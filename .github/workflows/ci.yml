@@ -50,6 +50,10 @@ jobs:
         working-directory: apps/api
         run: uv run mypy .
 
+      - name: check_permission_lint.py
+        working-directory: apps/api
+        run: uv run python ../../scripts/check_permission_lint.py
+
       - name: eslint
         run: pnpm --filter web lint
 
