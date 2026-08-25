@@ -3,9 +3,12 @@ sync — the part that is pure arithmetic over rows, same shape as
 ``organizations/services.py``: one function per operation, transactional,
 no Stripe I/O inside it (``stripe_client.py`` owns that seam)."""
 
+from datetime import timedelta
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from keel.billing import stripe_client
 from keel.billing.entitlements import enforce_downgrade_limits
@@ -13,6 +16,7 @@ from keel.billing.models import Plan, Price, Subscription
 from keel.organizations.models import Membership, Organization
 
 CHECKOUT_TRIAL_DAYS = 14
+TRIAL_ENDING_NOTICE_WINDOW_DAYS = 3
 
 
 class MissingPlanCode(Exception):
@@ -160,3 +164,95 @@ def sync_seat_quantity(organization: Organization) -> None:
     )
     subscription.quantity = quantity
     subscription.save(update_fields=["quantity"])
+
+
+def sync_stripe_plans() -> dict[str, int]:
+    """The nightly Stripe plan sync (PRD §5 "Scheduled jobs";
+    docs/plans/phase-5.md 5.4). Wraps fetch-then-upsert as one call so
+    the scheduled task's body stays a single service call — the
+    management command (``sync_stripe_plans``) uses this too, so there
+    is exactly one place that sequence is spelled out."""
+    products = stripe_client.fetch_products_and_prices()
+    return sync_plans_from_stripe(products)
+
+
+def send_trial_ending_notices() -> int:
+    """Trial-ending notices (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
+    5.4), daily. Idempotent when run twice: no field on ``Subscription``
+    records "already notified" (Phase 1's baseline didn't add one, and
+    this phase generates no migrations), so idempotency is checked
+    against ``AuditLog`` instead — one row per (subscription, trial end
+    date) is the record that a notice already went out for *this* trial
+    end. Returns the count of notices actually sent."""
+    from keel.audit.models import AuditLog
+    from keel.notifications.emails import send_trial_ending_email
+
+    window_end = timezone.now() + timedelta(days=TRIAL_ENDING_NOTICE_WINDOW_DAYS)
+    subscriptions = Subscription.objects.filter(
+        trial_end__isnull=False, trial_end__lte=window_end, trial_end__gt=timezone.now()
+    ).select_related("organization", "organization__created_by")
+
+    sent = 0
+    for subscription in subscriptions:
+        trial_end = subscription.trial_end
+        assert trial_end is not None  # the queryset's trial_end__isnull=False guarantees this
+        action = "trial_ending_notice_sent"
+        target_id = f"{subscription.pk}:{trial_end.isoformat()}"
+        if AuditLog.objects.filter(action=action, target_id=target_id).exists():
+            continue
+        organization = subscription.organization
+        send_trial_ending_email(
+            to=organization.created_by.email,
+            organization_name=organization.name,
+            billing_url=f"{settings.FRONTEND_URL}/{organization.slug}/settings/billing",
+            trial_end_date=trial_end.date().isoformat(),
+        )
+        AuditLog.objects.create(
+            organization=organization,
+            action=action,
+            target_type="Subscription",
+            target_id=target_id,
+        )
+        sent += 1
+    return sent
+
+
+def check_dunning() -> int:
+    """Dunning check (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md 5.4),
+    daily. Same idempotency mechanism as ``send_trial_ending_notices``:
+    one ``AuditLog`` row per (subscription, current period end) records
+    that a payment-failed notice already went out for *this* billing
+    period, since ``Subscription`` has no "already notified" field to
+    check instead."""
+    from keel.audit.models import AuditLog
+    from keel.notifications.emails import send_payment_failed_email
+
+    subscriptions = Subscription.objects.filter(status="past_due").select_related(
+        "organization", "organization__created_by"
+    )
+
+    sent = 0
+    for subscription in subscriptions:
+        action = "dunning_notice_sent"
+        period_marker = (
+            subscription.current_period_end.isoformat()
+            if subscription.current_period_end
+            else "unknown"
+        )
+        target_id = f"{subscription.pk}:{period_marker}"
+        if AuditLog.objects.filter(action=action, target_id=target_id).exists():
+            continue
+        organization = subscription.organization
+        send_payment_failed_email(
+            to=organization.created_by.email,
+            organization_name=organization.name,
+            billing_url=f"{settings.FRONTEND_URL}/{organization.slug}/settings/billing",
+        )
+        AuditLog.objects.create(
+            organization=organization,
+            action=action,
+            target_type="Subscription",
+            target_id=target_id,
+        )
+        sent += 1
+    return sent

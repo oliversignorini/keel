@@ -5,8 +5,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from keel.billing import stripe_client
-from keel.billing.services import sync_plans_from_stripe
+from keel.billing.services import sync_stripe_plans
 
 
 class Command(BaseCommand):
@@ -16,8 +15,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args: Any, **options: Any) -> None:
-        products = stripe_client.fetch_products_and_prices()
-        result = sync_plans_from_stripe(products)
+        result = sync_stripe_plans()
         self.stdout.write(
             self.style.SUCCESS(
                 "Synced {plans_synced} plan(s), {prices_synced} price(s); "

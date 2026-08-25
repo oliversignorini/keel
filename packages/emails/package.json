@@ -1,0 +1,17 @@
+{
+  "name": "@keel/emails",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "email export --dir templates --outDir dist"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.31",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "react-email": "^3.0.4"
+  }
+}

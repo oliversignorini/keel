@@ -25,7 +25,22 @@ services:
   worker:
     build:
       context: ../apps/api
-    command: ["celery", "-A", "config", "worker", "-l", "info"]
+    # Four queues, routed by cost profile not by domain (see
+    # config/celery.py's ``_QUEUE_PATTERNS`` for the reasoning and the
+    # routing table itself). One worker process serves all four here;
+    # a project that outgrows this splits into per-queue worker
+    # services, each with its own ``-Q``.
+    command:
+      [
+        "celery",
+        "-A",
+        "config",
+        "worker",
+        "-l",
+        "info",
+        "-Q",
+        "default,email,external,scheduled",
+      ]
     restart: unless-stopped
     env_file: ../.env
     depends_on:

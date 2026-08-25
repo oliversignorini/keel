@@ -12,6 +12,7 @@ from pathlib import Path
 
 import django
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -158,6 +159,36 @@ CELERY_BROKER_URL = env(
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_DEFAULT_QUEUE = "default"
 
+# The six scheduled jobs (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
+# 5.4). Each is idempotent when run twice — see keel/jobs/tasks.py and
+# its tests, which run every job twice and assert identical state.
+CELERY_BEAT_SCHEDULE = {
+    "sync-stripe-plans": {
+        "task": "keel.jobs.tasks.sync_stripe_plans_task",
+        "schedule": crontab(hour=2, minute=0),  # daily
+    },
+    "expire-invitations": {
+        "task": "keel.jobs.tasks.expire_invitations_task",
+        "schedule": crontab(minute=0),  # hourly
+    },
+    "send-trial-ending-notices": {
+        "task": "keel.jobs.tasks.send_trial_ending_notices_task",
+        "schedule": crontab(hour=3, minute=0),  # daily
+    },
+    "check-dunning": {
+        "task": "keel.jobs.tasks.check_dunning_task",
+        "schedule": crontab(hour=4, minute=0),  # daily
+    },
+    "purge-old-audit-logs": {
+        "task": "keel.jobs.tasks.purge_old_audit_logs_task",
+        "schedule": crontab(day_of_week=0, hour=5, minute=0),  # weekly
+    },
+    "cleanup-expired-sessions": {
+        "task": "keel.jobs.tasks.cleanup_expired_sessions_task",
+        "schedule": crontab(hour=1, minute=0),  # daily
+    },
+}
+
 # --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -
 # Session transport is an HttpOnly cookie, not a JWT (PRD §4). The cookie's
 # Domain must be the *registrable* domain — `.acme.com` — so it is shared
@@ -200,6 +231,30 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
+
+# Resend (PRD §5, docs/plans/phase-5.md 5.5). Blank in dev/test, same
+# pattern as STRIPE_SECRET_KEY above — keel.notifications.resend_backend
+# raises ImproperlyConfigured if a send is actually attempted without it.
+# Only wired as EMAIL_BACKEND in prod.py; dev/test keep sending through
+# Mailpit / locmem via the stock Django backends.
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+
+# R2 presigned direct upload (PRD §5; docs/plans/phase-5.md 5.6). No R2
+# credentials exist for this project — dev points ``R2_ENDPOINT_URL`` at
+# the MinIO container in infra/compose.dev.yml (S3-API-compatible), and
+# tests use ``moto``'s mocked S3 (keel/files/tests/test_uploads.py). Prod
+# points these at real Cloudflare R2 credentials; the client code
+# (keel.files.r2_client) is unchanged either way — R2 and MinIO both
+# speak the S3 API, so this is purely a settings swap.
+R2_ENDPOINT_URL = env("R2_ENDPOINT_URL", default="http://localhost:9000")
+R2_ACCESS_KEY_ID = env("R2_ACCESS_KEY_ID", default="minioadmin")
+R2_SECRET_ACCESS_KEY = env("R2_SECRET_ACCESS_KEY", default="minioadmin")
+R2_BUCKET = env("R2_BUCKET", default="keel-dev")
+R2_PUBLIC_URL = env("R2_PUBLIC_URL", default="http://localhost:9000/keel-dev")
+
+# Audit log retention (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
+# 5.4) — keel.audit.services.purge_old_audit_logs, run weekly.
+AUDIT_LOG_RETENTION_DAYS = env.int("AUDIT_LOG_RETENTION_DAYS", default=365)
 
 # --- Encryption (keel/core/crypto.py) ---------------------------------
 # Backs Connection.access_token / refresh_token. Generate with:
@@ -261,6 +316,10 @@ HEADLESS_FRONTEND_URLS = {
 # `/invite/[token]` also appears in this settings-doc's PRD passage but is
 # an organizations (Phase 3) concept, not an allauth flow — it is not a
 # HEADLESS_FRONTEND_URLS key because allauth never redirects there.
+
+# keel.notifications.adapter routes verification/reset emails through
+# the react-email templates (docs/plans/phase-5.md 5.5).
+ACCOUNT_ADAPTER = "keel.notifications.adapter.KeelAccountAdapter"
 
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_METHODS = {"email"}

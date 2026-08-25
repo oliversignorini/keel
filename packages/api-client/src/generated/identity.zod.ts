@@ -1305,6 +1305,35 @@ export const organizationsBillingSubscriptionRetrieveParams = zod.object({
 
 
 /**
+ * ``POST /organizations/<org_slug>/files/``.
+ */
+export const organizationsFilesCreateParams = zod.object({
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``GET /organizations/<org_slug>/files/<file_id>/``. Scoped to
+``organization`` in the same lookup as the completion view above —
+the mechanism the cross-tenant test in
+``keel/files/tests/test_uploads.py`` exercises directly.
+ */
+export const organizationsFilesRetrieveParams = zod.object({
+  "file_id": zod.string().uuid(),
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``POST /organizations/<org_slug>/files/<file_id>/complete/``.
+ */
+export const organizationsFilesCompleteCreateParams = zod.object({
+  "file_id": zod.string().uuid(),
+  "org_slug": zod.string()
+})
+
+
+/**
  * ``/organizations/<org_slug>/invitations/``.
  */
 export const organizationsInvitationsListParams = zod.object({
