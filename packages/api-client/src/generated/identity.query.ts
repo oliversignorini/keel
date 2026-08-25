@@ -528,6 +528,14 @@ export interface PaginatedRoleList {
   results: Role[];
 }
 
+export interface PaginatedWidgetList {
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Widget[];
+}
+
 export type PasskeySignup = BaseSignup;
 
 /**
@@ -542,6 +550,18 @@ export interface PatchedMembership {
   readonly role?: Role;
   readonly status?: StatusEnum;
   readonly user?: _UserSummary;
+}
+
+export interface PatchedWidget {
+  readonly created_at?: string;
+  readonly created_by?: string;
+  description?: string;
+  readonly id?: string;
+  /** @maxLength 255 */
+  name?: string;
+  /** @maxLength 32 */
+  status?: string;
+  readonly updated_at?: string;
 }
 
 /**
@@ -971,6 +991,18 @@ export interface WebAuthnCredentialRequestOptions {
   request_options: WebAuthnCredentialRequestOptionsRequestOptions;
 }
 
+export interface Widget {
+  readonly created_at: string;
+  readonly created_by: string;
+  description?: string;
+  readonly id: string;
+  /** @maxLength 255 */
+  name: string;
+  /** @maxLength 32 */
+  status?: string;
+  readonly updated_at: string;
+}
+
 export interface _UserSummary {
   email: string;
   id: string;
@@ -1342,6 +1374,17 @@ limit?: number;
 };
 
 export type OrganizationsRolesListParams = {
+/**
+ * The pagination cursor value.
+ */
+cursor?: string;
+/**
+ * Number of results to return per page.
+ */
+limit?: number;
+};
+
+export type OrganizationsWidgetsListParams = {
 /**
  * The pagination cursor value.
  */
@@ -7403,6 +7446,587 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getOrganizationsTransferCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsListResponse200 = {
+  data: PaginatedWidgetList
+  status: 200
+}
+    
+export type organizationsWidgetsListResponseSuccess = (organizationsWidgetsListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsListResponse = (organizationsWidgetsListResponseSuccess)
+
+export const getOrganizationsWidgetsListUrl = (orgSlug: string,
+    params?: OrganizationsWidgetsListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/${orgSlug}/widgets/?${stringifiedParams}` : `/api/v1/organizations/${orgSlug}/widgets/`
+}
+
+export const organizationsWidgetsList = async (orgSlug: string,
+    params?: OrganizationsWidgetsListParams, options?: RequestInit): Promise<organizationsWidgetsListResponse> => {
+  
+  return identityFetch<organizationsWidgetsListResponse>(getOrganizationsWidgetsListUrl(orgSlug,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsWidgetsListQueryKey = (orgSlug?: string,
+    params?: OrganizationsWidgetsListParams,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/widgets/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getOrganizationsWidgetsListQueryOptions = <TData = Awaited<ReturnType<typeof organizationsWidgetsList>>, TError = unknown>(orgSlug: string,
+    params?: OrganizationsWidgetsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsWidgetsListQueryKey(orgSlug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsWidgetsList>>> = ({ signal }) => organizationsWidgetsList(orgSlug,params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsWidgetsListQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsList>>>
+export type OrganizationsWidgetsListQueryError = unknown
+
+
+export function useOrganizationsWidgetsList<TData = Awaited<ReturnType<typeof organizationsWidgetsList>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  OrganizationsWidgetsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsWidgetsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsWidgetsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsWidgetsList<TData = Awaited<ReturnType<typeof organizationsWidgetsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsWidgetsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsWidgetsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsWidgetsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsWidgetsList<TData = Awaited<ReturnType<typeof organizationsWidgetsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsWidgetsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsWidgetsList<TData = Awaited<ReturnType<typeof organizationsWidgetsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsWidgetsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsWidgetsListQueryOptions(orgSlug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsCreateResponse201 = {
+  data: Widget
+  status: 201
+}
+    
+export type organizationsWidgetsCreateResponseSuccess = (organizationsWidgetsCreateResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsCreateResponse = (organizationsWidgetsCreateResponseSuccess)
+
+export const getOrganizationsWidgetsCreateUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/widgets/`
+}
+
+export const organizationsWidgetsCreate = async (orgSlug: string,
+    widget: NonReadonly<Widget>, options?: RequestInit): Promise<organizationsWidgetsCreateResponse> => {
+  
+  return identityFetch<organizationsWidgetsCreateResponse>(getOrganizationsWidgetsCreateUrl(orgSlug),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      widget,)
+  }
+);}
+
+
+
+
+export const getOrganizationsWidgetsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsCreate>>, TError,{orgSlug: string;data: NonReadonly<Widget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsCreate>>, TError,{orgSlug: string;data: NonReadonly<Widget>}, TContext> => {
+
+const mutationKey = ['organizationsWidgetsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsWidgetsCreate>>, {orgSlug: string;data: NonReadonly<Widget>}> = (props) => {
+          const {orgSlug,data} = props ?? {};
+
+          return  organizationsWidgetsCreate(orgSlug,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsWidgetsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsCreate>>>
+    export type OrganizationsWidgetsCreateMutationBody = NonReadonly<Widget>
+    export type OrganizationsWidgetsCreateMutationError = unknown
+
+    export const useOrganizationsWidgetsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsCreate>>, TError,{orgSlug: string;data: NonReadonly<Widget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsWidgetsCreate>>,
+        TError,
+        {orgSlug: string;data: NonReadonly<Widget>},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsWidgetsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsDestroyResponse204 = {
+  data: void
+  status: 204
+}
+    
+export type organizationsWidgetsDestroyResponseSuccess = (organizationsWidgetsDestroyResponse204) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsDestroyResponse = (organizationsWidgetsDestroyResponseSuccess)
+
+export const getOrganizationsWidgetsDestroyUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/widgets/${id}/`
+}
+
+export const organizationsWidgetsDestroy = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<organizationsWidgetsDestroyResponse> => {
+  
+  return identityFetch<organizationsWidgetsDestroyResponse>(getOrganizationsWidgetsDestroyUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getOrganizationsWidgetsDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsDestroy>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsDestroy>>, TError,{orgSlug: string;id: string}, TContext> => {
+
+const mutationKey = ['organizationsWidgetsDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsWidgetsDestroy>>, {orgSlug: string;id: string}> = (props) => {
+          const {orgSlug,id} = props ?? {};
+
+          return  organizationsWidgetsDestroy(orgSlug,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsWidgetsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsDestroy>>>
+    
+    export type OrganizationsWidgetsDestroyMutationError = unknown
+
+    export const useOrganizationsWidgetsDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsDestroy>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsWidgetsDestroy>>,
+        TError,
+        {orgSlug: string;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsWidgetsDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsRetrieveResponse200 = {
+  data: Widget
+  status: 200
+}
+    
+export type organizationsWidgetsRetrieveResponseSuccess = (organizationsWidgetsRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsRetrieveResponse = (organizationsWidgetsRetrieveResponseSuccess)
+
+export const getOrganizationsWidgetsRetrieveUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/widgets/${id}/`
+}
+
+export const organizationsWidgetsRetrieve = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<organizationsWidgetsRetrieveResponse> => {
+  
+  return identityFetch<organizationsWidgetsRetrieveResponse>(getOrganizationsWidgetsRetrieveUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsWidgetsRetrieveQueryKey = (orgSlug?: string,
+    id?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/widgets/${id}/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsWidgetsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsWidgetsRetrieveQueryKey(orgSlug,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>> = ({ signal }) => organizationsWidgetsRetrieve(orgSlug,id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsWidgetsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>>
+export type OrganizationsWidgetsRetrieveQueryError = unknown
+
+
+export function useOrganizationsWidgetsRetrieve<TData = Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsWidgetsRetrieve<TData = Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsWidgetsRetrieve<TData = Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsWidgetsRetrieve<TData = Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsWidgetsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsWidgetsRetrieveQueryOptions(orgSlug,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsPartialUpdateResponse200 = {
+  data: Widget
+  status: 200
+}
+    
+export type organizationsWidgetsPartialUpdateResponseSuccess = (organizationsWidgetsPartialUpdateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsPartialUpdateResponse = (organizationsWidgetsPartialUpdateResponseSuccess)
+
+export const getOrganizationsWidgetsPartialUpdateUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/widgets/${id}/`
+}
+
+export const organizationsWidgetsPartialUpdate = async (orgSlug: string,
+    id: string,
+    patchedWidget: NonReadonly<PatchedWidget>, options?: RequestInit): Promise<organizationsWidgetsPartialUpdateResponse> => {
+  
+  return identityFetch<organizationsWidgetsPartialUpdateResponse>(getOrganizationsWidgetsPartialUpdateUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      patchedWidget,)
+  }
+);}
+
+
+
+
+export const getOrganizationsWidgetsPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<PatchedWidget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<PatchedWidget>}, TContext> => {
+
+const mutationKey = ['organizationsWidgetsPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>, {orgSlug: string;id: string;data: NonReadonly<PatchedWidget>}> = (props) => {
+          const {orgSlug,id,data} = props ?? {};
+
+          return  organizationsWidgetsPartialUpdate(orgSlug,id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsWidgetsPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>>
+    export type OrganizationsWidgetsPartialUpdateMutationBody = NonReadonly<PatchedWidget>
+    export type OrganizationsWidgetsPartialUpdateMutationError = unknown
+
+    export const useOrganizationsWidgetsPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<PatchedWidget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsWidgetsPartialUpdate>>,
+        TError,
+        {orgSlug: string;id: string;data: NonReadonly<PatchedWidget>},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsWidgetsPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export type organizationsWidgetsUpdateResponse200 = {
+  data: Widget
+  status: 200
+}
+    
+export type organizationsWidgetsUpdateResponseSuccess = (organizationsWidgetsUpdateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsWidgetsUpdateResponse = (organizationsWidgetsUpdateResponseSuccess)
+
+export const getOrganizationsWidgetsUpdateUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/widgets/${id}/`
+}
+
+export const organizationsWidgetsUpdate = async (orgSlug: string,
+    id: string,
+    widget: NonReadonly<Widget>, options?: RequestInit): Promise<organizationsWidgetsUpdateResponse> => {
+  
+  return identityFetch<organizationsWidgetsUpdateResponse>(getOrganizationsWidgetsUpdateUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      widget,)
+  }
+);}
+
+
+
+
+export const getOrganizationsWidgetsUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Widget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Widget>}, TContext> => {
+
+const mutationKey = ['organizationsWidgetsUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsWidgetsUpdate>>, {orgSlug: string;id: string;data: NonReadonly<Widget>}> = (props) => {
+          const {orgSlug,id,data} = props ?? {};
+
+          return  organizationsWidgetsUpdate(orgSlug,id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsWidgetsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsWidgetsUpdate>>>
+    export type OrganizationsWidgetsUpdateMutationBody = NonReadonly<Widget>
+    export type OrganizationsWidgetsUpdateMutationError = unknown
+
+    export const useOrganizationsWidgetsUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsWidgetsUpdate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Widget>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsWidgetsUpdate>>,
+        TError,
+        {orgSlug: string;id: string;data: NonReadonly<Widget>},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsWidgetsUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
