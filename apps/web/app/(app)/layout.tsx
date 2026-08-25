@@ -4,6 +4,7 @@ import { OrgSwitcher } from "@/components/org/org-switcher";
 import { toApexHost } from "@/lib/host";
 import { OrgProvider, useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
+import { listWidgets } from "@/lib/widgets/api";
 import { authLogout } from "@keel/api-client";
 import { AppShell, CommandPalette, type CommandItem, ThemeToggleButton } from "@keel/ui";
 import { useTheme } from "next-themes";
@@ -44,6 +45,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [widgetResults, setWidgetResults] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -55,6 +57,30 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Resource search: filters by name against the current page of
+  // widgets. A real project's palette would back this with a proper
+  // search endpoint; this demo resource has no such index, so it's a
+  // client-side substring match over what's already paginated in.
+  useEffect(() => {
+    if (!paletteOpen || !currentOrg?.permissions.includes(Perm.WIDGETS_VIEW) || !paletteQuery) {
+      setWidgetResults([]);
+      return;
+    }
+    let cancelled = false;
+    listWidgets(currentOrg.slug)
+      .then((page) => {
+        if (cancelled) return;
+        const query = paletteQuery.toLowerCase();
+        setWidgetResults(page.results.filter((w) => w.name.toLowerCase().includes(query)));
+      })
+      .catch(() => {
+        if (!cancelled) setWidgetResults([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [paletteOpen, paletteQuery, currentOrg]);
 
   async function signOut() {
     await authLogout();
@@ -91,11 +117,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       group: "Organisations",
       onSelect: () => router.push(`/${org.slug}`),
     }));
-    const all = [...navCommands, ...orgCommands];
+    const widgetCommands: CommandItem[] = widgetResults.map((widget) => ({
+      id: `widget-${widget.id}`,
+      label: widget.name,
+      group: "Widgets",
+      onSelect: () => router.push(`/${params.org}/widgets/${widget.id}`),
+    }));
+    const all = [...navCommands, ...orgCommands, ...widgetCommands];
     if (!paletteQuery) return all;
     const query = paletteQuery.toLowerCase();
-    return all.filter((item) => item.label.toLowerCase().includes(query));
-  }, [navItems, me, paletteQuery, router]);
+    return all.filter(
+      (item) => item.group === "Widgets" || item.label.toLowerCase().includes(query),
+    );
+  }, [navItems, me, paletteQuery, router, widgetResults, params.org]);
 
   const nav = (
     <>
