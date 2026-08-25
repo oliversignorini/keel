@@ -43,6 +43,8 @@ class Perm:
     AUDIT_VIEW = "audit.view"
     WIDGETS_VIEW = "widgets.view"
     WIDGETS_MANAGE = "widgets.manage"
+    FILES_VIEW = "files.view"
+    FILES_MANAGE = "files.manage"
 
 
 def _resolve_role_permissions(user: Any, organization: Any) -> frozenset[str]:
@@ -128,3 +130,5 @@ registry.register(Perm.BILLING_MANAGE, _role_guard(Perm.BILLING_MANAGE))
 registry.register(Perm.AUDIT_VIEW, _role_guard(Perm.AUDIT_VIEW))
 registry.register(Perm.WIDGETS_VIEW, _role_guard(Perm.WIDGETS_VIEW))
 registry.register(Perm.WIDGETS_MANAGE, _role_guard(Perm.WIDGETS_MANAGE))
+registry.register(Perm.FILES_VIEW, _role_guard(Perm.FILES_VIEW))
+registry.register(Perm.FILES_MANAGE, _role_guard(Perm.FILES_MANAGE))

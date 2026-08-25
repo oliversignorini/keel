@@ -37,6 +37,8 @@ _MEMBER_CODES = {
     Perm.AUDIT_VIEW,
     Perm.WIDGETS_VIEW,
     Perm.WIDGETS_MANAGE,
+    Perm.FILES_VIEW,
+    Perm.FILES_MANAGE,
 }
 
 

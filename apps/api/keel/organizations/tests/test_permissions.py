@@ -78,6 +78,8 @@ for _code in (
     Perm.AUDIT_VIEW,
     Perm.WIDGETS_VIEW,
     Perm.WIDGETS_MANAGE,
+    Perm.FILES_VIEW,
+    Perm.FILES_MANAGE,
 ):
     _simple(_code)
 

@@ -5899,6 +5899,289 @@ export function useOrganizationsBillingSubscriptionRetrieve<TData = Awaited<Retu
 
 
 /**
+ * ``POST /organizations/<org_slug>/files/``.
+ */
+export type organizationsFilesCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsFilesCreateResponseSuccess = (organizationsFilesCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsFilesCreateResponse = (organizationsFilesCreateResponseSuccess)
+
+export const getOrganizationsFilesCreateUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/files/`
+}
+
+export const organizationsFilesCreate = async (orgSlug: string, options?: RequestInit): Promise<organizationsFilesCreateResponse> => {
+  
+  return identityFetch<organizationsFilesCreateResponse>(getOrganizationsFilesCreateUrl(orgSlug),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getOrganizationsFilesCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCreate>>, TError,{orgSlug: string}, TContext> => {
+
+const mutationKey = ['organizationsFilesCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsFilesCreate>>, {orgSlug: string}> = (props) => {
+          const {orgSlug} = props ?? {};
+
+          return  organizationsFilesCreate(orgSlug,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsFilesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsFilesCreate>>>
+    
+    export type OrganizationsFilesCreateMutationError = unknown
+
+    export const useOrganizationsFilesCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsFilesCreate>>,
+        TError,
+        {orgSlug: string},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsFilesCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``GET /organizations/<org_slug>/files/<file_id>/``. Scoped to
+``organization`` in the same lookup as the completion view above —
+the mechanism the cross-tenant test in
+``keel/files/tests/test_uploads.py`` exercises directly.
+ */
+export type organizationsFilesRetrieveResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsFilesRetrieveResponseSuccess = (organizationsFilesRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsFilesRetrieveResponse = (organizationsFilesRetrieveResponseSuccess)
+
+export const getOrganizationsFilesRetrieveUrl = (orgSlug: string,
+    fileId: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/files/${fileId}/`
+}
+
+export const organizationsFilesRetrieve = async (orgSlug: string,
+    fileId: string, options?: RequestInit): Promise<organizationsFilesRetrieveResponse> => {
+  
+  return identityFetch<organizationsFilesRetrieveResponse>(getOrganizationsFilesRetrieveUrl(orgSlug,fileId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsFilesRetrieveQueryKey = (orgSlug?: string,
+    fileId?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/files/${fileId}/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsFilesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError = unknown>(orgSlug: string,
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsFilesRetrieveQueryKey(orgSlug,fileId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsFilesRetrieve>>> = ({ signal }) => organizationsFilesRetrieve(orgSlug,fileId, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && fileId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsFilesRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsFilesRetrieve>>>
+export type OrganizationsFilesRetrieveQueryError = unknown
+
+
+export function useOrganizationsFilesRetrieve<TData = Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    fileId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFilesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFilesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsFilesRetrieve<TData = Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFilesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFilesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsFilesRetrieve<TData = Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsFilesRetrieve<TData = Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFilesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsFilesRetrieveQueryOptions(orgSlug,fileId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * ``POST /organizations/<org_slug>/files/<file_id>/complete/``.
+ */
+export type organizationsFilesCompleteCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsFilesCompleteCreateResponseSuccess = (organizationsFilesCompleteCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsFilesCompleteCreateResponse = (organizationsFilesCompleteCreateResponseSuccess)
+
+export const getOrganizationsFilesCompleteCreateUrl = (orgSlug: string,
+    fileId: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/files/${fileId}/complete/`
+}
+
+export const organizationsFilesCompleteCreate = async (orgSlug: string,
+    fileId: string, options?: RequestInit): Promise<organizationsFilesCompleteCreateResponse> => {
+  
+  return identityFetch<organizationsFilesCompleteCreateResponse>(getOrganizationsFilesCompleteCreateUrl(orgSlug,fileId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getOrganizationsFilesCompleteCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>, TError,{orgSlug: string;fileId: string}, TContext> => {
+
+const mutationKey = ['organizationsFilesCompleteCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>, {orgSlug: string;fileId: string}> = (props) => {
+          const {orgSlug,fileId} = props ?? {};
+
+          return  organizationsFilesCompleteCreate(orgSlug,fileId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsFilesCompleteCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>>
+    
+    export type OrganizationsFilesCompleteCreateMutationError = unknown
+
+    export const useOrganizationsFilesCompleteCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsFilesCompleteCreate>>,
+        TError,
+        {orgSlug: string;fileId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsFilesCompleteCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
  * ``/organizations/<org_slug>/invitations/``.
  */
 export type organizationsInvitationsListResponse200 = {

@@ -4975,6 +4975,96 @@
         ]
       }
     },
+    "/api/v1/organizations/{org_slug}/files/": {
+      "post": {
+        "description": "``POST /organizations/<org_slug>/files/``.",
+        "operationId": "organizations_files_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/files/{file_id}/": {
+      "get": {
+        "description": "``GET /organizations/<org_slug>/files/<file_id>/``. Scoped to\n``organization`` in the same lookup as the completion view above \u2014\nthe mechanism the cross-tenant test in\n``keel/files/tests/test_uploads.py`` exercises directly.",
+        "operationId": "organizations_files_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/files/{file_id}/complete/": {
+      "post": {
+        "description": "``POST /organizations/<org_slug>/files/<file_id>/complete/``.",
+        "operationId": "organizations_files_complete_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
     "/api/v1/organizations/{org_slug}/invitations/": {
       "get": {
         "description": "``/organizations/<org_slug>/invitations/``.",
