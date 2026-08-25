@@ -177,6 +177,22 @@ class GlobalViewSet(viewsets.GenericViewSet):
                 "GLOBAL_JUSTIFICATION string explaining why this table has no "
                 "tenant boundary."
             )
+        _global_viewset_registry.append(cls)
+
+
+_global_viewset_registry: list[type["GlobalViewSet"]] = []
+
+
+def registered_global_viewsets() -> list[type["GlobalViewSet"]]:
+    """Every well-formed, non-abstract ``GlobalViewSet`` subclass (including
+    every ``OrgScopedViewSet`` subclass, which is one), in definition order.
+
+    Recorded unconditionally by ``__init_subclass__`` — a ``GlobalViewSet``
+    cannot come into existence without landing here, which is what lets the
+    ``GLOBAL_JUSTIFICATION`` print (PRD §4 invariant 7) find an exemption
+    regardless of which router — or no router at all — it is registered on.
+    """
+    return list(_global_viewset_registry)
 
 
 _scoped_viewset_registry: list[type["OrgScopedViewSet"]] = []
