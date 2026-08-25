@@ -7,6 +7,7 @@ import {
   type VisibilityState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -18,12 +19,13 @@ export type { ColumnDef } from "@tanstack/react-table";
 
 /** `<DataTable>` — TanStack Table wired for the shape every list page in
  * this project needs (PRD §5 component inventory; docs/plans/phase-6.md
- * 6.C): sorting, column visibility, cursor pagination (the API's `next`
- * / `previous` are opaque — this never turns them into page numbers),
- * row selection, and bulk actions. Client-side sorting is over the rows
- * already on the page, matching the API's own default ordering rather
- * than replacing it — sorting across a 50k-row table happens via the
- * cursor, not by asking the client to hold every row at once. */
+ * 6.C): sorting, filtering, column visibility, cursor pagination (the
+ * API's `next` / `previous` are opaque — this never turns them into
+ * page numbers), row selection, and bulk actions. Client-side sorting
+ * and filtering are over the rows already on the page, matching the
+ * API's own default ordering rather than replacing it — reaching across
+ * a 50k-row table happens via the cursor, not by asking the client to
+ * hold every row at once. */
 export function DataTable<TData extends { id: string }>({
   columns,
   data,
@@ -34,6 +36,7 @@ export function DataTable<TData extends { id: string }>({
   onNextPage,
   onPreviousPage,
   isLoading,
+  filterPlaceholder = "Filter…",
 }: {
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
@@ -44,21 +47,25 @@ export function DataTable<TData extends { id: string }>({
   onNextPage: () => void;
   onPreviousPage: () => void;
   isLoading?: boolean;
+  filterPlaceholder?: string;
 }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, rowSelection, columnVisibility },
+    state: { sorting, rowSelection, columnVisibility, globalFilter },
     getRowId: (row) => row.id,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     enableRowSelection: Boolean(bulkActions),
   });
 
@@ -70,6 +77,15 @@ export function DataTable<TData extends { id: string }>({
 
   return (
     <div className="flex flex-col gap-3">
+      <input
+        type="search"
+        value={globalFilter}
+        onChange={(event) => setGlobalFilter(event.target.value)}
+        placeholder={filterPlaceholder}
+        aria-label="Filter rows"
+        className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+      />
+
       {bulkActions && selectedIds.length > 0 ? (
         <div className="flex items-center gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm">
           <span className="text-muted-foreground">{selectedIds.length} selected</span>
