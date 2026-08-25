@@ -1,0 +1,370 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Keel identity (allauth headless) — provisional",
+    "version": "0.0.0-provisional",
+    "description": "Hand-authored stand-in for allauth's real spec at /_allauth/openapi.json, built from keel-prd.md v1.2 §7's endpoint list plus allauth's documented headless response shapes. The p2-auth-api worktree owns the real spec and docs/auth-client-contract.md; regenerate this package against the merged spec the moment that lands. Do not hand-edit src/generated — only this input file, and only until it is replaced."
+  },
+  "paths": {
+    "/_allauth/browser/v1/auth/signup": {
+      "post": {
+        "operationId": "authSignup",
+        "summary": "Email/password signup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SignupRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Session established immediately (verification not required)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "401": { "description": "Pending flow — e.g. email verification required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthPendingResponse" } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
+          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/login": {
+      "post": {
+        "operationId": "authLogin",
+        "summary": "Email/password login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "401": { "description": "Pending flow — e.g. MFA challenge (awaiting TOTP)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthPendingResponse" } } } },
+          "400": { "description": "Bad credentials / validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
+          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/session": {
+      "delete": {
+        "operationId": "authLogout",
+        "summary": "End the current session (logout)",
+        "responses": {
+          "200": { "description": "Logged out", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
+          "401": { "description": "No session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/password/request": {
+      "post": {
+        "operationId": "authPasswordRequest",
+        "summary": "Request a password reset email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordResetRequestBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent if the address is known (no disclosure either way)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
+          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/password/reset": {
+      "post": {
+        "operationId": "authPasswordReset",
+        "summary": "Complete a password reset with the emailed key",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordResetBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password changed, session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "400": { "description": "Key invalid/expired or password rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/email/verify": {
+      "post": {
+        "operationId": "authEmailVerify",
+        "summary": "Verify an email address with the emailed key",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmailVerifyBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Verified, session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "400": { "description": "Key invalid/expired", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/provider/redirect": {
+      "get": {
+        "operationId": "authProviderRedirect",
+        "summary": "Start a social-provider (Google) auth redirect",
+        "parameters": [
+          { "name": "provider", "in": "query", "required": true, "schema": { "type": "string", "example": "google" } },
+          { "name": "process", "in": "query", "required": true, "schema": { "type": "string", "enum": ["login"] } },
+          { "name": "callback_url", "in": "query", "required": true, "schema": { "type": "string", "format": "uri" } }
+        ],
+        "responses": {
+          "302": { "description": "Redirect to the provider's consent screen" }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/2fa/authenticate": {
+      "post": {
+        "operationId": "authMfaAuthenticate",
+        "summary": "Submit a TOTP code to complete a login left pending by /auth/login (inferred: not in the PRD §7 list verbatim, required for the /mfa route to function; confirm against the real spec)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaAuthenticateBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "400": { "description": "Invalid code", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/account/authenticators/totp": {
+      "get": {
+        "operationId": "totpGet",
+        "summary": "Fetch TOTP enrolment status / provisioning secret",
+        "responses": {
+          "200": { "description": "TOTP authenticator state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" } } } },
+          "404": { "description": "Not enrolled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      },
+      "post": {
+        "operationId": "totpActivate",
+        "summary": "Activate TOTP with a confirmation code",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TotpActivateBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "TOTP activated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" } } } },
+          "400": { "description": "Invalid code", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "totpDeactivate",
+        "summary": "Deactivate TOTP",
+        "responses": {
+          "200": { "description": "TOTP deactivated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } }
+        }
+      }
+    },
+    "/_allauth/browser/v1/auth/sessions": {
+      "get": {
+        "operationId": "sessionsList",
+        "summary": "List active sessions for the current user",
+        "responses": {
+          "200": { "description": "Active sessions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionsListResponse" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "sessionsRevoke",
+        "summary": "Revoke one or more sessions by id (all but current if omitted)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SessionsRevokeBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Revoked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SignupRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 1 }
+        }
+      },
+      "PasswordResetRequestBody": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "PasswordResetBody": {
+        "type": "object",
+        "required": ["key", "password"],
+        "properties": {
+          "key": { "type": "string" },
+          "password": { "type": "string", "minLength": 8 }
+        }
+      },
+      "EmailVerifyBody": {
+        "type": "object",
+        "required": ["key"],
+        "properties": {
+          "key": { "type": "string" }
+        }
+      },
+      "MfaAuthenticateBody": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "string", "minLength": 6, "maxLength": 6, "pattern": "^[0-9]{6}$" }
+        }
+      },
+      "TotpActivateBody": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "string", "minLength": 6, "maxLength": 6, "pattern": "^[0-9]{6}$" }
+        }
+      },
+      "TotpAuthenticatorResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "const": "totp" },
+              "last_used_at": { "type": ["string", "null"], "format": "date-time" },
+              "provisioning_uri": { "type": "string" }
+            }
+          }
+        }
+      },
+      "SessionItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_agent": { "type": "string" },
+          "ip": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "last_seen_at": { "type": "string", "format": "date-time" },
+          "is_current": { "type": "boolean" }
+        }
+      },
+      "SessionsListResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SessionItem" }
+          }
+        }
+      },
+      "SessionsRevokeBody": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "AuthenticatedUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "AuthSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": { "$ref": "#/components/schemas/AuthenticatedUser" }
+            }
+          }
+        }
+      },
+      "AuthFlow": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "verify_email" },
+          "is_pending": { "type": "boolean" }
+        }
+      },
+      "AuthPendingResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "flows": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/AuthFlow" }
+              }
+            }
+          }
+        }
+      },
+      "AllauthOkResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" }
+        }
+      },
+      "AllauthFieldError": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "param": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "AllauthErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AllauthFieldError" }
+          }
+        }
+      }
+    }
+  }
+}
