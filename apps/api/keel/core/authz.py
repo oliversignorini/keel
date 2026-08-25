@@ -26,6 +26,7 @@ in it). Phase 3's job is exactly one function at that dotted path; nothing
 else in this file needs to change.
 """
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -60,9 +61,7 @@ class Decision:
 
 
 class Guard(Protocol):
-    def __call__(
-        self, user: Any, organization: Any, subject: Any | None = None
-    ) -> Decision: ...
+    def __call__(self, user: Any, organization: Any, subject: Any | None = None) -> Decision: ...
 
 
 class UnregisteredPermissionCode(Exception):
@@ -101,7 +100,7 @@ class PermissionRegistry:
         except KeyError:
             raise UnregisteredPermissionCode(code) from None
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[tuple[str, Guard]]:
         return iter(self._guards.items())
 
     def __len__(self) -> int:
@@ -111,9 +110,7 @@ class PermissionRegistry:
 registry = PermissionRegistry()
 
 
-def has_perm(
-    user: Any, organization: Any, code: str, subject: Any | None = None
-) -> Decision:
+def has_perm(user: Any, organization: Any, code: str, subject: Any | None = None) -> Decision:
     guard = registry.get(code)
     return guard(user, organization, subject=subject)
 
@@ -173,9 +170,7 @@ class GlobalViewSet(viewsets.GenericViewSet):
         if cls.__dict__.get("__abstract__", False):
             return
         if not getattr(cls, "required_permissions", None):
-            raise ImproperlyConfigured(
-                f"{cls.__name__} must declare required_permissions."
-            )
+            raise ImproperlyConfigured(f"{cls.__name__} must declare required_permissions.")
         if not cls.organization_scoped and not getattr(cls, "GLOBAL_JUSTIFICATION", None):
             raise ImproperlyConfigured(
                 f"{cls.__name__} must declare organization_scoped = True or a "
@@ -193,7 +188,7 @@ class OrgScopedViewSet(GlobalViewSet):
 
     __abstract__ = True
     organization_scoped = True
-    permission_classes = [HasOrgPermission]
+    permission_classes = (HasOrgPermission,)
     organization_url_kwarg = "org_slug"
     test_factory: str | None = None
 
@@ -210,9 +205,7 @@ class OrgScopedViewSet(GlobalViewSet):
             )
 
     def initial(self, request: Any, *args: Any, **kwargs: Any) -> None:
-        organization = _resolve_organization(
-            request, kwargs.get(self.organization_url_kwarg)
-        )
+        organization = _resolve_organization(request, kwargs.get(self.organization_url_kwarg))
         if organization is None:
             raise Http404
         self.organization = organization

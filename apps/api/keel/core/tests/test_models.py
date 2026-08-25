@@ -44,7 +44,7 @@ def test_org_scoped_model_organization_field_is_indexed() -> None:
 
     field = OrgScopedThing._meta.get_field("organization")
 
-    assert field.db_index or any(
+    assert getattr(field, "db_index", False) or any(
         "organization" in idx.fields for idx in OrgScopedThing._meta.indexes
     )
 

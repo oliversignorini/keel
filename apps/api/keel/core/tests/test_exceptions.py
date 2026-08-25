@@ -27,6 +27,7 @@ def test_400_validation_error_from_serializer() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 400
     body = envelope(response)
     assert body["error"]["code"] == "validation_error"
@@ -38,6 +39,7 @@ def test_401_not_authenticated() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 401
     body = envelope(response)
     assert body["error"]["code"] == "not_authenticated"
@@ -49,6 +51,7 @@ def test_401_authentication_failed() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 401
     assert envelope(response)["error"]["code"] == "authentication_failed"
 
@@ -62,6 +65,7 @@ def test_402_payment_required() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 402
     body = envelope(response)
     assert body["error"]["code"] == "SEAT_LIMIT_EXCEEDED"
@@ -79,6 +83,7 @@ def test_403_permission_denied_carries_decision_reason_and_details() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 403
     body = envelope(response)
     assert body["error"]["code"] == "insufficient_role"
@@ -90,6 +95,7 @@ def test_404_not_found() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 404
     assert envelope(response)["error"]["code"] == "not_found"
 
@@ -99,6 +105,7 @@ def test_409_conflict() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 409
     body = envelope(response)
     assert body["error"]["code"] == "already_accepted"
@@ -110,6 +117,7 @@ def test_422_unprocessable_entity() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 422
     assert envelope(response)["error"]["code"] == "invalid_state_transition"
 
@@ -119,6 +127,7 @@ def test_429_throttled_sets_retry_after_header() -> None:
 
     response = exception_handler(exc, {})
 
+    assert response is not None
     assert response.status_code == 429
     assert response.headers["Retry-After"] == "30"
     assert envelope(response)["error"]["code"] == "throttled"

@@ -24,7 +24,7 @@ def _fernet() -> Fernet:
     if not key:
         raise ImproperlyConfigured(
             "settings.KEEL_ENCRYPTION_KEY is not configured. Generate one with "
-            "`python -c \"from cryptography.fernet import Fernet; "
+            '`python -c "from cryptography.fernet import Fernet; '
             'print(Fernet.generate_key().decode())"` and set it in .env.'
         )
     return Fernet(key.encode() if isinstance(key, str) else key)

@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.contrib import admin
 from django.db import connections
 from django.http import HttpRequest, JsonResponse
 from django.urls import path
+from drf_spectacular.views import SpectacularAPIView
 from redis import Redis
 from redis.exceptions import RedisError
 
@@ -36,4 +38,6 @@ def readyz(request: HttpRequest) -> JsonResponse:
 urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("readyz/", readyz, name="readyz"),
+    path("admin/", admin.site.urls),
+    path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

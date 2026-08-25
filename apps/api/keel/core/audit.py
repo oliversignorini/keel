@@ -19,9 +19,10 @@ marked function and its marker the same way Phase 3's meta-test walks
 ``keel.core.authz.registry``.
 """
 
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from django.db import transaction
 
@@ -73,7 +74,7 @@ class AuditRegistry:
     def get(self, func: Callable[..., Any]) -> dict[str, Any]:
         return self._entries[self._key(func)]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[tuple[str, dict[str, Any]]]:
         return iter(self._entries.items())
 
     def __len__(self) -> int:

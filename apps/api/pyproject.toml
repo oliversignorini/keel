@@ -9,6 +9,7 @@ dependencies = [
     "django-cors-headers>=4.9.0",
     "django-environ>=0.14.0",
     "djangorestframework>=3.18.0",
+    "drf-spectacular>=0.30.0",
     "psycopg[binary]>=3.3.4",
     "redis>=8.1.0",
     "uuid-utils>=0.17.0",
@@ -34,6 +35,7 @@ addopts = "--cov=keel --cov=config --cov-report=json --cov-report=term-missing"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["*/migrations/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "DJ", "RUF"]
@@ -46,11 +48,11 @@ warn_return_any = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = "tests.*"
+module = ["tests.*", "keel.*.tests.*"]
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "environ.*"]
+module = ["celery.*", "environ.*", "rest_framework.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]

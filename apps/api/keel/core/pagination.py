@@ -16,11 +16,13 @@ and any subclass overriding ``ordering`` must do the same — end the tuple
 in a column guaranteed unique.
 """
 
+from collections.abc import Sequence
+
 from rest_framework.pagination import CursorPagination as DRFCursorPagination
 
 
 class CursorPagination(DRFCursorPagination):
     page_size = 25
-    ordering = ("-created_at", "id")
+    ordering: str | Sequence[str] = ("-created_at", "id")
     cursor_query_param = "cursor"
     page_size_query_param = "limit"

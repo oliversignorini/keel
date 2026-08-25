@@ -1,4 +1,6 @@
+from dataclasses import FrozenInstanceError
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
@@ -41,7 +43,7 @@ def test_decision_deny_carries_reason_and_details() -> None:
 def test_decision_is_frozen() -> None:
     decision = Decision.allow()
 
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         decision.allowed = False  # type: ignore[misc]
 
 
@@ -105,7 +107,9 @@ def test_has_perm_on_unregistered_code_raises_rather_than_denying() -> None:
 def test_has_org_permission_allows_when_decision_allows() -> None:
     from keel.core import authz
 
-    authz.registry.register("fixture.allow_perm", lambda user, organization, subject=None: Decision.allow())
+    authz.registry.register(
+        "fixture.allow_perm", lambda user, organization, subject=None: Decision.allow()
+    )
 
     view = SimpleNamespace(required_permissions=["fixture.allow_perm"], organization=object())
     request = SimpleNamespace(user=object())
@@ -147,7 +151,7 @@ def test_viewset_without_organization_scoped_or_global_justification_raises() ->
     with pytest.raises(ImproperlyConfigured):
 
         class BadGlobalViewSet(GlobalViewSet):
-            required_permissions = ["fixture.view"]
+            required_permissions = ("fixture.view",)
             organization_scoped = False
 
 
@@ -155,12 +159,12 @@ def test_org_scoped_viewset_without_test_factory_raises() -> None:
     with pytest.raises(ImproperlyConfigured):
 
         class BadOrgViewSet(OrgScopedViewSet):
-            required_permissions = ["fixture.view"]
+            required_permissions = ("fixture.view",)
 
 
 def test_org_scoped_viewset_with_everything_declared_does_not_raise() -> None:
     class GoodOrgViewSet(OrgScopedViewSet):
-        required_permissions = ["fixture.view"]
+        required_permissions = ("fixture.view",)
         test_factory = "keel.core.tests.test_authz.fake_factory"
 
     assert GoodOrgViewSet.organization_scoped is True
@@ -168,7 +172,7 @@ def test_org_scoped_viewset_with_everything_declared_does_not_raise() -> None:
 
 def test_global_viewset_with_justification_does_not_raise() -> None:
     class GoodGlobalViewSet(GlobalViewSet):
-        required_permissions = ["fixture.view"]
+        required_permissions = ("fixture.view",)
         organization_scoped = False
         GLOBAL_JUSTIFICATION = "Reference data, identical across tenants."
 
@@ -184,7 +188,7 @@ def fixture_org_resolver(request, org_slug):
     return SimpleNamespace(pk=org_slug, slug=org_slug)
 
 
-def test_decision_deny_reaches_client_as_403_envelope(settings: pytest.fixture) -> None:  # type: ignore[valid-type]
+def test_decision_deny_reaches_client_as_403_envelope(settings: Any) -> None:
     from keel.core import authz
 
     authz.registry.register(
@@ -195,7 +199,7 @@ def test_decision_deny_reaches_client_as_403_envelope(settings: pytest.fixture) 
     )
 
     class FixtureDenyViewSet(OrgScopedViewSet):
-        required_permissions = ["fixture.e2e_deny"]
+        required_permissions = ("fixture.e2e_deny",)
         test_factory = "keel.core.tests.test_authz.fake_factory"
 
         def list(self, request, *args, **kwargs):
@@ -220,7 +224,7 @@ def test_decision_deny_reaches_client_as_403_envelope(settings: pytest.fixture) 
 
 
 def test_org_scoped_viewset_404s_when_organization_does_not_resolve(
-    settings: pytest.fixture,  # type: ignore[valid-type]
+    settings: Any,
 ) -> None:
     from keel.core import authz
 
@@ -230,7 +234,7 @@ def test_org_scoped_viewset_404s_when_organization_does_not_resolve(
     )
 
     class FixtureMissingOrgViewSet(OrgScopedViewSet):
-        required_permissions = ["fixture.e2e_missing_org"]
+        required_permissions = ("fixture.e2e_missing_org",)
         test_factory = "keel.core.tests.test_authz.fake_factory"
 
         def list(self, request, *args, **kwargs):
@@ -249,7 +253,7 @@ def test_org_scoped_viewset_404s_when_organization_does_not_resolve(
 
 
 def test_organization_resolver_unconfigured_raises_improperly_configured(
-    settings: pytest.fixture,  # type: ignore[valid-type]
+    settings: Any,
 ) -> None:
     from keel.core import authz
 
@@ -259,7 +263,7 @@ def test_organization_resolver_unconfigured_raises_improperly_configured(
     )
 
     class FixtureUnconfiguredViewSet(OrgScopedViewSet):
-        required_permissions = ["fixture.e2e_unconfigured"]
+        required_permissions = ("fixture.e2e_unconfigured",)
         test_factory = "keel.core.tests.test_authz.fake_factory"
 
         def list(self, request, *args, **kwargs):

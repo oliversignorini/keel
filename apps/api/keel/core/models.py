@@ -6,6 +6,8 @@ by string reference rather than an import — the same trick Django's own
 and the Phase 0 import-linter contract stays green (PRD §4 invariant 2).
 """
 
+from typing import Any
+
 from django.db import models
 
 from keel.core.ids import uuid7
@@ -14,7 +16,7 @@ from keel.core.ids import uuid7
 class UUIDv7PrimaryKeyField(models.UUIDField):
     """A UUID primary key field defaulting to :func:`keel.core.ids.uuid7`."""
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("primary_key", True)
         kwargs.setdefault("default", uuid7)
         kwargs.setdefault("editable", False)

@@ -41,16 +41,20 @@ def test_cursor_pagination_across_a_run_of_equal_sort_values() -> None:
         class Meta:
             app_label = "core"
 
+        def __str__(self) -> str:
+            return f"Row(rank={self.rank})"
+
     with connection.schema_editor() as editor:
         editor.create_model(Row)
     try:
         expected_ids = set()
         for _ in range(4):
-            expected_ids.add(Row.objects.create(rank=1).id)
+            expected_ids.add(Row.objects.create(rank=1).id)  # type: ignore[attr-defined]
         for _ in range(4):
-            expected_ids.add(Row.objects.create(rank=1).id)  # same rank, second batch
+            # same rank, second batch
+            expected_ids.add(Row.objects.create(rank=1).id)  # type: ignore[attr-defined]
         for _ in range(4):
-            expected_ids.add(Row.objects.create(rank=2).id)
+            expected_ids.add(Row.objects.create(rank=2).id)  # type: ignore[attr-defined]
 
         class RowCursorPagination(CursorPagination):
             # "rank" alone is non-unique (several rows share rank=1); "id"
@@ -58,7 +62,8 @@ def test_cursor_pagination_across_a_run_of_equal_sort_values() -> None:
             # keel.core.pagination's module docstring.
             ordering = ("rank", "id")
 
-        seen = _paginate_all(RowCursorPagination, Row.objects.all(), page_size=3)
+        row_queryset = Row.objects.all()  # type: ignore[attr-defined]
+        seen = _paginate_all(RowCursorPagination, row_queryset, page_size=3)
 
         assert len(seen) == len(expected_ids), "pagination skipped or repeated rows"
         assert set(seen) == expected_ids
@@ -77,11 +82,14 @@ def test_cursor_pagination_response_envelope_shape() -> None:
         class Meta:
             app_label = "core"
 
+        def __str__(self) -> str:
+            return f"EnvelopeRow(rank={self.rank})"
+
     with connection.schema_editor() as editor:
         editor.create_model(EnvelopeRow)
     try:
         for _ in range(5):
-            EnvelopeRow.objects.create(rank=1)
+            EnvelopeRow.objects.create(rank=1)  # type: ignore[attr-defined]
 
         class EnvelopeCursorPagination(CursorPagination):
             ordering = "rank"
@@ -89,7 +97,8 @@ def test_cursor_pagination_response_envelope_shape() -> None:
 
         paginator = EnvelopeCursorPagination()
         request = Request(APIRequestFactory().get("/fake/things/"))
-        page = paginator.paginate_queryset(EnvelopeRow.objects.all(), request)
+        envelope_queryset = EnvelopeRow.objects.all()  # type: ignore[attr-defined]
+        page = paginator.paginate_queryset(envelope_queryset, request)
         response = paginator.get_paginated_response([row.id for row in page])
 
         assert set(response.data.keys()) == {"results", "next", "previous"}

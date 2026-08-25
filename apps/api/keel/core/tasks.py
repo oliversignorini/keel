@@ -12,7 +12,8 @@ directly. Phase 5.5 builds the Tier 2 primitive properly; growing this
 shim to reach it turns a seam into a wall.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from celery import shared_task
 from celery.result import EagerResult

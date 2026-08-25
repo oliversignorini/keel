@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     # Third party
     "rest_framework",
+    "drf_spectacular",
     "corsheaders",
     # Keel apps — empty in Phase 0, registered so Phase 1's baseline
     # migration has somewhere to land. No models here yet.
@@ -58,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "keel.core.middleware.RequestIDMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -118,6 +121,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+AUTH_USER_MODEL = "accounts.User"
+
 # --- Celery --------------------------------------------------------------
 CELERY_BROKER_URL = env(
     "CELERY_BROKER_URL", default=env("REDIS_URL", default="redis://localhost:6379/0")
@@ -147,4 +152,38 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
     ],
+    # Deny by default (PRD §4, task 1.12) — a viewset that forgets to
+    # declare permissions is unreachable rather than open.
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "keel.core.pagination.CursorPagination",
+    "EXCEPTION_HANDLER": "keel.core.exceptions.exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Keel API",
+    "DESCRIPTION": "Keel — Django + Next.js SaaS template.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "OAS_VERSION": "3.1.0",
+}
+
+# --- Structured JSON logging (keel/core/logging.py) --------------------
+# Every line is JSON and carries the request id set by
+# keel.core.middleware.RequestIDMiddleware.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {"()": "keel.core.logging.JSONFormatter"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "json"},
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
 }

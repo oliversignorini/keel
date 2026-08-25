@@ -1,7 +1,7 @@
 import pytest
 from django.db import transaction
 
-from keel.core.audit import audited, not_audited, registry
+from keel.core.audit import AuditRecord, audited, not_audited, registry
 
 
 def test_audited_registers_the_function_with_its_action() -> None:
@@ -60,7 +60,7 @@ def test_audited_returns_the_wrapped_functions_result() -> None:
 
 @pytest.mark.django_db(transaction=True)
 def test_audited_records_on_commit_with_actor_target_impersonator_metadata() -> None:
-    recorded = []
+    recorded: list[AuditRecord] = []
 
     @audited("fixture.record_full")
     def do_the_thing(*, actor, impersonator=None, target=None, metadata=None):
@@ -86,7 +86,7 @@ def test_audited_records_on_commit_with_actor_target_impersonator_metadata() -> 
 
 @pytest.mark.django_db(transaction=True)
 def test_audited_does_not_record_before_commit() -> None:
-    recorded = []
+    recorded: list[AuditRecord] = []
 
     @audited("fixture.not_yet_committed")
     def do_the_thing(*, actor=None):
