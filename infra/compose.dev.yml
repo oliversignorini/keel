@@ -1,0 +1,59 @@
+name: keel-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keel
+      POSTGRES_USER: keel
+      POSTGRES_PASSWORD: keel
+    ports:
+      # Host port 5433, not 5432: on Windows dev machines with a native
+      # PostgreSQL service already installed, 5432 is frequently owned by
+      # that service, and Docker Desktop's port publish can silently lose
+      # the race for it (connections land on the native server instead of
+      # the container and fail auth). See docs/deploy-railway.md / the
+      # Phase 0 report for the full story.
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keel -d keel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    volumes:
+      - mailpit_data:/data
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025/livez"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
+  mailpit_data:

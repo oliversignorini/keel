@@ -1,0 +1,31 @@
+[project]
+name = "keel-api"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "celery>=5.6.3",
+    "django~=6.0",
+    "django-cors-headers>=4.9.0",
+    "django-environ>=0.14.0",
+    "djangorestframework>=3.18.0",
+    "psycopg[binary]>=3.3.4",
+    "redis>=8.1.0",
+    "uuid-utils>=0.17.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.0",
+    "factory-boy>=3.3.3",
+    "import-linter>=2.13",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.4",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "--cov=keel --cov=config --cov-report=json --cov-report=term-missing"
