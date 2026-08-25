@@ -4,7 +4,13 @@ import pytest
 from django.utils import timezone
 
 from keel.accounts.models import User
-from keel.core.exceptions import Conflict, PermissionDeniedWithReason, UnprocessableEntity
+from keel.billing.models import Plan, Price, Subscription
+from keel.core.exceptions import (
+    Conflict,
+    PaymentRequired,
+    PermissionDeniedWithReason,
+    UnprocessableEntity,
+)
 from keel.organizations import services
 from keel.organizations.models import Membership, Organization, Role
 from keel.organizations.permissions import Perm
@@ -186,6 +192,102 @@ def test_revoke_invitation_sets_revoked_at() -> None:
 
     invitation.refresh_from_db()
     assert invitation.revoked_at is not None
+
+
+def _subscribe_to_plan_with_seat_limit(org: Organization, seats: int) -> None:
+    plan = Plan.objects.create(
+        code=f"seat-limited-{org.pk}",
+        name="Seat limited",
+        entitlements={"limits": {"seats": seats}},
+    )
+    price = Price.objects.create(
+        plan=plan,
+        stripe_price_id=f"price-{org.pk}",
+        interval=Price.INTERVAL_MONTH,
+        unit_amount=1900,
+        currency="AUD",
+    )
+    Subscription.objects.create(
+        organization=org,
+        stripe_subscription_id=f"sub-{org.pk}",
+        plan=plan,
+        price=price,
+        status="active",
+    )
+
+
+def test_accept_invitation_denies_beyond_the_seat_entitlement() -> None:
+    """docs/plans/phase-4.md B.4 acceptance: adding a member beyond the
+    seat entitlement returns 402 with upgrade context."""
+    org, owner_membership = _sole_owner_org()
+    _subscribe_to_plan_with_seat_limit(org, seats=1)  # the owner already fills the one seat
+    member_role = Role.objects.get(organization=None, name=PRESET_MEMBER)
+    invitation = services.create_invitation(
+        organization=org,
+        email="invitee@example.com",
+        role=member_role,
+        invited_by=owner_membership.user,
+    )
+    invitee = _user("invitee@example.com")
+
+    with pytest.raises(PaymentRequired) as exc_info:
+        services.accept_invitation(invitation=invitation, user=invitee)
+
+    assert exc_info.value.code == "limit_exceeded"
+    assert exc_info.value.details == {"resource": "seats", "limit": 1, "current_usage": 1}
+    invitation.refresh_from_db()
+    assert invitation.accepted_at is None, "a denied acceptance must change nothing"
+    assert not Membership.objects.filter(organization=org, user=invitee).exists()
+
+
+def test_accept_invitation_reactivating_a_suspended_membership_is_checked_as_a_new_seat() -> None:
+    """A suspended membership isn't counted by the "seats" resource
+    counter (it filters on STATUS_ACTIVE), so reactivating one genuinely
+    raises active usage by one and must be checked like any other new
+    seat."""
+    org, owner_membership = _sole_owner_org()
+    member_role = Role.objects.get(organization=None, name=PRESET_MEMBER)
+    invitee = _user("invitee@example.com")
+    Membership.objects.create(
+        organization=org, user=invitee, role=member_role, status=Membership.STATUS_SUSPENDED
+    )
+    _subscribe_to_plan_with_seat_limit(org, seats=1)  # owner alone already fills the one seat
+    invitation = services.create_invitation(
+        organization=org,
+        email="invitee@example.com",
+        role=member_role,
+        invited_by=owner_membership.user,
+    )
+
+    with pytest.raises(PaymentRequired):
+        services.accept_invitation(invitation=invitation, user=invitee)
+
+    assert Membership.objects.get(organization=org, user=invitee).status == (
+        Membership.STATUS_SUSPENDED
+    )
+
+
+def test_accept_invitation_re_accepting_an_already_active_membership_is_not_rechecked() -> None:
+    """Re-accepting an invitation for a membership that's already active
+    is a pure no-op and must not be blocked even when the org is
+    otherwise at its seat cap."""
+    org, owner_membership = _sole_owner_org()
+    member_role = Role.objects.get(organization=None, name=PRESET_MEMBER)
+    invitee = _user("invitee@example.com")
+    Membership.objects.create(
+        organization=org, user=invitee, role=member_role, status=Membership.STATUS_ACTIVE
+    )
+    _subscribe_to_plan_with_seat_limit(org, seats=2)  # owner + invitee already fill both seats
+    invitation = services.create_invitation(
+        organization=org,
+        email="invitee@example.com",
+        role=member_role,
+        invited_by=owner_membership.user,
+    )
+
+    membership = services.accept_invitation(invitation=invitation, user=invitee)
+
+    assert membership.status == Membership.STATUS_ACTIVE
 
 
 def test_accept_invitation_reactivates_a_suspended_membership() -> None:

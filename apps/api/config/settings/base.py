@@ -365,3 +365,17 @@ BILLING_CREDITS = env.bool("BILLING_CREDITS", default=False)
 # exists in organizations/services.py now, gated off until Phase 4 wires
 # a real seat-sync implementation (phase-3.md B.1).
 BILLING_SEAT_PRICING = env.bool("BILLING_SEAT_PRICING", default=False)
+
+# Stripe is the source of truth for plans/prices (PRD §7, "Plans and
+# prices are seeded from Stripe by a management command"); local Plan/
+# Price rows are a cache. Blank in dev/test — sync_stripe_plans and the
+# checkout/portal/webhook views raise ImproperlyConfigured if a call is
+# actually attempted without a key, rather than silently no-op'ing.
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
+
+# Verifies POST /api/v1/stripe/webhook/'s signature (PRD §6 "Stripe
+# webhook", invariant "Unsigned or wrongly-signed → 400, log, change
+# nothing, no retry"). Blank in dev/test for the same reason as
+# STRIPE_SECRET_KEY above — tests supply their own signed payloads via
+# stripe.Webhook's own signing helper against a fixture secret.
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
