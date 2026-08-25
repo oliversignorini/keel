@@ -1,0 +1,19 @@
+---
+title: "Stripe is the source of truth"
+description: "Keel's billing layer treats local plan and subscription rows as a cache, not a database — here's what that buys you."
+date: "2026-02-03"
+author: "Keel team"
+---
+
+It's tempting to model plans and prices as rows you own, and sync Stripe
+into them once. It works fine until a price changes in the Stripe
+dashboard and your app keeps quoting the old one.
+
+Keel's `sync_stripe_plans` job refreshes local plan rows nightly, and the
+pricing page reads from them directly — but every number displayed is one
+that Stripe could recompute independently. Checkout, the customer portal,
+and the webhook handlers all defer to Stripe for anything that touches
+money.
+
+The result: a local cache that can be wrong for at most a day, and never
+a local ledger you have to reconcile by hand.

@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - heading "Log in" [level=1] [ref=e4]
+    - generic [ref=e5]:
+      - button "Continue with Google" [ref=e7]
+      - generic [ref=e8]: or
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: Email
+          - textbox "Email" [ref=e14]
+        - generic [ref=e15]:
+          - generic [ref=e16]: Password
+          - textbox "Password" [ref=e17]
+        - button "Log in" [ref=e18]
+    - paragraph [ref=e19]:
+      - link "Create an account" [ref=e20] [cursor=pointer]:
+        - /url: /signup
+      - link "Forgot password?" [ref=e21] [cursor=pointer]:
+        - /url: /reset-password
+  - alert [ref=e22]
