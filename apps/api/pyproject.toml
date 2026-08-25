@@ -55,6 +55,17 @@ ignore_missing_imports = true
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
 
+# Per-directory coverage gate (PRD §4, invariant 7), enforced by
+# scripts/check_coverage.py — see that file for the mechanism.
+#
+# Empty in Phase 0 on purpose: every row in the PRD's coverage table
+# (services.py, keel/domain/, organizations/permissions.py,
+# billing/credits.py, Stripe webhooks, adapters) names a path that Phase 0
+# is explicitly forbidden from creating. Phase 1 onward adds a glob the
+# moment the path it covers exists, per "paths that do not exist yet
+# omitted" in docs/plans/phase-0.md task 0.8.
+[tool.keel.coverage]
+
 [tool.importlinter]
 root_packages = ["config", "keel"]
 include_external_packages = true
