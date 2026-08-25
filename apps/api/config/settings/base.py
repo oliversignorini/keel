@@ -346,10 +346,17 @@ KEEL_ORGANIZATION_RESOLVER = "keel.organizations.resolvers.resolve_organization"
 # a router — the meta-test itself is built and proven in this phase
 # against fixture viewsets; it starts covering production viewsets the
 # moment this points at a real router.
-KEEL_API_ROUTER = env("KEEL_API_ROUTER", default="")
+KEEL_API_ROUTER = env(
+    "KEEL_API_ROUTER", default="keel.organizations.urls.api_registry"
+)
 
 # Custom roles are a per-project feature flag, off by default (PRD §4,
 # "Tenancy and permissions") — the Role model and roles.manage permission
 # exist regardless, so turning this on is a settings change, not a
 # migration.
 KEEL_CUSTOM_ROLES_ENABLED = env.bool("KEEL_CUSTOM_ROLES_ENABLED", default=False)
+
+# Seat-based billing sync on invitation acceptance is Phase 4's — the hook
+# exists in organizations/services.py now, gated off until Phase 4 wires
+# a real seat-sync implementation (phase-3.md B.1).
+BILLING_SEAT_PRICING = env.bool("BILLING_SEAT_PRICING", default=False)

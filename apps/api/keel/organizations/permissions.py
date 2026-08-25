@@ -76,7 +76,7 @@ def _role_guard(code: str) -> Guard:
     return guard
 
 
-def _is_last_active_owner(subject: Any) -> bool:
+def is_last_active_owner(subject: Any) -> bool:
     """Whether ``subject`` (a ``Membership``) is the organisation's only
     active membership whose role holds ``Perm.ORG_TRANSFER`` — the
     permission code that identifies the Owner tier without naming it."""
@@ -106,7 +106,7 @@ def _members_remove_guard(user: Any, organization: Any, subject: Any | None = No
     permissions = _resolve_role_permissions(user, organization)
     if Perm.MEMBERS_REMOVE not in permissions:
         return Decision.deny("insufficient_role", details={"required": Perm.MEMBERS_REMOVE})
-    if subject is not None and _is_last_active_owner(subject):
+    if subject is not None and is_last_active_owner(subject):
         return Decision.deny(
             "cannot_remove_last_owner",
             details={"membership_id": str(subject.pk)},
