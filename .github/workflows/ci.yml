@@ -158,6 +158,23 @@ jobs:
 
   contracts:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: keel
+          POSTGRES_USER: keel
+          POSTGRES_PASSWORD: keel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keel -d keel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keel:keel@localhost:5432/keel
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
 
@@ -174,3 +191,12 @@ jobs:
       - name: lint-imports
         working-directory: apps/api
         run: uv run lint-imports
+
+      - name: merge_openapi.py produces the committed spec (client not stale)
+        working-directory: apps/api
+        run: |
+          uv run python ../../scripts/merge_openapi.py
+          git diff --exit-code -- ../../openapi.merged.json || {
+            echo "::error::openapi.merged.json is stale — run scripts/merge_openapi.py and commit the result.";
+            exit 1;
+          }

@@ -226,7 +226,10 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Keel — Django + Next.js SaaS template.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "OAS_VERSION": "3.1.0",
+    # Matches allauth headless's own spec version (3.0.3) so
+    # scripts/merge_openapi.py (A.3) merges two documents in the same
+    # OpenAPI dialect rather than mixing 3.0 and 3.1 JSON Schema variants.
+    "OAS_VERSION": "3.0.3",
 }
 
 # --- allauth headless (PRD §4 "Auth architecture", §8 Phase 2 A.1) ---------
@@ -235,6 +238,15 @@ SPECTACULAR_SETTINGS = {
 # (accounts/) are still included in config/urls.py because the OAuth
 # handshake redirect needs somewhere headed to land.
 HEADLESS_ONLY = True
+# Only the browser (cookie + CSRF) client is served — PRD §4: "the
+# X-Session-Token header path exists for non-browser clients and stays
+# unused." Pinning to one client also collapses the `{client}` path
+# parameter out of allauth's generated OpenAPI spec (A.3), which is what
+# keeps the merged spec's paths matching docs/auth-client-contract.md.
+HEADLESS_CLIENTS = ("browser",)
+# Enables allauth's /_allauth/openapi.json — read directly by
+# scripts/merge_openapi.py (A.3), not served to end users.
+HEADLESS_SERVE_SPECIFICATION = True
 FRONTEND_URL = env("KEEL_FRONTEND_URL", default="http://localhost:3000")
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
