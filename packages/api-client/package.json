@@ -1,0 +1,10 @@
+{
+  "name": "@keel/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "echo 'no generated client yet — Phase 1 adds the OpenAPI spec and orval config'"
+  }
+}

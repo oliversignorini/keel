@@ -1,0 +1,77 @@
+/*
+ * Keel token contract (PRD §5).
+ *
+ * A per-project brand pass (docs/brand-pass.md) replaces the values in this
+ * file and nothing else. Tokens are declared on a nestable selector, not
+ * only on :root, because light/dark and product surface are two separate
+ * axes — a workspace that reads dark while its settings read light, or a
+ * public embed that must stay light inside a dark app, is a config change
+ * here rather than a rewrite of the token layer.
+ */
+
+:root,
+[data-theme] {
+  /* Surface */
+  --background: oklch(0.99 0.002 264);
+  --foreground: oklch(0.2 0.01 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.01 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 264);
+  --muted: oklch(0.96 0.004 264);
+  --muted-foreground: oklch(0.5 0.01 264);
+
+  /* Intent */
+  --primary: oklch(0.45 0.09 264);
+  --primary-foreground: oklch(0.98 0.005 264);
+  --secondary: oklch(0.94 0.006 264);
+  --secondary-foreground: oklch(0.25 0.01 264);
+  --accent: oklch(0.94 0.006 264);
+  --accent-foreground: oklch(0.25 0.01 264);
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.98 0.005 27);
+  --success: oklch(0.6 0.13 152);
+  --success-foreground: oklch(0.98 0.005 152);
+  --warning: oklch(0.75 0.15 80);
+  --warning-foreground: oklch(0.2 0.02 80);
+
+  /* Structure */
+  --border: oklch(0.9 0.005 264);
+  --input: oklch(0.9 0.005 264);
+  --ring: oklch(0.45 0.09 264);
+  --radius: 0.5rem;
+}
+
+.dark,
+[data-theme][data-mode="dark"] {
+  --background: oklch(0.19 0.008 264);
+  --foreground: oklch(0.96 0.004 264);
+  --card: oklch(0.23 0.008 264);
+  --card-foreground: oklch(0.96 0.004 264);
+  --popover: oklch(0.23 0.008 264);
+  --popover-foreground: oklch(0.96 0.004 264);
+  --muted: oklch(0.27 0.008 264);
+  --muted-foreground: oklch(0.68 0.01 264);
+
+  --primary: oklch(0.72 0.1 264);
+  --primary-foreground: oklch(0.19 0.008 264);
+  --secondary: oklch(0.3 0.008 264);
+  --secondary-foreground: oklch(0.96 0.004 264);
+  --accent: oklch(0.3 0.008 264);
+  --accent-foreground: oklch(0.96 0.004 264);
+  --destructive: oklch(0.65 0.19 27);
+  --destructive-foreground: oklch(0.19 0.008 27);
+  --success: oklch(0.68 0.13 152);
+  --success-foreground: oklch(0.19 0.008 152);
+  --warning: oklch(0.78 0.15 80);
+  --warning-foreground: oklch(0.19 0.02 80);
+
+  --border: oklch(0.32 0.008 264);
+  --input: oklch(0.32 0.008 264);
+  --ring: oklch(0.72 0.1 264);
+}
+
+[data-surface="marketing"] {
+  /* Per-surface overrides land here as projects need them. Empty by
+     default — Phase 0 ships the contract, not a marketing surface. */
+}

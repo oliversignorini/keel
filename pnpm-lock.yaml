@@ -33,6 +33,9 @@ importers:
       '@keel/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@keel/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tailwindcss/postcss':
         specifier: ^4.0.0
         version: 4.3.3
@@ -73,6 +76,8 @@ importers:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@22.20.1)(jsdom@25.0.1)(lightningcss@1.32.0)
 
+  packages/api-client: {}
+
   packages/eslint-config:
     dependencies:
       '@eslint/js':
@@ -95,6 +100,8 @@ importers:
         version: 8.68.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
 
   packages/tsconfig: {}
+
+  packages/ui: {}
 
 packages:
 

@@ -18,6 +18,7 @@
   "devDependencies": {
     "@keel/eslint-config": "workspace:*",
     "@keel/tsconfig": "workspace:*",
+    "@keel/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
