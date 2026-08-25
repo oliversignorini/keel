@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/json-ld";
+import { SITE_URL } from "@/lib/site";
+
 export const metadata: Metadata = {
   title: "Keel — Django + Next.js SaaS template",
   description:
@@ -29,6 +32,14 @@ const FEATURES = [
 export default function LandingPage() {
   return (
     <main>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Keel",
+          url: SITE_URL,
+        }}
+      />
       <section className="mx-auto max-w-5xl px-4 py-24 text-center">
         <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-5xl">
           Ship the SaaS parts you would rather not build

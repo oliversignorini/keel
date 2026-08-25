@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { allPosts } from "content-collections";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_URL } from "@/lib/site";
 
 export function generateStaticParams() {
   return allPosts.map((post) => ({ slug: post.slug }));
@@ -26,6 +28,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.description,
+          datePublished: post.date,
+          author: { "@type": "Organization", name: post.author },
+          url: `${SITE_URL}/blog/${post.slug}`,
+        }}
+      />
       <article>
         <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">
           {post.title}

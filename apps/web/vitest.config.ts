@@ -10,6 +10,9 @@ export default defineConfig({
     // explicitly — org-context.tsx, can.tsx etc. all import via "@/...".
     alias: {
       "@": path.resolve(__dirname, "."),
+      // Mirrors tsconfig.json's "content-collections" path alias to the
+      // generated output of content-collections.ts (apps/web/lib/blog).
+      "content-collections": path.resolve(__dirname, ".content-collections/generated"),
     },
   },
   test: {
