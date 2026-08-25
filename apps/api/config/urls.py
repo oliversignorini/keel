@@ -18,7 +18,7 @@ def readyz(request: HttpRequest) -> JsonResponse:
     try:
         connections["default"].cursor().execute("SELECT 1")
         checks["database"] = "ok"
-    except Exception as exc:  # noqa: BLE001 - readiness probe reports any failure
+    except Exception as exc:
         checks["database"] = f"error: {exc}"
 
     try:
@@ -29,7 +29,8 @@ def readyz(request: HttpRequest) -> JsonResponse:
         checks["redis"] = f"error: {exc}"
 
     healthy = all(value == "ok" for value in checks.values())
-    return JsonResponse({"status": "ok" if healthy else "error", "checks": checks}, status=200 if healthy else 503)
+    status = 200 if healthy else 503
+    return JsonResponse({"status": "ok" if healthy else "error", "checks": checks}, status=status)
 
 
 urlpatterns = [

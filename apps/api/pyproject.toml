@@ -29,3 +29,63 @@ dev = [
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 addopts = "--cov=keel --cov=config --cov-report=json --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "RUF"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.12"
+disallow_untyped_defs = true
+warn_return_any = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "environ.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.importlinter]
+root_packages = ["config", "keel"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+# source_modules uses a wildcard ("keel.domain.**") rather than the literal
+# "keel.domain" on purpose: import-linter raises a hard error if a literal
+# source module name does not exist in the graph, which would make this
+# contract fail the build outright while keel/domain/ is absent, rather
+# than pass silently as PRD §4 invariant 1 requires. A wildcard expression
+# resolves to an empty set (not an error) when nothing matches, and
+# matches every module added under keel/domain/ once the directory exists.
+name = "keel.domain is independent"
+type = "forbidden"
+source_modules = ["keel.domain.**"]
+forbidden_modules = [
+    "django",
+    "celery",
+    "config",
+    "keel.core",
+    "keel.accounts",
+    "keel.organizations",
+    "keel.billing",
+    "keel.audit",
+    "keel.notifications",
+    "keel.files",
+    "keel.widgets",
+]
+
+[[tool.importlinter.contracts]]
+name = "keel.core does not import keel.organizations"
+type = "forbidden"
+source_modules = ["keel.core"]
+forbidden_modules = ["keel.organizations"]

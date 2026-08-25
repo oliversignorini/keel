@@ -23,7 +23,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # --- Version floor -----------------------------------------------------
 # A project that needs an older Django or Python is a fork, not a
 # configuration (PRD §8, Phase 0).
-if sys.version_info < (3, 12):
+if sys.version_info < (3, 12):  # noqa: UP036 - a floor assertion, not dead code
     raise RuntimeError("Keel requires Python 3.12 or newer.")
 if django.VERSION < (6, 0):
     raise RuntimeError("Keel requires Django 6.0 or newer.")
@@ -117,7 +117,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Celery --------------------------------------------------------------
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=env("REDIS_URL", default="redis://localhost:6379/0"))
+CELERY_BROKER_URL = env(
+    "CELERY_BROKER_URL", default=env("REDIS_URL", default="redis://localhost:6379/0")
+)
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_DEFAULT_QUEUE = "default"
 
