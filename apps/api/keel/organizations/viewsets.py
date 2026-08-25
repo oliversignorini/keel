@@ -54,9 +54,7 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
         organization = services.create_organization(
             created_by=request.user, **serializer.validated_data
         )
-        return Response(
-            OrganizationSerializer(organization).data, status=status.HTTP_201_CREATED
-        )
+        return Response(OrganizationSerializer(organization).data, status=status.HTTP_201_CREATED)
 
 
 class OrganizationDetailView(APIView):
@@ -310,9 +308,7 @@ class InvitationAcceptView(APIView):
         ):
             # Expired, revoked, and nonexistent are all "invalid_or_expired"
             # — the recipient cannot distinguish them (phase-3.md B.4).
-            raise Conflict(
-                code="invalid_or_expired", message="This invitation is no longer valid."
-            )
+            raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
         return invitation
 
     def get(self, request: Request, token: str) -> Response:
@@ -333,8 +329,6 @@ class InvitationAcceptView(APIView):
         if invitation.email.lower() != request.user.email.lower():
             # Wrong email: rejected without disclosing who was actually
             # invited (phase-3.md B.4).
-            raise Conflict(
-                code="invalid_or_expired", message="This invitation is no longer valid."
-            )
+            raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
         membership = services.accept_invitation(invitation=invitation, user=request.user)
         return Response(MembershipSerializer(membership).data)

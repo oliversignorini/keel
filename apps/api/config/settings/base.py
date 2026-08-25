@@ -346,9 +346,7 @@ KEEL_ORGANIZATION_RESOLVER = "keel.organizations.resolvers.resolve_organization"
 # a router — the meta-test itself is built and proven in this phase
 # against fixture viewsets; it starts covering production viewsets the
 # moment this points at a real router.
-KEEL_API_ROUTER = env(
-    "KEEL_API_ROUTER", default="keel.organizations.urls.api_registry"
-)
+KEEL_API_ROUTER = env("KEEL_API_ROUTER", default="keel.organizations.urls.api_registry")
 
 # Custom roles are a per-project feature flag, off by default (PRD §4,
 # "Tenancy and permissions") — the Role model and roles.manage permission

@@ -2,7 +2,6 @@
 paths (PRD §4 invariant 7 — the cross-org meta-test walk) and directly by
 this app's own tests."""
 
-
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
