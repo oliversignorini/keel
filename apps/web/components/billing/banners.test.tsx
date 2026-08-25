@@ -60,7 +60,7 @@ describe("<DunningBanner>", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/Your organisation keeps working/);
     expect(screen.getByRole("link", { name: "Update payment details" })).toHaveAttribute(
       "href",
-      "/app/acme/settings/billing",
+      "/acme/settings/billing",
     );
   });
 

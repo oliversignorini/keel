@@ -26,7 +26,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <div>
       <nav className="mb-6 flex gap-1 border-b border-neutral-200 dark:border-neutral-800">
         {TABS.map((tab) => {
-          const href = `/app/${params.org}/settings/${tab.slug}`;
+          const href = `/${params.org}/settings/${tab.slug}`;
           const active = pathname === href;
           return (
             <Link

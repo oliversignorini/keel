@@ -57,7 +57,7 @@ export default function GeneralSettingsPage() {
   async function onDelete() {
     if (!window.confirm(`Delete ${currentOrg!.name}? This cannot be undone.`)) return;
     await deleteOrganization(currentOrg!.slug);
-    router.push("/app");
+    router.push("/");
   }
 
   return (

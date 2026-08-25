@@ -100,7 +100,7 @@ describe("<EntitlementGate>", () => {
     expect(await screen.findByText("Available on the Pro plan.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Upgrade to Pro" })).toHaveAttribute(
       "href",
-      "/app/acme/settings/billing",
+      "/acme/settings/billing",
     );
   });
 

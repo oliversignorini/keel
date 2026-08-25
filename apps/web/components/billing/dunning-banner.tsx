@@ -35,7 +35,7 @@ export function DunningBanner({
       We couldn&apos;t take payment for your last invoice. Your organisation keeps working — update
       your payment details to avoid interruption.{" "}
       <Can code={Perm.BILLING_MANAGE}>
-        <Link href={`/app/${orgSlug}/settings/billing`} className="font-medium underline">
+        <Link href={`/${orgSlug}/settings/billing`} className="font-medium underline">
           Update payment details
         </Link>
       </Can>

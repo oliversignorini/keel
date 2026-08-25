@@ -1777,6 +1777,173 @@ export const organizationsTransferCreateParams = zod.object({
 
 
 /**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsListParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const organizationsWidgetsListQueryParams = zod.object({
+  "cursor": zod.string().optional().describe('The pagination cursor value.'),
+  "limit": zod.number().optional().describe('Number of results to return per page.')
+})
+
+export const organizationsWidgetsListResponseResultsItemNameMax = 255;
+
+export const organizationsWidgetsListResponseResultsItemStatusMax = 32;
+
+
+
+export const organizationsWidgetsListResponse = zod.object({
+  "next": zod.string().url().nullish(),
+  "previous": zod.string().url().nullish(),
+  "results": zod.array(zod.object({
+  "created_at": zod.string().datetime({}),
+  "created_by": zod.string().uuid(),
+  "description": zod.string().optional(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsWidgetsListResponseResultsItemNameMax),
+  "status": zod.string().max(organizationsWidgetsListResponseResultsItemStatusMax).optional(),
+  "updated_at": zod.string().datetime({})
+}))
+})
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsCreateParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const organizationsWidgetsCreateBodyNameMax = 255;
+
+export const organizationsWidgetsCreateBodyStatusMax = 32;
+
+
+
+export const organizationsWidgetsCreateBody = zod.object({
+  "description": zod.string().optional(),
+  "name": zod.string().max(organizationsWidgetsCreateBodyNameMax),
+  "status": zod.string().max(organizationsWidgetsCreateBodyStatusMax).optional()
+})
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsDestroyParams = zod.object({
+  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsRetrieveParams = zod.object({
+  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
+  "org_slug": zod.string()
+})
+
+export const organizationsWidgetsRetrieveResponseNameMax = 255;
+
+export const organizationsWidgetsRetrieveResponseStatusMax = 32;
+
+
+
+export const organizationsWidgetsRetrieveResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "created_by": zod.string().uuid(),
+  "description": zod.string().optional(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsWidgetsRetrieveResponseNameMax),
+  "status": zod.string().max(organizationsWidgetsRetrieveResponseStatusMax).optional(),
+  "updated_at": zod.string().datetime({})
+})
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsPartialUpdateParams = zod.object({
+  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
+  "org_slug": zod.string()
+})
+
+export const organizationsWidgetsPartialUpdateBodyNameMax = 255;
+
+export const organizationsWidgetsPartialUpdateBodyStatusMax = 32;
+
+
+
+export const organizationsWidgetsPartialUpdateBody = zod.object({
+  "description": zod.string().optional(),
+  "name": zod.string().max(organizationsWidgetsPartialUpdateBodyNameMax).optional(),
+  "status": zod.string().max(organizationsWidgetsPartialUpdateBodyStatusMax).optional()
+})
+
+export const organizationsWidgetsPartialUpdateResponseNameMax = 255;
+
+export const organizationsWidgetsPartialUpdateResponseStatusMax = 32;
+
+
+
+export const organizationsWidgetsPartialUpdateResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "created_by": zod.string().uuid(),
+  "description": zod.string().optional(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsWidgetsPartialUpdateResponseNameMax),
+  "status": zod.string().max(organizationsWidgetsPartialUpdateResponseStatusMax).optional(),
+  "updated_at": zod.string().datetime({})
+})
+
+
+/**
+ * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+endpoint (PRD §7's demo-resource route table).
+ */
+export const organizationsWidgetsUpdateParams = zod.object({
+  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
+  "org_slug": zod.string()
+})
+
+export const organizationsWidgetsUpdateBodyNameMax = 255;
+
+export const organizationsWidgetsUpdateBodyStatusMax = 32;
+
+
+
+export const organizationsWidgetsUpdateBody = zod.object({
+  "description": zod.string().optional(),
+  "name": zod.string().max(organizationsWidgetsUpdateBodyNameMax),
+  "status": zod.string().max(organizationsWidgetsUpdateBodyStatusMax).optional()
+})
+
+export const organizationsWidgetsUpdateResponseNameMax = 255;
+
+export const organizationsWidgetsUpdateResponseStatusMax = 32;
+
+
+
+export const organizationsWidgetsUpdateResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "created_by": zod.string().uuid(),
+  "description": zod.string().optional(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsWidgetsUpdateResponseNameMax),
+  "status": zod.string().max(organizationsWidgetsUpdateResponseStatusMax).optional(),
+  "updated_at": zod.string().datetime({})
+})
+
+
+/**
  * ``GET /api/v1/plans/`` — the pricing page reads this unauthenticated
 (docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an
 ``OrgScopedViewSet``: a plan is not owned by any organisation, and

@@ -1,5 +1,6 @@
 "use client";
 
+import { toApexHost } from "@/lib/host";
 import { LAST_ORG_STORAGE_KEY } from "@/lib/org/last-org";
 import { useOrgContext } from "@/lib/org/org-context";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,8 @@ export default function AppRedirectPage() {
     if (loading || !me) return;
 
     if (me.organizations.length === 0) {
-      router.replace("/onboarding");
+      // /onboarding is an (auth) route, reachable only on the apex.
+      window.location.href = `${window.location.protocol}//${toApexHost(window.location.host)}/onboarding`;
       return;
     }
 
@@ -32,7 +34,7 @@ export default function AppRedirectPage() {
     const target =
       me.organizations.find((org) => org.slug === lastSlug) ?? me.organizations.at(0) ?? null;
     if (target) {
-      router.replace(`/app/${target.slug}`);
+      router.replace(`/${target.slug}`);
     }
   }, [loading, me, router]);
 

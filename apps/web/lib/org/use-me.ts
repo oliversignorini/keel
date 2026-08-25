@@ -1,8 +1,9 @@
 "use client";
 
 import { UnauthorizedError } from "@keel/api-client";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+
+import { toApexHost } from "@/lib/host";
 
 import { getMe } from "./api";
 import type { MeResponse } from "./types";
@@ -26,7 +27,6 @@ interface UseMeResult {
  * only, never to gate a request.
  */
 export function useMe(): UseMeResult {
-  const router = useRouter();
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,20 +37,21 @@ export function useMe(): UseMeResult {
       setMe(result);
     } catch (error) {
       if (error instanceof UnauthorizedError) {
-        router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        // /login only exists on the apex (plan 6.A) — this hook is used
+        // from the app host, so getting there is a real navigation, not
+        // router.push, and `next` has to carry the full current URL back
+        // across hosts.
+        const apexOrigin = `${window.location.protocol}//${toApexHost(window.location.host)}`;
+        window.location.href = `${apexOrigin}/login?next=${encodeURIComponent(window.location.href)}`;
         return;
       }
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
-    // fetchMe is stable across the lifetime of a given router instance
-    // (its only dependency, itself stable per Next.js), so this only
-    // re-runs if the router identity actually changes — not on every
-    // render.
     void fetchMe();
   }, [fetchMe]);
 

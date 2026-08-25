@@ -15,7 +15,10 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@keel/api-client": "workspace:*",
+    "@tanstack/react-query": "^5.62.7",
+    "@tanstack/react-table": "^8.20.5",
     "next": "^15.0.3",
+    "next-themes": "^0.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.2",

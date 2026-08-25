@@ -3,10 +3,12 @@
 import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { identityFetch } from "@keel/api-client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { defaultAppUrl, navigateTo } from "@/lib/navigation";
 
 import { FormError } from "../_components/form-error";
 import { FormField } from "../_components/form-field";
@@ -27,7 +29,16 @@ const mfaFormSchema = z.object({ code: z.string().min(1, "Enter your authenticat
 type MfaFormValues = z.infer<typeof mfaFormSchema>;
 
 export default function MfaChallengePage() {
+  return (
+    <Suspense>
+      <MfaChallengeForm />
+    </Suspense>
+  );
+}
+
+function MfaChallengeForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -44,7 +55,7 @@ export default function MfaChallengePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      router.push("/app");
+      navigateTo(router, searchParams.get("next") ?? defaultAppUrl());
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));
     }

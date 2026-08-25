@@ -9,6 +9,7 @@ config() call would otherwise need helpers for.
 
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import django
 import environ
@@ -202,17 +203,30 @@ CELERY_BEAT_SCHEDULE = {
 # --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -
 # Session transport is an HttpOnly cookie, not a JWT (PRD §4). The cookie's
 # Domain must be the *registrable* domain — `.acme.com` — so it is shared
-# between `acme.com` (Next.js) and `api.acme.com` (Django). KEEL_APP_DOMAIN
-# is that registrable domain; SESSION_COOKIE_DOMAIN is derived from it
-# rather than duplicated, so the two cannot drift apart in an env file.
-# Local dev serves both sides off "localhost" with no port-spanning cookie
-# issue, so KEEL_APP_DOMAIN defaults there and SESSION_COOKIE_DOMAIN is left
-# unset (host-only cookie) unless a real domain is configured — Chrome
-# rejects `Domain=localhost` cookies set with a leading dot.
+# between the web origin (apex `acme.com` for marketing/auth, `app.acme.com`
+# for the app shell — plan 6.A) and `api.acme.com` (Django). KEEL_APP_DOMAIN
+# is the app's own host (e.g. `app.acme.com`, or `app.lvh.me` in dev, per
+# plan 6.A — NOT the registrable domain), so
+# keel.core.checks.check_session_cookie_domain genuinely exercises its
+# subdomain branch rather than being satisfied by domain equality.
+# SESSION_COOKIE_DOMAIN is derived from it rather than duplicated, so the
+# two cannot drift apart in an env file. Local dev with no subdomain split
+# serves both sides off "localhost" with no port-spanning cookie issue, so
+# KEEL_APP_DOMAIN defaults there and SESSION_COOKIE_DOMAIN is left unset
+# (host-only cookie) unless a real domain is configured — Chrome rejects
+# `Domain=localhost` cookies set with a leading dot.
 KEEL_APP_DOMAIN = env("KEEL_APP_DOMAIN", default="localhost")
+# The registrable domain is KEEL_APP_DOMAIN itself, unless it is the
+# `app.` subdomain plan 6.A introduces, in which case the cookie must be
+# scoped one level up (`app.acme.com` -> `.acme.com`) so it is also sent
+# to the apex and to `api.*`. Set DJANGO_SESSION_COOKIE_DOMAIN explicitly
+# for any shape this heuristic does not cover.
+_registrable_domain = (
+    KEEL_APP_DOMAIN.removeprefix("app.") if KEEL_APP_DOMAIN.startswith("app.") else KEEL_APP_DOMAIN
+)
 SESSION_COOKIE_DOMAIN = env(
     "DJANGO_SESSION_COOKIE_DOMAIN",
-    default=None if KEEL_APP_DOMAIN == "localhost" else f".{KEEL_APP_DOMAIN}",
+    default=None if KEEL_APP_DOMAIN == "localhost" else f".{_registrable_domain}",
 )
 
 SESSION_COOKIE_HTTPONLY = True
@@ -318,6 +332,28 @@ HEADLESS_CLIENTS = ("browser",)
 # scripts/merge_openapi.py (A.3), not served to end users.
 HEADLESS_SERVE_SPECIFICATION = True
 FRONTEND_URL = env("KEEL_FRONTEND_URL", default="http://localhost:3000")
+# Same origin as FRONTEND_URL unless KEEL_APP_FRONTEND_URL says otherwise
+# (plan 6.A splits the app onto its own subdomain, e.g. `app.lvh.me`
+# instead of the apex `lvh.me` that auth/marketing keep). Links generated
+# server-side into org-scoped app pages (billing portal returns, trial /
+# dunning emails) must point here, not at FRONTEND_URL.
+APP_FRONTEND_URL = env("KEEL_APP_FRONTEND_URL", default=None)
+if APP_FRONTEND_URL is None:
+    _frontend_parts = urlsplit(FRONTEND_URL)
+    _frontend_host = _frontend_parts.hostname or ""
+    if KEEL_APP_DOMAIN == "localhost" or _frontend_host.startswith("app."):
+        APP_FRONTEND_URL = FRONTEND_URL
+    else:
+        _port = f":{_frontend_parts.port}" if _frontend_parts.port else ""
+        APP_FRONTEND_URL = urlunsplit(
+            (
+                _frontend_parts.scheme,
+                f"app.{_frontend_host}{_port}",
+                _frontend_parts.path,
+                _frontend_parts.query,
+                _frontend_parts.fragment,
+            )
+        )
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
     "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",

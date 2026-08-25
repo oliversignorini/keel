@@ -9,6 +9,8 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { defaultAppUrl, navigateTo } from "@/lib/navigation";
+
 import { FormError } from "../_components/form-error";
 import { FormField } from "../_components/form-field";
 import { GoogleContinueLink } from "../_components/google-continue-link";
@@ -55,10 +57,11 @@ function LoginForm() {
     setFormError(null);
     try {
       await authLogin(values);
-      router.push(searchParams.get("next") ?? "/app");
+      navigateTo(router, searchParams.get("next") ?? defaultAppUrl());
     } catch (error) {
       if (error instanceof UnauthorizedError && error.code === "mfa_authenticate") {
-        router.push("/mfa");
+        const mfaNext = searchParams.get("next");
+        router.push(mfaNext ? `/mfa?next=${encodeURIComponent(mfaNext)}` : "/mfa");
         return;
       }
       setFormError(applyFieldErrors(error, setError));
@@ -69,7 +72,7 @@ function LoginForm() {
     <>
       <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Log in</h1>
       <div className="flex flex-col gap-4">
-        <GoogleContinueLink nextPath={searchParams.get("next") ?? "/app"} />
+        <GoogleContinueLink nextPath={searchParams.get("next") ?? defaultAppUrl()} />
         <div className="flex items-center gap-3 text-xs text-neutral-500">
           <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
           or

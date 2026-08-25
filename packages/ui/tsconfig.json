@@ -1,0 +1,7 @@
+{
+  "extends": "@keel/tsconfig/react-library.json",
+  "compilerOptions": {
+    "moduleResolution": "Bundler"
+  },
+  "include": ["src"]
+}
