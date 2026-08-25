@@ -5,6 +5,23 @@
   "license": "UNLICENSED",
   "main": "./src/index.ts",
   "scripts": {
-    "typecheck": "echo 'no generated client yet — Phase 1 adds the OpenAPI spec and orval config'"
+    "generate": "orval --config ./orval.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.59.20",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@keel/tsconfig": "workspace:*",
+    "@types/react": "^19.0.1",
+    "jsdom": "^25.0.1",
+    "orval": "^7.5.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
   }
 }

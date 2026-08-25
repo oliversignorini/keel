@@ -27,6 +27,11 @@ next-env.d.ts
 .turbo/
 *.tsbuildinfo
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 # Django
 *.log
 staticfiles/
