@@ -44,7 +44,9 @@ export default function SignupPage() {
 
   return (
     <>
-      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Create an account</h1>
+      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Create an account
+      </h1>
       <div className="flex flex-col gap-4">
         <GoogleContinueLink />
         <div className="flex items-center gap-3 text-xs text-neutral-500">
@@ -70,7 +72,9 @@ export default function SignupPage() {
             error={errors.password?.message}
             {...register("password")}
           />
-          <SubmitButton disabled={isSubmitting}>{isSubmitting ? "Creating account…" : "Sign up"}</SubmitButton>
+          <SubmitButton disabled={isSubmitting}>
+            {isSubmitting ? "Creating account…" : "Sign up"}
+          </SubmitButton>
         </form>
       </div>
       <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">

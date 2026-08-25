@@ -34,7 +34,9 @@ export default function SessionsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Active sessions</h1>
+      <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Active sessions
+      </h1>
       <FormError message={error} />
       {sessions === null ? (
         <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
@@ -49,7 +51,8 @@ export default function SessionsPage() {
             >
               <div>
                 <p className="text-neutral-900 dark:text-neutral-100">
-                  {session.user_agent ?? "Unknown device"} {session.is_current ? "(this device)" : ""}
+                  {session.user_agent ?? "Unknown device"}{" "}
+                  {session.is_current ? "(this device)" : ""}
                 </p>
                 <p className="text-neutral-500 dark:text-neutral-500">
                   {session.ip} · last seen {session.last_seen_at}

@@ -15,7 +15,10 @@ function uniqueEmail(): string {
   return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;
 }
 
-async function latestMessageTo(request: import("@playwright/test").APIRequestContext, email: string) {
+async function latestMessageTo(
+  request: import("@playwright/test").APIRequestContext,
+  email: string,
+) {
   const response = await request.get(`${MAILPIT_API}/search`, { params: { query: `to:${email}` } });
   const body = await response.json();
   return body.messages?.[0];
@@ -37,17 +40,20 @@ test("signup sends a verification email caught at Mailpit, and clicking it authe
   const message = await latestMessageTo(request, email);
   expect(message, "verification email should be caught at Mailpit").toBeTruthy();
 
-  const detail = await (
-    await request.get(`${MAILPIT_API}/message/${message.ID}`)
-  ).json();
-  const link = /https?:\/\/[^\s"]+\/verify-email\/[A-Za-z0-9_-]+/.exec(detail.Text ?? detail.HTML ?? "")?.[0];
+  const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
+  const link = /https?:\/\/[^\s"]+\/verify-email\/[A-Za-z0-9_-]+/.exec(
+    detail.Text ?? detail.HTML ?? "",
+  )?.[0];
   expect(link, "email body should contain a /verify-email/[key] link").toBeTruthy();
 
   await page.goto(new URL(link!).pathname);
   await expect(page).toHaveURL(/\/onboarding/);
 });
 
-test("login with valid credentials establishes a session and logout ends it", async ({ page, request }) => {
+test("login with valid credentials establishes a session and logout ends it", async ({
+  page,
+  request,
+}) => {
   const email = uniqueEmail();
   const password = "correct horse battery staple 1";
 
@@ -64,7 +70,9 @@ test("login with valid credentials establishes a session and logout ends it", as
 
   await expect(page).toHaveURL(/\/app/);
 
-  const sessionCookie = (await page.context().cookies()).find((cookie) => cookie.name === "sessionid");
+  const sessionCookie = (await page.context().cookies()).find(
+    (cookie) => cookie.name === "sessionid",
+  );
   expect(sessionCookie, "a session cookie should be set after login").toBeTruthy();
   expect(sessionCookie?.httpOnly).toBe(true);
   expect(sessionCookie?.sameSite).toBe("Lax");
@@ -86,10 +94,10 @@ test("password reset round-trips end to end via Mailpit", async ({ page, request
 
   const message = await latestMessageTo(request, email);
   expect(message).toBeTruthy();
-  const detail = await (
-    await request.get(`${MAILPIT_API}/message/${message.ID}`)
-  ).json();
-  const link = /https?:\/\/[^\s"]+\/reset-password\/[A-Za-z0-9_-]+/.exec(detail.Text ?? detail.HTML ?? "")?.[0];
+  const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
+  const link = /https?:\/\/[^\s"]+\/reset-password\/[A-Za-z0-9_-]+/.exec(
+    detail.Text ?? detail.HTML ?? "",
+  )?.[0];
   expect(link).toBeTruthy();
 
   await page.goto(new URL(link!).pathname);

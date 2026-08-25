@@ -6,7 +6,8 @@ import { API_BASE_URL, getAuthProviderRedirectUrl } from "@keel/api-client";
  * onboarding itself is Phase 3 and 404s until that lands (B.2).
  */
 export function GoogleContinueLink({ nextPath = "/onboarding" }: { nextPath?: string }) {
-  const callbackUrl = typeof window === "undefined" ? nextPath : new URL(nextPath, window.location.origin).toString();
+  const callbackUrl =
+    typeof window === "undefined" ? nextPath : new URL(nextPath, window.location.origin).toString();
   const href = `${API_BASE_URL}${getAuthProviderRedirectUrl({
     provider: "google",
     process: "login",

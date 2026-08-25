@@ -30,7 +30,9 @@ function PasswordChangeForm() {
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<PasswordFormValues>({ resolver: zodResolver(identitySchemas.accountPasswordChangeBody) });
+  } = useForm<PasswordFormValues>({
+    resolver: zodResolver(identitySchemas.accountPasswordChangeBody),
+  });
 
   async function onSubmit(values: PasswordFormValues) {
     setFormError(null);
@@ -47,7 +49,9 @@ function PasswordChangeForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
       <FormError message={formError} />
-      {success ? <p className="text-sm text-green-700 dark:text-green-400">Password changed.</p> : null}
+      {success ? (
+        <p className="text-sm text-green-700 dark:text-green-400">Password changed.</p>
+      ) : null}
       <FormField
         label="Current password"
         id="current_password"
@@ -89,7 +93,8 @@ function TotpSection() {
       .then((result) => {
         if (cancelled) return;
         // Thrown non-2xx means only the status: 200 variant reaches here.
-        const provisioningUri = result.status === 200 ? result.data.data?.provisioning_uri : undefined;
+        const provisioningUri =
+          result.status === 200 ? result.data.data?.provisioning_uri : undefined;
         setState(provisioningUri ? { status: "inactive", provisioningUri } : { status: "active" });
       })
       .catch((err: unknown) => {
@@ -97,7 +102,9 @@ function TotpSection() {
         // 404 covers both "not enrolled" and "the settings flag is off" —
         // the client can't distinguish the two without the flag exposed
         // somewhere. Both read the same to a user: MFA isn't available.
-        setState(err instanceof NotFoundError ? { status: "unavailable" } : { status: "unavailable" });
+        setState(
+          err instanceof NotFoundError ? { status: "unavailable" } : { status: "unavailable" },
+        );
       });
 
     return () => {
@@ -112,7 +119,9 @@ function TotpSection() {
       setState({ status: "active" });
       setCode("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not activate two-factor authentication.");
+      setError(
+        err instanceof ApiError ? err.message : "Could not activate two-factor authentication.",
+      );
     }
   }
 
@@ -122,7 +131,9 @@ function TotpSection() {
       await totpDeactivate();
       setState({ status: "unavailable" });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not deactivate two-factor authentication.");
+      setError(
+        err instanceof ApiError ? err.message : "Could not deactivate two-factor authentication.",
+      );
     }
   }
 
@@ -145,7 +156,9 @@ function TotpSection() {
   if (state.status === "active") {
     return (
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-green-700 dark:text-green-400">Two-factor authentication is enabled.</p>
+        <p className="text-sm text-green-700 dark:text-green-400">
+          Two-factor authentication is enabled.
+        </p>
         <FormError message={error} />
         <button
           type="button"
@@ -191,7 +204,9 @@ export default function SecurityPage() {
         <PasswordChangeForm />
       </section>
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Two-factor authentication</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+          Two-factor authentication
+        </h2>
         <TotpSection />
       </section>
     </div>

@@ -17,7 +17,10 @@ describe("applyFieldErrors", () => {
 
     applyFieldErrors(error, setError);
 
-    expect(setError).toHaveBeenCalledWith("email", { type: "server", message: "Already a member." });
+    expect(setError).toHaveBeenCalledWith("email", {
+      type: "server",
+      message: "Already a member.",
+    });
     expect(setError).toHaveBeenCalledWith("password", { type: "server", message: "Too short." });
     expect(setError).toHaveBeenCalledTimes(2);
   });

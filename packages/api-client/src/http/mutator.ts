@@ -42,7 +42,11 @@ export async function identityFetch<T>(url: string, options: RequestInit = {}): 
   if (!response.ok) {
     const retryAfterHeader = response.headers.get("Retry-After");
     const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined;
-    throw errorFromStatus(response.status, normalizeErrorEnvelope(response.status, body), retryAfterSeconds);
+    throw errorFromStatus(
+      response.status,
+      normalizeErrorEnvelope(response.status, body),
+      retryAfterSeconds,
+    );
   }
 
   return { data: body, status: response.status, headers: response.headers } as T;

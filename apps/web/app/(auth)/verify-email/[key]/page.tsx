@@ -25,7 +25,9 @@ export default function VerifyEmailKeyPage() {
       .catch((error: unknown) => {
         if (cancelled) return;
         setStatus("error");
-        setMessage(error instanceof ApiError ? error.message : "This link is invalid or has expired.");
+        setMessage(
+          error instanceof ApiError ? error.message : "This link is invalid or has expired.",
+        );
       });
 
     return () => {
@@ -51,7 +53,9 @@ export default function VerifyEmailKeyPage() {
 
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Verification failed</h1>
+      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Verification failed
+      </h1>
       <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
         {message}
       </p>

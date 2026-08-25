@@ -72,9 +72,9 @@ describe("identityFetch", () => {
       }),
     );
 
-    await expect(identityFetch("/_allauth/browser/v1/auth/signup", { method: "POST" })).rejects.toBeInstanceOf(
-      UnprocessableEntityError,
-    );
+    await expect(
+      identityFetch("/_allauth/browser/v1/auth/signup", { method: "POST" }),
+    ).rejects.toBeInstanceOf(UnprocessableEntityError);
   });
 
   it("carries Retry-After through on 429", async () => {

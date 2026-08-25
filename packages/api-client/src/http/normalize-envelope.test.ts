@@ -18,7 +18,13 @@ describe("normalizeErrorEnvelope", () => {
   it("adapts an allauth errors[] envelope, mapping param to field", () => {
     const body = {
       status: 400,
-      errors: [{ code: "email_taken", param: "email", message: "A user is already registered with this email." }],
+      errors: [
+        {
+          code: "email_taken",
+          param: "email",
+          message: "A user is already registered with this email.",
+        },
+      ],
     };
 
     expect(normalizeErrorEnvelope(400, body)).toEqual({

@@ -153,8 +153,74 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: vitest
+      - name: vitest (web)
         run: pnpm --filter web test
+
+      - name: vitest (api-client)
+        run: pnpm --filter @keel/api-client test
+
+  api-client-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate the client and diff against what's committed
+        working-directory: packages/api-client
+        run: |
+          pnpm generate
+          git diff --exit-code -- src/generated
+        # A stale src/generated is a build error (keel-prd.md §4 "Type
+        # synchronisation"), not a runtime surprise — package.json says
+        # never hand-edit it, and this is what makes that true. Once
+        # p2-auth-api lands the merged spec and orval.config.ts's
+        # input.target moves to it, this job also proves the merge is
+        # deterministic run to run (a reordering merge would fail here
+        # randomly, which is exactly the failure mode A.3 warns about).
+
+  e2e-accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: axe-core on every auth and account route
+        working-directory: apps/web
+        run: pnpm exec playwright test e2e/accessibility.spec.ts
+        # e2e/auth-flows.spec.ts is intentionally not run here — it needs
+        # the real Django API (allauth) and Mailpit, both p2-auth-api's
+        # responsibility, plus CI service wiring that worktree owns. Wire
+        # it in once that lands; see e2e/auth-flows.spec.ts's header.
 
   contracts:
     runs-on: ubuntu-latest

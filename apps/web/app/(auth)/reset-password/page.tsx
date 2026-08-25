@@ -20,7 +20,9 @@ export default function ResetPasswordRequestPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RequestFormValues>({ resolver: zodResolver(identitySchemas.authPasswordRequestBody) });
+  } = useForm<RequestFormValues>({
+    resolver: zodResolver(identitySchemas.authPasswordRequestBody),
+  });
 
   async function onSubmit(values: RequestFormValues) {
     setFormError(null);
@@ -44,7 +46,9 @@ export default function ResetPasswordRequestPage() {
 
   return (
     <>
-      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Reset your password</h1>
+      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Reset your password
+      </h1>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         <FormError message={formError} />
         <FormField
@@ -55,7 +59,9 @@ export default function ResetPasswordRequestPage() {
           error={errors.email?.message}
           {...register("email")}
         />
-        <SubmitButton disabled={isSubmitting}>{isSubmitting ? "Sending…" : "Send reset link"}</SubmitButton>
+        <SubmitButton disabled={isSubmitting}>
+          {isSubmitting ? "Sending…" : "Send reset link"}
+        </SubmitButton>
       </form>
       <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
         <Link href="/login" className="underline">

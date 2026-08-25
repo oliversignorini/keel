@@ -36,7 +36,9 @@ export default function MfaChallengePage() {
 
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Two-factor authentication</h1>
+      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Two-factor authentication
+      </h1>
       <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
         Enter the 6-digit code from your authenticator app.
       </p>
@@ -52,7 +54,9 @@ export default function MfaChallengePage() {
           error={errors.code?.message}
           {...register("code")}
         />
-        <SubmitButton disabled={isSubmitting}>{isSubmitting ? "Verifying…" : "Verify"}</SubmitButton>
+        <SubmitButton disabled={isSubmitting}>
+          {isSubmitting ? "Verifying…" : "Verify"}
+        </SubmitButton>
       </form>
     </>
   );

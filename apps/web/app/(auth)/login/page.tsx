@@ -69,7 +69,9 @@ export default function LoginPage() {
             error={errors.password?.message}
             {...register("password")}
           />
-          <SubmitButton disabled={isSubmitting}>{isSubmitting ? "Logging in…" : "Log in"}</SubmitButton>
+          <SubmitButton disabled={isSubmitting}>
+            {isSubmitting ? "Logging in…" : "Log in"}
+          </SubmitButton>
         </form>
       </div>
       <p className="mt-4 flex justify-between text-sm text-neutral-600 dark:text-neutral-400">

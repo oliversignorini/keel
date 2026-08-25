@@ -24,7 +24,9 @@ const ACCOUNT_ROUTES = ["/account/profile", "/account/security", "/account/sessi
 for (const route of AUTH_ROUTES) {
   test(`axe: ${route} has zero violations`, async ({ page }) => {
     await page.goto(route);
-    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 }
@@ -35,7 +37,9 @@ for (const route of ACCOUNT_ROUTES) {
       { name: "sessionid", value: "e2e-fake-session", url: "http://localhost:3100" },
     ]);
     await page.goto(route);
-    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 }

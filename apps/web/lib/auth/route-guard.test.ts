@@ -8,7 +8,9 @@ describe("resolveGuardRedirect", () => {
   });
 
   it("sends an unauthenticated visitor to /account away to /login with next=", () => {
-    expect(resolveGuardRedirect("/account/security", false)).toBe("/login?next=%2Faccount%2Fsecurity");
+    expect(resolveGuardRedirect("/account/security", false)).toBe(
+      "/login?next=%2Faccount%2Fsecurity",
+    );
   });
 
   it("lets an authenticated visitor through to /app", () => {

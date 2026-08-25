@@ -38,7 +38,9 @@ export default function ResetPasswordKeyPage() {
 
   return (
     <>
-      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Choose a new password</h1>
+      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        Choose a new password
+      </h1>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         <FormError message={formError} />
         <FormField
@@ -49,7 +51,9 @@ export default function ResetPasswordKeyPage() {
           error={errors.password?.message}
           {...register("password")}
         />
-        <SubmitButton disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Set new password"}</SubmitButton>
+        <SubmitButton disabled={isSubmitting}>
+          {isSubmitting ? "Saving…" : "Set new password"}
+        </SubmitButton>
       </form>
     </>
   );

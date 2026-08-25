@@ -19,11 +19,46 @@
           }
         },
         "responses": {
-          "200": { "description": "Session established immediately (verification not required)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "401": { "description": "Pending flow — e.g. email verification required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthPendingResponse" } } } },
-          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
-          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
-          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Session established immediately (verification not required)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Pending flow — e.g. email verification required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthPendingResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already in use",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -40,10 +75,38 @@
           }
         },
         "responses": {
-          "200": { "description": "Session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "401": { "description": "Pending flow — e.g. MFA challenge (awaiting TOTP)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthPendingResponse" } } } },
-          "400": { "description": "Bad credentials / validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
-          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Session established",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Pending flow — e.g. MFA challenge (awaiting TOTP)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthPendingResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad credentials / validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -52,16 +115,42 @@
         "operationId": "authGetSession",
         "summary": "Fetch the current authenticated user (inferred: not in the PRD §7 list verbatim — only DELETE is listed there — but allauth's real headless API supports GET here, and the /account/profile route needs it; confirm against the real spec)",
         "responses": {
-          "200": { "description": "Current session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "401": { "description": "No session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Current session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "No session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       },
       "delete": {
         "operationId": "authLogout",
         "summary": "End the current session (logout)",
         "responses": {
-          "200": { "description": "Logged out", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
-          "401": { "description": "No session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Logged out",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } }
+            }
+          },
+          "401": {
+            "description": "No session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -78,9 +167,28 @@
           }
         },
         "responses": {
-          "200": { "description": "Reset email sent if the address is known (no disclosure either way)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
-          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } },
-          "429": { "description": "Rate limited", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Reset email sent if the address is known (no disclosure either way)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -97,8 +205,22 @@
           }
         },
         "responses": {
-          "200": { "description": "Password changed, session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "400": { "description": "Key invalid/expired or password rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Password changed, session established",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Key invalid/expired or password rejected",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -115,8 +237,22 @@
           }
         },
         "responses": {
-          "200": { "description": "Verified, session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "400": { "description": "Key invalid/expired", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Verified, session established",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Key invalid/expired",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -125,9 +261,24 @@
         "operationId": "authProviderRedirect",
         "summary": "Start a social-provider (Google) auth redirect",
         "parameters": [
-          { "name": "provider", "in": "query", "required": true, "schema": { "type": "string", "example": "google" } },
-          { "name": "process", "in": "query", "required": true, "schema": { "type": "string", "enum": ["login"] } },
-          { "name": "callback_url", "in": "query", "required": true, "schema": { "type": "string", "format": "uri" } }
+          {
+            "name": "provider",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "example": "google" }
+          },
+          {
+            "name": "process",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "enum": ["login"] }
+          },
+          {
+            "name": "callback_url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uri" }
+          }
         ],
         "responses": {
           "302": { "description": "Redirect to the provider's consent screen" }
@@ -147,8 +298,22 @@
           }
         },
         "responses": {
-          "200": { "description": "Session established", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
-          "400": { "description": "Invalid code", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Session established",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid code",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     },
@@ -157,8 +322,22 @@
         "operationId": "totpGet",
         "summary": "Fetch TOTP enrolment status / provisioning secret",
         "responses": {
-          "200": { "description": "TOTP authenticator state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" } } } },
-          "404": { "description": "Not enrolled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "TOTP authenticator state",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not enrolled",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       },
       "post": {
@@ -173,15 +352,34 @@
           }
         },
         "responses": {
-          "200": { "description": "TOTP activated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" } } } },
-          "400": { "description": "Invalid code", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "TOTP activated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TotpAuthenticatorResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid code",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       },
       "delete": {
         "operationId": "totpDeactivate",
         "summary": "Deactivate TOTP",
         "responses": {
-          "200": { "description": "TOTP deactivated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } }
+          "200": {
+            "description": "TOTP deactivated",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } }
+            }
+          }
         }
       }
     },
@@ -190,7 +388,14 @@
         "operationId": "sessionsList",
         "summary": "List active sessions for the current user",
         "responses": {
-          "200": { "description": "Active sessions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionsListResponse" } } } }
+          "200": {
+            "description": "Active sessions",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SessionsListResponse" }
+              }
+            }
+          }
         }
       },
       "delete": {
@@ -205,7 +410,12 @@
           }
         },
         "responses": {
-          "200": { "description": "Revoked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } }
+          "200": {
+            "description": "Revoked",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } }
+            }
+          }
         }
       }
     },
@@ -222,8 +432,20 @@
           }
         },
         "responses": {
-          "200": { "description": "Password changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
-          "400": { "description": "Current password incorrect or new password rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+          "200": {
+            "description": "Password changed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } }
+            }
+          },
+          "400": {
+            "description": "Current password incorrect or new password rejected",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" }
+              }
+            }
+          }
         }
       }
     }
