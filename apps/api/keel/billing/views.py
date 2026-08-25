@@ -6,14 +6,15 @@ id in the URL for a cross-org leak to hide behind, the same reasoning
 ``keel.organizations.viewsets.OrganizationDetailView`` documents.
 """
 
+import stripe
 from django.http import Http404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from keel.billing import services
-from keel.billing.models import Price, Subscription
+from keel.billing import services, stripe_client, tasks
+from keel.billing.models import Price, StripeEvent, Subscription
 from keel.billing.serializers import (
     CheckoutRequestSerializer,
     SubscriptionSerializer,
@@ -89,6 +90,48 @@ class SubscriptionView(_OrganizationBillingView):
         if subscription is None:
             return Response({"subscription": None})
         return Response({"subscription": SubscriptionSerializer(subscription).data})
+
+
+class StripeWebhookView(APIView):
+    """``POST /api/v1/stripe/webhook/`` (PRD §6 "Stripe webhook";
+    docs/plans/phase-4.md B.3). No session auth or CSRF: this is a
+    server-to-server call from Stripe with no session cookie, verified by
+    signature instead — DRF's ``SessionAuthentication`` only enforces CSRF
+    once it has resolved a session user, which an unauthenticated request
+    never does, so leaving ``authentication_classes`` empty here is belt
+    and braces, not a gap.
+
+    Records the event and acknowledges before any processing happens
+    (PRD §6, "Acknowledge in under 200ms ... work happens async") — the
+    only synchronous work below a signature check is one
+    ``get_or_create`` and enqueuing a task.
+    """
+
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request: Request) -> Response:
+        sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+        try:
+            event = stripe_client.verify_webhook_signature(
+                payload=request.body, sig_header=sig_header
+            )
+        except stripe.SignatureVerificationError:
+            # Unsigned or wrongly-signed: 400, change nothing, no retry
+            # (PRD §6) — no StripeEvent row is written for a payload that
+            # never proved it came from Stripe.
+            return Response(status=400)
+
+        stripe_event, created = StripeEvent.objects.get_or_create(
+            id=event["id"],
+            defaults={"type": event["type"], "payload": event.to_dict()},
+        )
+        if created:
+            tasks.dispatch_stripe_event.delay(str(stripe_event.pk))
+        # Already recorded (a replay) or freshly created: either way this
+        # is a 200 — idempotent no-op for a replay (PRD §6, "Already
+        # processed → 200 immediately").
+        return Response(status=200)
 
 
 def _frontend_base() -> str:

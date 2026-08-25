@@ -27,6 +27,22 @@ def _client() -> Any:
     return stripe.StripeClient(settings.STRIPE_SECRET_KEY)
 
 
+def verify_webhook_signature(*, payload: bytes, sig_header: str) -> Any:
+    """Verifies and decodes an incoming webhook body (PRD §6 "Stripe
+    webhook"). Raises ``stripe.SignatureVerificationError`` on a missing,
+    malformed, or wrongly-signed header — the view maps that straight to
+    400 without touching any local state. Uses ``stripe.Webhook`` directly
+    rather than ``_client()``: verification is a local HMAC check against
+    ``STRIPE_WEBHOOK_SECRET``, not an API call, so it doesn't need an
+    ``api_key`` at all."""
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        raise ImproperlyConfigured(
+            "settings.STRIPE_WEBHOOK_SECRET is not configured. Set "
+            "STRIPE_WEBHOOK_SECRET before calling verify_webhook_signature."
+        )
+    return stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+
+
 def create_customer(*, email: str, name: str) -> str:
     """Returns the new Stripe customer id."""
     customer = _client().customers.create({"email": email, "name": name})

@@ -10,6 +10,7 @@ router.register("plans", viewsets.PlanViewSet, basename="plan")
 
 urlpatterns = [
     *router.urls,
+    path("stripe/webhook/", views.StripeWebhookView.as_view(), name="stripe-webhook"),
     path(
         "organizations/<slug:org_slug>/billing/checkout/",
         views.CheckoutSessionView.as_view(),

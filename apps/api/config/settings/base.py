@@ -372,3 +372,10 @@ BILLING_SEAT_PRICING = env.bool("BILLING_SEAT_PRICING", default=False)
 # checkout/portal/webhook views raise ImproperlyConfigured if a call is
 # actually attempted without a key, rather than silently no-op'ing.
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
+
+# Verifies POST /api/v1/stripe/webhook/'s signature (PRD §6 "Stripe
+# webhook", invariant "Unsigned or wrongly-signed → 400, log, change
+# nothing, no retry"). Blank in dev/test for the same reason as
+# STRIPE_SECRET_KEY above — tests supply their own signed payloads via
+# stripe.Webhook's own signing helper against a fixture secret.
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
