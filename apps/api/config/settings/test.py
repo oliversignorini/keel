@@ -34,6 +34,14 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
+# Empty, not the MinIO default from base.py: keel.files.r2_client omits
+# ``endpoint_url`` entirely when this is blank, which is what lets
+# ``moto``'s mocked S3 intercept these calls (see
+# keel/files/tests/test_uploads.py) — a custom endpoint_url bypasses
+# moto's interception, since it only recognises real AWS-shaped hosts.
+R2_ENDPOINT_URL = ""
+R2_BUCKET = "keel-test"
+
 # allauth's rate limiting (base.py's ACCOUNT_RATE_LIMITS) is keyed in the
 # real Redis cache, which persists across test runs — a "confirm_email"
 # cooldown hit by one test's email address silently suppresses the next
