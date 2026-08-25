@@ -5019,6 +5019,19 @@
         ]
       }
     },
+    "/api/v1/impersonation/exit/": {
+      "post": {
+        "operationId": "impersonation_exit_create",
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "impersonation"
+        ]
+      }
+    },
     "/api/v1/invite/{token}/": {
       "get": {
         "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",

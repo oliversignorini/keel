@@ -42,7 +42,11 @@ describe("useMe", () => {
   });
 
   it("sets me from a successful response", async () => {
-    const me = { user: { id: "1", email: "a@example.com", name: "A" }, organizations: [] };
+    const me = {
+      user: { id: "1", email: "a@example.com", name: "A" },
+      organizations: [],
+      impersonator: null,
+    };
     vi.mocked(getMe).mockResolvedValue(me);
 
     const { result } = renderHook(() => useMe());

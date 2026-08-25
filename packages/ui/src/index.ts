@@ -4,6 +4,7 @@ export { cn } from "./cn";
 export { type ColumnDef, DataTable } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { FormField, FormTextarea } from "./form-field";
+export { ImpersonationBanner } from "./impersonation-banner";
 export { PageHeader } from "./page-header";
 export { ResourceForm } from "./resource-form";
 export { ThemeToggleButton } from "./theme-toggle";

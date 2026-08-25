@@ -1,5 +1,6 @@
 "use client";
 
+import { ImpersonationBannerHost } from "@/components/org/impersonation-banner";
 import { OrgSwitcher } from "@/components/org/org-switcher";
 import { toApexHost } from "@/lib/host";
 import { OrgProvider, useOrgContext } from "@/lib/org/org-context";
@@ -148,6 +149,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <ImpersonationBannerHost />
       <AppShell
         logo={
           <Link href="/" className="text-sm font-semibold text-foreground">

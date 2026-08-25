@@ -269,10 +269,20 @@ class MeView(APIView):
                     "entitlements": resolve_entitlements(organization),
                 }
             )
+        impersonator = getattr(request, "impersonator", None)
         return Response(
             {
                 "user": {"id": str(user.id), "email": user.email, "name": user.name},
                 "organizations": organizations,
+                "impersonator": (
+                    {
+                        "id": str(impersonator.id),
+                        "email": impersonator.email,
+                        "name": impersonator.name,
+                    }
+                    if impersonator is not None
+                    else None
+                ),
             }
         )
 

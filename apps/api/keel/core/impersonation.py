@@ -74,12 +74,14 @@ def start_impersonation(request: HttpRequest, *, impersonator: Any, target: Any)
     users) is written by the caller — ``keel.accounts.admin``'s
     "Impersonate" action — which has the request's ip/user_agent this
     module deliberately doesn't take."""
-    request.session[IMPERSONATOR_SESSION_KEY] = impersonator.pk
+    # str(): the session backend JSON-serialises its data, and User.pk is
+    # a UUID (keel/core/ids.py's uuid7), which json.dumps can't encode.
+    request.session[IMPERSONATOR_SESSION_KEY] = str(impersonator.pk)
     login(request, target, backend="django.contrib.auth.backends.ModelBackend")
     # login() rotates the session key, which login() itself already wrote
     # impersonator_id into above — re-set defensively in case a future
     # Django login() implementation ever clears extra session keys first.
-    request.session[IMPERSONATOR_SESSION_KEY] = impersonator.pk
+    request.session[IMPERSONATOR_SESSION_KEY] = str(impersonator.pk)
 
 
 def end_impersonation(request: HttpRequest, *, impersonator: Any) -> None:

@@ -4868,6 +4868,83 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
 
 
 
+export type impersonationExitCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type impersonationExitCreateResponseSuccess = (impersonationExitCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type impersonationExitCreateResponse = (impersonationExitCreateResponseSuccess)
+
+export const getImpersonationExitCreateUrl = () => {
+
+
+  
+
+  return `/api/v1/impersonation/exit/`
+}
+
+export const impersonationExitCreate = async ( options?: RequestInit): Promise<impersonationExitCreateResponse> => {
+  
+  return identityFetch<impersonationExitCreateResponse>(getImpersonationExitCreateUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getImpersonationExitCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExitCreate>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof impersonationExitCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['impersonationExitCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof impersonationExitCreate>>, void> = () => {
+          
+
+          return  impersonationExitCreate(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImpersonationExitCreateMutationResult = NonNullable<Awaited<ReturnType<typeof impersonationExitCreate>>>
+    
+    export type ImpersonationExitCreateMutationError = unknown
+
+    export const useImpersonationExitCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExitCreate>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof impersonationExitCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getImpersonationExitCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
 /**
  * ``/invite/<token>/`` (PRD §6 "Invitation"; phase-3.md B.4). All four
 edge cases: wrong email rejected without disclosing the invitee;
