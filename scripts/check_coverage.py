@@ -65,7 +65,7 @@ def check(thresholds: dict[str, float], files: dict[str, dict]) -> tuple[list[st
         actual = percent_for_glob(glob, files)
         if actual is None:
             failures.append(
-                f"{glob}: matched no files (required {required}%) — "
+                f"{glob}: matched no files (required {required}%) - "
                 "renamed or deleted path left its coverage obligation behind?"
             )
         elif actual < required:
@@ -82,7 +82,7 @@ def check(thresholds: dict[str, float], files: dict[str, dict]) -> tuple[list[st
 def main() -> int:
     if not COVERAGE_JSON_PATH.exists():
         print(
-            f"error: {COVERAGE_JSON_PATH} not found — run "
+            f"error: {COVERAGE_JSON_PATH} not found - run "
             "`uv run pytest` in apps/api first (it writes coverage.json).",
             file=sys.stderr,
         )
