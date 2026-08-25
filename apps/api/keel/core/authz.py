@@ -179,6 +179,22 @@ class GlobalViewSet(viewsets.GenericViewSet):
             )
 
 
+_scoped_viewset_registry: list[type["OrgScopedViewSet"]] = []
+
+
+def registered_scoped_viewsets() -> list[type["OrgScopedViewSet"]]:
+    """Every well-formed, non-abstract ``OrgScopedViewSet`` subclass with
+    ``organization_scoped = True``, in definition order.
+
+    Recorded unconditionally by ``__init_subclass__`` — a scoped viewset
+    cannot come into existence without landing here, which is what lets
+    a CI meta-test notice one that the tenant-isolation walk can't reach
+    (PRD §4 invariant 7: "the exemption list is where leaks hide" applies
+    just as much to a router nobody wired up as to an exemption list).
+    """
+    return list(_scoped_viewset_registry)
+
+
 class OrgScopedViewSet(GlobalViewSet):
     """Resolves the organisation from the URL, checks membership, and
     filters the queryset — all before any view code runs (PRD §4,
@@ -203,6 +219,8 @@ class OrgScopedViewSet(GlobalViewSet):
                 "cross-tenant meta-test uses to build rows in two "
                 "organisations (PRD §4 invariant 7)."
             )
+        if cls.organization_scoped:
+            _scoped_viewset_registry.append(cls)
 
     def initial(self, request: Any, *args: Any, **kwargs: Any) -> None:
         organization = _resolve_organization(request, kwargs.get(self.organization_url_kwarg))
