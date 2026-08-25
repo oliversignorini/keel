@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from keel.billing.models import Price, Subscription
+from keel.core.posthog import capture_billing_event
 from keel.organizations.models import Organization
 
 
@@ -58,6 +59,15 @@ def _handle_subscription_event(subscription: dict[str, Any]) -> None:
             "cancel_at_period_end": bool(subscription.get("cancel_at_period_end", False)),
         },
     )
+    capture_billing_event(
+        distinct_id=str(organization.created_by_id),
+        event=f"subscription_{subscription['status']}",
+        properties={
+            "organization_id": str(organization.id),
+            "plan_code": price.plan.code,
+            "stripe_subscription_id": subscription["id"],
+        },
+    )
 
 
 def _handle_invoice_paid(invoice: dict[str, Any]) -> None:
@@ -68,6 +78,13 @@ def _handle_invoice_paid(invoice: dict[str, Any]) -> None:
     Subscription.objects.filter(organization__stripe_customer_id=invoice["customer"]).update(
         status="active"
     )
+    organization = Organization.objects.filter(stripe_customer_id=invoice["customer"]).first()
+    if organization is not None:
+        capture_billing_event(
+            distinct_id=str(organization.created_by_id),
+            event="invoice_paid",
+            properties={"organization_id": str(organization.id)},
+        )
 
 
 def _handle_invoice_payment_failed(invoice: dict[str, Any]) -> None:
@@ -78,6 +95,13 @@ def _handle_invoice_payment_failed(invoice: dict[str, Any]) -> None:
     Subscription.objects.filter(organization__stripe_customer_id=invoice["customer"]).update(
         status="past_due"
     )
+    organization = Organization.objects.filter(stripe_customer_id=invoice["customer"]).first()
+    if organization is not None:
+        capture_billing_event(
+            distinct_id=str(organization.created_by_id),
+            event="invoice_payment_failed",
+            properties={"organization_id": str(organization.id)},
+        )
 
 
 HANDLERS = {

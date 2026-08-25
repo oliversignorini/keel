@@ -50,3 +50,12 @@ R2_BUCKET = "keel-test"
 # *behavior* is allauth's own, already-tested code; disabling it here
 # keeps this project's tests deterministic regardless of run history.
 ACCOUNT_RATE_LIMITS = False  # type: ignore[assignment]
+
+# Same reasoning as ACCOUNT_RATE_LIMITS above, for the general API
+# throttle (docs/plans/phase-8.md 8.6): DRF's throttle counters live in
+# the same real Redis cache, keyed by client ident/user id, and persist
+# across the whole test run — hundreds of tests hitting the same
+# endpoints would otherwise trip an unrelated test's rate limit purely
+# from run history. tests/test_rate_limiting.py re-enables this
+# explicitly (and clears the cache first) to test the mechanism itself.
+REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_CLASSES": []}  # noqa: F405
