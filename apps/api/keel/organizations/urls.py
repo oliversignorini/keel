@@ -8,6 +8,7 @@ from typing import Any
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
+from keel.jobs import urls as jobs_urls
 from keel.organizations import viewsets
 
 nested_router = SimpleRouter(trailing_slash=True)
@@ -26,7 +27,7 @@ class _CombinedRegistry:
         self.registry = [entry for router in routers for entry in router.registry]
 
 
-api_registry = _CombinedRegistry(nested_router)
+api_registry = _CombinedRegistry(nested_router, jobs_urls.nested_router)
 
 urlpatterns = [
     path("organizations/", viewsets.OrganizationListCreateView.as_view(), name="organization-list"),
