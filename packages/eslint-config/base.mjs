@@ -8,13 +8,7 @@ export const base = [
   ...tseslint.configs.recommended,
   prettier,
   {
-    ignores: [
-      "**/.next/**",
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/.turbo/**",
-      "**/coverage/**",
-    ],
+    ignores: ["**/.next/**", "**/dist/**", "**/node_modules/**", "**/.turbo/**", "**/coverage/**"],
   },
 ];
 

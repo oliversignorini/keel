@@ -4,3 +4,10 @@ node_modules/
 .turbo/
 coverage/
 pnpm-lock.yaml
+
+# Python workspace — not prettier's concern (ruff format owns it)
+apps/api/
+
+# Not ours to reformat
+docs/plans/
+keel-prd.md
