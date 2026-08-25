@@ -123,6 +123,75 @@ def build_drf_spec() -> dict:
     return generator.get_schema(request=None, public=True)
 
 
+# allauth headless's own schema (allauth.headless.spec.internal.schema.get_schema)
+# sets no `operationId` on any operation, so orval falls back to a name
+# derived from method + path (e.g. ``postAllauthBrowserV1AuthLogin``) —
+# unstable-reading and a breaking rename risk every time a path changes.
+# This assigns a stable, hand-picked name per (method, path) instead, so
+# the generated client's function names don't depend on orval's fallback
+# heuristic. Phase 2's web code (apps/web/app/(auth)/*, lib/auth/*) was
+# built against these exact names.
+ALLAUTH_OPERATION_IDS: dict[tuple[str, str], str] = {
+    ("get", "/_allauth/browser/v1/account/authenticators"): "authenticatorsList",
+    ("get", "/_allauth/browser/v1/account/authenticators/recovery-codes"): "recoveryCodesGet",
+    ("post", "/_allauth/browser/v1/account/authenticators/recovery-codes"): "recoveryCodesRegenerate",
+    ("get", "/_allauth/browser/v1/account/authenticators/totp"): "totpGet",
+    ("post", "/_allauth/browser/v1/account/authenticators/totp"): "totpActivate",
+    ("delete", "/_allauth/browser/v1/account/authenticators/totp"): "totpDeactivate",
+    ("get", "/_allauth/browser/v1/account/email"): "emailList",
+    ("post", "/_allauth/browser/v1/account/email"): "emailAdd",
+    ("put", "/_allauth/browser/v1/account/email"): "emailChangePrimary",
+    ("patch", "/_allauth/browser/v1/account/email"): "emailRequestVerification",
+    ("delete", "/_allauth/browser/v1/account/email"): "emailRemove",
+    ("post", "/_allauth/browser/v1/account/password/change"): "accountPasswordChange",
+    ("get", "/_allauth/browser/v1/account/phone"): "phoneGet",
+    ("post", "/_allauth/browser/v1/account/phone"): "phoneChange",
+    ("get", "/_allauth/browser/v1/account/providers"): "providersList",
+    ("delete", "/_allauth/browser/v1/account/providers"): "providersDisconnect",
+    ("post", "/_allauth/browser/v1/auth/2fa/authenticate"): "authMfaAuthenticate",
+    ("post", "/_allauth/browser/v1/auth/2fa/reauthenticate"): "authMfaReauthenticate",
+    ("post", "/_allauth/browser/v1/auth/code/confirm"): "authCodeConfirm",
+    ("get", "/_allauth/browser/v1/auth/email/verify"): "authEmailVerifyInfo",
+    ("post", "/_allauth/browser/v1/auth/email/verify"): "authEmailVerify",
+    ("post", "/_allauth/browser/v1/auth/email/verify/resend"): "authEmailVerifyResend",
+    ("post", "/_allauth/browser/v1/auth/login"): "authLogin",
+    ("post", "/_allauth/browser/v1/auth/password/request"): "authPasswordRequest",
+    ("get", "/_allauth/browser/v1/auth/password/reset"): "authPasswordResetInfo",
+    ("post", "/_allauth/browser/v1/auth/password/reset"): "authPasswordReset",
+    ("post", "/_allauth/browser/v1/auth/phone/verify"): "authPhoneVerify",
+    ("post", "/_allauth/browser/v1/auth/phone/verify/resend"): "authPhoneVerifyResend",
+    ("post", "/_allauth/browser/v1/auth/provider/redirect"): "authProviderRedirect",
+    ("get", "/_allauth/browser/v1/auth/provider/signup"): "authProviderSignupInfo",
+    ("post", "/_allauth/browser/v1/auth/provider/signup"): "authProviderSignup",
+    ("post", "/_allauth/browser/v1/auth/provider/token"): "authProviderToken",
+    ("post", "/_allauth/browser/v1/auth/reauthenticate"): "authReauthenticate",
+    ("get", "/_allauth/browser/v1/auth/session"): "authGetSession",
+    ("delete", "/_allauth/browser/v1/auth/session"): "authLogout",
+    ("get", "/_allauth/browser/v1/auth/sessions"): "sessionsList",
+    ("delete", "/_allauth/browser/v1/auth/sessions"): "sessionsRevoke",
+    ("post", "/_allauth/browser/v1/auth/signup"): "authSignup",
+    ("get", "/_allauth/browser/v1/config"): "authConfig",
+}
+
+
+def _assign_allauth_operation_ids(spec: dict) -> None:
+    missing: list[str] = []
+    for path, methods in spec.get("paths", {}).items():
+        for method, operation in methods.items():
+            operation_id = ALLAUTH_OPERATION_IDS.get((method, path))
+            if operation_id is None:
+                missing.append(f"{method.upper()} {path}")
+                continue
+            operation["operationId"] = operation_id
+    if missing:
+        raise ValueError(
+            "ALLAUTH_OPERATION_IDS is missing an entry for: "
+            + ", ".join(sorted(missing))
+            + " — add one (scripts/merge_openapi.py) so orval doesn't fall "
+            "back to an unstable generated name."
+        )
+
+
 def build_allauth_spec() -> dict:
     # allauth.headless.adapter.DefaultHeadlessAdapter.get_user_dataclass()
     # calls uuid.uuid4() to produce the "id" field's OpenAPI example every
@@ -137,9 +206,11 @@ def build_allauth_spec() -> dict:
     real_uuid4 = uuid.uuid4
     uuid.uuid4 = lambda: frozen_uuid  # type: ignore[assignment]
     try:
-        return get_schema()
+        schema = get_schema()
     finally:
         uuid.uuid4 = real_uuid4
+    _assign_allauth_operation_ids(schema)
+    return schema
 
 
 def main() -> int:

@@ -15,3 +15,9 @@ keel-prd.md
 # orval output — reformatting it would just be reverted on the next
 # `pnpm generate` (packages/api-client/package.json)
 packages/api-client/src/generated/
+
+# scripts/merge_openapi.py writes this with its own deterministic
+# formatter (json.dumps(..., sort_keys=True)) — reformatting it here would
+# just be reverted the next time that script runs (its docstring explains
+# why determinism matters more than most scripts for this one).
+openapi.merged.json

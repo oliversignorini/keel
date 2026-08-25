@@ -1,10 +1,22 @@
 import { defineConfig } from "orval";
 
-// Input is a hand-authored stand-in until the p2-auth-api worktree lands the
-// merged OpenAPI document (allauth's /_allauth/openapi.json + drf-spectacular's
-// /api/v1/schema/). Swap `input.target` for the merged spec then re-run
-// `pnpm generate` — src/generated is the only thing that changes.
-const input = { target: "./openapi/allauth.v1.json" };
+// The merged document (../../openapi.merged.json, built by
+// scripts/merge_openapi.py from the live drf-spectacular + allauth headless
+// schemas — see that script's docstring) landed with p3-orgs-api, replacing
+// the hand-authored allauth-only stand-in this file used to point at.
+// Everything — allauth's own endpoints and organizations/permissions.py's
+// endpoints (PRD §7) — is one input now, generated into the same two files
+// this package already had, so nothing downstream that imports from
+// `identity.query`/`identity.zod` has to change import paths.
+//
+// This has to stay ONE orval output pair rather than two tag-filtered
+// ones: `mode: "single"` dumps every `components/schemas` entry into each
+// output file regardless of `filters.tags` (the filter only trims which
+// *operations* are generated), so two outputs from the same spec produce
+// ~200 duplicate type exports that collide the moment both are re-exported
+// from src/index.ts. One output has no such collision because there is
+// only one copy of each type to begin with.
+const input = { target: "../../openapi.merged.json" };
 
 // A single "react-query" output already includes the plain fetch functions
 // and the generated types alongside the hooks, so one output covers B.1's
