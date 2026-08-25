@@ -6,6 +6,7 @@ dependencies = [
     "celery>=5.6.3",
     "cryptography>=50.0.0",
     "django~=6.0",
+    "django-allauth[headless-spec,mfa,socialaccount]>=65.19",
     "django-cors-headers>=4.9.0",
     "django-environ>=0.14.0",
     "djangorestframework>=3.18.0",
@@ -52,7 +53,7 @@ module = ["tests.*", "keel.*.tests.*"]
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "environ.*", "rest_framework.*"]
+module = ["celery.*", "environ.*", "rest_framework.*", "allauth.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]
@@ -79,6 +80,8 @@ django_settings_module = "config.settings.test"
 # never calls it.
 [tool.keel.coverage]
 "keel/core/ids.py" = 100
+"keel/core/authentication.py" = 100
+"keel/core/checks.py" = 100
 "keel/core/models.py" = 100
 "keel/core/exceptions.py" = 100
 "keel/core/authz.py" = 100

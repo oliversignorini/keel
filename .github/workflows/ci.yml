@@ -131,6 +131,15 @@ jobs:
         working-directory: apps/api
         run: uv run pytest
 
+      - name: pytest (MFA enabled)
+        working-directory: apps/api
+        run: uv run pytest keel/accounts/tests/test_mfa_flow.py --no-cov --ds=config.settings.test_mfa
+        # config.settings.test (the default above) runs with
+        # KEEL_MFA_ENABLED=false and asserts the TOTP endpoints are
+        # absent; this run exercises the "flag on" half of that same
+        # acceptance criterion (PRD §8 Phase 2 A.4) against the settings
+        # module where allauth.mfa is actually installed.
+
       - name: check_coverage.py
         run: python3 scripts/check_coverage.py
 
@@ -158,6 +167,23 @@ jobs:
 
   contracts:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: keel
+          POSTGRES_USER: keel
+          POSTGRES_PASSWORD: keel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keel -d keel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keel:keel@localhost:5432/keel
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
 
@@ -174,3 +200,12 @@ jobs:
       - name: lint-imports
         working-directory: apps/api
         run: uv run lint-imports
+
+      - name: merge_openapi.py produces the committed spec (client not stale)
+        working-directory: apps/api
+        run: |
+          uv run python ../../scripts/merge_openapi.py
+          git diff --exit-code -- ../../openapi.merged.json || {
+            echo "::error::openapi.merged.json is stale — run scripts/merge_openapi.py and commit the result.";
+            exit 1;
+          }

@@ -32,6 +32,13 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+# --- MFA scaffold flag (PRD §8 Phase 2, A.1) -------------------------------
+# TOTP is wired but off by default. Flip to true to install allauth.mfa
+# (and thereby its headless endpoints, gated on apps.is_installed — see
+# allauth.headless.urls.build_urlpatterns) without generating a migration
+# for it: the app's own migrations ship in the package.
+KEEL_MFA_ENABLED = env.bool("KEEL_MFA_ENABLED", default=False)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -40,10 +47,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+    "django.contrib.sites",
     # Third party
     "rest_framework",
     "drf_spectacular",
     "corsheaders",
+    # allauth headless (PRD §4 "Auth architecture", §8 Phase 2)
+    "allauth",
+    "allauth.account",
+    "allauth.headless",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.usersessions",
     # Keel apps — empty in Phase 0, registered so Phase 1's baseline
     # migration has somewhere to land. No models here yet.
     "keel.core",
@@ -58,6 +73,13 @@ INSTALLED_APPS = [
     "keel.widgets",
 ]
 
+if KEEL_MFA_ENABLED:
+    INSTALLED_APPS.append("allauth.mfa")
+
+# allauth requires the sites framework; headless mode never renders a
+# templated page from it, but the app must be present.
+SITE_ID = 1
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "keel.core.middleware.RequestIDMiddleware",
@@ -66,8 +88,14 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -130,7 +158,38 @@ CELERY_BROKER_URL = env(
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_DEFAULT_QUEUE = "default"
 
-# --- CORS ------------------------------------------------------------------
+# --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -
+# Session transport is an HttpOnly cookie, not a JWT (PRD §4). The cookie's
+# Domain must be the *registrable* domain — `.acme.com` — so it is shared
+# between `acme.com` (Next.js) and `api.acme.com` (Django). KEEL_APP_DOMAIN
+# is that registrable domain; SESSION_COOKIE_DOMAIN is derived from it
+# rather than duplicated, so the two cannot drift apart in an env file.
+# Local dev serves both sides off "localhost" with no port-spanning cookie
+# issue, so KEEL_APP_DOMAIN defaults there and SESSION_COOKIE_DOMAIN is left
+# unset (host-only cookie) unless a real domain is configured — Chrome
+# rejects `Domain=localhost` cookies set with a leading dot.
+KEEL_APP_DOMAIN = env("KEEL_APP_DOMAIN", default="localhost")
+SESSION_COOKIE_DOMAIN = env(
+    "DJANGO_SESSION_COOKIE_DOMAIN",
+    default=None if KEEL_APP_DOMAIN == "localhost" else f".{KEEL_APP_DOMAIN}",
+)
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = env.bool("DJANGO_SESSION_COOKIE_SECURE", default=not DEBUG)
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_NAME = "sessionid"
+
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+CSRF_COOKIE_HTTPONLY = False  # the SPA reads this cookie to set the CSRF header
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000"])
+
+# No wildcard: credentialed CORS (CORS_ALLOW_CREDENTIALS=True) forbids
+# `Access-Control-Allow-Origin: *` outright, and the browser's console
+# message for that failure does not say so — django-cors-headers would
+# silently reflect every origin if CORS_ALLOWED_ORIGIN_REGEXES or
+# CORS_ALLOW_ALL_ORIGINS were used here instead of an explicit list.
 CORS_ALLOWED_ORIGINS = env.list("DJANGO_CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
 CORS_ALLOW_CREDENTIALS = True
 
@@ -150,7 +209,12 @@ KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
 # --- DRF ---------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        # Not DRF's own SessionAuthentication (PRD §8 Phase 2 A.4): that
+        # class has no WWW-Authenticate challenge, which makes DRF coerce
+        # an unauthenticated request's 401 to 403 (documented DRF
+        # behavior — see keel/core/authentication.py). PRD §7 requires a
+        # real 401 for "no session, or session expired".
+        "keel.core.authentication.SessionAuthentication",
     ],
     # Deny by default (PRD §4, task 1.12) — a viewset that forgets to
     # declare permissions is unreachable rather than open.
@@ -167,8 +231,91 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Keel — Django + Next.js SaaS template.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "OAS_VERSION": "3.1.0",
+    # Matches allauth headless's own spec version (3.0.3) so
+    # scripts/merge_openapi.py (A.3) merges two documents in the same
+    # OpenAPI dialect rather than mixing 3.0 and 3.1 JSON Schema variants.
+    "OAS_VERSION": "3.0.3",
 }
+
+# --- allauth headless (PRD §4 "Auth architecture", §8 Phase 2 A.1) ---------
+# `HEADLESS_ONLY = True`: no allauth template-rendered account views, only
+# the JSON API at /_allauth/. The account app's own login/signup URLs
+# (accounts/) are still included in config/urls.py because the OAuth
+# handshake redirect needs somewhere headed to land.
+HEADLESS_ONLY = True
+# Only the browser (cookie + CSRF) client is served — PRD §4: "the
+# X-Session-Token header path exists for non-browser clients and stays
+# unused." Pinning to one client also collapses the `{client}` path
+# parameter out of allauth's generated OpenAPI spec (A.3), which is what
+# keeps the merged spec's paths matching docs/auth-client-contract.md.
+HEADLESS_CLIENTS = ("browser",)
+# Enables allauth's /_allauth/openapi.json — read directly by
+# scripts/merge_openapi.py (A.3), not served to end users.
+HEADLESS_SERVE_SPECIFICATION = True
+FRONTEND_URL = env("KEEL_FRONTEND_URL", default="http://localhost:3000")
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
+    "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
+    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=provider",
+}
+# `/invite/[token]` also appears in this settings-doc's PRD passage but is
+# an organizations (Phase 3) concept, not an allauth flow — it is not a
+# HEADLESS_FRONTEND_URLS key because allauth never redirects there.
+
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_LOGIN_METHODS = {"email"}
+# "password2" (confirm-password) is a classic-form-only concept — the
+# headless API always exposes a single "password" field on the wire
+# (allauth.headless.account.inputs.SignupInput), so it is left out here
+# rather than configured to no effect.
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
+# Rate limits, read from allauth.account.app_settings.RATE_LIMITS' defaults
+# (PRD §8 Phase 2 A.1: "configured, not left at defaults you have not
+# read") and restated explicitly here rather than left implicit, so a
+# reviewer sees the policy in this file instead of in the library source.
+ACCOUNT_RATE_LIMITS = {
+    "change_password": "5/m/user",
+    "manage_email": "10/m/user",
+    "reset_password": "20/m/ip,5/m/key",
+    "reauthenticate": "10/m/user",
+    "reset_password_from_key": "20/m/ip",
+    "signup": "20/m/ip",
+    "login": "30/m/ip",
+    "login_failed": "10/m/ip,5/300s/key",
+}
+
+# The one configured social provider (PRD §8 Phase 2 A.1). Credentials
+# come from settings, not the DB-backed SocialApp model, so there is
+# nothing to seed via a data migration or the admin. Adding a second
+# provider is exactly this: another top-level key with its own APPS
+# entry and env vars — no code change.
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "OAUTH_PKCE_ENABLED": True,
+        "APPS": [
+            {
+                "client_id": env("GOOGLE_OAUTH_CLIENT_ID", default=""),
+                "secret": env("GOOGLE_OAUTH_CLIENT_SECRET", default=""),
+                "key": "",
+            },
+        ],
+    },
+}
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # the provider already verified it
+SOCIALACCOUNT_STORE_TOKENS = False
+
+# MFA (TOTP): app is only installed (see INSTALLED_APPS above) when
+# KEEL_MFA_ENABLED is true. WebAuthn ships in allauth but is out of Phase 2
+# scope per the plan, so it is left out of SUPPORTED_TYPES even when TOTP
+# is switched on.
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
+
+USERSESSIONS_TRACK_ACTIVITY = True
 
 # --- Structured JSON logging (keel/core/logging.py) --------------------
 # Every line is JSON and carries the request id set by
