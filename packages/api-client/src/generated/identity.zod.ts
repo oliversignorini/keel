@@ -1422,6 +1422,180 @@ export const organizationsInvitationsRetrieveResponse = zod.object({
 })
 
 
+export const organizationsJobsListParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const organizationsJobsListQueryParams = zod.object({
+  "cursor": zod.string().optional().describe('The pagination cursor value.'),
+  "limit": zod.number().optional().describe('Number of results to return per page.')
+})
+
+export const organizationsJobsListResponseResultsItemResultRefMax = 255;
+
+export const organizationsJobsListResponseResultsItemStepsItemNameMax = 255;
+
+export const organizationsJobsListResponseResultsItemStepsItemOrdinalMin = -2147483648;
+export const organizationsJobsListResponseResultsItemStepsItemOrdinalMax = 2147483647;
+
+export const organizationsJobsListResponseResultsItemStepsItemOutputRefMax = 255;
+
+export const organizationsJobsListResponseResultsItemStepsItemStatusMax = 16;
+
+export const organizationsJobsListResponseResultsItemTypeMax = 100;
+
+
+
+export const organizationsJobsListResponse = zod.object({
+  "next": zod.string().url().nullish(),
+  "previous": zod.string().url().nullish(),
+  "results": zod.array(zod.object({
+  "created_at": zod.string().datetime({}),
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "params": zod.unknown().optional(),
+  "result_ref": zod.string().max(organizationsJobsListResponseResultsItemResultRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "steps": zod.array(zod.object({
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsJobsListResponseResultsItemStepsItemNameMax),
+  "ordinal": zod.number().min(organizationsJobsListResponseResultsItemStepsItemOrdinalMin).max(organizationsJobsListResponseResultsItemStepsItemOrdinalMax),
+  "output_ref": zod.string().max(organizationsJobsListResponseResultsItemStepsItemOutputRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.string().max(organizationsJobsListResponseResultsItemStepsItemStatusMax).optional()
+})),
+  "type": zod.string().max(organizationsJobsListResponseResultsItemTypeMax)
+}))
+})
+
+
+export const organizationsJobsCreateParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const organizationsJobsCreateBodyResultRefMax = 255;
+
+export const organizationsJobsCreateBodyTypeMax = 100;
+
+
+
+export const organizationsJobsCreateBody = zod.object({
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "params": zod.unknown().optional(),
+  "result_ref": zod.string().max(organizationsJobsCreateBodyResultRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "type": zod.string().max(organizationsJobsCreateBodyTypeMax)
+})
+
+
+export const organizationsJobsRetrieveParams = zod.object({
+  "id": zod.string(),
+  "org_slug": zod.string()
+})
+
+export const organizationsJobsRetrieveResponseResultRefMax = 255;
+
+export const organizationsJobsRetrieveResponseStepsItemNameMax = 255;
+
+export const organizationsJobsRetrieveResponseStepsItemOrdinalMin = -2147483648;
+export const organizationsJobsRetrieveResponseStepsItemOrdinalMax = 2147483647;
+
+export const organizationsJobsRetrieveResponseStepsItemOutputRefMax = 255;
+
+export const organizationsJobsRetrieveResponseStepsItemStatusMax = 16;
+
+export const organizationsJobsRetrieveResponseTypeMax = 100;
+
+
+
+export const organizationsJobsRetrieveResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "params": zod.unknown().optional(),
+  "result_ref": zod.string().max(organizationsJobsRetrieveResponseResultRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "steps": zod.array(zod.object({
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsJobsRetrieveResponseStepsItemNameMax),
+  "ordinal": zod.number().min(organizationsJobsRetrieveResponseStepsItemOrdinalMin).max(organizationsJobsRetrieveResponseStepsItemOrdinalMax),
+  "output_ref": zod.string().max(organizationsJobsRetrieveResponseStepsItemOutputRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.string().max(organizationsJobsRetrieveResponseStepsItemStatusMax).optional()
+})),
+  "type": zod.string().max(organizationsJobsRetrieveResponseTypeMax)
+})
+
+
+export const organizationsJobsCancelCreateParams = zod.object({
+  "id": zod.string(),
+  "org_slug": zod.string()
+})
+
+export const organizationsJobsCancelCreateBodyResultRefMax = 255;
+
+export const organizationsJobsCancelCreateBodyTypeMax = 100;
+
+
+
+export const organizationsJobsCancelCreateBody = zod.object({
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "params": zod.unknown().optional(),
+  "result_ref": zod.string().max(organizationsJobsCancelCreateBodyResultRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "type": zod.string().max(organizationsJobsCancelCreateBodyTypeMax)
+})
+
+export const organizationsJobsCancelCreateResponseResultRefMax = 255;
+
+export const organizationsJobsCancelCreateResponseStepsItemNameMax = 255;
+
+export const organizationsJobsCancelCreateResponseStepsItemOrdinalMin = -2147483648;
+export const organizationsJobsCancelCreateResponseStepsItemOrdinalMax = 2147483647;
+
+export const organizationsJobsCancelCreateResponseStepsItemOutputRefMax = 255;
+
+export const organizationsJobsCancelCreateResponseStepsItemStatusMax = 16;
+
+export const organizationsJobsCancelCreateResponseTypeMax = 100;
+
+
+
+export const organizationsJobsCancelCreateResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "params": zod.unknown().optional(),
+  "result_ref": zod.string().max(organizationsJobsCancelCreateResponseResultRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "steps": zod.array(zod.object({
+  "error": zod.string().optional(),
+  "finished_at": zod.string().datetime({}).nullish(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(organizationsJobsCancelCreateResponseStepsItemNameMax),
+  "ordinal": zod.number().min(organizationsJobsCancelCreateResponseStepsItemOrdinalMin).max(organizationsJobsCancelCreateResponseStepsItemOrdinalMax),
+  "output_ref": zod.string().max(organizationsJobsCancelCreateResponseStepsItemOutputRefMax).optional(),
+  "started_at": zod.string().datetime({}).nullish(),
+  "status": zod.string().max(organizationsJobsCancelCreateResponseStepsItemStatusMax).optional()
+})),
+  "type": zod.string().max(organizationsJobsCancelCreateResponseTypeMax)
+})
+
+
 /**
  * ``/organizations/<org_slug>/members/``.
  */
