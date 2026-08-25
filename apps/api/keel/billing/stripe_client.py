@@ -88,6 +88,13 @@ def create_billing_portal_session(*, customer_id: str, return_url: str) -> str:
     return str(session.url)
 
 
+def update_subscription_quantity(*, subscription_id: str, quantity: int) -> None:
+    """Syncs seat count with proration (docs/plans/phase-4.md B.5)."""
+    _client().subscriptions.update(
+        subscription_id, {"quantity": quantity, "proration_behavior": "create_prorations"}
+    )
+
+
 def fetch_products_and_prices() -> list[dict[str, Any]]:
     """Every active Stripe Product, each with its active Prices attached,
     normalised to the plain-dict shape ``sync_plans_from_stripe`` expects:

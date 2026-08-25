@@ -10,7 +10,7 @@ from django.db import transaction
 from keel.billing import stripe_client
 from keel.billing.entitlements import enforce_downgrade_limits
 from keel.billing.models import Plan, Price, Subscription
-from keel.organizations.models import Organization
+from keel.organizations.models import Membership, Organization
 
 CHECKOUT_TRIAL_DAYS = 14
 
@@ -142,3 +142,21 @@ def create_portal_session(*, organization: Organization, return_url: str) -> str
     return stripe_client.create_billing_portal_session(
         customer_id=customer_id, return_url=return_url
     )
+
+
+def sync_seat_quantity(organization: Organization) -> None:
+    """Syncs active membership count to the organisation's Stripe
+    subscription quantity, with proration (docs/plans/phase-4.md B.5).
+    A no-op if the organisation has no ``Subscription`` yet — seat pricing
+    can be on before anyone has checked out."""
+    subscription = Subscription.objects.filter(organization=organization).first()
+    if subscription is None:
+        return
+    quantity = Membership.objects.filter(
+        organization=organization, status=Membership.STATUS_ACTIVE
+    ).count()
+    stripe_client.update_subscription_quantity(
+        subscription_id=subscription.stripe_subscription_id, quantity=quantity
+    )
+    subscription.quantity = quantity
+    subscription.save(update_fields=["quantity"])

@@ -98,9 +98,15 @@ def transfer_ownership(
 
 
 def _sync_seats(organization_id: Any) -> None:
-    """Phase 4's seat-sync hook (phase-3.md B.1: "Seat sync on commit,
-    behind ``BILLING_SEAT_PRICING`` ... Phase 4 owns the sync itself —
-    leave the hook and note the dependency"). No-op until then."""
+    """Dispatches the Tier-1 seat-sync task (docs/plans/phase-4.md B.5).
+    Enqueuing rather than calling ``keel.billing.services.sync_seat_quantity``
+    directly means a Stripe failure here can never surface as an exception
+    from ``accept_invitation``/``remove_member`` — B.5's "membership writes
+    succeed while Stripe is unreachable" holds regardless of whether this
+    fires from inside a request or a background worker."""
+    from keel.billing.tasks import sync_seat_quantity_task
+
+    sync_seat_quantity_task.enqueue(str(organization_id))
 
 
 def _billing_seat_pricing_enabled() -> bool:
@@ -196,11 +202,19 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
 def remove_member(*, membership: Membership, actor: Any) -> None:
     """Calls the ``members.remove`` guard with ``membership`` as the
     subject rather than reimplementing the last-owner check — the
-    guard, not this function, is authorization's source of truth."""
+    guard, not this function, is authorization's source of truth.
+
+    Seat sync fires on commit, behind ``BILLING_SEAT_PRICING`` — the
+    other half of docs/plans/phase-4.md B.5 alongside
+    ``accept_invitation``'s ("seat count syncs to Stripe ... on
+    membership create and remove")."""
     decision = has_perm(actor, membership.organization, Perm.MEMBERS_REMOVE, subject=membership)
     if not decision.allowed:
         raise PermissionDeniedWithReason(
             code=decision.reason or "permission_denied", details=decision.details
         )
+    organization_id = membership.organization_id
     with transaction.atomic():
         membership.delete()
+        if _billing_seat_pricing_enabled():
+            transaction.on_commit(lambda: _sync_seats(organization_id))

@@ -14,6 +14,10 @@ dead-letter mechanism as Phase 5 deliverables, not Phase 4's. An event
 that exhausts its retries lands with ``StripeEvent.error`` set and
 ``processed_at`` still null — inspectable and re-processable by hand via
 Django admin, re-drivable properly once Phase 5's mechanism exists.
+
+Also holds ``sync_seat_quantity_task`` (B.5), which *does* use the Tier-1
+shim — see its own docstring for why the two tasks in this module use
+different mechanisms.
 """
 
 from typing import Any
@@ -24,6 +28,7 @@ from django.utils import timezone
 
 from keel.billing.models import StripeEvent
 from keel.billing.webhooks import HANDLERS
+from keel.core.tasks import task
 
 MAX_RETRIES = 5
 RETRY_BACKOFF_BASE_SECONDS = 5
@@ -69,3 +74,19 @@ def dispatch_stripe_event(self: Any, event_id: str) -> None:
         raise self.retry(
             exc=exc, countdown=RETRY_BACKOFF_BASE_SECONDS * (2**self.request.retries)
         ) from exc
+
+
+@task
+def sync_seat_quantity_task(organization_id: str) -> None:
+    """Tier-1 fire-and-forget dispatch (docs/plans/phase-4.md B.5) — this
+    is exactly the shim's own canonical example, "sync a Stripe object".
+    Unlike the webhook worker above, no retry is needed here: the next
+    membership create/remove re-syncs to the correct count regardless of
+    whether this particular sync succeeded, so there's nothing to retry
+    that the next event doesn't already fix. Takes an id, never a model
+    instance (PRD §5, "every task takes IDs")."""
+    from keel.billing.services import sync_seat_quantity
+    from keel.organizations.models import Organization
+
+    organization = Organization.objects.get(pk=organization_id)
+    sync_seat_quantity(organization)
