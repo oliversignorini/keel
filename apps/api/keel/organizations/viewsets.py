@@ -102,7 +102,11 @@ class OrganizationDetailView(APIView):
     def delete(self, request: Request, org_slug: str) -> Response:
         organization = self._get_organization(request, org_slug)
         self._require(request, organization, Perm.ORG_DELETE)
-        services.delete_organization(organization=organization, actor=request.user)
+        services.delete_organization(
+            organization=organization,
+            actor=request.user,
+            impersonator=getattr(request, "impersonator", None),
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

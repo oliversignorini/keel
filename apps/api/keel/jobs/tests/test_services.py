@@ -20,7 +20,7 @@ def test_create_job_creates_a_queued_job_and_does_not_run_it_inline(
     user = make_user()
     with django_capture_on_commit_callbacks(execute=False):
         job = services.create_job(
-            organization=org, requested_by=user, type=DEMO_JOB_TYPE, params={"items": [1, 2]}
+            organization=org, actor=user, type=DEMO_JOB_TYPE, params={"items": [1, 2]}
         )
     assert job.status == Job.STATUS_QUEUED
     assert job.started_at is None
@@ -35,14 +35,14 @@ def test_replaying_the_same_idempotency_key_returns_the_original_job_and_creates
     with django_capture_on_commit_callbacks(execute=False):
         first = services.create_job(
             organization=org,
-            requested_by=user,
+            actor=user,
             type=DEMO_JOB_TYPE,
             params={"items": [1]},
             idempotency_key="key-1",
         )
         second = services.create_job(
             organization=org,
-            requested_by=user,
+            actor=user,
             type=DEMO_JOB_TYPE,
             params={"items": [1, 2, 3]},  # different params — must still be ignored
             idempotency_key="key-1",
@@ -62,13 +62,13 @@ def test_replaying_the_same_idempotency_key_creates_no_second_credit_hold(
     with django_capture_on_commit_callbacks(execute=False):
         services.create_job(
             organization=org,
-            requested_by=user,
+            actor=user,
             type=DEMO_JOB_TYPE,
             idempotency_key="key-2",
         )
         services.create_job(
             organization=org,
-            requested_by=user,
+            actor=user,
             type=DEMO_JOB_TYPE,
             idempotency_key="key-2",
         )
@@ -84,10 +84,10 @@ def test_a_different_idempotency_key_creates_a_second_row(
     user = make_user()
     with django_capture_on_commit_callbacks(execute=False):
         first = services.create_job(
-            organization=org, requested_by=user, type=DEMO_JOB_TYPE, idempotency_key="a"
+            organization=org, actor=user, type=DEMO_JOB_TYPE, idempotency_key="a"
         )
         second = services.create_job(
-            organization=org, requested_by=user, type=DEMO_JOB_TYPE, idempotency_key="b"
+            organization=org, actor=user, type=DEMO_JOB_TYPE, idempotency_key="b"
         )
     assert first.pk != second.pk
 
@@ -95,7 +95,7 @@ def test_a_different_idempotency_key_creates_a_second_row(
 def test_create_job_with_an_unknown_type_raises() -> None:
     org = make_organization()
     with pytest.raises(UnprocessableEntity):
-        services.create_job(organization=org, requested_by=make_user(), type="nope.nope")
+        services.create_job(organization=org, actor=make_user(), type="nope.nope")
 
 
 def test_create_job_places_a_credit_hold_when_credits_are_enabled(
@@ -105,7 +105,7 @@ def test_create_job_places_a_credit_hold_when_credits_are_enabled(
     org = make_organization()
     credits.grant(org, 100)
     with django_capture_on_commit_callbacks(execute=False):
-        job = services.create_job(organization=org, requested_by=make_user(), type=DEMO_JOB_TYPE)
+        job = services.create_job(organization=org, actor=make_user(), type=DEMO_JOB_TYPE)
     assert credits.get_balance(org) == 100 - 3  # demo job's credit_estimate
     assert CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_HOLD).exists()
 
@@ -114,7 +114,7 @@ def test_create_job_raises_payment_required_when_balance_is_insufficient(setting
     settings.BILLING_CREDITS = True
     org = make_organization()
     with pytest.raises(PaymentRequired):
-        services.create_job(organization=org, requested_by=make_user(), type=DEMO_JOB_TYPE)
+        services.create_job(organization=org, actor=make_user(), type=DEMO_JOB_TYPE)
     assert Job.objects.filter(organization=org).count() == 0
 
 

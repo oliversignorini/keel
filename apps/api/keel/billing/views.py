@@ -58,6 +58,8 @@ class CheckoutSessionView(_OrganizationBillingView):
             raise UnprocessableEntity(code="price_not_found", message="Unknown or inactive price.")
         url = services.create_checkout_session(
             organization=organization,
+            actor=request.user,
+            impersonator=getattr(request, "impersonator", None),
             price=price,
             success_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=success",
             cancel_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=cancelled",
@@ -74,6 +76,8 @@ class BillingPortalView(_OrganizationBillingView):
         organization = self._get_organization(request, org_slug)
         url = services.create_portal_session(
             organization=organization,
+            actor=request.user,
+            impersonator=getattr(request, "impersonator", None),
             return_url=f"{_frontend_base()}/{organization.slug}/settings/billing",
         )
         return Response({"url": url})

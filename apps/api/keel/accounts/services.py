@@ -3,7 +3,10 @@
 
 from django.core.management import call_command
 
+from keel.core.audit import not_audited
 
+
+@not_audited(reason="Scheduled system job (PRD §5), not a user action — no actor to record.")
 def cleanup_expired_sessions() -> None:
     """Delegates to Django's own ``clearsessions`` management command
     rather than reimplementing its query — that command already deletes

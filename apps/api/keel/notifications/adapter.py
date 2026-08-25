@@ -18,11 +18,25 @@ adding allauth features later doesn't require touching this file first.
 from typing import Any
 
 from allauth.account.adapter import DefaultAccountAdapter
+from django.contrib.auth.base_user import AbstractBaseUser
 
+from keel.core.impersonation import forbid_when_impersonating, get_impersonator_id
 from keel.notifications.emails import send_password_reset_email, send_verification_email
 
 
 class KeelAccountAdapter(DefaultAccountAdapter):
+    def set_password(self, user: AbstractBaseUser, password: str) -> None:
+        """Allauth's one call point for every password set — change,
+        reset-confirm, and signup (PRD §6 "cannot change password" for an
+        impersonated session; docs/plans/phase-8.md 8.3). ``self.request``
+        is populated by allauth's own ``get_adapter(request)``/
+        ``allauth.core.context`` machinery regardless of which flow got
+        here, so this is the one enforcement point that covers all of
+        them without reimplementing allauth's password forms."""
+        impersonator_id = get_impersonator_id(self.request) if self.request else None
+        forbid_when_impersonating(impersonator_id, "change password")
+        super().set_password(user, password)
+
     def send_mail(self, template_prefix: str, email: str, context: dict[str, Any]) -> None:
         if template_prefix in (
             "account/email/email_confirmation",

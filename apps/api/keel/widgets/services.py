@@ -55,7 +55,7 @@ def create_widget(
 
 
 @audited("widget.updated")
-def update_widget(*, widget: Widget, actor: Any, **fields: Any) -> Widget:
+def update_widget(*, widget: Widget, actor: Any, impersonator: Any = None, **fields: Any) -> Widget:
     with transaction.atomic():
         for field, value in fields.items():
             setattr(widget, field, value)
@@ -64,6 +64,6 @@ def update_widget(*, widget: Widget, actor: Any, **fields: Any) -> Widget:
 
 
 @audited("widget.deleted")
-def delete_widget(*, widget: Widget, actor: Any) -> None:
+def delete_widget(*, widget: Widget, actor: Any, impersonator: Any = None) -> None:
     with transaction.atomic():
         widget.delete()
