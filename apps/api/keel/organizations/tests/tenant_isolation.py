@@ -10,7 +10,7 @@ from django.utils.module_loading import import_string
 from rest_framework.test import APIRequestFactory
 
 from keel.accounts.models import User
-from keel.core.authz import GlobalViewSet, OrgScopedViewSet
+from keel.core.authz import OrgScopedViewSet, registered_global_viewsets
 from keel.organizations.models import Membership, Organization, Role
 
 
@@ -27,18 +27,28 @@ def iter_org_scoped_viewsets(router: Any) -> Any:
             yield viewset
 
 
-def iter_global_justifications(router: Any) -> Any:
-    """``(viewset name, GLOBAL_JUSTIFICATION)`` for every ``organization_scoped
-    = False`` viewset on ``router`` — printed in CI output so an exemption
-    from tenant scoping is a decision visible on every run, not an entry
-    in a list nobody reads (PRD §4 invariant 7)."""
+def _is_production_module(viewset_cls: type) -> bool:
+    return "tests" not in viewset_cls.__module__.split(".")
+
+
+def iter_global_justifications() -> Any:
+    """``(viewset name, GLOBAL_JUSTIFICATION)`` for every production
+    ``organization_scoped = False`` ``GlobalViewSet`` ever defined — drawn
+    from ``keel.core.authz.registered_global_viewsets()``, not any
+    particular router. A ``GlobalViewSet`` is recorded there unconditionally
+    at import time, so its justification is printed in CI output regardless
+    of which router it lands on or whether it is routed at all (PRD §4
+    invariant 7). Test-fixture viewsets are excluded by module path, the
+    way ``test_meta_router_wiring.py`` excludes them from the scoped-viewset
+    walk: anything whose ``__module__`` has a ``tests`` package segment."""
     seen = set()
-    for _prefix, viewset, _basename in getattr(router, "registry", []):
+    for viewset in registered_global_viewsets():
         if viewset in seen:
             continue
         seen.add(viewset)
-        is_global = issubclass(viewset, GlobalViewSet)
-        if is_global and not getattr(viewset, "organization_scoped", False):
+        if not _is_production_module(viewset):
+            continue
+        if not getattr(viewset, "organization_scoped", False):
             yield viewset.__name__, viewset.GLOBAL_JUSTIFICATION
 
 

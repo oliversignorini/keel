@@ -96,12 +96,11 @@ def test_plan_viewset_declares_a_real_global_justification() -> None:
     assert len(justification) > 40, "GLOBAL_JUSTIFICATION reads like a placeholder, not a reason"
 
 
-def test_plan_viewset_justification_is_printable_by_the_router_walk() -> None:
-    from rest_framework.routers import SimpleRouter
+def test_plan_viewset_justification_is_printed_regardless_of_router() -> None:
+    """PlanViewSet is registered on keel/billing/urls.py's router, not the
+    router at settings.KEEL_API_ROUTER — the justification print must find
+    it anyway, because it walks the GlobalViewSet registry, not a router
+    (PRD §4 invariant 7)."""
+    justifications = list(iter_global_justifications())
 
-    router = SimpleRouter()
-    router.register("plans", PlanViewSet, basename="fixture-plan")
-
-    justifications = list(iter_global_justifications(router))
-
-    assert justifications == [("PlanViewSet", PlanViewSet.GLOBAL_JUSTIFICATION)]
+    assert ("PlanViewSet", PlanViewSet.GLOBAL_JUSTIFICATION) in justifications

@@ -113,16 +113,68 @@ def test_iter_org_scoped_viewsets_finds_scoped_viewsets_on_a_router() -> None:
     assert found == [WellScopedDemoViewSet]
 
 
-def test_iter_global_justifications_lists_every_global_viewset() -> None:
-    router = SimpleRouter()
-    router.register("widgets", WellScopedDemoViewSet, basename="fixture-widgets-2")
-    router.register("brands", _FixtureGlobalViewSet, basename="fixture-brands-2")
+def test_iter_global_justifications_excludes_test_fixture_viewsets() -> None:
+    """``_FixtureGlobalViewSet`` above is well-formed and organization_scoped
+    = False, so it lands in the registry — but it lives under this
+    ``tests`` package, so it must not show up in CI's justification print."""
+    names = {name for name, _justification in iter_global_justifications()}
 
-    justifications = list(iter_global_justifications(router))
+    assert "_FixtureGlobalViewSet" not in names
 
-    assert justifications == [
-        ("_FixtureGlobalViewSet", "Fixture — reference data identical across tenants.")
+
+def test_iter_global_justifications_finds_globals_from_the_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The print is driven by the registry, not by whichever router a
+    viewset happens to be wired to — this is the fix for PRD §4 invariant
+    7's gap: a GlobalViewSet on a router nobody walks (or on no router at
+    all) must still surface its justification."""
+
+    # Plain duck-typed stand-ins, not real GlobalViewSet/OrgScopedViewSet
+    # subclasses — a real subclass would register itself in the actual,
+    # process-wide registries via __init_subclass__ and leak into every
+    # other test in the suite (e.g. test_meta_router_wiring.py).
+    fake_global_viewset = type(
+        "_ProductionGlobalViewSet",
+        (),
+        {
+            "__module__": "keel.billing.viewsets",
+            "organization_scoped": False,
+            "GLOBAL_JUSTIFICATION": "Catalogue data, identical across tenants.",
+        },
+    )
+    fake_scoped_viewset = type(
+        "_ProductionScopedViewSet",
+        (),
+        {"__module__": "keel.billing.viewsets", "organization_scoped": True},
+    )
+
+    monkeypatch.setattr(
+        "keel.organizations.tests.tenant_isolation.registered_global_viewsets",
+        lambda: [fake_global_viewset, fake_scoped_viewset],
+    )
+
+    assert list(iter_global_justifications()) == [
+        ("_ProductionGlobalViewSet", "Catalogue data, identical across tenants.")
     ]
+
+
+def test_no_production_global_justification_is_blank() -> None:
+    """A GLOBAL_JUSTIFICATION of " " satisfies __init_subclass__'s "declared
+    a string" check and defeats the entire point of PRD §4 invariant 7 — an
+    exemption nobody has to actually write a paragraph for. This walks the
+    real registry, not a fixture."""
+    blank = [
+        name
+        for name, justification in iter_global_justifications()
+        if not (justification or "").strip()
+    ]
+
+    assert not blank, (
+        "The following GlobalViewSet(s) declare a GLOBAL_JUSTIFICATION that "
+        f"is missing, empty, or whitespace-only: {blank}. PRD §4 invariant "
+        "7 requires a real explanation, not just a truthy string."
+    )
 
 
 def test_router_enforces_cross_org_404_for_every_scoped_viewset() -> None:
