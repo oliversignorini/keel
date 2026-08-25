@@ -2,6 +2,8 @@
 paths (PRD §4 invariant 7 — the cross-org meta-test walk) and directly by
 this app's own tests."""
 
+from datetime import timedelta
+
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
@@ -45,5 +47,5 @@ def invitation_factory(organization: Organization) -> Invitation:
         role=role,
         invited_by=inviter,
         token=get_random_string(48),
-        expires_at=timezone.now() + timezone.timedelta(days=7),
+        expires_at=timezone.now() + timedelta(days=7),
     )

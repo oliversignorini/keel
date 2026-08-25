@@ -3,6 +3,8 @@ acceptance): organisations, members, roles, invitations, /me,
 /permissions, and the invitation-accept edge cases (phase-3.md B.4).
 """
 
+from datetime import timedelta
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -175,7 +177,7 @@ def test_expired_and_revoked_invitations_are_indistinguishable() -> None:
 
     org, creator = _org_with_owner()
     expired = _pending_invitation(org, creator, email="expired@example.com")
-    expired.expires_at = timezone.now() - timezone.timedelta(days=1)
+    expired.expires_at = timezone.now() - timedelta(days=1)
     expired.save(update_fields=["expires_at"])
     revoked = _pending_invitation(org, creator, email="revoked@example.com")
     services.revoke_invitation(invitation=revoked, actor=creator)
