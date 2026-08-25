@@ -52,6 +52,22 @@ def test_request_id_is_null_when_unset() -> None:
     assert parsed["request_id"] is None
 
 
+def test_includes_exc_info_when_present() -> None:
+    formatter = JSONFormatter()
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        import sys
+
+        record = _record("failed", exc_info=sys.exc_info())
+
+    output = formatter.format(record)
+    parsed = json.loads(output)
+
+    assert "ValueError" in parsed["exc_info"]
+    assert "boom" in parsed["exc_info"]
+
+
 def test_get_request_id_reads_the_contextvar() -> None:
     assert get_request_id() is None
 

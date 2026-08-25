@@ -67,7 +67,27 @@ django_settings_module = "config.settings.test"
 # is explicitly forbidden from creating. Phase 1 onward adds a glob the
 # moment the path it covers exists, per "paths that do not exist yet
 # omitted" in docs/plans/phase-0.md task 0.8.
+#
+# keel/core is the first real obligation: the authz registry, the
+# exception handler, the pagination class, the audit decorators, the
+# crypto seam and the id generator are all load-bearing and all cheap to
+# test — 100% is what this phase actually achieved, not an aspiration.
+# Modules listed explicitly rather than "keel/core/*.py": fnmatch's "*"
+# matches "/" too, so a single-segment glob would also reach
+# keel/core/tests/*.py, where a fixture function's body legitimately
+# goes uncovered whenever a test only asserts on its registration and
+# never calls it.
 [tool.keel.coverage]
+"keel/core/ids.py" = 100
+"keel/core/models.py" = 100
+"keel/core/exceptions.py" = 100
+"keel/core/authz.py" = 100
+"keel/core/audit.py" = 100
+"keel/core/pagination.py" = 100
+"keel/core/tasks.py" = 100
+"keel/core/crypto.py" = 100
+"keel/core/logging.py" = 100
+"keel/core/middleware.py" = 100
 
 [tool.importlinter]
 root_packages = ["config", "keel"]

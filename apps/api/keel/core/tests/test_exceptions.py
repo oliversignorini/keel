@@ -14,6 +14,7 @@ from keel.core.exceptions import (
     PaymentRequired,
     PermissionDeniedWithReason,
     UnprocessableEntity,
+    _validation_details,
     exception_handler,
 )
 
@@ -32,6 +33,23 @@ def test_400_validation_error_from_serializer() -> None:
     body = envelope(response)
     assert body["error"]["code"] == "validation_error"
     assert body["error"]["details"] == [{"field": "email", "message": "This field is required."}]
+
+
+def test_400_validation_error_with_non_field_errors_list() -> None:
+    exc = ValidationError(["Top-level error not tied to a field."])
+
+    response = exception_handler(exc, {})
+
+    assert response is not None
+    assert response.status_code == 400
+    body = envelope(response)
+    assert body["error"]["details"] == [
+        {"field": None, "message": "Top-level error not tied to a field."}
+    ]
+
+
+def test_validation_details_wraps_a_bare_scalar_detail() -> None:
+    assert _validation_details("just a string") == [{"field": None, "message": "just a string"}]
 
 
 def test_401_not_authenticated() -> None:

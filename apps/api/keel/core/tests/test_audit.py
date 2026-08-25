@@ -47,6 +47,7 @@ def test_registry_is_enumerable() -> None:
 
     assert any(k.endswith("fixture_audited_fn") for k in entries)
     assert any(k.endswith("fixture_not_audited_fn") for k in entries)
+    assert len(registry) >= 2
 
 
 @pytest.mark.django_db

@@ -179,6 +179,33 @@ def test_global_viewset_with_justification_does_not_raise() -> None:
     assert GoodGlobalViewSet.GLOBAL_JUSTIFICATION
 
 
+def test_abstract_org_scoped_intermediate_base_skips_the_test_factory_check() -> None:
+    """A project may want its own abstract mixin between OrgScopedViewSet
+    and its concrete viewsets; declaring __abstract__ = True opts out of
+    the test_factory check the same way OrgScopedViewSet itself does."""
+
+    class AbstractIntermediateViewSet(OrgScopedViewSet):
+        __abstract__ = True
+
+    assert AbstractIntermediateViewSet.test_factory is None
+
+
+def test_get_queryset_filters_through_for_organization() -> None:
+    class FakeQuerySet:
+        def for_organization(self, organization):
+            return f"filtered-for-{organization}"
+
+    class FixtureQuerysetViewSet(OrgScopedViewSet):
+        required_permissions = ("fixture.queryset",)
+        test_factory = "keel.core.tests.test_authz.fake_factory"
+        queryset = FakeQuerySet()
+
+    view = FixtureQuerysetViewSet()
+    view.organization = "org-1"
+
+    assert view.get_queryset() == "filtered-for-org-1"
+
+
 # --- End-to-end: Decision.deny reaches the client as a 403 envelope -------
 
 
