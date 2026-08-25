@@ -22,8 +22,10 @@ describe("formatPrice", () => {
   // Asserted so the unreachable catch branch below is not mistaken for
   // the thing keeping this safe.
   it("degrades instead of throwing on an unknown currency", () => {
-    //  , not a plain space: Intl separates an unknown currency code
-    // from the number with a non-breaking space.
+    // Intl does not throw on an unknown code, it prints the code itself,
+    // separated from the number by a non-breaking space rather than a
+    // plain one. Asserting the real character keeps the unreachable catch
+    // branch in format.ts from being mistaken for what makes this safe.
     expect(formatPrice(2900, "ZZZ")).toBe("ZZZ 29");
   });
 });
