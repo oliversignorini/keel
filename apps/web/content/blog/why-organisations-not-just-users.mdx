@@ -1,0 +1,19 @@
+---
+title: "Why organisations, not just users"
+description: "Multi-tenancy is easy to bolt on late and expensive to skip early. Here's why Keel builds it in from Phase 3."
+date: "2026-01-12"
+author: "Keel team"
+---
+
+Most SaaS products eventually need to answer "who is this data for — a
+person, or a team?" Retrofitting an organisation model onto a
+single-tenant schema means a migration that touches every table with a
+foreign key to `User`.
+
+Keel starts with organisations as the tenant boundary. Every resource
+belongs to an organisation, membership carries a role, and roles map to
+permissions checked on the server — never just hidden in the UI.
+
+The switcher in the top bar keeps the current organisation visible at all
+times, because "wrong data" confusion in a multi-tenant app is almost
+always a context problem, not a permissions bug.

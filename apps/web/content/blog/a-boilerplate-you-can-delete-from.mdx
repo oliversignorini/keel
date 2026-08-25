@@ -1,0 +1,19 @@
+---
+title: "A boilerplate you can delete from"
+description: "Not every project wants a marketing site, a demo resource, or seat-based pricing. Keel's init script asks first."
+date: "2026-02-20"
+author: "Keel team"
+---
+
+The easiest way to make a template feel generic is to make everything in
+it optional and self-contained. Keel's `init` script asks a handful of
+yes/no questions on first run — does this project want a public marketing
+site, a demo resource to copy, seat-based billing — and answering "no"
+removes the corresponding code rather than leaving it disabled behind a
+flag.
+
+That only works if the part being removed was built as a clean unit in
+the first place: its own route group, its own dependencies, its own
+Playwright specs. The marketing site you're reading this on is one of
+those units — see `docs/marketing-removal.md` for exactly what `init`
+deletes if you decline it.
