@@ -38,4 +38,17 @@ describe("resolveGuardRedirect", () => {
     expect(resolveGuardRedirect("/app", false)).toBe("/login?next=%2Fapp");
     expect(resolveGuardRedirect("/accountability", false)).toBeNull();
   });
+
+  it("sends an unauthenticated visitor away from /onboarding to /login with next=", () => {
+    expect(resolveGuardRedirect("/onboarding", false)).toBe("/login?next=%2Fonboarding");
+  });
+
+  it("lets an authenticated visitor reach /onboarding", () => {
+    expect(resolveGuardRedirect("/onboarding", true)).toBeNull();
+  });
+
+  it("leaves /invite/[token] unguarded either way — it must work signed out", () => {
+    expect(resolveGuardRedirect("/invite/abc123", false)).toBeNull();
+    expect(resolveGuardRedirect("/invite/abc123", true)).toBeNull();
+  });
 });

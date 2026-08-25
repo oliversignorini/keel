@@ -4,8 +4,8 @@ import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UnauthorizedError, authSignup, identitySchemas } from "@keel/api-client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -16,26 +16,44 @@ import { SubmitButton } from "../_components/submit-button";
 
 type SignupFormValues = z.infer<typeof identitySchemas.authSignupBody>;
 
+// useSearchParams() opts the page out of static rendering unless wrapped in
+// its own Suspense boundary, same as /login (see that page's comment).
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Invitation-driven signup (PRD §6 "Invitation": "not signed in → signup,
+  // prefilled + locked email, then re-resolve") — the email comes from the
+  // invite page's already-resolved invitation, never typed by the visitor,
+  // so it's locked rather than merely prefilled.
+  const lockedEmail = searchParams.get("email");
+  const next = searchParams.get("next");
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<SignupFormValues>({ resolver: zodResolver(identitySchemas.authSignupBody) });
+  } = useForm<SignupFormValues>({
+    resolver: zodResolver(identitySchemas.authSignupBody),
+    defaultValues: lockedEmail ? { email: lockedEmail } : undefined,
+  });
 
   async function onSubmit(values: SignupFormValues) {
     setFormError(null);
     try {
       await authSignup(values);
-      // Signup succeeded with no pending flow — onboarding is Phase 3's
-      // route; this link is honest even though the target 404s for now.
-      router.push("/onboarding");
+      router.push(next ?? "/onboarding");
     } catch (error) {
       if (error instanceof UnauthorizedError && error.code === "verify_email") {
-        router.push("/verify-email");
+        router.push(next ? `/verify-email?next=${encodeURIComponent(next)}` : "/verify-email");
         return;
       }
       setFormError(applyFieldErrors(error, setError));
@@ -48,12 +66,16 @@ export default function SignupPage() {
         Create an account
       </h1>
       <div className="flex flex-col gap-4">
-        <GoogleContinueLink />
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
-          <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-          or
-          <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-        </div>
+        {lockedEmail ? null : (
+          <>
+            <GoogleContinueLink nextPath={next ?? "/onboarding"} />
+            <div className="flex items-center gap-3 text-xs text-neutral-500">
+              <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+              or
+              <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+            </div>
+          </>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <FormError message={formError} />
           <FormField
@@ -62,6 +84,8 @@ export default function SignupPage() {
             type="email"
             autoComplete="email"
             error={errors.email?.message}
+            readOnly={Boolean(lockedEmail)}
+            aria-readonly={lockedEmail ? true : undefined}
             {...register("email")}
           />
           <FormField
