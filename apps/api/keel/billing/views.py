@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from keel.billing import services, stripe_client, tasks
+from keel.billing import credits, services, stripe_client, tasks
 from keel.billing.models import Price, StripeEvent, Subscription
 from keel.billing.serializers import (
     CheckoutRequestSerializer,
@@ -90,6 +90,31 @@ class SubscriptionView(_OrganizationBillingView):
         if subscription is None:
             return Response({"subscription": None})
         return Response({"subscription": SubscriptionSerializer(subscription).data})
+
+
+class CreditBalanceView(_OrganizationBillingView):
+    """``GET /organizations/<org_slug>/billing/credits/`` (PRD §7's
+    credits endpoint list; docs/plans/phase-4.md Worktree C's
+    ``<CreditMeter>``, which is "rendered **only when credits are
+    enabled**").
+
+    Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5: "With it
+    off: no endpoints, no meter, no cost"). Off is a **404**, not a zero
+    balance: the flag decides whether this feature exists at all, so the
+    web meter's absence-of-data path is "there is nothing here" rather
+    than "you have no credits" — two states a user would read very
+    differently. 404 is also what an unresolvable organisation already
+    returns from ``_get_organization``, which keeps the flag from being a
+    distinguishable signal to a non-member either way.
+    """
+
+    required_permission = Perm.BILLING_VIEW
+
+    def get(self, request: Request, org_slug: str) -> Response:
+        if not credits.credits_enabled():
+            raise Http404
+        organization = self._get_organization(request, org_slug)
+        return Response({"balance": credits.get_balance(organization)})
 
 
 class StripeWebhookView(APIView):

@@ -2748,6 +2748,44 @@
         ],
         "type": "object"
       },
+      "Plan": {
+        "properties": {
+          "code": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "entitlements": {},
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "readOnly": true,
+            "type": "array"
+          },
+          "sort_order": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "id",
+          "name",
+          "prices"
+        ],
+        "type": "object"
+      },
       "Process": {
         "description": "The process to be executed when the user successfully\nauthenticates. When set to `login`, the user will be logged into the\naccount to which the provider account is connected, or if no such\naccount exists, a signup will occur. If set to `connect`, the provider\naccount will be connected to the list of provider accounts for the\ncurrently authenticated user.\n",
         "enum": [
@@ -4681,7 +4719,7 @@
     },
     "/api/v1/me/": {
       "get": {
-        "description": "``GET /me/`` \u2014 user, organisations, current role, resolved\npermission codes per organisation (PRD \u00a77). Entitlement resolution is\nPhase 4's; the ``entitlements`` seam is left as an empty dict per\norganisation until then.",
+        "description": "``GET /me/`` \u2014 user, organisations, current role, resolved\npermission codes and entitlements per organisation (PRD \u00a77;\ndocs/plans/phase-4.md B.4: \"Resolution feeds GET /api/v1/me/, which\nPhase 3 owns \u2014 coordinate rather than duplicating it\").",
         "operationId": "me_retrieve",
         "responses": {
           "200": {
@@ -4821,6 +4859,102 @@
       "patch": {
         "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
         "operationId": "organizations_partial_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/billing/checkout/": {
+      "post": {
+        "description": "``POST /organizations/<org_slug>/billing/checkout/``.",
+        "operationId": "organizations_billing_checkout_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/billing/credits/": {
+      "get": {
+        "description": "``GET /organizations/<org_slug>/billing/credits/`` (PRD \u00a77's\ncredits endpoint list; docs/plans/phase-4.md Worktree C's\n``<CreditMeter>``, which is \"rendered **only when credits are\nenabled**\").\n\nBehind ``BILLING_CREDITS``, off by default (phase-4.md A.5: \"With it\noff: no endpoints, no meter, no cost\"). Off is a **404**, not a zero\nbalance: the flag decides whether this feature exists at all, so the\nweb meter's absence-of-data path is \"there is nothing here\" rather\nthan \"you have no credits\" \u2014 two states a user would read very\ndifferently. 404 is also what an unresolvable organisation already\nreturns from ``_get_organization``, which keeps the flag from being a\ndistinguishable signal to a non-member either way.",
+        "operationId": "organizations_billing_credits_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/billing/portal/": {
+      "post": {
+        "description": "``POST /organizations/<org_slug>/billing/portal/``.",
+        "operationId": "organizations_billing_portal_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/billing/subscription/": {
+      "get": {
+        "description": "``GET /organizations/<org_slug>/billing/subscription/``.",
+        "operationId": "organizations_billing_subscription_retrieve",
         "parameters": [
           {
             "in": "path",
@@ -5372,6 +5506,50 @@
         },
         "tags": [
           "permissions"
+        ]
+      }
+    },
+    "/api/v1/plans/": {
+      "get": {
+        "description": "``GET /api/v1/plans/`` \u2014 the pricing page reads this unauthenticated\n(docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an\n``OrgScopedViewSet``: a plan is not owned by any organisation, and\nunlike ``OrgScopedViewSet`` requests it never resolves ``org_slug``.\n\n``required_permissions`` is declared (``GlobalViewSet`` requires a\nnon-empty value at import time) but not enforced here \u2014 enforcement is\n``HasOrgPermission``, which only ``OrgScopedViewSet`` wires in.\n``permission_classes`` is overridden to ``AllowAny`` instead, which is\nthe actual gate for this endpoint. The declared code documents what an\nauthenticated billing surface would require if this list were ever\nmoved behind a login.",
+        "operationId": "plans_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Plan"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/v1/stripe/webhook/": {
+      "post": {
+        "description": "``POST /api/v1/stripe/webhook/`` (PRD \u00a76 \"Stripe webhook\";\ndocs/plans/phase-4.md B.3). No session auth or CSRF: this is a\nserver-to-server call from Stripe with no session cookie, verified by\nsignature instead \u2014 DRF's ``SessionAuthentication`` only enforces CSRF\nonce it has resolved a session user, which an unauthenticated request\nnever does, so leaving ``authentication_classes`` empty here is belt\nand braces, not a gap.\n\nRecords the event and acknowledges before any processing happens\n(PRD \u00a76, \"Acknowledge in under 200ms ... work happens async\") \u2014 the\nonly synchronous work below a signature check is one\n``get_or_create`` and enqueuing a task.",
+        "operationId": "stripe_webhook_create",
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "stripe"
         ]
       }
     }

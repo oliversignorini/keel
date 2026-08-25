@@ -26,4 +26,9 @@ urlpatterns = [
         views.SubscriptionView.as_view(),
         name="billing-subscription",
     ),
+    path(
+        "organizations/<slug:org_slug>/billing/credits/",
+        views.CreditBalanceView.as_view(),
+        name="billing-credits",
+    ),
 ]

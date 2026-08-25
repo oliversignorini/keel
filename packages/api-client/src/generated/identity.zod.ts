@@ -1261,6 +1261,50 @@ export const organizationsPartialUpdateParams = zod.object({
 
 
 /**
+ * ``POST /organizations/<org_slug>/billing/checkout/``.
+ */
+export const organizationsBillingCheckoutCreateParams = zod.object({
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``GET /organizations/<org_slug>/billing/credits/`` (PRD §7's
+credits endpoint list; docs/plans/phase-4.md Worktree C's
+``<CreditMeter>``, which is "rendered **only when credits are
+enabled**").
+
+Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5: "With it
+off: no endpoints, no meter, no cost"). Off is a **404**, not a zero
+balance: the flag decides whether this feature exists at all, so the
+web meter's absence-of-data path is "there is nothing here" rather
+than "you have no credits" — two states a user would read very
+differently. 404 is also what an unresolvable organisation already
+returns from ``_get_organization``, which keeps the flag from being a
+distinguishable signal to a non-member either way.
+ */
+export const organizationsBillingCreditsRetrieveParams = zod.object({
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``POST /organizations/<org_slug>/billing/portal/``.
+ */
+export const organizationsBillingPortalCreateParams = zod.object({
+  "org_slug": zod.string()
+})
+
+
+/**
+ * ``GET /organizations/<org_slug>/billing/subscription/``.
+ */
+export const organizationsBillingSubscriptionRetrieveParams = zod.object({
+  "org_slug": zod.string()
+})
+
+
+/**
  * ``/organizations/<org_slug>/invitations/``.
  */
 export const organizationsInvitationsListParams = zod.object({
@@ -1527,3 +1571,37 @@ another active member.
 export const organizationsTransferCreateParams = zod.object({
   "org_slug": zod.string()
 })
+
+
+/**
+ * ``GET /api/v1/plans/`` — the pricing page reads this unauthenticated
+(docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an
+``OrgScopedViewSet``: a plan is not owned by any organisation, and
+unlike ``OrgScopedViewSet`` requests it never resolves ``org_slug``.
+
+``required_permissions`` is declared (``GlobalViewSet`` requires a
+non-empty value at import time) but not enforced here — enforcement is
+``HasOrgPermission``, which only ``OrgScopedViewSet`` wires in.
+``permission_classes`` is overridden to ``AllowAny`` instead, which is
+the actual gate for this endpoint. The declared code documents what an
+authenticated billing surface would require if this list were ever
+moved behind a login.
+ */
+export const plansListResponseCodeMax = 100;
+
+export const plansListResponseNameMax = 255;
+
+export const plansListResponseSortOrderMin = -2147483648;
+export const plansListResponseSortOrderMax = 2147483647;
+
+
+
+export const plansListResponseItem = zod.object({
+  "code": zod.string().max(plansListResponseCodeMax),
+  "entitlements": zod.unknown().optional(),
+  "id": zod.string().uuid(),
+  "name": zod.string().max(plansListResponseNameMax),
+  "prices": zod.array(zod.record(zod.string(), zod.unknown())),
+  "sort_order": zod.number().min(plansListResponseSortOrderMin).max(plansListResponseSortOrderMax).optional()
+})
+export const plansListResponse = zod.array(plansListResponseItem)
