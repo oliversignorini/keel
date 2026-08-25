@@ -204,7 +204,7 @@ def send_trial_ending_notices() -> int:
         send_trial_ending_email(
             to=organization.created_by.email,
             organization_name=organization.name,
-            billing_url=f"{settings.FRONTEND_URL}/{organization.slug}/settings/billing",
+            billing_url=f"{settings.APP_FRONTEND_URL}/{organization.slug}/settings/billing",
             trial_end_date=trial_end.date().isoformat(),
         )
         AuditLog.objects.create(
@@ -246,7 +246,7 @@ def check_dunning() -> int:
         send_payment_failed_email(
             to=organization.created_by.email,
             organization_name=organization.name,
-            billing_url=f"{settings.FRONTEND_URL}/{organization.slug}/settings/billing",
+            billing_url=f"{settings.APP_FRONTEND_URL}/{organization.slug}/settings/billing",
         )
         AuditLog.objects.create(
             organization=organization,

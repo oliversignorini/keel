@@ -59,8 +59,8 @@ class CheckoutSessionView(_OrganizationBillingView):
         url = services.create_checkout_session(
             organization=organization,
             price=price,
-            success_url=f"{_frontend_base()}/app/{organization.slug}/settings/billing?checkout=success",
-            cancel_url=f"{_frontend_base()}/app/{organization.slug}/settings/billing?checkout=cancelled",
+            success_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=success",
+            cancel_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=cancelled",
         )
         return Response({"url": url})
 
@@ -74,7 +74,7 @@ class BillingPortalView(_OrganizationBillingView):
         organization = self._get_organization(request, org_slug)
         url = services.create_portal_session(
             organization=organization,
-            return_url=f"{_frontend_base()}/app/{organization.slug}/settings/billing",
+            return_url=f"{_frontend_base()}/{organization.slug}/settings/billing",
         )
         return Response({"url": url})
 
@@ -162,5 +162,5 @@ class StripeWebhookView(APIView):
 def _frontend_base() -> str:
     from django.conf import settings
 
-    base: str = settings.FRONTEND_URL
+    base: str = settings.APP_FRONTEND_URL
     return base.rstrip("/")
