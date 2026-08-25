@@ -10,6 +10,21 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 
+# Hardcoded, not derived from DEBUG or read from the environment — unlike
+# prod.py (which hardcodes the same values) base.py's
+# SESSION_COOKIE_SECURE = env.bool("DJANGO_SESSION_COOKIE_SECURE", default=not DEBUG)
+# resolves at base.py import time, using *base's own* DEBUG (from
+# DJANGO_DEBUG / a developer's untracked .env), before this module's
+# `DEBUG = False` above ever runs — so it does not retroactively flip.
+# A developer's local .env (DJANGO_DEBUG=true for their own dev server,
+# entirely reasonable there) would otherwise silently flip this suite's
+# cookie-security assertions depending on who ran it and where, which
+# makes the suite non-hermetic: same code, different result by machine.
+# Explicit values here make the test suite's result depend only on the
+# code, never on ambient environment or an untracked .env.
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
