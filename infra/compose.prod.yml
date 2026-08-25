@@ -1,0 +1,60 @@
+# Self-host production compose: full stack, prod parity.
+#
+# TODO(Phase 9 — Template mechanics / docs/deploy-selfhost.md): this file is
+# a sketch, not a working stack. The Railway path (infra/railway.json) is
+# primary; this is the self-host alternative (Hostinger VPS + Coolify +
+# Caddy) named in the PRD Appendix. It needs a real Dockerfile for
+# apps/api (gunicorn/uvicorn per PRD §4), the worker and beat commands
+# wired to config.celery, and infra/Caddyfile in front of it — none of
+# which exist yet in Phase 0.
+name: keel-prod
+
+services:
+  api:
+    build:
+      context: ../apps/api
+    command: ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ../apps/api
+    command: ["celery", "-A", "config", "worker", "-l", "info"]
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      - postgres
+      - redis
+
+  beat:
+    build:
+      context: ../apps/api
+    command: ["celery", "-A", "config", "beat", "-l", "info"]
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
