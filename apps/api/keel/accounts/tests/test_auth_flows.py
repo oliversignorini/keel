@@ -198,6 +198,25 @@ def test_session_cookie_attributes() -> None:
     assert cookie["samesite"] == "Lax"
 
 
+def test_session_cookie_is_scoped_to_the_registrable_domain_when_configured() -> None:
+    """PRD §4: Domain=.acme.com so acme.com and api.acme.com share the
+    cookie. Asserted on the actual header with a production-shaped
+    KEEL_APP_DOMAIN, not the host-only default local dev uses."""
+    from django.test import Client, override_settings
+
+    with override_settings(SESSION_COOKIE_DOMAIN=".acme.com"):
+        client = Client()
+        _signup_and_verify(client, "ada@example.com", "s3cret-pass-1")
+
+        response = client.post(
+            "/_allauth/browser/v1/auth/login",
+            {"email": "ada@example.com", "password": "s3cret-pass-1"},
+            content_type="application/json",
+        )
+
+    assert response.cookies["sessionid"]["domain"] == ".acme.com"
+
+
 def test_csrf_cookie_is_set_on_a_browser_client_get() -> None:
     from django.test import Client
 
