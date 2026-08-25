@@ -13,7 +13,7 @@ from typing import Any, ClassVar
 from django.http import Http404
 from django.utils import timezone
 from rest_framework import generics, mixins, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -160,7 +160,7 @@ class MembershipViewSet(
     # initial(): required_permissions must be a plain tuple readable off
     # the *class* (not a property), because assert_cross_org_404 reads
     # `viewset_cls.required_permissions` directly (PRD §4 invariant 7).
-    required_permissions = (Perm.MEMBERS_VIEW,)
+    required_permissions: tuple[str, ...] = (Perm.MEMBERS_VIEW,)
 
     _ACTION_PERMISSIONS: ClassVar[dict[str, tuple[str, ...]]] = {
         "list": (Perm.MEMBERS_VIEW,),
@@ -253,7 +253,7 @@ class MeView(APIView):
 
     def get(self, request: Request) -> Response:
         user = request.user
-        organizations = []
+        organizations: list[dict[str, Any]] = []
         for organization in selectors.list_organizations_for_user(user):
             membership = selectors.get_membership(user=user, organization=organization)
             organizations.append(
@@ -292,7 +292,13 @@ class InvitationAcceptView(APIView):
     returns enough to drive signup with a locked email; signed in with a
     matching email accepts."""
 
-    permission_classes = (IsAuthenticated,)
+    def get_permissions(self) -> list[Any]:
+        # GET must work signed-out — that's the "not signed in" case
+        # (phase-3.md B.4): the client needs org name + locked email to
+        # drive signup before there's any session to authenticate.
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     def _resolve_valid(self, token: str) -> Invitation:
         invitation = selectors.get_invitation_by_token(token)
