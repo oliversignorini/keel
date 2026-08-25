@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { featureLabel } from "@/lib/billing/feature-labels";
 import { formatPrice } from "@/lib/billing/format";
 import type { BillingInterval, PlanWithPrices } from "@/lib/billing/types";
 
@@ -78,7 +79,7 @@ export function PricingTable({ plans }: { plans: PlanWithPrices[] }) {
               </p>
               <ul className="mt-4 flex flex-1 flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400">
                 {(plan.entitlements?.features ?? []).map((feature) => (
-                  <li key={feature}>{feature}</li>
+                  <li key={feature}>{featureLabel(feature)}</li>
                 ))}
               </ul>
               <Link

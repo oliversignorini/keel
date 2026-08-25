@@ -54,10 +54,11 @@ describe("<PricingTable>", () => {
     expect(screen.getByText("Starter")).toBeInTheDocument();
   });
 
-  it("lists the features a plan's entitlements grant", () => {
+  it("lists the features a plan's entitlements grant as human labels, not raw codes", () => {
     render(<PricingTable plans={PLANS} />);
 
-    expect(screen.getByText("api_access")).toBeInTheDocument();
+    expect(screen.getByText("API access")).toBeInTheDocument();
+    expect(screen.queryByText("api_access")).not.toBeInTheDocument();
   });
 
   it("says so when nothing is purchasable on an interval", () => {
