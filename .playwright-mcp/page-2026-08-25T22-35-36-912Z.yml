@@ -1,0 +1,31 @@
+- generic [active] [ref=f24e1]:
+  - generic [ref=f24e2]:
+    - banner [ref=f24e3]:
+      - link "Keel" [ref=f24e4] [cursor=pointer]:
+        - /url: /
+      - button "Acme Pty Ltd" [ref=f24e6]:
+        - text: Acme Pty Ltd
+        - generic [ref=f24e7]: ▾
+      - navigation [ref=f24e8]:
+        - link "Dashboard" [ref=f24e9] [cursor=pointer]:
+          - /url: /acme-pty-ltd
+        - link "Widgets" [ref=f24e10] [cursor=pointer]:
+          - /url: /acme-pty-ltd/widgets
+        - link "Settings" [ref=f24e11] [cursor=pointer]:
+          - /url: /acme-pty-ltd/settings/general
+      - generic [ref=f24e12]:
+        - button "Open command palette" [ref=f24e13]: ⌘K
+        - button "Switch to dark mode" [ref=f24e15]: ◐
+        - generic [ref=f24e16]:
+          - link "Account" [ref=f24e17] [cursor=pointer]:
+            - /url: /account/profile
+          - button "Sign out" [ref=f24e18]
+    - main [ref=f24e19]:
+      - generic [ref=f24e20]:
+        - generic [ref=f24e22]:
+          - heading "Acme Pty Ltd" [level=1] [ref=f24e23]
+          - paragraph [ref=f24e24]: Signed in as Owner.
+        - link "View widgets →" [ref=f24e25] [cursor=pointer]:
+          - /url: /acme-pty-ltd/widgets
+  - button "Open Next.js Dev Tools" [ref=f24e31] [cursor=pointer]
+  - alert [ref=f24e35]

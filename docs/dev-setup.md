@@ -9,9 +9,17 @@ lvh.me:3000        -> Next.js, the (marketing) route group + (auth)
 api.lvh.me:8000    -> Django
 ```
 
-Copy `.env.example` to `.env` (used by `apps/api`) and `.env.local` in
-`apps/web`, and run `manage.py runserver` / `pnpm dev` as usual — nothing
-else changes about the dev workflow.
+Copy `.env.example` to `.env` at the repo root, and copy the
+`NEXT_PUBLIC_*` lines out of it into `apps/web/.env.local`:
+
+```bash
+cp .env.example .env
+grep '^NEXT_PUBLIC' .env.example > apps/web/.env.local
+```
+
+Django reads `apps/api/.env` first and falls back to the repo-root `.env`,
+so either location works; the root is the one `.env.example` sits next to.
+Then run `pnpm dev` as usual — nothing else changes about the dev workflow.
 
 ## Why `lvh.me`, not `app.localhost`
 

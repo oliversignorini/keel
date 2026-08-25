@@ -1,0 +1,18 @@
+- generic [ref=f25e2]:
+  - banner [ref=f25e3]:
+    - link "Keel" [ref=f25e4] [cursor=pointer]:
+      - /url: /
+    - navigation [ref=f25e6]:
+      - link "Dashboard" [ref=f25e7] [cursor=pointer]:
+        - /url: /acme-pty-ltd
+      - link "Settings" [ref=f25e8] [cursor=pointer]:
+        - /url: /acme-pty-ltd/settings/general
+    - generic [ref=f25e9]:
+      - button "Open command palette" [ref=f25e10]: ⌘K
+      - button "Switch to dark mode" [ref=f25e12]: ◐
+      - generic [ref=f25e13]:
+        - link "Account" [ref=f25e14] [cursor=pointer]:
+          - /url: /account/profile
+        - button "Sign out" [ref=f25e15]
+  - main [ref=f25e16]:
+    - status [ref=f25e17]: Loading…

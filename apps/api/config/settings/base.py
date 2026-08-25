@@ -20,7 +20,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
 )
-environ.Env.read_env(BASE_DIR / ".env")
+# Read apps/api/.env, then fall back to the repo-root .env.
+#
+# .env.example lives at the repo root, so "copy .env.example to .env" puts
+# the file there — and Django, whose BASE_DIR is apps/api, would not see it.
+# The symptom is a DisallowedHost 400 with settings that look correct on
+# disk, which is a genuinely confusing half-hour. Accept both locations;
+# apps/api wins where both exist, so a per-app override still works.
+_ENV_CANDIDATES = (BASE_DIR / ".env", BASE_DIR.parent.parent / ".env")
+for _env_file in _ENV_CANDIDATES:
+    if _env_file.is_file():
+        environ.Env.read_env(_env_file)
+        break
 
 # --- Version floor -----------------------------------------------------
 # A project that needs an older Django or Python is a fork, not a
