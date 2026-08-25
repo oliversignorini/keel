@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { UnauthorizedError, authLogin, identitySchemas } from "@keel/api-client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -16,7 +16,19 @@ import { SubmitButton } from "../_components/submit-button";
 
 type LoginFormValues = z.infer<typeof identitySchemas.authLoginBody>;
 
+// useSearchParams() opts the page out of static rendering unless wrapped in
+// its own Suspense boundary (Next.js requires this even though the /login
+// route is never actually prerendered as static HTML — it needs the
+// session cookie).
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
