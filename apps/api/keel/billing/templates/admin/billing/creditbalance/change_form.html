@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {% if adjust_url %}
+    <li><a href="{{ adjust_url }}" class="button">Adjust balance</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
