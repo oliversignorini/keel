@@ -151,7 +151,7 @@ function UpgradePrompt({ feature }: { feature: string }) {
       </p>
       {currentOrg ? (
         <a
-          href={`/app/${currentOrg.slug}/settings/billing`}
+          href={`/${currentOrg.slug}/settings/billing`}
           className="mt-2 inline-block text-sm font-medium text-amber-900 underline dark:text-amber-200"
         >
           {requiredPlan ? `Upgrade to ${requiredPlan.name}` : "View plans"}

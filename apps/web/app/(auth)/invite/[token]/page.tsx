@@ -1,10 +1,11 @@
 "use client";
 
 import { authGetSession } from "@keel/api-client";
+import { toAppHost } from "@/lib/host";
 import { acceptInvitation, resolveInvitation } from "@/lib/org/api";
 import type { InviteResolveResponse } from "@/lib/org/types";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { SubmitButton } from "../../_components/submit-button";
@@ -40,7 +41,6 @@ type Outcome =
 
 export default function InvitePage() {
   const params = useParams<{ token: string }>();
-  const router = useRouter();
   const [outcome, setOutcome] = useState<Outcome>({ kind: "loading" });
   const [accepting, setAccepting] = useState(false);
 
@@ -105,7 +105,7 @@ export default function InvitePage() {
     try {
       await acceptInvitation(params.token);
       setOutcome({ kind: "accepted", orgSlug });
-      router.push(`/app/${orgSlug}`);
+      window.location.href = `${window.location.protocol}//${toAppHost(window.location.host)}/${orgSlug}`;
     } catch {
       setOutcome({ kind: "accept_failed" });
     } finally {

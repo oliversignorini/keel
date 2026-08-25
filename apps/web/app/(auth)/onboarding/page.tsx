@@ -1,8 +1,8 @@
 "use client";
 
 import { applyFieldErrors } from "@/lib/api/form-error-mapper";
+import { toAppHost } from "@/lib/host";
 import { createOrganization } from "@/lib/org/api";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -24,7 +24,6 @@ interface OnboardingFormValues {
  * nothing").
  */
 export default function OnboardingPage() {
-  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -37,7 +36,7 @@ export default function OnboardingPage() {
     setFormError(null);
     try {
       const organization = await createOrganization({ name: values.name });
-      router.push(`/app/${organization.slug}`);
+      window.location.href = `${window.location.protocol}//${toAppHost(window.location.host)}/${organization.slug}`;
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));
     }

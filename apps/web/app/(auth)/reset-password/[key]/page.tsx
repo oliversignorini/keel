@@ -8,6 +8,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
+import { defaultAppUrl, navigateTo } from "@/lib/navigation";
+
 import { FormError } from "../../_components/form-error";
 import { FormField } from "../../_components/form-field";
 import { SubmitButton } from "../../_components/submit-button";
@@ -30,7 +32,7 @@ export default function ResetPasswordKeyPage() {
     setFormError(null);
     try {
       await authPasswordReset({ key: params.key, password: values.password });
-      router.push("/app");
+      navigateTo(router, defaultAppUrl());
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));
     }

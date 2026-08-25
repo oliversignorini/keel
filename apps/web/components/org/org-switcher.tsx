@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { cn } from "@/lib/cn";
+import { toApexHost } from "@/lib/host";
 import { useOrgContext } from "@/lib/org/org-context";
 
 /**
@@ -32,7 +32,16 @@ export function OrgSwitcher() {
 
   function switchTo(slug: string) {
     setOpen(false);
-    router.push(`/app/${slug}`);
+    // Same host (the app host rewrites bare org paths internally to
+    // /app/[org]/... — plan 6.A), so a plain client-side push is enough.
+    router.push(`/${slug}`);
+  }
+
+  function createOrganisation() {
+    setOpen(false);
+    // /onboarding is an (auth) route, reachable only on the apex — a
+    // cross-host jump needs a real navigation, not router.push.
+    window.location.href = `${window.location.protocol}//${toApexHost(window.location.host)}/onboarding`;
   }
 
   return (
@@ -69,13 +78,13 @@ export function OrgSwitcher() {
             </button>
           ))}
           <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
-          <Link
-            href="/onboarding"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-left text-sm text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+          <button
+            type="button"
+            onClick={createOrganisation}
+            className="block w-full px-3 py-1.5 text-left text-sm text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
           >
             + Create organisation
-          </Link>
+          </button>
         </div>
       ) : null}
     </div>

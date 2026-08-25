@@ -9,6 +9,8 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
+import { navigateTo } from "@/lib/navigation";
+
 import { FormError } from "../_components/form-error";
 import { FormField } from "../_components/form-field";
 import { GoogleContinueLink } from "../_components/google-continue-link";
@@ -50,7 +52,7 @@ function SignupForm() {
     setFormError(null);
     try {
       await authSignup(values);
-      router.push(next ?? "/onboarding");
+      navigateTo(router, next ?? "/onboarding");
     } catch (error) {
       if (error instanceof UnauthorizedError && error.code === "verify_email") {
         router.push(next ? `/verify-email?next=${encodeURIComponent(next)}` : "/verify-email");
