@@ -48,6 +48,14 @@
       }
     },
     "/_allauth/browser/v1/auth/session": {
+      "get": {
+        "operationId": "authGetSession",
+        "summary": "Fetch the current authenticated user (inferred: not in the PRD §7 list verbatim — only DELETE is listed there — but allauth's real headless API supports GET here, and the /account/profile route needs it; confirm against the real spec)",
+        "responses": {
+          "200": { "description": "Current session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthSuccessResponse" } } } },
+          "401": { "description": "No session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      },
       "delete": {
         "operationId": "authLogout",
         "summary": "End the current session (logout)",
@@ -200,6 +208,24 @@
           "200": { "description": "Revoked", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } }
         }
       }
+    },
+    "/_allauth/browser/v1/account/password/change": {
+      "post": {
+        "operationId": "accountPasswordChange",
+        "summary": "Change the current password (inferred: not in the PRD §7 list verbatim — that lists only the unauthenticated reset flow — but /account/security needs an in-session change; confirm against the real spec)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PasswordChangeBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthOkResponse" } } } },
+          "400": { "description": "Current password incorrect or new password rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AllauthErrorResponse" } } } }
+        }
+      }
     }
   },
   "components": {
@@ -225,6 +251,14 @@
         "required": ["email"],
         "properties": {
           "email": { "type": "string", "format": "email" }
+        }
+      },
+      "PasswordChangeBody": {
+        "type": "object",
+        "required": ["current_password", "new_password"],
+        "properties": {
+          "current_password": { "type": "string", "minLength": 1 },
+          "new_password": { "type": "string", "minLength": 8 }
         }
       },
       "PasswordResetBody": {

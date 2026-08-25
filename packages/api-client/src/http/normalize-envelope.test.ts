@@ -40,6 +40,32 @@ describe("normalizeErrorEnvelope", () => {
     expect(normalizeErrorEnvelope(400, body).details).toHaveLength(2);
   });
 
+  it("maps allauth's pending-flow envelope to a code matching the flow id", () => {
+    const body = {
+      status: 401,
+      data: { flows: [{ id: "verify_email", is_pending: true }] },
+    };
+
+    expect(normalizeErrorEnvelope(401, body)).toEqual({
+      code: "verify_email",
+      message: "Check your email to verify your address before continuing.",
+    });
+  });
+
+  it("picks the pending flow when several flows are listed", () => {
+    const body = {
+      status: 401,
+      data: {
+        flows: [
+          { id: "login", is_pending: false },
+          { id: "mfa_authenticate", is_pending: true },
+        ],
+      },
+    };
+
+    expect(normalizeErrorEnvelope(401, body).code).toBe("mfa_authenticate");
+  });
+
   it("falls back to a generic envelope for an unrecognized body", () => {
     expect(normalizeErrorEnvelope(500, { unexpected: true })).toEqual({
       code: "unknown_error",

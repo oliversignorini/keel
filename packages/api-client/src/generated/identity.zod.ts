@@ -53,6 +53,20 @@ export const authLoginResponse = zod.object({
 
 
 /**
+ * @summary Fetch the current authenticated user (inferred: not in the PRD §7 list verbatim — only DELETE is listed there — but allauth's real headless API supports GET here, and the /account/profile route needs it; confirm against the real spec)
+ */
+export const authGetSessionResponse = zod.object({
+  "status": zod.number().optional(),
+  "data": zod.object({
+  "user": zod.object({
+  "id": zod.string().optional(),
+  "email": zod.string().email().optional()
+}).optional()
+}).optional()
+})
+
+
+/**
  * @summary End the current session (logout)
  */
 export const authLogoutResponse = zod.object({
@@ -217,5 +231,23 @@ export const sessionsRevokeBody = zod.object({
 })
 
 export const sessionsRevokeResponse = zod.object({
+  "status": zod.number().optional()
+})
+
+
+/**
+ * @summary Change the current password (inferred: not in the PRD §7 list verbatim — that lists only the unauthenticated reset flow — but /account/security needs an in-session change; confirm against the real spec)
+ */
+
+export const accountPasswordChangeBodyNewPasswordMin = 8;
+
+
+
+export const accountPasswordChangeBody = zod.object({
+  "current_password": zod.string().min(1),
+  "new_password": zod.string().min(accountPasswordChangeBodyNewPasswordMin)
+})
+
+export const accountPasswordChangeResponse = zod.object({
   "status": zod.number().optional()
 })

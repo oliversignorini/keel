@@ -41,6 +41,13 @@ export interface PasswordResetRequestBody {
   email: string;
 }
 
+export interface PasswordChangeBody {
+  /** @minLength 1 */
+  current_password: string;
+  /** @minLength 8 */
+  new_password: string;
+}
+
 export interface PasswordResetBody {
   key: string;
   /** @minLength 8 */
@@ -368,6 +375,126 @@ export const useAuthLogin = <TError = AllauthErrorResponse | AuthPendingResponse
       return useMutation(mutationOptions, queryClient);
     }
     
+/**
+ * @summary Fetch the current authenticated user (inferred: not in the PRD §7 list verbatim — only DELETE is listed there — but allauth's real headless API supports GET here, and the /account/profile route needs it; confirm against the real spec)
+ */
+export type authGetSessionResponse200 = {
+  data: AuthSuccessResponse
+  status: 200
+}
+
+export type authGetSessionResponse401 = {
+  data: AllauthErrorResponse
+  status: 401
+}
+    
+export type authGetSessionResponseSuccess = (authGetSessionResponse200) & {
+  headers: Headers;
+};
+export type authGetSessionResponseError = (authGetSessionResponse401) & {
+  headers: Headers;
+};
+
+export type authGetSessionResponse = (authGetSessionResponseSuccess | authGetSessionResponseError)
+
+export const getAuthGetSessionUrl = () => {
+
+
+  
+
+  return `/_allauth/browser/v1/auth/session`
+}
+
+export const authGetSession = async ( options?: RequestInit): Promise<authGetSessionResponse> => {
+  
+  return identityFetch<authGetSessionResponse>(getAuthGetSessionUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getAuthGetSessionQueryKey = () => {
+    return [
+    `/_allauth/browser/v1/auth/session`
+    ] as const;
+    }
+
+    
+export const getAuthGetSessionQueryOptions = <TData = Awaited<ReturnType<typeof authGetSession>>, TError = AllauthErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAuthGetSessionQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof authGetSession>>> = ({ signal }) => authGetSession({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type AuthGetSessionQueryResult = NonNullable<Awaited<ReturnType<typeof authGetSession>>>
+export type AuthGetSessionQueryError = AllauthErrorResponse
+
+
+export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AllauthErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authGetSession>>,
+          TError,
+          Awaited<ReturnType<typeof authGetSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AllauthErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authGetSession>>,
+          TError,
+          Awaited<ReturnType<typeof authGetSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AllauthErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Fetch the current authenticated user (inferred: not in the PRD §7 list verbatim — only DELETE is listed there — but allauth's real headless API supports GET here, and the /account/profile route needs it; confirm against the real spec)
+ */
+
+export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AllauthErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getAuthGetSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
 /**
  * @summary End the current session (logout)
  */
@@ -1434,6 +1561,97 @@ export const useSessionsRevoke = <TError = unknown,
       > => {
 
       const mutationOptions = getSessionsRevokeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * @summary Change the current password (inferred: not in the PRD §7 list verbatim — that lists only the unauthenticated reset flow — but /account/security needs an in-session change; confirm against the real spec)
+ */
+export type accountPasswordChangeResponse200 = {
+  data: AllauthOkResponse
+  status: 200
+}
+
+export type accountPasswordChangeResponse400 = {
+  data: AllauthErrorResponse
+  status: 400
+}
+    
+export type accountPasswordChangeResponseSuccess = (accountPasswordChangeResponse200) & {
+  headers: Headers;
+};
+export type accountPasswordChangeResponseError = (accountPasswordChangeResponse400) & {
+  headers: Headers;
+};
+
+export type accountPasswordChangeResponse = (accountPasswordChangeResponseSuccess | accountPasswordChangeResponseError)
+
+export const getAccountPasswordChangeUrl = () => {
+
+
+  
+
+  return `/_allauth/browser/v1/account/password/change`
+}
+
+export const accountPasswordChange = async (passwordChangeBody: PasswordChangeBody, options?: RequestInit): Promise<accountPasswordChangeResponse> => {
+  
+  return identityFetch<accountPasswordChangeResponse>(getAccountPasswordChangeUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      passwordChangeBody,)
+  }
+);}
+
+
+
+
+export const getAccountPasswordChangeMutationOptions = <TError = AllauthErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof accountPasswordChange>>, TError,{data: PasswordChangeBody}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof accountPasswordChange>>, TError,{data: PasswordChangeBody}, TContext> => {
+
+const mutationKey = ['accountPasswordChange'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof accountPasswordChange>>, {data: PasswordChangeBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  accountPasswordChange(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AccountPasswordChangeMutationResult = NonNullable<Awaited<ReturnType<typeof accountPasswordChange>>>
+    export type AccountPasswordChangeMutationBody = PasswordChangeBody
+    export type AccountPasswordChangeMutationError = AllauthErrorResponse
+
+    /**
+ * @summary Change the current password (inferred: not in the PRD §7 list verbatim — that lists only the unauthenticated reset flow — but /account/security needs an in-session change; confirm against the real spec)
+ */
+export const useAccountPasswordChange = <TError = AllauthErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof accountPasswordChange>>, TError,{data: PasswordChangeBody}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof accountPasswordChange>>,
+        TError,
+        {data: PasswordChangeBody},
+        TContext
+      > => {
+
+      const mutationOptions = getAccountPasswordChangeMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
