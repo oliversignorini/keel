@@ -2282,6 +2282,74 @@
         ],
         "type": "object"
       },
+      "Invitation": {
+        "properties": {
+          "accepted_at": {
+            "format": "date-time",
+            "nullable": true,
+            "readOnly": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "readOnly": true,
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "invited_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/_UserSummary"
+              }
+            ],
+            "readOnly": true
+          },
+          "revoked_at": {
+            "format": "date-time",
+            "nullable": true,
+            "readOnly": true,
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ],
+            "readOnly": true
+          },
+          "status": {
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "accepted_at",
+          "created_at",
+          "email",
+          "expires_at",
+          "id",
+          "invited_by",
+          "revoked_at",
+          "role",
+          "status"
+        ],
+        "type": "object"
+      },
       "Login": {
         "allOf": [
           {
@@ -2372,9 +2440,195 @@
         ],
         "type": "object"
       },
+      "Membership": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "joined_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ],
+            "readOnly": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatusEnum"
+              }
+            ],
+            "readOnly": true
+          },
+          "user": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/_UserSummary"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "joined_at",
+          "role",
+          "status",
+          "user"
+        ],
+        "type": "object"
+      },
       "OptionalTimestamp": {
         "$ref": "#/components/schemas/Timestamp",
         "nullable": true
+      },
+      "Organization": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "slug": {
+            "pattern": "^[-a-zA-Z0-9_]+$",
+            "readOnly": true,
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "name",
+          "slug",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "PaginatedInvitationList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Invitation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "PaginatedMembershipList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "PaginatedOrganizationList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Organization"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "PaginatedRoleList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
       },
       "PasskeySignup": {
         "allOf": [
@@ -2387,6 +2641,45 @@
         "description": "The password.\n",
         "example": "Alohomora!",
         "type": "string"
+      },
+      "PatchedMembership": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "joined_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ],
+            "readOnly": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatusEnum"
+              }
+            ],
+            "readOnly": true
+          },
+          "user": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/_UserSummary"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "type": "object"
       },
       "Phone": {
         "description": "The phone number.\n",
@@ -2762,6 +3055,33 @@
         ],
         "type": "object"
       },
+      "Role": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "is_preset": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "name": {
+            "readOnly": true,
+            "type": "string"
+          },
+          "permissions": {
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "is_preset",
+          "name",
+          "permissions"
+        ],
+        "type": "object"
+      },
       "SensitiveRecoveryCodesAuthenticator": {
         "allOf": [
           {
@@ -2875,6 +3195,14 @@
           202
         ],
         "type": "integer"
+      },
+      "StatusEnum": {
+        "description": "* `active` - Active\n* `suspended` - Suspended",
+        "enum": [
+          "active",
+          "suspended"
+        ],
+        "type": "string"
       },
       "StatusOK": {
         "enum": [
@@ -3080,6 +3408,27 @@
           "request_options"
         ],
         "type": "object"
+      },
+      "_UserSummary": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "id",
+          "name"
+        ],
+        "type": "object"
       }
     }
   },
@@ -3093,6 +3442,7 @@
     "/_allauth/browser/v1/account/email": {
       "delete": {
         "description": "Used to remove an email address.\n",
+        "operationId": "emailRemove",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3128,6 +3478,7 @@
       },
       "get": {
         "description": "Retrieves the list of email addresses of the account.\n",
+        "operationId": "emailList",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3148,6 +3499,7 @@
       },
       "patch": {
         "description": "Used to change primary email address to a different one. Note that only verified email addresses\ncan be marked as primary.\n",
+        "operationId": "emailRequestVerification",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3183,6 +3535,7 @@
       },
       "post": {
         "description": "The following functionality is available:\n\n  - Adding a new email address for an already signed in user (`ACCOUNT_CHANGE_EMAIL = False`).\n  - Change to a new email address for an already signed in user   (`ACCOUNT_CHANGE_EMAIL = True`).\n  - Change to a new email address during the email verification process at signup (`ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_CHANGE = True`).\n\nIn all cases, an email verification mail will be sent containing a link or code that needs to be verified.\n",
+        "operationId": "emailAdd",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3231,6 +3584,7 @@
       },
       "put": {
         "description": "Requests for (another) email verification email to be sent. Note that\nsending emails is rate limited, so when you send too many requests the\nemail will not be sent.\n",
+        "operationId": "emailChangePrimary",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3278,6 +3632,7 @@
     "/_allauth/browser/v1/account/password/change": {
       "post": {
         "description": "In order to change the password of an account, the current and new\npassword must be provider.  However, accounts that were created by\nsigning up using a third-party provider do not have a password set. In\nthat case, the current password is not required.\n",
+        "operationId": "accountPasswordChange",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3303,6 +3658,7 @@
     "/_allauth/browser/v1/account/phone": {
       "get": {
         "description": "Retrieves the phone number of the account, if any. Note that while the\nendpoint returns a list of phone numbers, at most one entry is returned.\n",
+        "operationId": "phoneGet",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3323,6 +3679,7 @@
       },
       "post": {
         "description": "The following functionality is available:\n\n- Initiate the phone number change process for signed in users.\n- Change to a new phone number during the phone number verification\n  process at signup for unauthenticated users. Note that this requires:\n  `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_CHANGE = True`.\n\nIn both cases, after posting a new phone number, proceed with the phone\nverification endpoint to confirm the change of the phone number by\nposting the verification code.\n",
+        "operationId": "phoneChange",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3375,6 +3732,7 @@
     "/_allauth/browser/v1/account/providers": {
       "delete": {
         "description": "Disconnect a third-party provider account, returning the remaining\naccounts that are still connected. The disconnect is not allowed if it\nwould leave the account unusable. For example, if no password was\nset up yet.\n",
+        "operationId": "providersDisconnect",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3412,6 +3770,7 @@
         ]
       },
       "get": {
+        "operationId": "providersList",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3431,6 +3790,7 @@
     "/_allauth/browser/v1/auth/code/confirm": {
       "post": {
         "description": "Use this endpoint to pass along the received \"special\" login code.\n",
+        "operationId": "authCodeConfirm",
         "requestBody": {
           "$ref": "#/components/requestBodies/ConfirmLoginCode"
         },
@@ -3488,6 +3848,7 @@
     "/_allauth/browser/v1/auth/email/verify": {
       "get": {
         "description": "Obtain email verification information, given the token that was sent to\nthe user by email.\n",
+        "operationId": "authEmailVerifyInfo",
         "parameters": [
           {
             "$ref": "#/components/parameters/EmailVerificationKey"
@@ -3530,6 +3891,7 @@
       },
       "post": {
         "description": "Complete the email verification process. Depending on the configuration,\nemail addresses are either verified by opening a link that is sent to\ntheir email address, or, by inputting a code that is sent. On the API,\nboth cases are handled identically. Meaning, the required key is either\nthe one from the link, or, the code itself.\n\nNote that a status code of 401 does not imply failure. It indicates that\nthe email verification was successful, yet, the user is still not signed\nin. For example, in case `ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION` is set to\n`False`, a 401 is returned when verifying as part of login/signup.\n",
+        "operationId": "authEmailVerify",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3580,6 +3942,7 @@
     "/_allauth/browser/v1/auth/email/verify/resend": {
       "post": {
         "description": "Requests a new email verification code.\nRequires `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True`.\n",
+        "operationId": "authEmailVerifyResend",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3612,6 +3975,7 @@
     "/_allauth/browser/v1/auth/login": {
       "post": {
         "description": "Login using a username-password or email-password combination.\n",
+        "operationId": "authLogin",
         "requestBody": {
           "$ref": "#/components/requestBodies/Login"
         },
@@ -3675,6 +4039,7 @@
     "/_allauth/browser/v1/auth/password/request": {
       "post": {
         "description": "Initiates the password reset procedure. Depending on whether or not\n`ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED` is `True`, the procedure is\neither stateless or stateful.\n\nIn case codes are used, it is stateful, and a new\n`password_reset_by_code` flow is started. In this case, on a successful\npassword reset request, you will receive a 401 indicating the pending\nstatus of this flow.\n\nIn case password reset is configured to use (stateless) links, you will\nreceive a 200 on a successful password reset request.\n",
+        "operationId": "authPasswordRequest",
         "requestBody": {
           "$ref": "#/components/requestBodies/RequestPassword"
         },
@@ -3710,6 +4075,7 @@
     "/_allauth/browser/v1/auth/password/reset": {
       "get": {
         "description": "Used to obtain information on and validate a password reset key.  The\nkey passed is either the key encoded in the password reset URL that the\nuser has received per email, or, the password reset code in case of\n`ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,\nthe number of requests you can make is limited (by\n`ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).\n",
+        "operationId": "authPasswordResetInfo",
         "parameters": [
           {
             "$ref": "#/components/parameters/PasswordResetKey"
@@ -3752,6 +4118,7 @@
       },
       "post": {
         "description": "Perform the password reset, by handing over the password reset key and\nthe new password. After successfully completing the password reset, the\nuser is either logged in (in case `ACCOUNT_LOGIN_ON_PASSWORD_RESET` is\n`True`), or, the user will need to proceed to the login page.  In case\nof the former, a `200` status code is returned, in case of the latter a\n401.\n",
+        "operationId": "authPasswordReset",
         "requestBody": {
           "$ref": "#/components/requestBodies/ResetPassword"
         },
@@ -3797,6 +4164,7 @@
     "/_allauth/browser/v1/auth/phone/verify": {
       "post": {
         "description": "Complete the phone number verification process. Note that a status code\nof 401 does not imply failure. It merely indicates that the phone number\nverification was successful, yet, the user is still not signed in.\n",
+        "operationId": "authPhoneVerify",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3842,6 +4210,7 @@
     "/_allauth/browser/v1/auth/phone/verify/resend": {
       "post": {
         "description": "Requests a new phone number verification code.\nRequires `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_RESEND = True`.\n",
+        "operationId": "authPhoneVerifyResend",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -3874,6 +4243,7 @@
     "/_allauth/browser/v1/auth/provider/redirect": {
       "post": {
         "description": "Initiates the third-party provider authentication redirect flow. As calling\nthis endpoint results in a user facing redirect (302), this call is only\navailable in a browser, and must be called in a synchronous (non-XHR)\nmanner.\n",
+        "operationId": "authProviderRedirect",
         "requestBody": {
           "$ref": "#/components/requestBodies/ProviderRedirect"
         },
@@ -3899,6 +4269,7 @@
     "/_allauth/browser/v1/auth/provider/signup": {
       "get": {
         "description": "If, while signing up using a third-party provider account, there is\ninsufficient information received from the provider to automatically\ncomplete the signup process, an additional step is needed to complete\nthe missing data before the user is fully signed up and authenticated.\nThe information available so far, such as the pending provider account,\ncan be retrieved via this endpoint.\n",
+        "operationId": "authProviderSignupInfo",
         "responses": {
           "200": {
             "$ref": "#/components/responses/ProviderSignup"
@@ -3921,6 +4292,7 @@
       },
       "post": {
         "description": "If, while signing up using a third-party provider account, there is\ninsufficient information received from the provider to automatically\ncomplete the signup process, an additional step is needed to complete\nthe missing data before the user is fully signed up and authenticated.\n",
+        "operationId": "authProviderSignup",
         "requestBody": {
           "$ref": "#/components/requestBodies/ProviderSignup"
         },
@@ -3988,6 +4360,7 @@
     "/_allauth/browser/v1/auth/provider/token": {
       "post": {
         "description": "Authenticates with a third-party provider using provider tokens received\nby other means. For example, in case of a mobile app, the authentication\nflow runs completely on the device itself, without any interaction with\nthe API. Then, when the (device) authentication completes and the mobile\napp receives an access and/or ID token, it can hand over these tokens\nvia this endpoint to authenticate on the server.\n",
+        "operationId": "authProviderToken",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4053,6 +4426,7 @@
     "/_allauth/browser/v1/auth/reauthenticate": {
       "post": {
         "description": "In order to safeguard the account, some actions require the user to be\nrecently authenticated.  If you try to perform such an action without\nhaving been recently authenticated, a `401` status is returned, listing\nflows that can be performed to reauthenticate. One such flow is the flow\nwith ID `reauthenticate`, which allows for the user to input the\npassword. This is the endpoint related towards that flow.\n",
+        "operationId": "authReauthenticate",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4090,6 +4464,7 @@
     "/_allauth/browser/v1/auth/session": {
       "delete": {
         "description": "Logs out the user from the current session.\n",
+        "operationId": "authLogout",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4107,6 +4482,7 @@
       },
       "get": {
         "description": "Retrieve information about the authentication status for the current\nsession.\n",
+        "operationId": "authGetSession",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4131,6 +4507,7 @@
     },
     "/_allauth/browser/v1/auth/sessions": {
       "delete": {
+        "operationId": "sessionsRevoke",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4153,6 +4530,7 @@
         ]
       },
       "get": {
+        "operationId": "sessionsList",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionToken"
@@ -4172,6 +4550,7 @@
     "/_allauth/browser/v1/auth/signup": {
       "post": {
         "description": "Whether or not `username`, `email`, `phone` or combination of those are\nrequired depends on the configuration of django-allauth. Additionally,\nif a custom signup form is used there may be other custom properties\nrequired.\n",
+        "operationId": "authSignup",
         "requestBody": {
           "$ref": "#/components/requestBodies/Signup"
         },
@@ -4239,6 +4618,7 @@
     "/_allauth/browser/v1/config": {
       "get": {
         "description": "There are many configuration options that alter the functionality\nand behavior of django-allauth, some of which can also impact the\nfrontend. Therefore, relevant configuration options are exposed via\nthis endpoint. The data returned is not user/authentication\ndependent. Hence, it suffices to only fetch this data once at boot\ntime of your application.\n",
+        "operationId": "authConfig",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Configuration"
@@ -4247,6 +4627,751 @@
         "summary": "Get configuration",
         "tags": [
           "Configuration"
+        ]
+      }
+    },
+    "/api/v1/invite/{token}/": {
+      "get": {
+        "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",
+        "operationId": "invite_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "invite"
+        ]
+      },
+      "post": {
+        "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",
+        "operationId": "invite_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "invite"
+        ]
+      }
+    },
+    "/api/v1/me/": {
+      "get": {
+        "description": "``GET /me/`` \u2014 user, organisations, current role, resolved\npermission codes per organisation (PRD \u00a77). Entitlement resolution is\nPhase 4's; the ``entitlements`` seam is left as an empty dict per\norganisation until then.",
+        "operationId": "me_retrieve",
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/api/v1/organizations/": {
+      "get": {
+        "description": "``/organizations/`` \u2014 list the caller's organisations, or create a\nnew one. Not tenant-scoped: there is no organisation in the URL to\nresolve yet (PRD \u00a74, org creation happens before tenant context\nexists), so this deliberately does not use ``OrgScopedViewSet``.",
+        "operationId": "organizations_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedOrganizationList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "description": "``/organizations/`` \u2014 list the caller's organisations, or create a\nnew one. Not tenant-scoped: there is no organisation in the URL to\nresolve yet (PRD \u00a74, org creation happens before tenant context\nexists), so this deliberately does not use ``OrgScopedViewSet``.",
+        "operationId": "organizations_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Organization"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Organization"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Organization"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/": {
+      "delete": {
+        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
+        "operationId": "organizations_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "get": {
+        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
+        "operationId": "organizations_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "patch": {
+        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
+        "operationId": "organizations_partial_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/invitations/": {
+      "get": {
+        "description": "``/organizations/<org_slug>/invitations/``.",
+        "operationId": "organizations_invitations_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedInvitationList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "description": "``/organizations/<org_slug>/invitations/``.",
+        "operationId": "organizations_invitations_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invitation"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Invitation"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Invitation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/invitations/{id}/": {
+      "delete": {
+        "description": "``/organizations/<org_slug>/invitations/``.",
+        "operationId": "organizations_invitations_destroy",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this invitation.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "get": {
+        "description": "``/organizations/<org_slug>/invitations/``.",
+        "operationId": "organizations_invitations_retrieve",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this invitation.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/members/": {
+      "get": {
+        "description": "``/organizations/<org_slug>/members/``.",
+        "operationId": "organizations_members_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMembershipList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/members/{id}/": {
+      "delete": {
+        "description": "``/organizations/<org_slug>/members/``.",
+        "operationId": "organizations_members_destroy",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this membership.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "get": {
+        "description": "``/organizations/<org_slug>/members/``.",
+        "operationId": "organizations_members_retrieve",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this membership.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "patch": {
+        "description": "``/organizations/<org_slug>/members/``.",
+        "operationId": "organizations_members_partial_update",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this membership.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedMembership"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedMembership"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedMembership"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "put": {
+        "description": "``/organizations/<org_slug>/members/``.",
+        "operationId": "organizations_members_update",
+        "parameters": [
+          {
+            "description": "A UUID string identifying this membership.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Membership"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Membership"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Membership"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/roles/": {
+      "get": {
+        "description": "``/organizations/<org_slug>/roles/`` \u2014 read-only: the three global\npresets plus any custom roles belonging to the organisation.",
+        "operationId": "organizations_roles_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoleList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/roles/{id}/": {
+      "get": {
+        "description": "``/organizations/<org_slug>/roles/`` \u2014 read-only: the three global\npresets plus any custom roles belonging to the organisation.",
+        "operationId": "organizations_roles_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/transfer/": {
+      "post": {
+        "description": "``POST /organizations/<org_slug>/transfer/`` \u2014 hand ownership to\nanother active member.",
+        "operationId": "organizations_transfer_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/permissions/": {
+      "get": {
+        "description": "``GET /permissions/`` \u2014 the full permission-code registry, for the\nrole editor (PRD \u00a77). Global: identical for every caller, not\ntenant-scoped data.",
+        "operationId": "permissions_retrieve",
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "permissions"
         ]
       }
     }

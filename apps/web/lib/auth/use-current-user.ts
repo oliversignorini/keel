@@ -1,11 +1,11 @@
 "use client";
 
-import { UnauthorizedError, authGetSession, type AuthenticatedUser } from "@keel/api-client";
+import { UnauthorizedError, authGetSession, type User } from "@keel/api-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface UseCurrentUserResult {
-  user: AuthenticatedUser | null;
+  user: User | null;
   loading: boolean;
 }
 
@@ -16,7 +16,7 @@ interface UseCurrentUserResult {
  */
 export function useCurrentUser(): UseCurrentUserResult {
   const router = useRouter();
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

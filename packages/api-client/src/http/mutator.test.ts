@@ -53,6 +53,37 @@ describe("identityFetch", () => {
     expect((init.headers as Headers).get("X-CSRFToken")).toBe("abc123");
   });
 
+  it("primes the CSRF cookie with a GET before the first unsafe request of a session", async () => {
+    // No cookie set — this is a fresh session's very first action. Without
+    // priming, Django rejects the POST outright with "CSRF cookie not
+    // set" before application code ever runs (confirmed against the live
+    // server — see mutator.ts's ensureCsrfCookie docstring).
+    fetchSpy.mockImplementation((url: string) => {
+      if (url.includes("/_allauth/browser/v1/config")) {
+        document.cookie = "csrftoken=primed456; path=/";
+        return Promise.resolve(jsonResponse(200, { data: {} }));
+      }
+      return Promise.resolve(jsonResponse(200, { ok: true }));
+    });
+
+    await identityFetch("/_allauth/browser/v1/auth/login", { method: "POST", body: "{}" });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    const [primeUrl] = fetchSpy.mock.calls[0]!;
+    expect(primeUrl).toContain("/_allauth/browser/v1/config");
+    const [, loginInit] = fetchSpy.mock.calls[1]!;
+    expect((loginInit.headers as Headers).get("X-CSRFToken")).toBe("primed456");
+  });
+
+  it("does not prime when a csrftoken cookie already exists", async () => {
+    document.cookie = "csrftoken=already-there; path=/";
+    fetchSpy.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+    await identityFetch("/_allauth/browser/v1/auth/login", { method: "POST", body: "{}" });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("resolves with { data, status, headers } on success", async () => {
     fetchSpy.mockResolvedValue(jsonResponse(200, { status: 200, data: { user: { id: "1" } } }));
 

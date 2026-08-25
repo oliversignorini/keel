@@ -6,10 +6,8 @@ import {
   ApiError,
   NotFoundError,
   accountPasswordChange,
+  identityFetch,
   identitySchemas,
-  totpActivate,
-  totpDeactivate,
-  totpGet,
 } from "@keel/api-client";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -81,6 +79,23 @@ type TotpState =
   | { status: "inactive"; provisioningUri: string }
   | { status: "active" };
 
+// `/_allauth/browser/v1/account/authenticators/totp` only exists in the
+// generated client's spec when `KEEL_MFA_ENABLED` is on at generation time
+// (docs/auth-client-contract.md) — it's off by default (PRD §8 Phase 2),
+// so `packages/api-client` has no typed `totpGet`/`totpActivate`/
+// `totpDeactivate` to import right now. This calls the same routes
+// directly through the generated transport (identityFetch — same CSRF
+// handling, same typed errors). The 404-means-unavailable handling below
+// is unchanged from before this file used raw paths: a 404 here already
+// covered both "not enrolled" and "the flag is off", so nothing about the
+// user-facing behaviour changes when the flag is eventually turned on and
+// this switches back to the generated functions.
+const TOTP_PATH = "/_allauth/browser/v1/account/authenticators/totp";
+
+interface TotpGetResponse {
+  data?: { provisioning_uri?: string };
+}
+
 function TotpSection() {
   const [state, setState] = useState<TotpState>({ status: "loading" });
   const [code, setCode] = useState("");
@@ -89,12 +104,10 @@ function TotpSection() {
   useEffect(() => {
     let cancelled = false;
 
-    totpGet()
+    identityFetch<{ data: TotpGetResponse }>(TOTP_PATH)
       .then((result) => {
         if (cancelled) return;
-        // Thrown non-2xx means only the status: 200 variant reaches here.
-        const provisioningUri =
-          result.status === 200 ? result.data.data?.provisioning_uri : undefined;
+        const provisioningUri = result.data.data?.provisioning_uri;
         setState(provisioningUri ? { status: "inactive", provisioningUri } : { status: "active" });
       })
       .catch((err: unknown) => {
@@ -115,7 +128,11 @@ function TotpSection() {
   async function activate() {
     setError(null);
     try {
-      await totpActivate({ code });
+      await identityFetch(TOTP_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
       setState({ status: "active" });
       setCode("");
     } catch (err) {
@@ -128,7 +145,7 @@ function TotpSection() {
   async function deactivate() {
     setError(null);
     try {
-      await totpDeactivate();
+      await identityFetch(TOTP_PATH, { method: "DELETE" });
       setState({ status: "unavailable" });
     } catch (err) {
       setError(

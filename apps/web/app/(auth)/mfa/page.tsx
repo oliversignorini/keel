@@ -2,17 +2,29 @@
 
 import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authMfaAuthenticate, identitySchemas } from "@keel/api-client";
+import { identityFetch } from "@keel/api-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { FormError } from "../_components/form-error";
 import { FormField } from "../_components/form-field";
 import { SubmitButton } from "../_components/submit-button";
 
-type MfaFormValues = z.infer<typeof identitySchemas.authMfaAuthenticateBody>;
+// `POST /_allauth/browser/v1/auth/2fa/authenticate` only exists in the
+// generated client's spec when `KEEL_MFA_ENABLED` is on at generation
+// time (docs/auth-client-contract.md "MFA endpoints") — it's off by
+// default (PRD §8 Phase 2: "MFA scaffolded and disabled by a settings
+// flag"), so `packages/api-client` has no typed `authMfaAuthenticate` or
+// `identitySchemas.authMfaAuthenticateBody` to import right now. This
+// calls the same route directly through the generated transport
+// (identityFetch — same CSRF handling, same typed errors) with a
+// hand-written schema instead. Once the flag is on for a real project,
+// `pnpm generate` produces the typed function and this file should switch
+// back to it.
+const mfaFormSchema = z.object({ code: z.string().min(1, "Enter your authenticator code.") });
+type MfaFormValues = z.infer<typeof mfaFormSchema>;
 
 export default function MfaChallengePage() {
   const router = useRouter();
@@ -22,12 +34,16 @@ export default function MfaChallengePage() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<MfaFormValues>({ resolver: zodResolver(identitySchemas.authMfaAuthenticateBody) });
+  } = useForm<MfaFormValues>({ resolver: zodResolver(mfaFormSchema) });
 
   async function onSubmit(values: MfaFormValues) {
     setFormError(null);
     try {
-      await authMfaAuthenticate(values);
+      await identityFetch("/_allauth/browser/v1/auth/2fa/authenticate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
       router.push("/app");
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));

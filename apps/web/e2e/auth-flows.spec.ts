@@ -24,6 +24,21 @@ async function latestMessageTo(
   return body.messages?.[0];
 }
 
+/**
+ * The key segment of allauth's verification/reset links is
+ * percent-encoded (it contains ":", e.g. "MTU%3A1wyu…") — `\S+` rather
+ * than an alphanumeric class because the encoded form itself contains
+ * "%". Returns the decoded key.
+ */
+function extractKeyFromEmail(
+  body: string,
+  routeSegment: "verify-email" | "reset-password",
+): string {
+  const match = new RegExp(`https?://\\S+/${routeSegment}/(\\S+)`).exec(body);
+  expect(match, `email body should contain a /${routeSegment}/[key] link`).toBeTruthy();
+  return decodeURIComponent(match![1]!);
+}
+
 test("signup sends a verification email caught at Mailpit, and clicking it authenticates", async ({
   page,
   request,
@@ -41,12 +56,9 @@ test("signup sends a verification email caught at Mailpit, and clicking it authe
   expect(message, "verification email should be caught at Mailpit").toBeTruthy();
 
   const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
-  const link = /https?:\/\/[^\s"]+\/verify-email\/[A-Za-z0-9_-]+/.exec(
-    detail.Text ?? detail.HTML ?? "",
-  )?.[0];
-  expect(link, "email body should contain a /verify-email/[key] link").toBeTruthy();
+  const key = extractKeyFromEmail(detail.Text ?? detail.HTML ?? "", "verify-email");
 
-  await page.goto(new URL(link!).pathname);
+  await page.goto(`/verify-email/${encodeURIComponent(key)}`);
   await expect(page).toHaveURL(/\/onboarding/);
 });
 
@@ -57,11 +69,26 @@ test("login with valid credentials establishes a session and logout ends it", as
   const email = uniqueEmail();
   const password = "correct horse battery staple 1";
 
-  // Seed the account directly against the API so this test is independent
-  // of the signup test above.
-  await request.post("http://localhost:8000/_allauth/browser/v1/auth/signup", {
-    data: { email, password },
-  });
+  // Seed the account through the real signup + verification flow —
+  // ACCOUNT_EMAIL_VERIFICATION="mandatory" (apps/api config/settings/base.py)
+  // means an unverified account cannot log in at all, so a raw signup
+  // call alone (with no verify step) is not a valid precondition for this
+  // test — logging out afterward is this test's actual subject.
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: /sign up/i }).click();
+  await expect(page).toHaveURL(/\/verify-email$/);
+
+  const message = await latestMessageTo(request, email);
+  expect(message, "verification email should be caught at Mailpit").toBeTruthy();
+  const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
+  const key = extractKeyFromEmail(detail.Text ?? detail.HTML ?? "", "verify-email");
+  await page.goto(`/verify-email/${encodeURIComponent(key)}`);
+  // Verifying doesn't itself establish a session (confirmed against the
+  // live server), so this lands back on /onboarding only if it did — it
+  // won't here, and the explicit login below is the actual subject of
+  // this test either way.
 
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
@@ -83,9 +110,16 @@ test("password reset round-trips end to end via Mailpit", async ({ page, request
   const password = "correct horse battery staple 1";
   const newPassword = "correct horse battery staple 2";
 
-  await request.post("http://localhost:8000/_allauth/browser/v1/auth/signup", {
-    data: { email, password },
-  });
+  // Through the real signup form (not a raw request.post) so the CSRF
+  // cookie needed for it — and for the reset request just below — is
+  // primed the same way a real visitor's browser primes it (see
+  // packages/api-client/src/http/mutator.ts's ensureCsrfCookie).
+  // Verification is irrelevant to this test; unverified is fine.
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: /sign up/i }).click();
+  await expect(page).toHaveURL(/\/verify-email$/);
 
   await page.goto("/reset-password");
   await page.getByLabel("Email").fill(email);
@@ -95,12 +129,9 @@ test("password reset round-trips end to end via Mailpit", async ({ page, request
   const message = await latestMessageTo(request, email);
   expect(message).toBeTruthy();
   const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
-  const link = /https?:\/\/[^\s"]+\/reset-password\/[A-Za-z0-9_-]+/.exec(
-    detail.Text ?? detail.HTML ?? "",
-  )?.[0];
-  expect(link).toBeTruthy();
+  const key = extractKeyFromEmail(detail.Text ?? detail.HTML ?? "", "reset-password");
 
-  await page.goto(new URL(link!).pathname);
+  await page.goto(`/reset-password/${encodeURIComponent(key)}`);
   await page.getByLabel("New password").fill(newPassword);
   await page.getByRole("button", { name: /set new password/i }).click();
   await expect(page).toHaveURL(/\/app/);

@@ -4,7 +4,7 @@
  */
 export const SESSION_COOKIE_NAME = "sessionid";
 
-const PROTECTED_PREFIXES = ["/app", "/account"];
+const PROTECTED_PREFIXES = ["/app", "/account", "/onboarding"];
 const AUTH_ONLY_PATHS = ["/login", "/signup"];
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {

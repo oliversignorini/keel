@@ -24,7 +24,7 @@ export async function identityFetch<T>(url: string, options: RequestInit = {}): 
   const headers = new Headers(options.headers);
 
   if (isUnsafeMethod(method)) {
-    const csrfToken = readCsrfCookie();
+    const csrfToken = await ensureCsrfCookie();
     if (csrfToken) {
       headers.set(CSRF_HEADER_NAME, csrfToken);
     }
@@ -50,6 +50,28 @@ export async function identityFetch<T>(url: string, options: RequestInit = {}): 
   }
 
   return { data: body, status: response.status, headers: response.headers } as T;
+}
+
+/**
+ * Django only sets the `csrftoken` cookie as a side effect of a request
+ * that calls `get_token()` — nothing GETs anything before a visitor's
+ * very first action, so the first unsafe request of a fresh browser
+ * session (no prior page load on the API's own origin ever set it) has no
+ * cookie to send and gets rejected with a 403 "CSRF cookie not set"
+ * before it ever reaches application code. Confirmed against the live
+ * server while building this client (packages/api-client's regeneration
+ * — see orval.config.ts) — every unsafe call up to and including the
+ * very first login/signup was failing on exactly this before this fix.
+ * `/_allauth/browser/v1/config` is the lightest, always-public GET this
+ * API serves, so it doubles as the priming request.
+ */
+async function ensureCsrfCookie(): Promise<string | undefined> {
+  const existing = readCsrfCookie();
+  if (existing) {
+    return existing;
+  }
+  await fetch(`${API_BASE_URL}/_allauth/browser/v1/config`, { credentials: "include" });
+  return readCsrfCookie();
 }
 
 async function parseBody(response: Response): Promise<unknown> {

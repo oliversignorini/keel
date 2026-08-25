@@ -1,12 +1,12 @@
 "use client";
 
-import { ApiError, sessionsList, sessionsRevoke, type SessionItem } from "@keel/api-client";
+import { ApiError, sessionsList, sessionsRevoke, type Session } from "@keel/api-client";
 import { useEffect, useState } from "react";
 
 import { FormError } from "../../(auth)/_components/form-error";
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<SessionItem[] | null>(null);
+  const [sessions, setSessions] = useState<Session[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -22,7 +22,7 @@ export default function SessionsPage() {
     load();
   }, []);
 
-  async function revoke(sessionId: string) {
+  async function revoke(sessionId: number) {
     setError(null);
     try {
       await sessionsRevoke({ sessions: [sessionId] });
@@ -58,10 +58,10 @@ export default function SessionsPage() {
                   {session.ip} · last seen {session.last_seen_at}
                 </p>
               </div>
-              {session.is_current || !session.id ? null : (
+              {session.is_current ? null : (
                 <button
                   type="button"
-                  onClick={() => revoke(session.id!)}
+                  onClick={() => revoke(session.id)}
                   className="text-red-600 underline dark:text-red-400"
                 >
                   Revoke

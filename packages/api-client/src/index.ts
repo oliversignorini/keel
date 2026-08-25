@@ -11,6 +11,8 @@ export * from "./http/csrf";
 export * from "./http/mutator";
 // identity.query.ts is orval's "react-query" output: it already contains
 // the plain fetch functions and request/response types alongside the
-// TanStack Query hooks, so this one export covers all three.
+// TanStack Query hooks, so this one export covers all three. It now covers
+// BOTH allauth's endpoints and organizations/permissions.py's (PRD §7) —
+// see orval.config.ts for why that has to be one generated file.
 export * from "./generated/identity.query";
 export * as identitySchemas from "./generated/identity.zod";
