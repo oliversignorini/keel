@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     "keel.accounts",
     "keel.organizations",
     "keel.billing",
+    "keel.connections",
+    "keel.jobs",
     "keel.audit",
     "keel.notifications",
     "keel.files",
