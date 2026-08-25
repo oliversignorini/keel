@@ -15,6 +15,7 @@ from keel.core.authz import (
     PermissionRegistry,
     UnregisteredPermissionCode,
     has_perm,
+    registered_scoped_viewsets,
 )
 from keel.core.exceptions import PermissionDeniedWithReason
 
@@ -188,6 +189,47 @@ def test_abstract_org_scoped_intermediate_base_skips_the_test_factory_check() ->
         __abstract__ = True
 
     assert AbstractIntermediateViewSet.test_factory is None
+
+
+# --- The scoped-viewset registry (PRD §4 invariant 7) -----------------
+# Every well-formed OrgScopedViewSet subclass records itself so nothing
+# can define a scoped viewset without the tenant-isolation meta-test
+# being able to find it — see
+# keel/organizations/tests/test_meta_router_wiring.py for the CI check
+# that actually enforces this.
+
+
+def test_org_scoped_viewset_subclass_is_recorded_in_the_registry() -> None:
+    class RecordedViewSet(OrgScopedViewSet):
+        required_permissions = ("fixture.view",)
+        test_factory = "keel.core.tests.test_authz.fake_factory"
+
+    assert RecordedViewSet in registered_scoped_viewsets()
+
+
+def test_abstract_org_scoped_subclass_is_not_recorded() -> None:
+    before = set(registered_scoped_viewsets())
+
+    class AbstractNotRecordedViewSet(OrgScopedViewSet):
+        __abstract__ = True
+
+    after = set(registered_scoped_viewsets())
+
+    assert after == before
+
+
+def test_org_scoped_subclass_opting_out_of_scoping_is_not_recorded() -> None:
+    before = set(registered_scoped_viewsets())
+
+    class OptedOutViewSet(OrgScopedViewSet):
+        required_permissions = ("fixture.view",)
+        organization_scoped = False
+        GLOBAL_JUSTIFICATION = "Fixture — deliberately opts out."
+
+    after = set(registered_scoped_viewsets())
+
+    assert after == before
+    assert OptedOutViewSet not in after
 
 
 def test_get_queryset_filters_through_for_organization() -> None:
