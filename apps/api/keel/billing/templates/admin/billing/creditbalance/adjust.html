@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>Current balance for <strong>{{ original.organization }}</strong>: {{ original.balance }}</p>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Record adjustment">
+</form>
+{% endblock %}
