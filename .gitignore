@@ -24,6 +24,7 @@ next-env.d.ts
 
 # Turborepo
 .turbo/
+*.tsbuildinfo
 
 # Django
 *.log
