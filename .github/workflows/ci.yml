@@ -131,6 +131,15 @@ jobs:
         working-directory: apps/api
         run: uv run pytest
 
+      - name: pytest (MFA enabled)
+        working-directory: apps/api
+        run: uv run pytest keel/accounts/tests/test_mfa_flow.py --no-cov --ds=config.settings.test_mfa
+        # config.settings.test (the default above) runs with
+        # KEEL_MFA_ENABLED=false and asserts the TOTP endpoints are
+        # absent; this run exercises the "flag on" half of that same
+        # acceptance criterion (PRD §8 Phase 2 A.4) against the settings
+        # module where allauth.mfa is actually installed.
+
       - name: check_coverage.py
         run: python3 scripts/check_coverage.py
 

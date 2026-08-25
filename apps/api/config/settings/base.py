@@ -209,7 +209,12 @@ KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
 # --- DRF ---------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        # Not DRF's own SessionAuthentication (PRD §8 Phase 2 A.4): that
+        # class has no WWW-Authenticate challenge, which makes DRF coerce
+        # an unauthenticated request's 401 to 403 (documented DRF
+        # behavior — see keel/core/authentication.py). PRD §7 requires a
+        # real 401 for "no session, or session expired".
+        "keel.core.authentication.SessionAuthentication",
     ],
     # Deny by default (PRD §4, task 1.12) — a viewset that forgets to
     # declare permissions is unreachable rather than open.
@@ -259,7 +264,11 @@ HEADLESS_FRONTEND_URLS = {
 
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+# "password2" (confirm-password) is a classic-form-only concept — the
+# headless API always exposes a single "password" field on the wire
+# (allauth.headless.account.inputs.SignupInput), so it is left out here
+# rather than configured to no effect.
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 

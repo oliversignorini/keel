@@ -39,7 +39,7 @@ def test_fails_when_cookie_domain_is_not_a_parent_of_the_app_domain() -> None:
 
 
 def test_fails_when_app_domain_is_only_a_suffix_match_not_a_subdomain() -> None:
-    """"notacme.com" ends with "acme.com" as a raw string, but is not a
+    """ "notacme.com" ends with "acme.com" as a raw string, but is not a
     subdomain of it — the check must compare domain labels, not do a bare
     string suffix match."""
     with override_settings(SESSION_COOKIE_DOMAIN=".acme.com", KEEL_APP_DOMAIN="notacme.com"):

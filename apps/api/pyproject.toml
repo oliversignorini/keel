@@ -80,6 +80,8 @@ django_settings_module = "config.settings.test"
 # never calls it.
 [tool.keel.coverage]
 "keel/core/ids.py" = 100
+"keel/core/authentication.py" = 100
+"keel/core/checks.py" = 100
 "keel/core/models.py" = 100
 "keel/core/exceptions.py" = 100
 "keel/core/authz.py" = 100

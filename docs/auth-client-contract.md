@@ -122,7 +122,9 @@ session, 403 = authenticated but denied, `code` = `Decision.reason`).
 GET    /_allauth/browser/v1/config                       # capabilities, no auth required
 GET    /_allauth/browser/v1/auth/session                 # current session / triggers CSRF cookie
 DELETE /_allauth/browser/v1/auth/session                 # logout
-POST   /_allauth/browser/v1/auth/signup                  # { email, password1, password2 }
+POST   /_allauth/browser/v1/auth/signup                  # { email, password } — one password field on
+                                                            # the wire; confirm-password is a client-side
+                                                            # UX concern only, allauth never sees it twice
 POST   /_allauth/browser/v1/auth/login                   # { email, password }
 POST   /_allauth/browser/v1/auth/password/request        # { email } — request reset
 POST   /_allauth/browser/v1/auth/password/reset           # { key, password1, password2 }
@@ -135,8 +137,11 @@ GET    /_allauth/browser/v1/auth/sessions                 # list this user's act
 DELETE /_allauth/browser/v1/auth/sessions                 # revoke sessions (body selects which; see spec)
 
 # MFA (TOTP) — present only when KEEL_MFA_ENABLED=true (see apps/api .env.example)
-POST   /_allauth/browser/v1/account/authenticators/totp   # activate — response includes the TOTP secret URI
-GET    /_allauth/browser/v1/account/authenticators/totp
+GET    /_allauth/browser/v1/account/authenticators/totp   # 404 + meta.{secret,totp_url} when not yet
+                                                            # enrolled (secret is in `meta`, not `data`);
+                                                            # 200 + data when already enrolled
+POST   /_allauth/browser/v1/account/authenticators/totp   # { code } — activates using the secret from
+                                                            # the preceding GET (stored server-side in session)
 DELETE /_allauth/browser/v1/account/authenticators/totp
 POST   /_allauth/browser/v1/auth/2fa/authenticate         # { code } — resolves a pending mfa_authenticate flow
 ```
