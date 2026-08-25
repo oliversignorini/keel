@@ -353,3 +353,10 @@ KEEL_API_ROUTER = env("KEEL_API_ROUTER", default="")
 # exist regardless, so turning this on is a settings change, not a
 # migration.
 KEEL_CUSTOM_ROLES_ENABLED = env.bool("KEEL_CUSTOM_ROLES_ENABLED", default=False)
+
+# Credits are a per-project feature flag, off by default (PRD §4, "Credits
+# — the metered-billing primitive"; docs/plans/phase-4.md A.5) — the
+# CreditLedgerEntry/CreditBalance models and keel.billing.credits exist
+# regardless, so turning this on is a settings change, not a migration.
+# With it off: no endpoints, no meter, no cost.
+BILLING_CREDITS = env.bool("BILLING_CREDITS", default=False)

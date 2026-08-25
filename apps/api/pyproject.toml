@@ -98,6 +98,10 @@ django_settings_module = "config.settings.test"
 "keel/organizations/permissions.py" = 100
 "keel/organizations/resolvers.py" = 100
 "keel/organizations/roles.py" = 100
+# The credit ledger arithmetic (PRD §4 "Credits — the metered-billing
+# primitive", invariant 7; phase-4.md A.1) — pure arithmetic over rows,
+# so 100% is the achievable floor rather than an aspiration.
+"keel/billing/credits.py" = 100
 
 [tool.importlinter]
 root_packages = ["config", "keel"]
