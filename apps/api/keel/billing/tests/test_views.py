@@ -134,6 +134,56 @@ def test_checkout_rejects_inactive_price() -> None:
     assert response.data["error"]["code"] == "price_not_found"
 
 
+def test_checkout_blocks_a_downgrade_below_current_usage(monkeypatch: pytest.MonkeyPatch) -> None:
+    """docs/plans/phase-4.md B.4: plan downgrade below current usage is
+    blocked, naming what's over — and no Stripe call is made."""
+    from keel.billing import entitlements
+
+    org, owner = _org_with_owner()
+    old_plan = Plan.objects.create(code="pro", name="Pro", stripe_product_id="prod_pro_dg")
+    old_price = Price.objects.create(
+        plan=old_plan,
+        stripe_price_id="price_pro_dg",
+        interval=Price.INTERVAL_MONTH,
+        unit_amount=4900,
+        currency="AUD",
+    )
+    Subscription.objects.create(
+        organization=org,
+        stripe_subscription_id="sub_pro_dg",
+        plan=old_plan,
+        price=old_price,
+        status="active",
+    )
+    new_plan = Plan.objects.create(
+        code="starter-dg",
+        name="Starter",
+        stripe_product_id="prod_starter_dg",
+        entitlements={"limits": {"seats": 1}},
+    )
+    new_price = Price.objects.create(
+        plan=new_plan,
+        stripe_price_id="price_starter_dg",
+        interval=Price.INTERVAL_MONTH,
+        unit_amount=900,
+        currency="AUD",
+    )
+    monkeypatch.setitem(entitlements._resource_counters, "seats", lambda organization: 3)
+
+    def _fail(**kw):
+        raise AssertionError("must not call Stripe when the downgrade is blocked")
+
+    monkeypatch.setattr(stripe_client, "create_checkout_session", _fail)
+
+    response = _client_for(owner).post(
+        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(new_price.id)}
+    )
+
+    assert response.status_code == 409, response.data
+    assert response.data["error"]["code"] == "downgrade_blocked"
+    assert "seats" in response.data["error"]["message"]
+
+
 def test_checkout_404s_for_nonmember() -> None:
     org, _owner = _org_with_owner()
     outsider = _user("outsider")

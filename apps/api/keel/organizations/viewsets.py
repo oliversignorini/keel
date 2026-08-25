@@ -18,6 +18,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from keel.billing.entitlements import resolve_entitlements
 from keel.core.authz import OrgScopedViewSet, has_perm
 from keel.core.exceptions import Conflict, PermissionDeniedWithReason
 from keel.organizations import selectors, services
@@ -243,9 +244,9 @@ class InvitationViewSet(
 
 class MeView(APIView):
     """``GET /me/`` — user, organisations, current role, resolved
-    permission codes per organisation (PRD §7). Entitlement resolution is
-    Phase 4's; the ``entitlements`` seam is left as an empty dict per
-    organisation until then."""
+    permission codes and entitlements per organisation (PRD §7;
+    docs/plans/phase-4.md B.4: "Resolution feeds GET /api/v1/me/, which
+    Phase 3 owns — coordinate rather than duplicating it")."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -261,7 +262,7 @@ class MeView(APIView):
                     "name": organization.name,
                     "role": membership.role.name if membership else None,
                     "permissions": selectors.resolve_permission_codes(membership),
-                    "entitlements": {},
+                    "entitlements": resolve_entitlements(organization),
                 }
             )
         return Response(

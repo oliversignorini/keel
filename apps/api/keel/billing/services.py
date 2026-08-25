@@ -8,7 +8,8 @@ from typing import Any
 from django.db import transaction
 
 from keel.billing import stripe_client
-from keel.billing.models import Plan, Price
+from keel.billing.entitlements import enforce_downgrade_limits
+from keel.billing.models import Plan, Price, Subscription
 from keel.organizations.models import Organization
 
 CHECKOUT_TRIAL_DAYS = 14
@@ -114,7 +115,16 @@ def create_checkout_session(
     """``POST /organizations/<org_slug>/billing/checkout/``
     (docs/plans/phase-4.md B.2). Returns the Checkout Session URL — the
     ``Subscription`` row itself is created later, by the webhook handler
-    processing ``checkout.session.completed``, not here."""
+    processing ``checkout.session.completed``, not here.
+
+    If the organisation already has a subscription, this doubles as the
+    plan-change entry point — Checkout replaces an existing subscription's
+    price when reused this way. A downgrade whose target plan's limits
+    are already exceeded by current usage is blocked before any Stripe
+    call (docs/plans/phase-4.md B.4)."""
+    existing_subscription = Subscription.objects.filter(organization=organization).first()
+    if existing_subscription is not None:
+        enforce_downgrade_limits(organization, price.plan)
     customer_id = ensure_stripe_customer(organization)
     return stripe_client.create_checkout_session(
         customer_id=customer_id,

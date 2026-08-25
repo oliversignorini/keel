@@ -18,6 +18,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
+from keel.billing.entitlements import check_limit
 from keel.core.audit import audited
 from keel.core.exceptions import Conflict, PermissionDeniedWithReason, UnprocessableEntity
 from keel.organizations.models import Invitation, Membership, Organization, Role
@@ -135,19 +136,39 @@ def revoke_invitation(*, invitation: Invitation, actor: Any) -> Invitation:
 @audited("invitation.accepted")
 def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
     """Atomic: membership created, ``accepted_at`` set (phase-3.md B.1).
-    Seat sync fires on commit, behind ``BILLING_SEAT_PRICING``."""
+    Seat sync fires on commit, behind ``BILLING_SEAT_PRICING``.
+
+    Checked against the plan's seat entitlement before anything is
+    written (docs/plans/phase-4.md B.4: "Adding a member beyond the seat
+    entitlement returns 402 with upgrade context"). The seat counter only
+    counts ``STATUS_ACTIVE`` memberships, so both a brand-new membership
+    and reactivating a suspended one genuinely add a seat and are checked;
+    re-accepting an already-active membership is a pure no-op and isn't."""
     with transaction.atomic():
+        existing = Membership.objects.filter(
+            organization=invitation.organization, user=user
+        ).first()
+        adds_a_new_active_seat = existing is None or existing.status != Membership.STATUS_ACTIVE
+        if adds_a_new_active_seat:
+            check_limit(invitation.organization, "seats")
+
         invitation.accepted_at = timezone.now()
         invitation.save(update_fields=["accepted_at"])
-        membership, created = Membership.objects.get_or_create(
-            organization=invitation.organization,
-            user=user,
-            defaults={"role": invitation.role, "status": Membership.STATUS_ACTIVE},
-        )
-        if not created and membership.status != Membership.STATUS_ACTIVE:
-            membership.status = Membership.STATUS_ACTIVE
-            membership.role = invitation.role
-            membership.save(update_fields=["status", "role"])
+
+        if existing is None:
+            membership = Membership.objects.create(
+                organization=invitation.organization,
+                user=user,
+                role=invitation.role,
+                status=Membership.STATUS_ACTIVE,
+            )
+        else:
+            membership = existing
+            if membership.status != Membership.STATUS_ACTIVE:
+                membership.status = Membership.STATUS_ACTIVE
+                membership.role = invitation.role
+                membership.save(update_fields=["status", "role"])
+
         if _billing_seat_pricing_enabled():
             transaction.on_commit(lambda: _sync_seats(invitation.organization_id))
     return membership

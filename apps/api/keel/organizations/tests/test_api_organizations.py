@@ -145,6 +145,40 @@ def test_me_returns_organizations_role_and_permissions() -> None:
     org_row = next(row for row in response.data["organizations"] if row["slug"] == org.slug)
     assert org_row["role"] == PRESET_OWNER
     assert Perm.ORG_TRANSFER in org_row["permissions"]
+    assert org_row["entitlements"] == {"features": [], "limits": {}}
+
+
+def test_me_resolves_entitlements_from_the_current_plan() -> None:
+    """docs/plans/phase-4.md B.4: "Resolution feeds GET /api/v1/me/"."""
+    from keel.billing.models import Plan, Price, Subscription
+
+    org, creator = _org_with_owner()
+    plan = Plan.objects.create(
+        code="pro",
+        name="Pro",
+        stripe_product_id="prod_pro_me",
+        entitlements={"features": ["api_access"], "limits": {"seats": 10}},
+    )
+    price = Price.objects.create(
+        plan=plan,
+        stripe_price_id="price_pro_me",
+        interval=Price.INTERVAL_MONTH,
+        unit_amount=4900,
+        currency="AUD",
+    )
+    Subscription.objects.create(
+        organization=org,
+        stripe_subscription_id="sub_pro_me",
+        plan=plan,
+        price=price,
+        status="active",
+    )
+    client = _client_for(creator)
+
+    response = client.get("/api/v1/me/")
+
+    org_row = next(row for row in response.data["organizations"] if row["slug"] == org.slug)
+    assert org_row["entitlements"] == {"features": ["api_access"], "limits": {"seats": 10}}
 
 
 # --- Invitation accept: the four edge cases (phase-3.md B.4) --------------
