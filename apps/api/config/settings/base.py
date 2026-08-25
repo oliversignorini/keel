@@ -137,6 +137,11 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
 
+# --- Encryption (keel/core/crypto.py) ---------------------------------
+# Backs Connection.access_token / refresh_token. Generate with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
+
 # --- DRF ---------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
