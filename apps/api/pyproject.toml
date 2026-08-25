@@ -88,6 +88,13 @@ django_settings_module = "config.settings.test"
 "keel/core/crypto.py" = 100
 "keel/core/logging.py" = 100
 "keel/core/middleware.py" = 100
+# Permission registry (PRD §4 invariant 2, phase-3.md A.1-A.4) — the two
+# CI meta-tests are the specified enforcement mechanism for guard test
+# coverage; 100% here catches ordinary dead code the meta-tests wouldn't
+# (an unreachable branch inside a guard, an unused helper).
+"keel/organizations/permissions.py" = 100
+"keel/organizations/resolvers.py" = 100
+"keel/organizations/roles.py" = 100
 
 [tool.importlinter]
 root_packages = ["config", "keel"]
