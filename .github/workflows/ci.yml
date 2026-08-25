@@ -124,6 +124,30 @@ jobs:
         working-directory: apps/api
         run: uv sync --frozen
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build email templates
+        run: pnpm --filter @keel/emails build
+        # react-email templates are authored as .tsx and rendered to HTML
+        # at build time (PRD Integration points: "rendered to HTML at
+        # build, sent from Django"). keel/notifications reads those built
+        # files, so every allauth flow that sends mail — signup, email
+        # verification, password reset — raises EmailTemplateMissing
+        # without this step. packages/emails/dist is a build artifact and
+        # is not committed, so CI must produce it before pytest runs.
+
       - name: makemigrations --check --dry-run
         working-directory: apps/api
         run: uv run python manage.py makemigrations --check --dry-run
