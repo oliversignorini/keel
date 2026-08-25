@@ -9,6 +9,7 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
 from keel.organizations import viewsets
+from keel.widgets.urls import widgets_router
 
 nested_router = SimpleRouter(trailing_slash=True)
 nested_router.register("members", viewsets.MembershipViewSet, basename="membership")
@@ -26,7 +27,7 @@ class _CombinedRegistry:
         self.registry = [entry for router in routers for entry in router.registry]
 
 
-api_registry = _CombinedRegistry(nested_router)
+api_registry = _CombinedRegistry(nested_router, widgets_router)
 
 urlpatterns = [
     path("organizations/", viewsets.OrganizationListCreateView.as_view(), name="organization-list"),
@@ -41,6 +42,7 @@ urlpatterns = [
         name="organization-transfer",
     ),
     path("organizations/<slug:org_slug>/", include(nested_router.urls)),
+    path("organizations/<slug:org_slug>/", include(widgets_router.urls)),
     path("me/", viewsets.MeView.as_view(), name="me"),
     path("permissions/", viewsets.PermissionsRegistryView.as_view(), name="permissions"),
     path("invite/<str:token>/", viewsets.InvitationAcceptView.as_view(), name="invite-accept"),
