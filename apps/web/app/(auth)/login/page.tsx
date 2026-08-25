@@ -2,19 +2,31 @@
 
 import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UnauthorizedError, authLogin, identitySchemas } from "@keel/api-client";
+import { UnauthorizedError, authLogin } from "@keel/api-client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { FormError } from "../_components/form-error";
 import { FormField } from "../_components/form-field";
 import { GoogleContinueLink } from "../_components/google-continue-link";
 import { SubmitButton } from "../_components/submit-button";
 
-type LoginFormValues = z.infer<typeof identitySchemas.authLoginBody>;
+// The generated authLoginBody schema (identitySchemas) types the real
+// allauth request body — { password } & (username | email | phone) —
+// because headless login is generically multi-method. This project's
+// User.USERNAME_FIELD is email (PRD §4 "Custom User ... email as
+// USERNAME_FIELD"), so email is the only method this form ever needs; a
+// narrower local schema keeps the form's field errors typed directly
+// against `email` instead of fighting the union. `{email, password}`
+// still satisfies the generated body type at the `authLogin()` call below.
+const loginFormSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 // useSearchParams() opts the page out of static rendering unless wrapped in
 // its own Suspense boundary (Next.js requires this even though the /login
@@ -37,7 +49,7 @@ function LoginForm() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({ resolver: zodResolver(identitySchemas.authLoginBody) });
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginFormSchema) });
 
   async function onSubmit(values: LoginFormValues) {
     setFormError(null);
