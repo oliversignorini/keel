@@ -198,6 +198,25 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
     return membership
 
 
+def expire_invitations() -> int:
+    """Invitation expiry (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
+    5.4), hourly. A system action, not a user one — no ``actor``, so not
+    ``@audited`` (that decorator records who did it; nobody did this).
+
+    Phase 1's schema has no separate "expired" state on ``Invitation`` —
+    only ``accepted_at`` / ``revoked_at``, and no migration is available
+    to add one (docs/plans/phase-5.md boundary: "a needed migration
+    means a Phase 1 gap"). An invitation past its ``expires_at`` with
+    neither set is, in every observable way (it 403s on accept), already
+    revoked; this just makes that state visible on the row itself.
+    Idempotent by construction: the ``filter`` only ever matches rows
+    this hasn't already touched, so a second run updates zero rows."""
+    now = timezone.now()
+    return Invitation.objects.filter(
+        accepted_at__isnull=True, revoked_at__isnull=True, expires_at__lt=now
+    ).update(revoked_at=now)
+
+
 @audited("membership.removed")
 def remove_member(*, membership: Membership, actor: Any) -> None:
     """Calls the ``members.remove`` guard with ``membership`` as the
