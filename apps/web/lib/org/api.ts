@@ -17,6 +17,7 @@
 
 import {
   meRetrieve,
+  organizationsAuditList,
   organizationsCreate as generatedOrganizationsCreate,
   organizationsDestroy,
   organizationsInvitationsCreate as generatedOrganizationsInvitationsCreate,
@@ -32,6 +33,7 @@ import {
   permissionsRetrieve as generatedPermissionsRetrieve,
   inviteRetrieve as generatedInviteRetrieve,
   inviteCreate as generatedInviteCreate,
+  type AuditLog,
   type Invitation,
   type Membership,
   type Organization,
@@ -96,6 +98,26 @@ export async function transferOwnership(slug: string, body: TransferBody): Promi
 export async function listMembers(slug: string): Promise<Membership[]> {
   const result = await organizationsMembersList(slug);
   return result.data.results;
+}
+
+function cursorFromNextUrl(next: string | null | undefined): string | null {
+  if (!next) return null;
+  try {
+    return new URL(next).searchParams.get("cursor");
+  } catch {
+    // next is a relative path in some environments (no scheme/host to
+    // resolve against) — URLSearchParams on the query string alone.
+    const query = next.split("?")[1] ?? "";
+    return new URLSearchParams(query).get("cursor");
+  }
+}
+
+export async function listAuditLogs(
+  slug: string,
+  cursor?: string,
+): Promise<{ results: AuditLog[]; next: string | null }> {
+  const result = await organizationsAuditList(slug, cursor ? { cursor } : undefined);
+  return { results: result.data.results, next: cursorFromNextUrl(result.data.next) };
 }
 
 export async function updateMemberRole(

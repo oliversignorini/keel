@@ -79,6 +79,31 @@ export interface AccountConfiguration {
   password_reset_by_code_enabled?: boolean;
 }
 
+/**
+ * @nullable
+ */
+export type AuditLogActor = _AuditActor | null;
+
+/**
+ * @nullable
+ */
+export type AuditLogImpersonator = _AuditActor | null;
+
+export interface AuditLog {
+  readonly action: string;
+  /** @nullable */
+  readonly actor: AuditLogActor;
+  readonly created_at: string;
+  readonly id: string;
+  /** @nullable */
+  readonly impersonator: AuditLogImpersonator;
+  /** @nullable */
+  readonly ip: string | null;
+  readonly metadata: unknown;
+  readonly target_id: string;
+  readonly target_type: string;
+}
+
 export interface Authenticated {
   /** A list of methods used to authenticate.
  */
@@ -563,6 +588,14 @@ export interface Organization {
   /** @pattern ^[-a-zA-Z0-9_]+$ */
   readonly slug: string;
   readonly updated_at: string;
+}
+
+export interface PaginatedAuditLogList {
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: AuditLog[];
 }
 
 export interface PaginatedInvitationList {
@@ -1067,6 +1100,12 @@ export interface Widget {
   readonly updated_at: string;
 }
 
+export interface _AuditActor {
+  email: string;
+  id: string;
+  name: string;
+}
+
 export interface _UserSummary {
   email: string;
   id: string;
@@ -1405,6 +1444,17 @@ export type PasswordResetKeyParameter = string;
 export type SessionTokenParameter = string;
 
 export type OrganizationsListParams = {
+/**
+ * The pagination cursor value.
+ */
+cursor?: string;
+/**
+ * Number of results to return per page.
+ */
+limit?: number;
+};
+
+export type OrganizationsAuditListParams = {
 /**
  * The pagination cursor value.
  */
@@ -5624,6 +5674,243 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     
+export type organizationsAuditListResponse200 = {
+  data: PaginatedAuditLogList
+  status: 200
+}
+    
+export type organizationsAuditListResponseSuccess = (organizationsAuditListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsAuditListResponse = (organizationsAuditListResponseSuccess)
+
+export const getOrganizationsAuditListUrl = (orgSlug: string,
+    params?: OrganizationsAuditListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/${orgSlug}/audit/?${stringifiedParams}` : `/api/v1/organizations/${orgSlug}/audit/`
+}
+
+export const organizationsAuditList = async (orgSlug: string,
+    params?: OrganizationsAuditListParams, options?: RequestInit): Promise<organizationsAuditListResponse> => {
+  
+  return identityFetch<organizationsAuditListResponse>(getOrganizationsAuditListUrl(orgSlug,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsAuditListQueryKey = (orgSlug?: string,
+    params?: OrganizationsAuditListParams,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/audit/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getOrganizationsAuditListQueryOptions = <TData = Awaited<ReturnType<typeof organizationsAuditList>>, TError = unknown>(orgSlug: string,
+    params?: OrganizationsAuditListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsAuditListQueryKey(orgSlug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsAuditList>>> = ({ signal }) => organizationsAuditList(orgSlug,params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsAuditListQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsAuditList>>>
+export type OrganizationsAuditListQueryError = unknown
+
+
+export function useOrganizationsAuditList<TData = Awaited<ReturnType<typeof organizationsAuditList>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  OrganizationsAuditListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsAuditList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsAuditList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsAuditList<TData = Awaited<ReturnType<typeof organizationsAuditList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsAuditListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsAuditList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsAuditList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsAuditList<TData = Awaited<ReturnType<typeof organizationsAuditList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsAuditListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsAuditList<TData = Awaited<ReturnType<typeof organizationsAuditList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsAuditListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsAuditListQueryOptions(orgSlug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export type organizationsAuditRetrieveResponse200 = {
+  data: AuditLog
+  status: 200
+}
+    
+export type organizationsAuditRetrieveResponseSuccess = (organizationsAuditRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsAuditRetrieveResponse = (organizationsAuditRetrieveResponseSuccess)
+
+export const getOrganizationsAuditRetrieveUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/audit/${id}/`
+}
+
+export const organizationsAuditRetrieve = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<organizationsAuditRetrieveResponse> => {
+  
+  return identityFetch<organizationsAuditRetrieveResponse>(getOrganizationsAuditRetrieveUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsAuditRetrieveQueryKey = (orgSlug?: string,
+    id?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/audit/${id}/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsAuditRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsAuditRetrieveQueryKey(orgSlug,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsAuditRetrieve>>> = ({ signal }) => organizationsAuditRetrieve(orgSlug,id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsAuditRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsAuditRetrieve>>>
+export type OrganizationsAuditRetrieveQueryError = unknown
+
+
+export function useOrganizationsAuditRetrieve<TData = Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsAuditRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsAuditRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsAuditRetrieve<TData = Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsAuditRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsAuditRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsAuditRetrieve<TData = Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsAuditRetrieve<TData = Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsAuditRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsAuditRetrieveQueryOptions(orgSlug,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
 /**
  * ``POST /organizations/<org_slug>/billing/checkout/``.
  */

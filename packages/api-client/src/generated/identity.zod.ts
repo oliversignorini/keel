@@ -1260,6 +1260,66 @@ export const organizationsPartialUpdateParams = zod.object({
 })
 
 
+export const organizationsAuditListParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const organizationsAuditListQueryParams = zod.object({
+  "cursor": zod.string().optional().describe('The pagination cursor value.'),
+  "limit": zod.number().optional().describe('Number of results to return per page.')
+})
+
+export const organizationsAuditListResponse = zod.object({
+  "next": zod.string().url().nullish(),
+  "previous": zod.string().url().nullish(),
+  "results": zod.array(zod.object({
+  "action": zod.string(),
+  "actor": zod.object({
+  "email": zod.string().email(),
+  "id": zod.string().uuid(),
+  "name": zod.string()
+}).nullable(),
+  "created_at": zod.string().datetime({}),
+  "id": zod.string().uuid(),
+  "impersonator": zod.object({
+  "email": zod.string().email(),
+  "id": zod.string().uuid(),
+  "name": zod.string()
+}).nullable(),
+  "ip": zod.string().nullable(),
+  "metadata": zod.unknown(),
+  "target_id": zod.string(),
+  "target_type": zod.string()
+}))
+})
+
+
+export const organizationsAuditRetrieveParams = zod.object({
+  "id": zod.string(),
+  "org_slug": zod.string()
+})
+
+export const organizationsAuditRetrieveResponse = zod.object({
+  "action": zod.string(),
+  "actor": zod.object({
+  "email": zod.string().email(),
+  "id": zod.string().uuid(),
+  "name": zod.string()
+}).nullable(),
+  "created_at": zod.string().datetime({}),
+  "id": zod.string().uuid(),
+  "impersonator": zod.object({
+  "email": zod.string().email(),
+  "id": zod.string().uuid(),
+  "name": zod.string()
+}).nullable(),
+  "ip": zod.string().nullable(),
+  "metadata": zod.unknown(),
+  "target_id": zod.string(),
+  "target_type": zod.string()
+})
+
+
 /**
  * ``POST /organizations/<org_slug>/billing/checkout/``.
  */

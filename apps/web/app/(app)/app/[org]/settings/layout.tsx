@@ -7,15 +7,15 @@ import Link from "next/link";
 /**
  * Secondary horizontal tab row (PRD §5 "Layout — top bar navigation":
  * "Settings uses a secondary horizontal tab row rather than a nested
- * sidebar"). Audit is Phase 8's and is the one tab in PRD §5's row that
- * still routes nowhere; Billing landed with Phase 4 (phase-4.md Worktree
- * C) and is listed here now.
+ * sidebar"): General · Members · Roles · Billing · Audit. Audit is
+ * Phase 8's (docs/plans/phase-8.md 8.2) — the fifth tab PRD §5 lists.
  */
 const TABS = [
   { slug: "general", label: "General" },
   { slug: "members", label: "Members" },
   { slug: "roles", label: "Roles" },
   { slug: "billing", label: "Billing" },
+  { slug: "audit", label: "Audit" },
 ] as const;
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
