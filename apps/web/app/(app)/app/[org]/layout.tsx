@@ -1,5 +1,6 @@
 "use client";
 
+import { BillingBanners } from "@/components/billing/billing-banners";
 import { rememberLastOrg } from "@/lib/org/last-org";
 import { useOrgContext } from "@/lib/org/org-context";
 import { useEffect } from "react";
@@ -50,5 +51,13 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {/* Billing banners live here, not on the billing settings page, so a
+          trial ending or a failed payment is visible while the product is
+          being used — see components/billing/billing-banners.tsx. */}
+      {currentOrg ? <BillingBanners orgSlug={currentOrg.slug} /> : null}
+      {children}
+    </>
+  );
 }

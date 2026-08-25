@@ -569,6 +569,23 @@ export interface PhoneNumbersResponse {
   status: StatusOK;
 }
 
+export type PlanPricesItem = {[key: string]: unknown};
+
+export interface Plan {
+  /** @maxLength 100 */
+  code: string;
+  entitlements?: unknown;
+  readonly id: string;
+  /** @maxLength 255 */
+  name: string;
+  readonly prices: readonly PlanPricesItem[];
+  /**
+   * @minimum -2147483648
+   * @maximum 2147483647
+   */
+  sort_order?: number;
+}
+
 /**
  * The process to be executed when the user successfully
 authenticates. When set to `login`, the user will be logged into the
@@ -4883,9 +4900,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     
 /**
  * ``GET /me/`` — user, organisations, current role, resolved
-permission codes per organisation (PRD §7). Entitlement resolution is
-Phase 4's; the ``entitlements`` seam is left as an empty dict per
-organisation until then.
+permission codes and entitlements per organisation (PRD §7;
+docs/plans/phase-4.md B.4: "Resolution feeds GET /api/v1/me/, which
+Phase 3 owns — coordinate rather than duplicating it").
  */
 export type meRetrieveResponse200 = {
   data: void
@@ -5489,6 +5506,398 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     
+/**
+ * ``POST /organizations/<org_slug>/billing/checkout/``.
+ */
+export type organizationsBillingCheckoutCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsBillingCheckoutCreateResponseSuccess = (organizationsBillingCheckoutCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsBillingCheckoutCreateResponse = (organizationsBillingCheckoutCreateResponseSuccess)
+
+export const getOrganizationsBillingCheckoutCreateUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/billing/checkout/`
+}
+
+export const organizationsBillingCheckoutCreate = async (orgSlug: string, options?: RequestInit): Promise<organizationsBillingCheckoutCreateResponse> => {
+  
+  return identityFetch<organizationsBillingCheckoutCreateResponse>(getOrganizationsBillingCheckoutCreateUrl(orgSlug),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getOrganizationsBillingCheckoutCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>, TError,{orgSlug: string}, TContext> => {
+
+const mutationKey = ['organizationsBillingCheckoutCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>, {orgSlug: string}> = (props) => {
+          const {orgSlug} = props ?? {};
+
+          return  organizationsBillingCheckoutCreate(orgSlug,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsBillingCheckoutCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>>
+    
+    export type OrganizationsBillingCheckoutCreateMutationError = unknown
+
+    export const useOrganizationsBillingCheckoutCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsBillingCheckoutCreate>>,
+        TError,
+        {orgSlug: string},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsBillingCheckoutCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``GET /organizations/<org_slug>/billing/credits/`` (PRD §7's
+credits endpoint list; docs/plans/phase-4.md Worktree C's
+``<CreditMeter>``, which is "rendered **only when credits are
+enabled**").
+
+Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5: "With it
+off: no endpoints, no meter, no cost"). Off is a **404**, not a zero
+balance: the flag decides whether this feature exists at all, so the
+web meter's absence-of-data path is "there is nothing here" rather
+than "you have no credits" — two states a user would read very
+differently. 404 is also what an unresolvable organisation already
+returns from ``_get_organization``, which keeps the flag from being a
+distinguishable signal to a non-member either way.
+ */
+export type organizationsBillingCreditsRetrieveResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsBillingCreditsRetrieveResponseSuccess = (organizationsBillingCreditsRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsBillingCreditsRetrieveResponse = (organizationsBillingCreditsRetrieveResponseSuccess)
+
+export const getOrganizationsBillingCreditsRetrieveUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/billing/credits/`
+}
+
+export const organizationsBillingCreditsRetrieve = async (orgSlug: string, options?: RequestInit): Promise<organizationsBillingCreditsRetrieveResponse> => {
+  
+  return identityFetch<organizationsBillingCreditsRetrieveResponse>(getOrganizationsBillingCreditsRetrieveUrl(orgSlug),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsBillingCreditsRetrieveQueryKey = (orgSlug?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/billing/credits/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsBillingCreditsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsBillingCreditsRetrieveQueryKey(orgSlug);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>> = ({ signal }) => organizationsBillingCreditsRetrieve(orgSlug, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsBillingCreditsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>>
+export type OrganizationsBillingCreditsRetrieveQueryError = unknown
+
+
+export function useOrganizationsBillingCreditsRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError = unknown>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsBillingCreditsRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsBillingCreditsRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsBillingCreditsRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingCreditsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsBillingCreditsRetrieveQueryOptions(orgSlug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * ``POST /organizations/<org_slug>/billing/portal/``.
+ */
+export type organizationsBillingPortalCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsBillingPortalCreateResponseSuccess = (organizationsBillingPortalCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsBillingPortalCreateResponse = (organizationsBillingPortalCreateResponseSuccess)
+
+export const getOrganizationsBillingPortalCreateUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/billing/portal/`
+}
+
+export const organizationsBillingPortalCreate = async (orgSlug: string, options?: RequestInit): Promise<organizationsBillingPortalCreateResponse> => {
+  
+  return identityFetch<organizationsBillingPortalCreateResponse>(getOrganizationsBillingPortalCreateUrl(orgSlug),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getOrganizationsBillingPortalCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingPortalCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingPortalCreate>>, TError,{orgSlug: string}, TContext> => {
+
+const mutationKey = ['organizationsBillingPortalCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsBillingPortalCreate>>, {orgSlug: string}> = (props) => {
+          const {orgSlug} = props ?? {};
+
+          return  organizationsBillingPortalCreate(orgSlug,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsBillingPortalCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsBillingPortalCreate>>>
+    
+    export type OrganizationsBillingPortalCreateMutationError = unknown
+
+    export const useOrganizationsBillingPortalCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsBillingPortalCreate>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsBillingPortalCreate>>,
+        TError,
+        {orgSlug: string},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsBillingPortalCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * ``GET /organizations/<org_slug>/billing/subscription/``.
+ */
+export type organizationsBillingSubscriptionRetrieveResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type organizationsBillingSubscriptionRetrieveResponseSuccess = (organizationsBillingSubscriptionRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsBillingSubscriptionRetrieveResponse = (organizationsBillingSubscriptionRetrieveResponseSuccess)
+
+export const getOrganizationsBillingSubscriptionRetrieveUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/billing/subscription/`
+}
+
+export const organizationsBillingSubscriptionRetrieve = async (orgSlug: string, options?: RequestInit): Promise<organizationsBillingSubscriptionRetrieveResponse> => {
+  
+  return identityFetch<organizationsBillingSubscriptionRetrieveResponse>(getOrganizationsBillingSubscriptionRetrieveUrl(orgSlug),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsBillingSubscriptionRetrieveQueryKey = (orgSlug?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/billing/subscription/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsBillingSubscriptionRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsBillingSubscriptionRetrieveQueryKey(orgSlug);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>> = ({ signal }) => organizationsBillingSubscriptionRetrieve(orgSlug, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsBillingSubscriptionRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>>
+export type OrganizationsBillingSubscriptionRetrieveQueryError = unknown
+
+
+export function useOrganizationsBillingSubscriptionRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError = unknown>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsBillingSubscriptionRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsBillingSubscriptionRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsBillingSubscriptionRetrieve<TData = Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsBillingSubscriptionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsBillingSubscriptionRetrieveQueryOptions(orgSlug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
 /**
  * ``/organizations/<org_slug>/invitations/``.
  */
@@ -6822,3 +7231,219 @@ export function usePermissionsRetrieve<TData = Awaited<ReturnType<typeof permiss
 
   return query;
 }
+
+
+
+
+
+/**
+ * ``GET /api/v1/plans/`` — the pricing page reads this unauthenticated
+(docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an
+``OrgScopedViewSet``: a plan is not owned by any organisation, and
+unlike ``OrgScopedViewSet`` requests it never resolves ``org_slug``.
+
+``required_permissions`` is declared (``GlobalViewSet`` requires a
+non-empty value at import time) but not enforced here — enforcement is
+``HasOrgPermission``, which only ``OrgScopedViewSet`` wires in.
+``permission_classes`` is overridden to ``AllowAny`` instead, which is
+the actual gate for this endpoint. The declared code documents what an
+authenticated billing surface would require if this list were ever
+moved behind a login.
+ */
+export type plansListResponse200 = {
+  data: Plan[]
+  status: 200
+}
+    
+export type plansListResponseSuccess = (plansListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type plansListResponse = (plansListResponseSuccess)
+
+export const getPlansListUrl = () => {
+
+
+  
+
+  return `/api/v1/plans/`
+}
+
+export const plansList = async ( options?: RequestInit): Promise<plansListResponse> => {
+  
+  return identityFetch<plansListResponse>(getPlansListUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getPlansListQueryKey = () => {
+    return [
+    `/api/v1/plans/`
+    ] as const;
+    }
+
+    
+export const getPlansListQueryOptions = <TData = Awaited<ReturnType<typeof plansList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPlansListQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof plansList>>> = ({ signal }) => plansList({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type PlansListQueryResult = NonNullable<Awaited<ReturnType<typeof plansList>>>
+export type PlansListQueryError = unknown
+
+
+export function usePlansList<TData = Awaited<ReturnType<typeof plansList>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof plansList>>,
+          TError,
+          Awaited<ReturnType<typeof plansList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function usePlansList<TData = Awaited<ReturnType<typeof plansList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof plansList>>,
+          TError,
+          Awaited<ReturnType<typeof plansList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function usePlansList<TData = Awaited<ReturnType<typeof plansList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function usePlansList<TData = Awaited<ReturnType<typeof plansList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof plansList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getPlansListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * ``POST /api/v1/stripe/webhook/`` (PRD §6 "Stripe webhook";
+docs/plans/phase-4.md B.3). No session auth or CSRF: this is a
+server-to-server call from Stripe with no session cookie, verified by
+signature instead — DRF's ``SessionAuthentication`` only enforces CSRF
+once it has resolved a session user, which an unauthenticated request
+never does, so leaving ``authentication_classes`` empty here is belt
+and braces, not a gap.
+
+Records the event and acknowledges before any processing happens
+(PRD §6, "Acknowledge in under 200ms ... work happens async") — the
+only synchronous work below a signature check is one
+``get_or_create`` and enqueuing a task.
+ */
+export type stripeWebhookCreateResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type stripeWebhookCreateResponseSuccess = (stripeWebhookCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type stripeWebhookCreateResponse = (stripeWebhookCreateResponseSuccess)
+
+export const getStripeWebhookCreateUrl = () => {
+
+
+  
+
+  return `/api/v1/stripe/webhook/`
+}
+
+export const stripeWebhookCreate = async ( options?: RequestInit): Promise<stripeWebhookCreateResponse> => {
+  
+  return identityFetch<stripeWebhookCreateResponse>(getStripeWebhookCreateUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getStripeWebhookCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhookCreate>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stripeWebhookCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['stripeWebhookCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stripeWebhookCreate>>, void> = () => {
+          
+
+          return  stripeWebhookCreate(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StripeWebhookCreateMutationResult = NonNullable<Awaited<ReturnType<typeof stripeWebhookCreate>>>
+    
+    export type StripeWebhookCreateMutationError = unknown
+
+    export const useStripeWebhookCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhookCreate>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof stripeWebhookCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getStripeWebhookCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
