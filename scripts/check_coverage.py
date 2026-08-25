@@ -93,13 +93,19 @@ def main() -> int:
 
     failures, notes = check(thresholds, files)
 
+    # Notes first, failure summary last: CI logs are read from the tail, and
+    # stdout/stderr can interleave unpredictably once merged (stderr is
+    # unbuffered, stdout is often fully buffered once redirected) - writing
+    # everything to stdout, in this order, keeps the reason the build failed
+    # on the last line regardless of how the caller captures output.
     for note in notes:
         print(f"note: {note}")
 
     if failures:
-        print("\nCoverage gate failed:", file=sys.stderr)
+        print("\nCoverage gate failed:")
         for failure in failures:
-            print(f"  - {failure}", file=sys.stderr)
+            print(f"  - {failure}")
+        sys.stdout.flush()
         return 1
 
     print("Coverage gate passed.")
