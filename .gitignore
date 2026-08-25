@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.json
+htmlcov/
+.coverage
+.coverage.*
+
+# Node
+node_modules/
+.pnpm-store/
+dist/
+build/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Turborepo
+.turbo/
+
+# Django
+*.log
+staticfiles/
+media/
+db.sqlite3
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
