@@ -11,4 +11,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = "DENY"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# Resend (docs/plans/phase-5.md 5.5) — see
+# keel.notifications.resend_backend for why this is a backend rather
+# than a bespoke send path.
+EMAIL_BACKEND = "keel.notifications.resend_backend.ResendEmailBackend"
