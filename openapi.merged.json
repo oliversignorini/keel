@@ -2350,6 +2350,115 @@
         ],
         "type": "object"
       },
+      "Job": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "params": {},
+          "result_ref": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatusEnum"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/JobStep"
+            },
+            "readOnly": true,
+            "type": "array"
+          },
+          "type": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "id",
+          "steps",
+          "type"
+        ],
+        "type": "object"
+      },
+      "JobStatusEnum": {
+        "description": "* `queued` - Queued\n* `running` - Running\n* `succeeded` - Succeeded\n* `partial` - Partial\n* `failed` - Failed",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "partial",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "JobStep": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "ordinal": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "output_ref": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "maxLength": 16,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ordinal"
+        ],
+        "type": "object"
+      },
       "Login": {
         "allOf": [
           {
@@ -2463,7 +2572,7 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/StatusEnum"
+                "$ref": "#/components/schemas/MembershipStatusEnum"
               }
             ],
             "readOnly": true
@@ -2485,6 +2594,14 @@
           "user"
         ],
         "type": "object"
+      },
+      "MembershipStatusEnum": {
+        "description": "* `active` - Active\n* `suspended` - Suspended",
+        "enum": [
+          "active",
+          "suspended"
+        ],
+        "type": "string"
       },
       "OptionalTimestamp": {
         "$ref": "#/components/schemas/Timestamp",
@@ -2543,6 +2660,32 @@
           "results": {
             "items": {
               "$ref": "#/components/schemas/Invitation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "PaginatedJobList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Job"
             },
             "type": "array"
           }
@@ -2665,7 +2808,7 @@
           "status": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/StatusEnum"
+                "$ref": "#/components/schemas/MembershipStatusEnum"
               }
             ],
             "readOnly": true
@@ -3233,14 +3376,6 @@
           202
         ],
         "type": "integer"
-      },
-      "StatusEnum": {
-        "description": "* `active` - Active\n* `suspended` - Suspended",
-        "enum": [
-          "active",
-          "suspended"
-        ],
-        "type": "string"
       },
       "StatusOK": {
         "enum": [
@@ -5224,6 +5359,198 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/jobs/": {
+      "get": {
+        "operationId": "organizations_jobs_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedJobList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "operationId": "organizations_jobs_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/jobs/{id}/": {
+      "get": {
+        "operationId": "organizations_jobs_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/jobs/{id}/cancel/": {
+      "post": {
+        "operationId": "organizations_jobs_cancel_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             },

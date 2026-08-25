@@ -96,9 +96,55 @@ constraint has a specific consequence for **Vercel preview deployments**.
   cookie is host-only and this constraint doesn't apply — see
   `apps/api/.env.example`'s `KEEL_APP_DOMAIN` comment).
 
-## Everything else
+## Service topology and `railway.json` (Phase 5.5)
 
-Not written yet. `railway.json`, service topology (api / worker / beat /
-the dedicated SSE uvicorn service per the Appendix note on
-`text/event-stream` buffering), and env var provisioning arrive with the
-phases that need them.
+`infra/railway.json` declares four services, all built from the same
+`apps/api` image (`apps/api/Dockerfile` — not written yet; see the
+Phase 9 TODO in `infra/compose.prod.yml`, which the `api`/`stream`
+services here are written against on the same terms):
+
+| Service | Command | Why it's separate |
+|---|---|---|
+| `api` | `gunicorn config.wsgi:application` | Ordinary request/response traffic, sync workers |
+| `stream` | `uvicorn config.asgi_stream:application` | SSE only — `keel/jobs/sse.py`, reachable at `.../jobs/stream/`. Never gunicorn: a held-open SSE connection occupies a sync worker for its entire life, exhausting the pool at a user count far below what request/response load testing suggests (PRD §5.5.5, footgun 1) |
+| `worker` | `celery -A config worker -Q default,email,external,scheduled` | Tier 1 shim tasks and Tier 2 job runner (`keel/jobs/runner.py`) |
+| `beat` | `celery -A config beat` | The six scheduled jobs (PRD §5) |
+
+**Not directly verified against a live Railway account or the Railway
+CLI** — written from Railway's documented multi-service `railway.json`
+schema (`services` keyed by name, each with `build`/`deploy`), the same
+epistemic status as the pgvector section above. Before the first real
+deploy, confirm against `railway up`/the dashboard that:
+
+- Railway actually reads a multi-service `railway.json` this shape
+  (vs. requiring one config file per service, set via each service's
+  "Config File Path")
+- `$PORT` is available to `stream` as its own distinct port the way it
+  is to `api` — Railway assigns one `$PORT` per *service*, not per
+  container, so this should hold, but is worth confirming once
+  `stream` is a real deployed service rather than a local `uvicorn`
+  process
+- the proxy in front of `stream`'s public domain does not buffer
+  `text/event-stream` by default. `keel/jobs/sse.py` sets
+  `X-Accel-Buffering: no` (the nginx-family signal) and flushes a
+  leading `: connected` comment before ever touching Redis; Railway's
+  own edge proxy has not been checked against either of those. If it
+  does buffer, the symptom is exactly the one PRD §5.5.5 warns about:
+  not an error, a tray that shows nothing for minutes then everything
+  at once.
+- `api` and `stream` are given **different public hostnames or paths**
+  so `stream`'s healthcheck and TLS termination don't collide with
+  `api`'s — the PRD's own diagram shows one hostname with path routing
+  (`api.acme.com/…/stream`), which is a reverse-proxy rule Railway's
+  edge would need to be configured with, not something `railway.json`
+  alone expresses.
+
+Dev runs `stream` as a second local process, not via Railway or
+Docker Compose: `pnpm --filter api dev:stream` (wraps `uv run uvicorn
+config.asgi_stream:application --port 8001 --reload`), alongside the
+usual `pnpm --filter api dev` (gunicorn's dev equivalent, `runserver`,
+on 8000). `NEXT_PUBLIC_API_STREAM_URL` (`.env.example`) points the web
+app at whichever port `stream` is actually running on.
+
+Env var provisioning beyond what's already in `.env.example` arrives
+with Phase 9 (`init`).

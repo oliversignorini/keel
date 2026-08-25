@@ -80,6 +80,8 @@ for _code in (
     Perm.WIDGETS_MANAGE,
     Perm.FILES_VIEW,
     Perm.FILES_MANAGE,
+    Perm.JOBS_VIEW,
+    Perm.JOBS_CREATE,
 ):
     _simple(_code)
 

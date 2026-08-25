@@ -39,6 +39,8 @@ _MEMBER_CODES = {
     Perm.WIDGETS_MANAGE,
     Perm.FILES_VIEW,
     Perm.FILES_MANAGE,
+    Perm.JOBS_VIEW,
+    Perm.JOBS_CREATE,
 }
 
 

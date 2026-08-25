@@ -89,6 +89,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "keel.jobs.idempotency.IdempotencyKeyMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -158,6 +159,15 @@ CELERY_BROKER_URL = env(
 )
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_DEFAULT_QUEUE = "default"
+
+# Tier 2 jobs (PRD §5.5.4, §5.5.5) — the per-organisation concurrency
+# limit enforced by keel/jobs/concurrency.py's Redis semaphore, and the
+# Redis connection pub/sub publication and the SSE endpoint both use.
+# Separate from CELERY_BROKER_URL in name only, so a project that moves
+# Celery onto a managed broker can still point job pub/sub at its own
+# Redis instance without another setting name to invent later.
+JOBS_MAX_CONCURRENT_PER_ORG = env.int("JOBS_MAX_CONCURRENT_PER_ORG", default=3)
+JOBS_REDIS_URL = env("JOBS_REDIS_URL", default=CELERY_BROKER_URL)
 
 # The six scheduled jobs (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
 # 5.4). Each is idempotent when run twice — see keel/jobs/tasks.py and

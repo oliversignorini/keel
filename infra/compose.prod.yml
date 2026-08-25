@@ -6,7 +6,9 @@
 # Caddy) named in the PRD Appendix. It needs a real Dockerfile for
 # apps/api (gunicorn/uvicorn per PRD §4), the worker and beat commands
 # wired to config.celery, and infra/Caddyfile in front of it — none of
-# which exist yet in Phase 0.
+# which exist yet in Phase 0. The `api` and `stream` services below are
+# written against that not-yet-existing Dockerfile the same way
+# infra/railway.json is (see that file and docs/deploy-railway.md).
 name: keel-prod
 
 services:
@@ -21,6 +23,35 @@ services:
       - redis
     ports:
       - "8000:8000"
+
+  # The dedicated ASGI service (PRD §4 system architecture; §5.5.5
+  # footgun 1): SSE's held-open connections must never share `api`'s sync
+  # gunicorn worker pool, so this runs uvicorn against the same image as
+  # its own separate process/container rather than a thread inside `api`.
+  # Caddy (infra/Caddyfile, Phase 9) is where `text/event-stream`
+  # buffering actually gets turned off for whichever hostname/path
+  # routes here — `X-Accel-Buffering: no` (keel/jobs/sse.py) covers
+  # nginx-style proxies; Caddy's own no-buffering behaviour for
+  # streaming responses still wants confirming once that file exists.
+  stream:
+    build:
+      context: ../apps/api
+    command:
+      [
+        "uvicorn",
+        "config.asgi_stream:application",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8001",
+      ]
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8001:8001"
 
   worker:
     build:

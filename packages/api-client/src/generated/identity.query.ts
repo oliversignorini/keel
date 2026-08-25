@@ -435,6 +435,62 @@ export interface Invitation {
   readonly status: string;
 }
 
+export interface Job {
+  readonly created_at: string;
+  error?: string;
+  /** @nullable */
+  finished_at?: string | null;
+  readonly id: string;
+  params?: unknown;
+  /** @maxLength 255 */
+  result_ref?: string;
+  /** @nullable */
+  started_at?: string | null;
+  status?: JobStatusEnum;
+  readonly steps: readonly JobStep[];
+  /** @maxLength 100 */
+  type: string;
+}
+
+/**
+ * * `queued` - Queued
+* `running` - Running
+* `succeeded` - Succeeded
+* `partial` - Partial
+* `failed` - Failed
+ */
+export type JobStatusEnum = typeof JobStatusEnum[keyof typeof JobStatusEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const JobStatusEnum = {
+  queued: 'queued',
+  running: 'running',
+  succeeded: 'succeeded',
+  partial: 'partial',
+  failed: 'failed',
+} as const;
+
+export interface JobStep {
+  error?: string;
+  /** @nullable */
+  finished_at?: string | null;
+  readonly id: string;
+  /** @maxLength 255 */
+  name: string;
+  /**
+   * @minimum -2147483648
+   * @maximum 2147483647
+   */
+  ordinal: number;
+  /** @maxLength 255 */
+  output_ref?: string;
+  /** @nullable */
+  started_at?: string | null;
+  /** @maxLength 16 */
+  status?: string;
+}
+
 export type LoginAllOf = {
   password: Password;
 };
@@ -477,9 +533,22 @@ export interface Membership {
   readonly id: string;
   readonly joined_at: string;
   readonly role: Role;
-  readonly status: StatusEnum;
+  readonly status: MembershipStatusEnum;
   readonly user: _UserSummary;
 }
+
+/**
+ * * `active` - Active
+* `suspended` - Suspended
+ */
+export type MembershipStatusEnum = typeof MembershipStatusEnum[keyof typeof MembershipStatusEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MembershipStatusEnum = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
 
 /**
  * @nullable
@@ -502,6 +571,14 @@ export interface PaginatedInvitationList {
   /** @nullable */
   previous?: string | null;
   results: Invitation[];
+}
+
+export interface PaginatedJobList {
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Job[];
 }
 
 export interface PaginatedMembershipList {
@@ -540,7 +617,7 @@ export interface PatchedMembership {
   readonly id?: string;
   readonly joined_at?: string;
   readonly role?: Role;
-  readonly status?: StatusEnum;
+  readonly status?: MembershipStatusEnum;
   readonly user?: _UserSummary;
 }
 
@@ -858,19 +935,6 @@ export type StatusAccepted = typeof StatusAccepted[keyof typeof StatusAccepted];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const StatusAccepted = {
   NUMBER_202: 202,
-} as const;
-
-/**
- * * `active` - Active
-* `suspended` - Suspended
- */
-export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const StatusEnum = {
-  active: 'active',
-  suspended: 'suspended',
 } as const;
 
 export type StatusOK = typeof StatusOK[keyof typeof StatusOK];
@@ -1320,6 +1384,17 @@ limit?: number;
 };
 
 export type OrganizationsInvitationsListParams = {
+/**
+ * The pagination cursor value.
+ */
+cursor?: string;
+/**
+ * Number of results to return per page.
+ */
+limit?: number;
+};
+
+export type OrganizationsJobsListParams = {
 /**
  * The pagination cursor value.
  */
@@ -6588,6 +6663,403 @@ export function useOrganizationsInvitationsRetrieve<TData = Awaited<ReturnType<t
 
 
 
+export type organizationsJobsListResponse200 = {
+  data: PaginatedJobList
+  status: 200
+}
+    
+export type organizationsJobsListResponseSuccess = (organizationsJobsListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsJobsListResponse = (organizationsJobsListResponseSuccess)
+
+export const getOrganizationsJobsListUrl = (orgSlug: string,
+    params?: OrganizationsJobsListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/${orgSlug}/jobs/?${stringifiedParams}` : `/api/v1/organizations/${orgSlug}/jobs/`
+}
+
+export const organizationsJobsList = async (orgSlug: string,
+    params?: OrganizationsJobsListParams, options?: RequestInit): Promise<organizationsJobsListResponse> => {
+  
+  return identityFetch<organizationsJobsListResponse>(getOrganizationsJobsListUrl(orgSlug,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsJobsListQueryKey = (orgSlug?: string,
+    params?: OrganizationsJobsListParams,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/jobs/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getOrganizationsJobsListQueryOptions = <TData = Awaited<ReturnType<typeof organizationsJobsList>>, TError = unknown>(orgSlug: string,
+    params?: OrganizationsJobsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsJobsListQueryKey(orgSlug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsJobsList>>> = ({ signal }) => organizationsJobsList(orgSlug,params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsJobsListQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsJobsList>>>
+export type OrganizationsJobsListQueryError = unknown
+
+
+export function useOrganizationsJobsList<TData = Awaited<ReturnType<typeof organizationsJobsList>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  OrganizationsJobsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsJobsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsJobsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsJobsList<TData = Awaited<ReturnType<typeof organizationsJobsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsJobsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsJobsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsJobsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsJobsList<TData = Awaited<ReturnType<typeof organizationsJobsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsJobsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsJobsList<TData = Awaited<ReturnType<typeof organizationsJobsList>>, TError = unknown>(
+ orgSlug: string,
+    params?: OrganizationsJobsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsJobsListQueryOptions(orgSlug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export type organizationsJobsCreateResponse201 = {
+  data: Job
+  status: 201
+}
+    
+export type organizationsJobsCreateResponseSuccess = (organizationsJobsCreateResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsJobsCreateResponse = (organizationsJobsCreateResponseSuccess)
+
+export const getOrganizationsJobsCreateUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/jobs/`
+}
+
+export const organizationsJobsCreate = async (orgSlug: string,
+    job: NonReadonly<Job>, options?: RequestInit): Promise<organizationsJobsCreateResponse> => {
+  
+  return identityFetch<organizationsJobsCreateResponse>(getOrganizationsJobsCreateUrl(orgSlug),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      job,)
+  }
+);}
+
+
+
+
+export const getOrganizationsJobsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCreate>>, TError,{orgSlug: string;data: NonReadonly<Job>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCreate>>, TError,{orgSlug: string;data: NonReadonly<Job>}, TContext> => {
+
+const mutationKey = ['organizationsJobsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsJobsCreate>>, {orgSlug: string;data: NonReadonly<Job>}> = (props) => {
+          const {orgSlug,data} = props ?? {};
+
+          return  organizationsJobsCreate(orgSlug,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsJobsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsJobsCreate>>>
+    export type OrganizationsJobsCreateMutationBody = NonReadonly<Job>
+    export type OrganizationsJobsCreateMutationError = unknown
+
+    export const useOrganizationsJobsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCreate>>, TError,{orgSlug: string;data: NonReadonly<Job>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsJobsCreate>>,
+        TError,
+        {orgSlug: string;data: NonReadonly<Job>},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsJobsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+export type organizationsJobsRetrieveResponse200 = {
+  data: Job
+  status: 200
+}
+    
+export type organizationsJobsRetrieveResponseSuccess = (organizationsJobsRetrieveResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsJobsRetrieveResponse = (organizationsJobsRetrieveResponseSuccess)
+
+export const getOrganizationsJobsRetrieveUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/jobs/${id}/`
+}
+
+export const organizationsJobsRetrieve = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<organizationsJobsRetrieveResponse> => {
+  
+  return identityFetch<organizationsJobsRetrieveResponse>(getOrganizationsJobsRetrieveUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getOrganizationsJobsRetrieveQueryKey = (orgSlug?: string,
+    id?: string,) => {
+    return [
+    `/api/v1/organizations/${orgSlug}/jobs/${id}/`
+    ] as const;
+    }
+
+    
+export const getOrganizationsJobsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsJobsRetrieveQueryKey(orgSlug,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsJobsRetrieve>>> = ({ signal }) => organizationsJobsRetrieve(orgSlug,id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type OrganizationsJobsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsJobsRetrieve>>>
+export type OrganizationsJobsRetrieveQueryError = unknown
+
+
+export function useOrganizationsJobsRetrieve<TData = Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsJobsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsJobsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsJobsRetrieve<TData = Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsJobsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsJobsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useOrganizationsJobsRetrieve<TData = Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useOrganizationsJobsRetrieve<TData = Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError = unknown>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsJobsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getOrganizationsJobsRetrieveQueryOptions(orgSlug,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export type organizationsJobsCancelCreateResponse200 = {
+  data: Job
+  status: 200
+}
+    
+export type organizationsJobsCancelCreateResponseSuccess = (organizationsJobsCancelCreateResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsJobsCancelCreateResponse = (organizationsJobsCancelCreateResponseSuccess)
+
+export const getOrganizationsJobsCancelCreateUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/organizations/${orgSlug}/jobs/${id}/cancel/`
+}
+
+export const organizationsJobsCancelCreate = async (orgSlug: string,
+    id: string,
+    job: NonReadonly<Job>, options?: RequestInit): Promise<organizationsJobsCancelCreateResponse> => {
+  
+  return identityFetch<organizationsJobsCancelCreateResponse>(getOrganizationsJobsCancelCreateUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      job,)
+  }
+);}
+
+
+
+
+export const getOrganizationsJobsCancelCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCancelCreate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Job>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCancelCreate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Job>}, TContext> => {
+
+const mutationKey = ['organizationsJobsCancelCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsJobsCancelCreate>>, {orgSlug: string;id: string;data: NonReadonly<Job>}> = (props) => {
+          const {orgSlug,id,data} = props ?? {};
+
+          return  organizationsJobsCancelCreate(orgSlug,id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsJobsCancelCreateMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsJobsCancelCreate>>>
+    export type OrganizationsJobsCancelCreateMutationBody = NonReadonly<Job>
+    export type OrganizationsJobsCancelCreateMutationError = unknown
+
+    export const useOrganizationsJobsCancelCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsJobsCancelCreate>>, TError,{orgSlug: string;id: string;data: NonReadonly<Job>}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsJobsCancelCreate>>,
+        TError,
+        {orgSlug: string;id: string;data: NonReadonly<Job>},
+        TContext
+      > => {
+
+      const mutationOptions = getOrganizationsJobsCancelCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
 /**
  * ``/organizations/<org_slug>/members/``.
  */
