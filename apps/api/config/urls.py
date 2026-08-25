@@ -41,6 +41,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/v1/", include("keel.organizations.urls")),
+    path("api/v1/", include("keel.billing.urls")),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8
     # Phase 2 A.1; allauth headless installation docs).
