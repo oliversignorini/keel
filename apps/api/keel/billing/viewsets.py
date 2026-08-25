@@ -30,6 +30,12 @@ class PlanViewSet(mixins.ListModelMixin, GlobalViewSet):
     queryset = Plan.objects.filter(is_active=True).order_by("sort_order", "code")
     serializer_class = PlanSerializer
     permission_classes = (AllowAny,)
+    # Unpaginated: this is a small, bounded reference table (a handful of
+    # plans), and the default CursorPagination orders by its own
+    # ``ordering`` attribute regardless of the queryset's — pagination
+    # would silently discard the sort_order/code ordering below, which is
+    # exactly the order the pricing page needs (docs/plans/phase-4.md B.1).
+    pagination_class = None
     organization_scoped = False
     required_permissions = (Perm.BILLING_VIEW,)
     GLOBAL_JUSTIFICATION = (

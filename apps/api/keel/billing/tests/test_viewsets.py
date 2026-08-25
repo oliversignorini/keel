@@ -48,11 +48,22 @@ def test_list_plans_returns_active_plans_with_nested_active_prices() -> None:
 
     response = APIClient().get("/api/v1/plans/")
 
-    codes = [row["code"] for row in response.data["results"]]
+    codes = [row["code"] for row in response.data]
     assert codes == ["starter"]
 
-    prices = response.data["results"][0]["prices"]
+    prices = response.data[0]["prices"]
     assert [row["id"] for row in prices] == [str(active_price.id)]
+
+
+def test_list_plans_is_not_paginated() -> None:
+    _plan("starter")
+
+    response = APIClient().get("/api/v1/plans/")
+
+    assert isinstance(response.data, list), (
+        "plans is a small bounded reference table — CursorPagination would "
+        "silently reorder by created_at instead of sort_order/code"
+    )
 
 
 def test_list_plans_orders_by_sort_order_then_code() -> None:
@@ -61,7 +72,7 @@ def test_list_plans_orders_by_sort_order_then_code() -> None:
 
     response = APIClient().get("/api/v1/plans/")
 
-    codes = [row["code"] for row in response.data["results"]]
+    codes = [row["code"] for row in response.data]
     assert codes == ["bronze", "gold"]
 
 
@@ -72,7 +83,7 @@ def test_plan_serializer_exposes_entitlements() -> None:
 
     response = APIClient().get("/api/v1/plans/")
 
-    assert response.data["results"][0]["entitlements"] == {
+    assert response.data[0]["entitlements"] == {
         "seats": 5,
         "features": ["api_access"],
     }

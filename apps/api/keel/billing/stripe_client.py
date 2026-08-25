@@ -27,6 +27,51 @@ def _client() -> Any:
     return stripe.StripeClient(settings.STRIPE_SECRET_KEY)
 
 
+def create_customer(*, email: str, name: str) -> str:
+    """Returns the new Stripe customer id."""
+    customer = _client().customers.create({"email": email, "name": name})
+    return str(customer.id)
+
+
+def create_checkout_session(
+    *,
+    customer_id: str,
+    price_id: str,
+    success_url: str,
+    cancel_url: str,
+    trial_period_days: int,
+) -> str:
+    """Returns the Checkout Session URL (docs/plans/phase-4.md B.2:
+    ``automatic_tax`` enabled, 14-day trial without requiring a card up
+    front)."""
+    session = _client().checkout.sessions.create(
+        {
+            "mode": "subscription",
+            "customer": customer_id,
+            "line_items": [{"price": price_id, "quantity": 1}],
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "automatic_tax": {"enabled": True},
+            "subscription_data": {
+                "trial_period_days": trial_period_days,
+                "trial_settings": {
+                    "end_behavior": {"missing_payment_method": "cancel"},
+                },
+            },
+            "payment_method_collection": "if_required",
+        }
+    )
+    return str(session.url)
+
+
+def create_billing_portal_session(*, customer_id: str, return_url: str) -> str:
+    """Returns the Customer Portal URL (docs/plans/phase-4.md B.2)."""
+    session = _client().billing_portal.sessions.create(
+        {"customer": customer_id, "return_url": return_url}
+    )
+    return str(session.url)
+
+
 def fetch_products_and_prices() -> list[dict[str, Any]]:
     """Every active Stripe Product, each with its active Prices attached,
     normalised to the plain-dict shape ``sync_plans_from_stripe`` expects:

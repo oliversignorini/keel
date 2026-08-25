@@ -4,7 +4,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from keel.billing.models import Plan, Price
+from keel.billing.models import Plan, Price, Subscription
 
 
 class PriceSerializer(serializers.ModelSerializer):
@@ -27,3 +27,23 @@ class PlanSerializer(serializers.ModelSerializer):
         active_prices: list[Price] = getattr(plan, "active_prices", [])
         data: list[dict[str, Any]] = PriceSerializer(active_prices, many=True).data
         return data
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    plan = serializers.CharField(source="plan.code", read_only=True)
+
+    class Meta:
+        model = Subscription
+        fields = (
+            "id",
+            "plan",
+            "status",
+            "quantity",
+            "current_period_end",
+            "trial_end",
+            "cancel_at_period_end",
+        )
+
+
+class CheckoutRequestSerializer(serializers.Serializer):
+    price_id = serializers.UUIDField()

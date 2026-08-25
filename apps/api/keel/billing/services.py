@@ -7,7 +7,11 @@ from typing import Any
 
 from django.db import transaction
 
+from keel.billing import stripe_client
 from keel.billing.models import Plan, Price
+from keel.organizations.models import Organization
+
+CHECKOUT_TRIAL_DAYS = 14
 
 
 class MissingPlanCode(Exception):
@@ -86,3 +90,45 @@ def sync_plans_from_stripe(products: list[dict[str, Any]]) -> dict[str, int]:
         "plans_deactivated": deactivated_plans,
         "prices_deactivated": deactivated_prices,
     }
+
+
+def ensure_stripe_customer(organization: Organization) -> str:
+    """Lazily creates the Stripe customer for ``organization`` on first
+    need and persists the id. No ``transaction.atomic()`` here (PRD §4,
+    "No Stripe call happens inside an open transaction", invariant 3):
+    the Stripe call happens first, and the local write that follows it is
+    a single-field save, not a multi-step block that needs wrapping."""
+    if organization.stripe_customer_id:
+        return organization.stripe_customer_id
+    customer_id = stripe_client.create_customer(
+        email=organization.created_by.email, name=organization.name
+    )
+    organization.stripe_customer_id = customer_id
+    organization.save(update_fields=["stripe_customer_id"])
+    return customer_id
+
+
+def create_checkout_session(
+    *, organization: Organization, price: Price, success_url: str, cancel_url: str
+) -> str:
+    """``POST /organizations/<org_slug>/billing/checkout/``
+    (docs/plans/phase-4.md B.2). Returns the Checkout Session URL — the
+    ``Subscription`` row itself is created later, by the webhook handler
+    processing ``checkout.session.completed``, not here."""
+    customer_id = ensure_stripe_customer(organization)
+    return stripe_client.create_checkout_session(
+        customer_id=customer_id,
+        price_id=price.stripe_price_id,
+        success_url=success_url,
+        cancel_url=cancel_url,
+        trial_period_days=CHECKOUT_TRIAL_DAYS,
+    )
+
+
+def create_portal_session(*, organization: Organization, return_url: str) -> str:
+    """``POST /organizations/<org_slug>/billing/portal/``
+    (docs/plans/phase-4.md B.2). Returns the Customer Portal URL."""
+    customer_id = ensure_stripe_customer(organization)
+    return stripe_client.create_billing_portal_session(
+        customer_id=customer_id, return_url=return_url
+    )
