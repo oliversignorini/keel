@@ -52,3 +52,9 @@ db.sqlite3
 .DS_Store
 Thumbs.db
 .playwright-mcp/
+
+# Local env files in every form. .env.example is the only one that is
+# tracked; a stray .env.bak once made it in via `git add -A`.
+.env
+.env.*
+!.env.example
