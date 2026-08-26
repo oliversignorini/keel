@@ -12,11 +12,14 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "cross-host-login.spec.ts",
+  testMatch: ["cross-host-login.spec.ts", "app-accessibility.spec.ts"],
   fullyParallel: false,
   reporter: "list",
   use: {
-    baseURL: "http://lvh.me:3000",
+    // Overridable for a dev machine where :3000 is already taken by
+    // another worktree's server (docs/plans/phase-8.md verification) —
+    // defaults to the documented topology (docs/dev-setup.md).
+    baseURL: process.env.E2E_LVH_BASE_URL ?? "http://lvh.me:3000",
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
