@@ -1,7 +1,7 @@
 # Keel — Django + Next.js SaaS Template
 
 **Product Requirements Document**
-Version 1.2 · 25 August 2026
+Version 1.3 · 26 August 2026
 Owner: Oliver Signorini
 
 > **Keel** — the structural backbone a ship is built on; everything else attaches to it. Rename freely; the init script handles it.
@@ -39,6 +39,22 @@ v1.1 was read end to end against an implementation plan. Nine things did not sur
 | 7 | SSE is served by a dedicated ASGI service, named in the deployment topology and in `railway.json` | Phase 5.5 required an async worker that no deployment artefact described |
 | 8 | `<FileUpload>` added to the component inventory | Named as a Phase 5 deliverable, absent from §5 |
 | 9 | Build order is chunked explicitly: Phases 0–4, sign-off, then 5–9 | §2 said build 0–4 and stop; §3 said 0–9 were all must-have |
+
+### Revision note — v1.3
+
+v1.2 was written before any of it was built. Phases 0 through 8 have now been implemented and verified, and this revision records what contact with the code changed. One item is a deliberate operator decision; the rest are things the document got wrong or left out, discovered by building it.
+
+| # | Change | Driver |
+|---|---|---|
+| 1 | **The app shell moves to its own subdomain.** `app.acme.com/{org}` rather than `acme.com/app/{org}`, via a host-based Next middleware rewrite | Operator decision. The marketing site and the app are different products with different audiences, and a shared path prefix made that boundary a routing detail rather than a deployment one |
+| 2 | Dev uses `lvh.me`, not `app.localhost` | The session cookie must be shared between the web and API origins. Browsers special-case `localhost` and handle a `Domain=.localhost` attribute inconsistently, so `app.localhost` would authenticate in production and fail in dev — the worst failure shape available |
+| 3 | `KEEL_APP_DOMAIN` names the app's own host, not the registrable domain | Otherwise the Phase 2 cookie-domain startup check is satisfied by domain equality and never exercises its subdomain branch — a guard that silently stops guarding |
+| 4 | `keel/jobs/` and `keel/connections/` added to the app list | The §4 layout had nowhere to put `Job`, `JobStep`, `FailedTask` or `Connection`, all of which are in the data model |
+| 5 | `packages/emails/` named as a build-time dependency of the API test suite | react-email templates render to HTML at build. The rendered files are a build artefact, so a fresh clone and CI both start without them, and every allauth flow that sends mail fails several frames deep with an unrelated-looking 500 |
+| 6 | Settings read `apps/api/.env` and fall back to the repository root | `.env.example` sits at the root, so copying it there is the obvious move, and Django's `BASE_DIR` is `apps/api`. The symptom was a `DisallowedHost` 400 with settings that looked correct on disk |
+| 7 | The tenant URL segment is recorded as `organizations`, not `orgs` | The implementation used the longer form throughout. Named here as a known deviation rather than left as a silent disagreement between spec and code; see "Outstanding" below |
+
+**Outstanding at v1.3.** Three items are known and deferred rather than done: the `organizations` → `orgs` URL rename, a cursor envelope on `GET /api/v1/plans/` (it returns a bare array, against the §7 convention that all collections are cursor-paginated), and wiring `e2e/auth-flows.spec.ts` into CI — it needs the live API and Mailpit as service containers, and only the accessibility spec runs today. Phase 9 is not built.
 
 ---
 
@@ -316,6 +332,8 @@ apps/api/
 │   ├── audit/                     # AuditLog, impersonation
 │   ├── notifications/             # email dispatch
 │   ├── files/                     # presigned R2 uploads
+│   ├── jobs/                      # Job, JobStep, FailedTask (Phase 5.5)
+│   ├── connections/               # third-party OAuth Connection
 │   └── widgets/                   # DEMO RESOURCE — `init` deletes this
 └── tests/
 
@@ -485,10 +503,40 @@ What it provides out of the box: email/password, email verification, password re
 **The domain constraint this imposes.** The API must sit on a subdomain of the app's registrable domain:
 
 ```
-acme.com          → Next.js (marketing + app), Vercel
+acme.com          → Next.js, the (marketing) and (auth) route groups
+app.acme.com      → Next.js, the (app) route group        ← v1.3
 api.acme.com      → Django, Railway, custom domain via CNAME
 Cookie: Domain=.acme.com; HttpOnly; Secure; SameSite=Lax
 ```
+
+All three are subdomains of one registrable domain, so the single session
+cookie reaches all of them and the constraint above is unchanged by the
+split. One Next.js deployment serves both route groups; a middleware
+rewrite keyed on the `Host` header decides which.
+
+**Local development uses `lvh.me`, not `localhost`.** `lvh.me` is a public
+DNS name whose wildcard resolves to `127.0.0.1`, which makes it a real
+registrable domain that a shared cookie can be scoped to:
+
+```
+lvh.me:3000       → marketing + auth
+app.lvh.me:3000   → the app
+api.lvh.me:8000   → Django
+Cookie: Domain=.lvh.me
+```
+
+`app.localhost` is the obvious choice and the wrong one. Browsers
+special-case `localhost` and handle a `Domain=.localhost` cookie attribute
+inconsistently, so the app would authenticate correctly in production and
+fail to authenticate in dev — a failure that appears only on the machine
+you are least expecting it on. `lvh.me` depends on a third-party DNS record
+and therefore fails offline; `docs/dev-setup.md` documents a hosts-file
+fallback for that case.
+
+**`KEEL_APP_DOMAIN` names the app's own host** (`app.acme.com`), not the
+registrable domain. Set to the registrable domain instead, the startup
+check below is satisfied by simple equality and never exercises the
+subdomain branch that is the whole point of it.
 
 Cross-registrable-domain cookies are third-party cookies and are blocked. This is not optional and is the first thing `init` prompts for.
 
@@ -855,16 +903,16 @@ Settings uses a secondary horizontal tab row rather than a nested sidebar: Gener
   /invite/[token]                # accept invitation
   /onboarding                    # create first organisation
 
-(app)                            # AppShell, authenticated
-  /app                           # → redirect to last-used org
-  /app/[org]                     # dashboard
-  /app/[org]/widgets             # DEMO — the pattern to copy
-  /app/[org]/widgets/[id]
-  /app/[org]/settings/general
-  /app/[org]/settings/members
-  /app/[org]/settings/roles
-  /app/[org]/settings/billing
-  /app/[org]/settings/audit
+(app)                            # app.acme.com — AppShell, authenticated
+  /                              # → redirect to last-used org
+  /[org]                         # dashboard
+  /[org]/widgets                 # DEMO — the pattern to copy
+  /[org]/widgets/[id]
+  /[org]/settings/general
+  /[org]/settings/members
+  /[org]/settings/roles
+  /[org]/settings/billing
+  /[org]/settings/audit
   /account/profile
   /account/security              # password, MFA devices
   /account/sessions              # active sessions, revoke
@@ -1288,7 +1336,7 @@ A third, smaller: HTTP/1.1 caps concurrent connections per host at six per brows
 - [ ] Marketing routes are statically rendered and score ≥ 95 on Lighthouse SEO
 - [ ] Pricing reflects Stripe without a redeploy
 - [ ] A new MDX file appears in the index with typed frontmatter validation
-- [ ] Sitemap includes marketing and blog routes and excludes `/app/*`
+- [ ] Sitemap includes marketing and blog routes and excludes the app — which is a separate host as of v1.3, so exclusion is by host, not by path prefix
 
 ---
 
@@ -1322,7 +1370,7 @@ A third, smaller: HTTP/1.1 caps concurrent connections per host at six per brows
 | Prompt | Effect |
 |---|---|
 | Project name | Renames the Python package and every reference |
-| App and API domains | Written into settings; refuses to complete without both |
+| App, marketing and API domains | Written into settings; refuses to complete without all three. The app is its own subdomain (v1.3) — `app.acme.com`, `acme.com`, `api.acme.com` — and `init` also writes the `lvh.me` dev equivalents |
 | **Tenant noun** | Model name, URL segment, permission-code prefix, route param, component names, UI copy |
 | Stripe keys | `.env`, plan sync |
 | **Marketing site?** | On "no", deletes the `(marketing)` group, `content-collections`, the MDX directory, sitemap and robots routes, and the marketing Playwright rows |
@@ -1395,6 +1443,8 @@ Named seams for the things explicitly out of scope, so adding them later is a kn
 |---|---|
 | The subdomain cookie constraint is forgotten on a new project and login silently fails in production | `init` refuses to complete without both domains; a startup check fails loudly on a mismatched `SESSION_COOKIE_DOMAIN` |
 | Vercel preview deploys break auth | Wildcard preview domain configured at `init`; documented as requiring Vercel Pro |
+| `lvh.me` stops resolving, or a developer works offline, and dev auth breaks with no obvious cause | `docs/dev-setup.md` documents a hosts-file fallback (`keel.test`) and the reason the shared-cookie constraint rules out `app.localhost`. The failure is loud — nothing resolves — rather than the silent cookie failure `app.localhost` would produce |
+| A phase adds a build artefact the test suite silently depends on | `packages/emails` did exactly this: its rendered HTML is required by every mail-sending flow, is not committed, and CI had no step to produce it. A root `conftest.py` now fails at collection naming the command to run. The general lesson is that a worktree passing does not mean a fresh clone passes |
 | Two deploys drift — API and web versions mismatch | Generated client checked into the repo; CI fails on drift; both deploy from the same commit |
 | The template accretes features nobody needed | Every addition must trace to a real project requirement; every v1.1 change traces to a named conflict with the first instantiation; the demo slice is the only speculative code and `init` removes or quarantines it |
 | Phase 5.5 is the template guessing at a project's job system, and the project needs a different one | It ships as the primitive, not the workflow — rows, transitions, streaming, resumption. Anything about *what* a job does stays in the project. If the first real project rewrites more than the registry, the phase was wrong and should shrink |
