@@ -19,10 +19,10 @@ unused"). Every request below assumes `/_allauth/browser/v1/` and
 
 ## Cookies
 
-| Cookie | Set by | Purpose |
-|---|---|---|
-| `sessionid` | Django session middleware, on any authenticating response | The session. `HttpOnly`, `Secure` (in non-DEBUG), `SameSite=Lax`, `Domain` = registrable domain (e.g. `.acme.com`) in production, unset (host-only) in local dev. |
-| `csrftoken` | Django CSRF middleware, on the first `GET` to any browser-client headless endpoint | Not `HttpOnly` — the SPA reads it and echoes it back as a header on unsafe methods. `SameSite=Lax`, `Secure` matches the session cookie. |
+| Cookie      | Set by                                                                             | Purpose                                                                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sessionid` | Django session middleware, on any authenticating response                          | The session. `HttpOnly`, `Secure` (in non-DEBUG), `SameSite=Lax`, `Domain` = registrable domain (e.g. `.acme.com`) in production, unset (host-only) in local dev. |
+| `csrftoken` | Django CSRF middleware, on the first `GET` to any browser-client headless endpoint | Not `HttpOnly` — the SPA reads it and echoes it back as a header on unsafe methods. `SameSite=Lax`, `Secure` matches the session cookie.                          |
 
 Both are `Domain`-scoped identically, controlled by `SESSION_COOKIE_DOMAIN`
 / `CSRF_COOKIE_DOMAIN` in `apps/api/config/settings/base.py`, which derive
@@ -66,9 +66,7 @@ On failure, allauth adds an `errors` array instead of (or alongside) `data`:
 ```json
 {
   "status": 400,
-  "errors": [
-    { "message": "Already registered.", "code": "email_taken", "param": "email" }
-  ]
+  "errors": [{ "message": "Already registered.", "code": "email_taken", "param": "email" }]
 }
 ```
 
@@ -90,7 +88,7 @@ uses this shape, not allauth's.
 
 ## 401 vs 403 vs 409 on `/_allauth/browser/v1/…`
 
-- **401** — no session, or a session that is only *partially* authenticated
+- **401** — no session, or a session that is only _partially_ authenticated
   (e.g. password verified, TOTP still pending). The body's `data.flows`
   array is the state machine: each entry has an `id` (e.g. `"login"`,
   `"signup"`, `"mfa_authenticate"`) and a pending entry has

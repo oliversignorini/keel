@@ -26,13 +26,13 @@ pnpm dev
 
 Then:
 
-| | |
-|---|---|
-| Marketing + auth | http://lvh.me:3000 |
-| Application | http://app.lvh.me:3000 |
-| API | http://api.lvh.me:8000 |
-| Django admin | http://api.lvh.me:8000/admin/ |
-| Mailpit | http://localhost:8025 |
+|                  |                               |
+| ---------------- | ----------------------------- |
+| Marketing + auth | http://lvh.me:3000            |
+| Application      | http://app.lvh.me:3000        |
+| API              | http://api.lvh.me:8000        |
+| Django admin     | http://api.lvh.me:8000/admin/ |
+| Mailpit          | http://localhost:8025         |
 
 Create an admin user with `cd apps/api && uv run python manage.py createsuperuser`.
 
@@ -67,7 +67,7 @@ Every Django app has the same shape: `models.py` `services.py` `selectors.py` `p
 
 The full seven are in `docs/architecture.md` and §4 of the PRD. Four of them are enforced by tests that will fail on you rather than by convention:
 
-**Authorization lives in one file.** `organizations/permissions.py` holds every permission code and guard. `has_perm` returns a `Decision`, not a bool, so a denial carries a machine-readable reason into the 403 body. A CI meta-test walks the registry and fails if any guard lacks both an allow and a deny test — and the deny test must assert the *reason*, because a guard that denies for the wrong reason passes a boolean test and fails a user.
+**Authorization lives in one file.** `organizations/permissions.py` holds every permission code and guard. `has_perm` returns a `Decision`, not a bool, so a denial carries a machine-readable reason into the 403 body. A CI meta-test walks the registry and fails if any guard lacks both an allow and a deny test — and the deny test must assert the _reason_, because a guard that denies for the wrong reason passes a boolean test and fails a user.
 
 **Tenant scoping is declared, never inferred.** Every viewset declares `organization_scoped = True` plus a `test_factory`, or a `GLOBAL_JUSTIFICATION` paragraph explaining why it is not tenant-scoped. A meta-test walks the router and asserts cross-organisation access returns **404, not 403** — existence is not disclosed across a tenant boundary. Every justification is printed in CI, so an exemption is a decision someone has to read rather than a line in a list.
 

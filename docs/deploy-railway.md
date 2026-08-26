@@ -74,7 +74,7 @@ constraint has a specific consequence for **Vercel preview deployments**.
   back to a preview deploy — auth silently fails there even though it
   works in production, and it fails in exactly the way `manage.py check`
   (`keel.core.E001`/`E002`, see `apps/api/keel/core/checks.py`) cannot
-  catch, because the *server-side* config is correct; the mismatch is
+  catch, because the _server-side_ config is correct; the mismatch is
   between the server's configured domain and whichever preview URL Vercel
   handed out for that request.
 - **Resolution: a wildcard preview domain.** Configure Vercel to serve
@@ -103,12 +103,12 @@ constraint has a specific consequence for **Vercel preview deployments**.
 Phase 9 TODO in `infra/compose.prod.yml`, which the `api`/`stream`
 services here are written against on the same terms):
 
-| Service | Command | Why it's separate |
-|---|---|---|
-| `api` | `gunicorn config.wsgi:application` | Ordinary request/response traffic, sync workers |
-| `stream` | `uvicorn config.asgi_stream:application` | SSE only — `keel/jobs/sse.py`, reachable at `.../jobs/stream/`. Never gunicorn: a held-open SSE connection occupies a sync worker for its entire life, exhausting the pool at a user count far below what request/response load testing suggests (PRD §5.5.5, footgun 1) |
-| `worker` | `celery -A config worker -Q default,email,external,scheduled` | Tier 1 shim tasks and Tier 2 job runner (`keel/jobs/runner.py`) |
-| `beat` | `celery -A config beat` | The six scheduled jobs (PRD §5) |
+| Service  | Command                                                       | Why it's separate                                                                                                                                                                                                                                                        |
+| -------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `api`    | `gunicorn config.wsgi:application`                            | Ordinary request/response traffic, sync workers                                                                                                                                                                                                                          |
+| `stream` | `uvicorn config.asgi_stream:application`                      | SSE only — `keel/jobs/sse.py`, reachable at `.../jobs/stream/`. Never gunicorn: a held-open SSE connection occupies a sync worker for its entire life, exhausting the pool at a user count far below what request/response load testing suggests (PRD §5.5.5, footgun 1) |
+| `worker` | `celery -A config worker -Q default,email,external,scheduled` | Tier 1 shim tasks and Tier 2 job runner (`keel/jobs/runner.py`)                                                                                                                                                                                                          |
+| `beat`   | `celery -A config beat`                                       | The six scheduled jobs (PRD §5)                                                                                                                                                                                                                                          |
 
 **Not directly verified against a live Railway account or the Railway
 CLI** — written from Railway's documented multi-service `railway.json`
@@ -120,7 +120,7 @@ deploy, confirm against `railway up`/the dashboard that:
   (vs. requiring one config file per service, set via each service's
   "Config File Path")
 - `$PORT` is available to `stream` as its own distinct port the way it
-  is to `api` — Railway assigns one `$PORT` per *service*, not per
+  is to `api` — Railway assigns one `$PORT` per _service_, not per
   container, so this should hold, but is worth confirming once
   `stream` is a real deployed service rather than a local `uvicorn`
   process

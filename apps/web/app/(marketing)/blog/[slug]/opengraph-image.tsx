@@ -15,25 +15,21 @@ export default async function OpengraphImage({ params }: { params: Promise<{ slu
   const post = allPosts.find((candidate) => candidate.slug === slug);
 
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "80px",
-          backgroundColor: "#171717",
-          color: "#fafafa",
-        }}
-      >
-        <div style={{ fontSize: 24, color: "#a3a3a3" }}>Keel blog</div>
-        <div style={{ fontSize: 64, fontWeight: 600, marginTop: 16 }}>
-          {post?.title ?? "Keel"}
-        </div>
-      </div>
-    ),
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "80px",
+        backgroundColor: "#171717",
+        color: "#fafafa",
+      }}
+    >
+      <div style={{ fontSize: 24, color: "#a3a3a3" }}>Keel blog</div>
+      <div style={{ fontSize: 64, fontWeight: 600, marginTop: 16 }}>{post?.title ?? "Keel"}</div>
+    </div>,
     { ...size },
   );
 }

@@ -18,10 +18,16 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             Keel
           </Link>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/pricing" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+            <Link
+              href="/pricing"
+              className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
               Pricing
             </Link>
-            <Link href="/blog" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+            <Link
+              href="/blog"
+              className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
               Blog
             </Link>
             <Link
@@ -44,10 +50,16 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400 sm:flex-row sm:justify-between">
           <p>&copy; {new Date().getFullYear()} Keel</p>
           <div className="flex gap-4">
-            <Link href="/legal/terms" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+            <Link
+              href="/legal/terms"
+              className="hover:text-neutral-900 dark:hover:text-neutral-100"
+            >
               Terms
             </Link>
-            <Link href="/legal/privacy" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+            <Link
+              href="/legal/privacy"
+              className="hover:text-neutral-900 dark:hover:text-neutral-100"
+            >
               Privacy
             </Link>
           </div>

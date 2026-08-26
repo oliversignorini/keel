@@ -36,15 +36,7 @@ services:
   stream:
     build:
       context: ../apps/api
-    command:
-      [
-        "uvicorn",
-        "config.asgi_stream:application",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8001",
-      ]
+    command: ["uvicorn", "config.asgi_stream:application", "--host", "0.0.0.0", "--port", "8001"]
     restart: unless-stopped
     env_file: ../.env
     depends_on:
@@ -62,16 +54,7 @@ services:
     # a project that outgrows this splits into per-queue worker
     # services, each with its own ``-Q``.
     command:
-      [
-        "celery",
-        "-A",
-        "config",
-        "worker",
-        "-l",
-        "info",
-        "-Q",
-        "default,email,external,scheduled",
-      ]
+      ["celery", "-A", "config", "worker", "-l", "info", "-Q", "default,email,external,scheduled"]
     restart: unless-stopped
     env_file: ../.env
     depends_on:
