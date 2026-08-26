@@ -87,3 +87,9 @@ def test_adjust_form_rejects_a_zero_amount():
 
     assert response.status_code == 200
     assert not CreditLedgerEntry.objects.filter(organization=org).exists()
+
+
+def test_credit_ledger_entry_plural_is_grammatical() -> None:
+    """docs/plans/phase-8.md 8.8: Django admin's default pluralisation
+    (append "s") renders "Credit ledger entrys"."""
+    assert CreditLedgerEntry._meta.verbose_name_plural == "Credit ledger entries"

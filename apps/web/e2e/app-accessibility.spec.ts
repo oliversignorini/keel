@@ -151,4 +151,10 @@ test.describe("axe: authenticated app routes", () => {
     await browserContext.close();
     await apiContext.dispose();
   });
+
+  test("the app host serves a favicon (docs/plans/phase-8.md 8.8)", async ({ request }) => {
+    const response = await request.get(`${APP_HOST}/favicon.ico`);
+
+    expect(response.status()).toBe(200);
+  });
 });

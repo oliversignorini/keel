@@ -54,3 +54,9 @@ test("robots.txt disallows the authenticated app", async ({ request }) => {
 
   expect(body).toContain("Disallow: /app/");
 });
+
+test("the apex host serves a favicon (docs/plans/phase-8.md 8.8)", async ({ request }) => {
+  const response = await request.get("/favicon.ico");
+
+  expect(response.status()).toBe(200);
+});

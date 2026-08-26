@@ -115,6 +115,9 @@ class CreditLedgerEntry(UUIDv7PrimaryKeyModel):
 
     class Meta:
         indexes = (models.Index(fields=["organization", "created_at"]),)
+        # Django admin's default pluralisation just appends "s"
+        # ("Credit ledger entrys" — docs/plans/phase-8.md 8.8).
+        verbose_name_plural = "Credit ledger entries"
 
     def __str__(self) -> str:
         return f"{self.kind} {self.amount} @ {self.organization_id}"
