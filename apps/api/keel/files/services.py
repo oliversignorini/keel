@@ -4,6 +4,7 @@ straight to R2; the row reaches ``complete``."""
 
 from typing import Any
 
+from keel.core.audit import audited, not_audited
 from keel.core.exceptions import UnprocessableEntity
 from keel.core.ids import uuid7
 from keel.files import r2_client
@@ -19,13 +20,14 @@ def _object_key(*, organization_id: Any, filename: str) -> str:
     return f"org/{organization_id}/{uuid7()}/{filename}"
 
 
+@audited("file.upload_presigned")
 def create_presigned_upload(
-    *, organization: Any, uploader: Any, filename: str, content_type: str, size: int
+    *, organization: Any, actor: Any, filename: str, content_type: str, size: int
 ) -> tuple[FileUpload, str]:
     key = _object_key(organization_id=organization.pk, filename=filename)
     file_upload = FileUpload.objects.create(
         organization=organization,
-        uploader=uploader,
+        uploader=actor,
         key=key,
         content_type=content_type,
         size=size,
@@ -34,6 +36,13 @@ def create_presigned_upload(
     return file_upload, upload_url
 
 
+@not_audited(
+    reason="Server-side confirmation that an R2 object exists; the user-initiated "
+    "action is create_presigned_upload above, which is audited. This call carries "
+    "no actor (it fires from the browser's completion callback with only the "
+    "FileUpload row) and records no new fact beyond a status flip already implied "
+    "by the presigned-upload row."
+)
 def complete_upload(*, file_upload: FileUpload) -> FileUpload:
     """Moves ``file_upload`` to ``complete`` only once the object is
     actually confirmed present in the bucket (PRD §5.6's acceptance

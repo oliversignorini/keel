@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from keel.billing import credits
 from keel.billing.models import CreditLedgerEntry
+from keel.core.audit import audited
 from keel.core.exceptions import UnprocessableEntity
 from keel.jobs.models import Job
 from keel.jobs.pubsub import publish_job_event
@@ -21,10 +22,11 @@ from keel.jobs.registry import UnknownJobType, registry
 from keel.jobs.runner import run_job_task
 
 
+@audited("job.created")
 def create_job(
     *,
     organization: Any,
-    requested_by: Any,
+    actor: Any,
     type: str,
     params: dict[str, Any] | None = None,
     idempotency_key: str = "",
@@ -51,17 +53,18 @@ def create_job(
         job = Job.objects.create(
             organization=organization,
             type=type,
-            requested_by=requested_by,
+            requested_by=actor,
             params=params or {},
             idempotency_key=idempotency_key,
         )
         if credits.credits_enabled() and spec.credit_estimate > 0:
-            credits.hold(organization, spec.credit_estimate, job=job, actor=requested_by)
+            credits.hold(organization, spec.credit_estimate, job=job, actor=actor)
 
     transaction.on_commit(lambda: run_job_task.apply_async(args=[str(job.id)], queue=spec.queue))
     return job
 
 
+@audited("job.cancelled")
 def cancel_job(*, job: Job, actor: Any) -> Job:
     """Best-effort: a job already mid-step finishes that step (there is
     no schema-level "cancelled" status to interrupt into — ``Job``'s

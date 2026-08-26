@@ -70,7 +70,10 @@ class WidgetViewSet(
         serializer = WidgetUpdateSerializer(data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         widget = services.update_widget(
-            widget=widget, actor=request.user, **serializer.validated_data
+            widget=widget,
+            actor=request.user,
+            impersonator=getattr(request, "impersonator", None),
+            **serializer.validated_data,
         )
         return Response(WidgetSerializer(widget).data)
 
@@ -80,5 +83,7 @@ class WidgetViewSet(
 
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         widget = self.get_object()
-        services.delete_widget(widget=widget, actor=request.user)
+        services.delete_widget(
+            widget=widget, actor=request.user, impersonator=getattr(request, "impersonator", None)
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)

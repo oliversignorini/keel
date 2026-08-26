@@ -3,8 +3,11 @@
 from unittest.mock import patch
 
 import pytest
+import sentry_sdk
 
+from keel.core.sentry import init_sentry
 from keel.core.tasks import MAX_RETRIES, redrive, task
+from keel.core.tests.sentry_stub import CapturingTransport
 from keel.jobs.models import FailedTask
 
 
@@ -96,3 +99,30 @@ def test_redrive_re_enqueues_the_dead_lettered_task_and_marks_it_redriven(settin
     failed.refresh_from_db()
     assert failed.redriven_at is not None
     assert attempts == ["y", "y"]
+
+
+@pytest.mark.django_db
+def test_dead_lettering_reports_the_exception_to_sentry(settings) -> None:
+    """docs/plans/phase-8.md 8.4's dead-letter seam, wired: a task
+    dead-lettering (PRD §5, "then a FailedTask row plus a Sentry
+    event") produces a captured event, not just a documented no-op."""
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = False
+    transport = CapturingTransport()
+    init_sentry(transport=transport, release="test-sha")
+    try:
+
+        @task
+        def always_fails_for_sentry(organization_id: str) -> None:
+            raise ValueError("dead-letter me")
+
+        with patch("keel.core.tasks._backoff_seconds", return_value=0):
+            always_fails_for_sentry.enqueue("org-1")
+
+        sentry_sdk.get_client().flush()
+        assert len(transport.envelopes) == 1
+        event = transport.envelopes[0].get_event()
+        assert event["exception"]["values"][-1]["type"] == "ValueError"
+        assert event["tags"]["task_name"].endswith("always_fails_for_sentry")
+    finally:
+        init_sentry()

@@ -56,6 +56,10 @@ export interface MeResponse {
     name: string;
   };
   organizations: MeOrganization[];
+  /** Non-null only while this session is impersonating (PRD §6
+   * "Impersonation"; docs/plans/phase-8.md 8.3) — the staff user who
+   * started it. Drives `<ImpersonationBanner>`. */
+  impersonator: { id: string; email: string; name: string } | null;
 }
 
 /** `GET /api/v1/permissions/` (PermissionsRegistryView.get). */

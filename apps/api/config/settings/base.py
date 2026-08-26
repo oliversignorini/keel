@@ -95,12 +95,17 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Django 6's native CSP middleware (docs/plans/phase-8.md 8.6) — reads
+    # SECURE_CSP above. Placed early per Django's own middleware-ordering
+    # guidance for security headers.
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "keel.core.middleware.RequestIDMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "keel.core.middleware.ImpersonationMiddleware",
     "keel.jobs.idempotency.IdempotencyKeyMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -314,6 +319,21 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "keel.core.pagination.CursorPagination",
     "EXCEPTION_HANDLER": "keel.core.exceptions.exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # General API rate limiting (PRD §3 NFR "Security": "Rate limiting ...
+    # on the API generally"; docs/plans/phase-8.md 8.6). allauth's own
+    # limiter already covers /_allauth/* — this is everything else.
+    # DRF's default throttle handler already sets Retry-After from
+    # Throttled.wait (see keel.core.exceptions's docstring) and Django's
+    # cache (Redis, PRD §3 "Redis for ... rate limit counters") backs the
+    # counters, so no new mechanism is needed, only turning this on.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": env("KEEL_API_THROTTLE_USER_RATE", default="300/minute"),
+        "anon": env("KEEL_API_THROTTLE_ANON_RATE", default="60/minute"),
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -495,3 +515,39 @@ STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
 # STRIPE_SECRET_KEY above — tests supply their own signed payloads via
 # stripe.Webhook's own signing helper against a fixture secret.
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+
+# Sentry (PRD §4 Integration points; docs/plans/phase-8.md 8.4). Blank
+# DSN in dev/test — sentry_sdk.init() with dsn=None is a documented
+# no-op, so this is unconditional (keel/core/sentry.py). Release is tied
+# to the git SHA: Railway sets RAILWAY_GIT_COMMIT_SHA automatically; the
+# generic GIT_SHA fallback covers self-host and CI.
+SENTRY_DSN = env("SENTRY_DSN", default="")
+SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default="development")
+SENTRY_RELEASE = env("RAILWAY_GIT_COMMIT_SHA", default=env("GIT_SHA", default="dev"))
+
+# PostHog (PRD §4 Integration points; docs/plans/phase-8.md 8.5). Same
+# treatment as Sentry above — blank key in dev/test, and the client
+# (keel/core/posthog.py) is a documented no-op without one.
+POSTHOG_PROJECT_API_KEY = env("POSTHOG_PROJECT_API_KEY", default="")
+POSTHOG_HOST = env("POSTHOG_HOST", default="https://us.i.posthog.com")
+
+# --- Security headers (PRD §3 NFR "Security"; docs/plans/phase-8.md 8.6) ---
+# NOSNIFF and REFERRER_POLICY are Django's own defaults already (3.0+ and
+# 3.1+ respectively) — explicit here so the header is a documented
+# decision, not an implicit default someone could accidentally change by
+# not knowing it was relying on one. HSTS is prod.py's job (only correct
+# over HTTPS, which dev/test aren't).
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+
+# Django's own pages only (admin, the OpenAPI schema UI) — the app's CSP
+# is Next.js's job (apps/web/next.config.ts), since that's the origin
+# actually rendering untrusted-adjacent HTML. 'unsafe-inline' on
+# style-src is Django admin's own requirement (its templates carry
+# inline `style=` attributes); nothing here is looser than that.
+SECURE_CSP = {
+    "default-src": ["'self'"],
+    "style-src": ["'self'", "'unsafe-inline'"],
+    "img-src": ["'self'", "data:"],
+    "frame-ancestors": ["'none'"],
+}

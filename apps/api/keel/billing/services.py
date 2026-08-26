@@ -13,6 +13,8 @@ from django.utils import timezone
 from keel.billing import stripe_client
 from keel.billing.entitlements import enforce_downgrade_limits
 from keel.billing.models import Plan, Price, Subscription
+from keel.core.audit import audited, not_audited
+from keel.core.impersonation import forbid_when_impersonating
 from keel.organizations.models import Membership, Organization
 
 CHECKOUT_TRIAL_DAYS = 14
@@ -33,6 +35,11 @@ class MissingPlanCode(Exception):
         )
 
 
+@not_audited(
+    reason="System-driven catalogue sync from Stripe (management command / nightly "
+    "beat job), not a user action — no actor. Stripe is already the source of "
+    "truth for plans and prices; this mirrors it, it doesn't decide anything."
+)
 @transaction.atomic
 def sync_plans_from_stripe(products: list[dict[str, Any]]) -> dict[str, int]:
     """Upsert ``Plan``/``Price`` rows from ``products`` — the normalised
@@ -97,6 +104,11 @@ def sync_plans_from_stripe(products: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
+@not_audited(
+    reason="Internal helper called by create_checkout_session and "
+    "create_portal_session, both of which are audited — decorating this too "
+    "would double-record a single checkout/portal call as two audit rows."
+)
 def ensure_stripe_customer(organization: Organization) -> str:
     """Lazily creates the Stripe customer for ``organization`` on first
     need and persists the id. No ``transaction.atomic()`` here (PRD §4,
@@ -113,8 +125,15 @@ def ensure_stripe_customer(organization: Organization) -> str:
     return customer_id
 
 
+@audited("billing.checkout_session_created")
 def create_checkout_session(
-    *, organization: Organization, price: Price, success_url: str, cancel_url: str
+    *,
+    organization: Organization,
+    actor: Any,
+    price: Price,
+    success_url: str,
+    cancel_url: str,
+    impersonator: Any = None,
 ) -> str:
     """``POST /organizations/<org_slug>/billing/checkout/``
     (docs/plans/phase-4.md B.2). Returns the Checkout Session URL — the
@@ -125,7 +144,12 @@ def create_checkout_session(
     plan-change entry point — Checkout replaces an existing subscription's
     price when reused this way. A downgrade whose target plan's limits
     are already exceeded by current usage is blocked before any Stripe
-    call (docs/plans/phase-4.md B.4)."""
+    call (docs/plans/phase-4.md B.4).
+
+    Covers both halves of PRD §6's "start or cancel a subscription"
+    restriction for impersonated sessions — starting and plan-changing
+    both go through this one entry point."""
+    forbid_when_impersonating(impersonator, "start or change a subscription")
     existing_subscription = Subscription.objects.filter(organization=organization).first()
     if existing_subscription is not None:
         enforce_downgrade_limits(organization, price.plan)
@@ -139,15 +163,28 @@ def create_checkout_session(
     )
 
 
-def create_portal_session(*, organization: Organization, return_url: str) -> str:
+@audited("billing.portal_session_created")
+def create_portal_session(
+    *, organization: Organization, actor: Any, return_url: str, impersonator: Any = None
+) -> str:
     """``POST /organizations/<org_slug>/billing/portal/``
-    (docs/plans/phase-4.md B.2). Returns the Customer Portal URL."""
+    (docs/plans/phase-4.md B.2). Returns the Customer Portal URL — the
+    Stripe Customer Portal is where a subscription is cancelled (PRD §4
+    "Billing flow"), so this is the other half of PRD §6's "start or
+    cancel a subscription" restriction for impersonated sessions."""
+    forbid_when_impersonating(impersonator, "start or cancel a subscription")
     customer_id = ensure_stripe_customer(organization)
     return stripe_client.create_billing_portal_session(
         customer_id=customer_id, return_url=return_url
     )
 
 
+@not_audited(
+    reason="System-triggered from transaction.on_commit() by "
+    "accept_invitation/remove_member, both of which already audit the "
+    "membership change that caused this — recording it again here would be "
+    "a second row for the same event with no actor of its own."
+)
 def sync_seat_quantity(organization: Organization) -> None:
     """Syncs active membership count to the organisation's Stripe
     subscription quantity, with proration (docs/plans/phase-4.md B.5).
@@ -166,6 +203,10 @@ def sync_seat_quantity(organization: Organization) -> None:
     subscription.save(update_fields=["quantity"])
 
 
+@not_audited(
+    reason="Scheduled system job / management command entry point; wraps "
+    "sync_plans_from_stripe, which carries the same not_audited reasoning."
+)
 def sync_stripe_plans() -> dict[str, int]:
     """The nightly Stripe plan sync (PRD §5 "Scheduled jobs";
     docs/plans/phase-5.md 5.4). Wraps fetch-then-upsert as one call so
@@ -176,6 +217,11 @@ def sync_stripe_plans() -> dict[str, int]:
     return sync_plans_from_stripe(products)
 
 
+@not_audited(
+    reason="Scheduled system notification job, no actor; its own idempotency "
+    "marker is an AuditLog row written directly below for each notice sent, "
+    "which is the record that matters here, not a call-level audit entry."
+)
 def send_trial_ending_notices() -> int:
     """Trial-ending notices (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
     5.4), daily. Idempotent when run twice: no field on ``Subscription``
@@ -217,6 +263,10 @@ def send_trial_ending_notices() -> int:
     return sent
 
 
+@not_audited(
+    reason="Scheduled system notification job, no actor; same idempotency-marker "
+    "reasoning as send_trial_ending_notices above."
+)
 def check_dunning() -> int:
     """Dunning check (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md 5.4),
     daily. Same idempotency mechanism as ``send_trial_ending_notices``:

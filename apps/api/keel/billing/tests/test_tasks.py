@@ -4,9 +4,12 @@ no-op, a raising handler records ``StripeEvent.error`` and retries, and an
 already-processed event is a no-op on redelivery."""
 
 import pytest
+import sentry_sdk
 
 from keel.billing import tasks, webhooks
 from keel.billing.models import StripeEvent
+from keel.core.sentry import init_sentry
+from keel.core.tests.sentry_stub import CapturingTransport
 
 pytestmark = pytest.mark.django_db
 
@@ -87,3 +90,31 @@ def test_dispatch_stripe_event_retries_then_gives_up_after_max_retries(
     stripe_event.refresh_from_db()
     assert stripe_event.processed_at is None
     assert "stripe is down" in stripe_event.error
+
+
+def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
+    monkeypatch: pytest.MonkeyPatch, settings
+) -> None:
+    """The real path (docs/plans/phase-8.md 8.4), not the monkeypatched
+    ``_report_to_sentry`` the test above uses to isolate retry counting."""
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = False
+    stripe_event = _stripe_event(event_id="evt_sentry")
+
+    def _always_fails(obj):
+        raise ValueError("stripe is really down")
+
+    monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", _always_fails)
+
+    transport = CapturingTransport()
+    init_sentry(transport=transport, release="test-sha")
+    try:
+        tasks.dispatch_stripe_event.apply(args=[stripe_event.pk], throw=False)
+        sentry_sdk.get_client().flush()
+    finally:
+        init_sentry()
+
+    assert len(transport.envelopes) == 1
+    event = transport.envelopes[0].get_event()
+    assert event["exception"]["values"][-1]["type"] == "ValueError"
+    assert event["tags"]["stripe_event_id"] == "evt_sentry"

@@ -35,10 +35,15 @@ RETRY_BACKOFF_BASE_SECONDS = 5
 
 
 def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
-    """Seam for Sentry (PRD §5, "then StripeEvent.error plus a Sentry
-    event"). Sentry SDK isn't wired into this project yet (a later phase's
-    task per the PRD's infra list) — documented no-op until then, same
-    pattern as ``organizations/services.py``'s ``_sync_stripe_customer``."""
+    """Wired to the real SDK (PRD §5, "then StripeEvent.error plus a
+    Sentry event"; docs/plans/phase-8.md 8.4) via ``keel.core.sentry``,
+    which is itself a no-op without a DSN — see that module's docstring."""
+    from keel.core.sentry import report_exception
+
+    report_exception(
+        exc,
+        tags={"stripe_event_id": str(stripe_event.pk), "stripe_event_type": stripe_event.type},
+    )
 
 
 def process_stripe_event(stripe_event: StripeEvent) -> None:

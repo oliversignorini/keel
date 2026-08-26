@@ -44,6 +44,7 @@ urlpatterns = [
     path("api/v1/", include("keel.billing.urls")),
     path("api/v1/", include("keel.files.urls")),
     path("api/v1/", include("keel.jobs.urls")),
+    path("api/v1/", include("keel.audit.urls")),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8
     # Phase 2 A.1; allauth headless installation docs).

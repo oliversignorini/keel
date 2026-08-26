@@ -1643,6 +1643,70 @@
         ],
         "type": "object"
       },
+      "AuditLog": {
+        "properties": {
+          "action": {
+            "readOnly": true,
+            "type": "string"
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/_AuditActor"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "readOnly": true,
+            "type": "string"
+          },
+          "impersonator": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/_AuditActor"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true
+          },
+          "ip": {
+            "nullable": true,
+            "readOnly": true,
+            "type": "string"
+          },
+          "metadata": {
+            "readOnly": true
+          },
+          "target_id": {
+            "readOnly": true,
+            "type": "string"
+          },
+          "target_type": {
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actor",
+          "created_at",
+          "id",
+          "impersonator",
+          "ip",
+          "metadata",
+          "target_id",
+          "target_type"
+        ],
+        "type": "object"
+      },
       "Authenticated": {
         "properties": {
           "methods": {
@@ -2640,6 +2704,32 @@
           "name",
           "slug",
           "updated_at"
+        ],
+        "type": "object"
+      },
+      "PaginatedAuditLogList": {
+        "properties": {
+          "next": {
+            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "previous": {
+            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
         ],
         "type": "object"
       },
@@ -3684,6 +3774,27 @@
           "id",
           "name",
           "updated_at"
+        ],
+        "type": "object"
+      },
+      "_AuditActor": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "id",
+          "name"
         ],
         "type": "object"
       },
@@ -4908,6 +5019,19 @@
         ]
       }
     },
+    "/api/v1/impersonation/exit/": {
+      "post": {
+        "operationId": "impersonation_exit_create",
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "tags": [
+          "impersonation"
+        ]
+      }
+    },
     "/api/v1/invite/{token}/": {
       "get": {
         "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",
@@ -5112,6 +5236,92 @@
         "responses": {
           "200": {
             "description": "No response body"
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/audit/": {
+      "get": {
+        "operationId": "organizations_audit_list",
+        "parameters": [
+          {
+            "description": "The pagination cursor value.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Number of results to return per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAuditLogList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/{org_slug}/audit/{id}/": {
+      "get": {
+        "operationId": "organizations_audit_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLog"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "tags": [

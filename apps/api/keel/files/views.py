@@ -48,7 +48,7 @@ class FileUploadCreateView(_OrganizationFilesView):
         serializer.is_valid(raise_exception=True)
         file_upload, upload_url = services.create_presigned_upload(
             organization=organization,
-            uploader=request.user,
+            actor=request.user,
             **serializer.validated_data,
         )
         return Response(

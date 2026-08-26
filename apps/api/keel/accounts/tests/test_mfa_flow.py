@@ -110,3 +110,53 @@ def test_totp_challenge_on_next_login() -> None:
 
     assert challenge_response.status_code == 200, challenge_response.json()
     assert challenge_response.json()["meta"]["is_authenticated"] is True
+
+
+# --- Impersonation restriction (PRD §6; docs/plans/phase-8.md 8.3) -----
+
+
+def test_authenticator_writes_are_blocked_while_impersonating() -> None:
+    """Direct, model-layer proof (the "call the service directly with an
+    impersonated session" test docs/plans/phase-8.md 8.3 asks for) —
+    every add/replace/remove of an ``Authenticator`` goes through
+    ``Authenticator.save()``/``.delete()``, which ``keel.accounts.mfa_guard``
+    hooks unconditionally. No HTTP request needed to prove the block; the
+    HTTP-level version follows below."""
+    from allauth.mfa.models import Authenticator
+
+    from keel.accounts.models import User
+    from keel.core.exceptions import PermissionDeniedWithReason
+    from keel.core.impersonation import _current_impersonator_id
+
+    user = User.objects.create_user(email="dana@example.com", password="s3cret-pass-1")
+    token = _current_impersonator_id.set("staff-marker")
+    try:
+        with pytest.raises(PermissionDeniedWithReason):
+            Authenticator.objects.create(user=user, type=Authenticator.Type.TOTP, data={})
+    finally:
+        _current_impersonator_id.reset(token)
+    assert not Authenticator.objects.filter(user=user).exists()
+
+
+def test_totp_enrolment_is_blocked_over_http_while_impersonating() -> None:
+    """The HTTP-level companion: a session flagged as impersonating (the
+    same session key ``keel.core.impersonation.start_impersonation``
+    writes) cannot complete TOTP activation through the real headless
+    endpoint. ``raise_request_exception=False`` because the guard's
+    exception is deliberately not one allauth's own view code catches —
+    the point is that the write never lands, not that this endpoint
+    renders it as a pretty 403."""
+    client = Client(raise_request_exception=False)
+    _signup_verify_login(client, "grace@example.com", "s3cret-pass-1")
+    secret = client.get("/_allauth/browser/v1/account/authenticators/totp").json()["meta"]["secret"]
+    session = client.session
+    session["impersonator_id"] = "staff-marker"
+    session.save()
+
+    activate_response = client.post(
+        "/_allauth/browser/v1/account/authenticators/totp",
+        {"code": _totp_code(secret)},
+        content_type="application/json",
+    )
+
+    assert activate_response.status_code >= 400

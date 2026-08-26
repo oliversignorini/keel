@@ -19,8 +19,9 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from keel.billing.entitlements import check_limit
-from keel.core.audit import audited
+from keel.core.audit import audited, not_audited
 from keel.core.exceptions import Conflict, PermissionDeniedWithReason, UnprocessableEntity
+from keel.core.impersonation import forbid_when_impersonating
 from keel.organizations.models import Invitation, Membership, Organization, Role
 from keel.organizations.permissions import Perm, has_perm, is_last_active_owner
 from keel.organizations.roles import PRESET_ADMIN, PRESET_OWNER, seed_preset_roles
@@ -64,7 +65,10 @@ def update_organization(*, organization: Organization, actor: Any, **fields: Any
 
 
 @audited("organization.deleted")
-def delete_organization(*, organization: Organization, actor: Any) -> Organization:
+def delete_organization(
+    *, organization: Organization, actor: Any, impersonator: Any = None
+) -> Organization:
+    forbid_when_impersonating(impersonator, "delete the organisation")
     with transaction.atomic():
         organization.deleted_at = timezone.now()
         organization.save(update_fields=["deleted_at"])
@@ -198,6 +202,10 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
     return membership
 
 
+@not_audited(
+    reason="Scheduled system job (PRD §5), not a user action — there is no actor to "
+    "record. See the docstring below for why this isn't @audited."
+)
 def expire_invitations() -> int:
     """Invitation expiry (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
     5.4), hourly. A system action, not a user one — no ``actor``, so not

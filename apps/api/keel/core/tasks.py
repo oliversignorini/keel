@@ -35,10 +35,19 @@ BASE_BACKOFF_SECONDS = 5
 JITTER_FRACTION = 0.25
 
 
-def report_to_sentry(task_name: str, error: str, traceback_text: str) -> None:
-    """Seam for Sentry (PRD §5: "then a FailedTask row plus a Sentry
-    event"). Sentry itself is Phase 8 — this is a documented no-op until
-    then, same pattern as ``keel.billing.tasks._report_to_sentry``."""
+def report_to_sentry(
+    task_name: str, error: str, traceback_text: str, exc: Exception | None = None
+) -> None:
+    """Wired to the real SDK (PRD §5: "then a FailedTask row plus a
+    Sentry event"; docs/plans/phase-8.md 8.4) via ``keel.core.sentry``,
+    which is itself a no-op without a DSN — see that module's docstring.
+    ``exc`` is optional only so the pre-Phase-8 call shape (task_name,
+    error, traceback_text) still type-checks; every real call site below
+    passes it."""
+    from keel.core.sentry import report_exception
+
+    if exc is not None:
+        report_exception(exc, tags={"task_name": task_name})
 
 
 def _backoff_seconds(retries: int) -> float:
@@ -94,7 +103,7 @@ class Task:
             traceback=traceback_text,
             attempts=MAX_RETRIES,
         )
-        report_to_sentry(self.name, str(exc), traceback_text)
+        report_to_sentry(self.name, str(exc), traceback_text, exc=exc)
         logger.error("task %s dead-lettered after %s attempts", self.name, MAX_RETRIES)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:

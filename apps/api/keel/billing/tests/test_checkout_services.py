@@ -81,6 +81,7 @@ def test_stripe_call_does_not_open_its_own_transaction(monkeypatch: pytest.Monke
 
     services.create_checkout_session(
         organization=org,
+        actor=org.created_by,
         price=price,
         success_url="https://app.test/success",
         cancel_url="https://app.test/cancel",
@@ -101,7 +102,9 @@ def test_create_portal_session_reuses_customer(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(stripe_client, "create_billing_portal_session", fake_portal)
 
-    url = services.create_portal_session(organization=org, return_url="https://app.test/billing")
+    url = services.create_portal_session(
+        organization=org, actor=org.created_by, return_url="https://app.test/billing"
+    )
 
     assert url == "https://stripe.test/portal/xyz"
     assert seen == {"customer_id": "cus_existing", "return_url": "https://app.test/billing"}

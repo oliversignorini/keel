@@ -58,7 +58,7 @@ class JobViewSet(
         serializer.is_valid(raise_exception=True)
         job = services.create_job(
             organization=self.organization,
-            requested_by=request.user,
+            actor=request.user,
             type=serializer.validated_data["type"],
             params=serializer.validated_data.get("params") or {},
             idempotency_key=request.headers.get("Idempotency-Key", ""),
