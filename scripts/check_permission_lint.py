@@ -8,13 +8,24 @@ registers no guard itself — every real guard implementation lives in
 ``organizations/permissions.py``, which is the only file allowed to call
 ``Decision.allow(``, ``Decision.deny(`` or ``registry.register(``.
 
-This is a source-text grep, not an AST walk, deliberately: the property
+This is mostly a source-text grep rather than an AST walk: the property
 being enforced is "does this string appear in a file other than the one
-sanctioned file", and a regex answers that directly without needing to
-resolve imports or understand control flow. Test files are exempt: they
-legitimately construct ``Decision`` objects and register fixture guards
-to exercise the vocabulary itself (see keel/core/tests/test_authz.py),
-which is testing the mechanism, not expressing a real permission check.
+sanctioned file", and a regex answers that directly. ``Decision.allow(``
+and ``Decision.deny(`` are unambiguous, so a plain grep is right for them.
+
+``registry.register(`` is not. Phase 5.5 introduced a second, entirely
+unrelated registry — ``keel.jobs.registry``, which registers job *types*
+and shares the method name by coincidence. A bare grep flagged
+``keel/jobs/demo.py`` as an authorization violation, which is a false
+positive that would have been "fixed" by renaming perfectly good job code
+or, worse, by exempting a path and blunting the rule. So that one pattern
+is import-aware: it only fires in a module that actually binds ``registry``
+from ``keel.core.authz``.
+
+Test files are exempt: they legitimately construct ``Decision`` objects and
+register fixture guards to exercise the vocabulary itself (see
+keel/core/tests/test_authz.py), which is testing the mechanism, not
+expressing a real permission check.
 """
 
 from __future__ import annotations
@@ -33,8 +44,15 @@ ALLOWED_FILES = {
 PATTERNS = {
     "Decision.allow(": re.compile(r"Decision\.allow\("),
     "Decision.deny(": re.compile(r"Decision\.deny\("),
-    "registry.register(": re.compile(r"registry\.register\("),
 }
+
+# Only meaningful in a module that binds `registry` from the authorization
+# vocabulary. keel.jobs.registry exports a `registry` of the same shape for
+# job types and is none of this rule's business.
+AUTHZ_REGISTRY_PATTERN = re.compile(r"registry\.register\(")
+AUTHZ_REGISTRY_IMPORT = re.compile(
+    r"^from\s+keel\.core\.authz\s+import\s+.*(?<![\w.])registry(?![\w])", re.MULTILINE
+)
 
 
 def _is_exempt(path: Path) -> bool:
@@ -50,11 +68,17 @@ def find_violations() -> list[str]:
         if _is_exempt(path):
             continue
         text = path.read_text(encoding="utf-8")
+        binds_authz_registry = bool(AUTHZ_REGISTRY_IMPORT.search(text))
         for line_no, line in enumerate(text.splitlines(), start=1):
             for label, pattern in PATTERNS.items():
                 if pattern.search(line):
                     rel = path.relative_to(API_DIR).as_posix()
                     violations.append(f"{rel}:{line_no}: {label} outside organizations/permissions.py")
+            if binds_authz_registry and AUTHZ_REGISTRY_PATTERN.search(line):
+                rel = path.relative_to(API_DIR).as_posix()
+                violations.append(
+                    f"{rel}:{line_no}: registry.register( outside organizations/permissions.py"
+                )
     return violations
 
 

@@ -190,6 +190,15 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build content collections
+        run: pnpm --filter web content:build
+        # app/sitemap.ts imports the generated "content-collections" module.
+        # It is produced by the content-collections build (and, incidentally,
+        # by `next dev`, which is why this passes locally and failed here).
+        # apps/web/.content-collections is generated output and is gitignored,
+        # so a fresh checkout starts without it and vitest cannot resolve the
+        # import at all.
+
       - name: vitest (web)
         run: pnpm --filter web test
 
