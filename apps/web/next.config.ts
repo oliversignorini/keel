@@ -1,7 +1,16 @@
 import { withContentCollections } from "@content-collections/next";
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 import { buildContentSecurityPolicy } from "./lib/csp";
+
+// Release tied to the git SHA (PRD §4 Integration points; docs/plans/
+// phase-8.md 8.4) — same source as the backend's SENTRY_RELEASE
+// (config/settings/base.py). NEXT_PUBLIC_ vars are inlined at build
+// time, so this has to be set here rather than read at runtime in the
+// browser bundle (sentry.client.config.ts).
+process.env.NEXT_PUBLIC_SENTRY_RELEASE ??=
+  process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_SHA || "dev";
 
 const nextConfig: NextConfig = {
   // @keel/ui ships TSX source, no build step of its own (a plain internal
@@ -39,4 +48,19 @@ const nextConfig: NextConfig = {
 // Wires apps/web/content-collections.ts into the Next.js build (phase-7.md
 // 7.4). Removing the marketing route group (PRD §8 Phase 9) means dropping
 // this wrapper too — see docs/marketing-removal.md.
-export default withContentCollections(nextConfig);
+const configWithContentCollections = withContentCollections(nextConfig);
+
+// Source-map upload (PRD §4: "source maps uploaded"; docs/plans/
+// phase-8.md 8.4) needs SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT —
+// none exist for this project (.env.example). withSentryConfig degrades
+// gracefully without them: the build still succeeds, just without
+// resolved stack frames in Sentry — it does not fail the build or
+// require credentials to exist.
+export default withSentryConfig(configWithContentCollections, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  widenClientFileUpload: true,
+  disableLogger: true,
+});
