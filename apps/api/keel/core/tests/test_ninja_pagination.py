@@ -21,7 +21,7 @@ from django.db import connection, models
 from django.test import RequestFactory
 from django.test.utils import isolate_apps
 
-from keel.core.ninja_pagination import CursorPaginator, InvalidCursor, _positive_int
+from keel.core.ninja_pagination import CursorPaginator, InvalidPagination, _positive_int
 
 
 def _paginate_all(paginator_cls, queryset, page_size):
@@ -228,15 +228,54 @@ def test_limit_query_param_overrides_the_default_page_size() -> None:
         ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "3"})
         assert len(ids) == 3
 
-        # A junk or non-positive limit falls back to the page size rather
-        # than 400-ing — the parameter is a hint, not part of the contract.
-        ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "not-a-number"})
-        assert len(ids) == 5
-        ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "0"})
-        assert len(ids) == 5
+        # A junk or non-positive limit is the client's error, not a silent
+        # fallback (api-patterns finding 8) — same 422 the malformed-cursor
+        # test below asserts, and the same code.
+        for bad_limit in ("not-a-number", "0", "-1"):
+            paginator = LimitPaginator()
+            paginator.page_size = 5
+            request = RequestFactory().get("/fake/things/", {"limit": bad_limit})
+            with pytest.raises(InvalidPagination) as excinfo:
+                paginator.paginate_queryset(queryset, request)
+            assert excinfo.value.status_code == 422
+            assert excinfo.value.code == "invalid_pagination"
     finally:
         with connection.schema_editor() as editor:
             editor.delete_model(LimitRow)
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_limit_above_the_maximum_is_capped_not_rejected() -> None:
+    """Unlike a malformed limit, an *oversized* one is still a valid
+    request — it is simply capped at ``max_page_size`` (api-patterns
+    finding 9 / ddia finding 26) rather than answering the full table."""
+
+    class CappedRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"CappedRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(CappedRow)
+    try:
+        for rank in range(5):
+            CappedRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+
+        class CappedPaginator(CursorPaginator):
+            ordering = ("rank", "id")
+            max_page_size = 3
+
+        queryset = CappedRow.objects.all()  # type: ignore[attr-defined]
+        ids, _ = _page(CappedPaginator, queryset, 5, {"limit": "1000000"})
+        assert len(ids) == 3
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(CappedRow)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -273,17 +312,18 @@ def test_a_single_string_ordering_is_accepted() -> None:
             editor.delete_model(StringOrderRow)
 
 
-def test_a_malformed_cursor_is_422_invalid_cursor() -> None:
+def test_a_malformed_cursor_is_422_invalid_pagination() -> None:
     """A tampered or truncated cursor is the client's error, not a 500 —
-    PRD §7's 422 row (``keel.core.exceptions.UnprocessableEntity``)."""
+    PRD §7's 422 row (``keel.core.exceptions.UnprocessableEntity``), and
+    the same code a malformed ``limit`` raises (api-patterns finding 8)."""
     paginator = CursorPaginator()
     request = RequestFactory().get("/fake/things/", {"cursor": "bz1ub3QtYS1udW1iZXI="})
 
-    with pytest.raises(InvalidCursor) as excinfo:
+    with pytest.raises(InvalidPagination) as excinfo:
         paginator._decode_cursor(request)
 
     assert excinfo.value.status_code == 422
-    assert excinfo.value.code == "invalid_cursor"
+    assert excinfo.value.code == "invalid_pagination"
 
 
 def test_position_is_read_from_a_dict_row_as_well_as_a_model_instance() -> None:
@@ -299,6 +339,13 @@ def test_position_is_read_from_a_dict_row_as_well_as_a_model_instance() -> None:
 def test_a_negative_page_size_is_rejected() -> None:
     with pytest.raises(ValueError):
         _positive_int("-1")
+
+
+def test_positive_int_with_no_cutoff_returns_the_value_unchanged() -> None:
+    """Every production call site now passes a ``cutoff`` (page size caps
+    at ``max_page_size``, the cursor offset caps at ``offset_cutoff``) —
+    this covers the no-cutoff branch directly so it isn't dead code."""
+    assert _positive_int("7") == 7
 
 
 @pytest.mark.django_db(transaction=True)

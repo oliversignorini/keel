@@ -66,9 +66,15 @@ def _replace_query_param(url: str, key: str, val: Any) -> str:
     return parse.urlunsplit((scheme, netloc, path, query, fragment))
 
 
-class InvalidCursor(UnprocessableEntity):
-    default_code = "invalid_cursor"
-    default_message = "Invalid cursor"
+class InvalidPagination(UnprocessableEntity):
+    """One code for both pagination parameters (api-patterns finding 8):
+    a malformed ``cursor`` and a non-positive or non-integer ``limit`` are
+    the same class of client error and now answer the same way, rather
+    than a cursor error raising 422 while a bad ``limit`` was silently
+    swallowed and replaced with the default page size."""
+
+    default_code = "invalid_pagination"
+    default_message = "Invalid pagination parameters."
 
 
 class CursorPaginator:
@@ -79,6 +85,10 @@ class CursorPaginator:
     cursor_query_param = "cursor"
     page_size_query_param = "limit"
     page_size = 25
+    # api-patterns finding 9 / ddia finding 26: uncapped, a client-supplied
+    # `limit` was pagination a client could opt out of entirely
+    # (`?limit=1000000` returned the full collection in one query).
+    max_page_size = 100
     ordering: Sequence[str] = ("-created_at", "id")
     offset_cutoff = 1000
 
@@ -160,9 +170,9 @@ class CursorPaginator:
             raw = request.GET.get(self.page_size_query_param)
             if raw is not None:
                 try:
-                    return _positive_int(raw, strict=True)
-                except ValueError:
-                    pass
+                    return _positive_int(raw, strict=True, cutoff=self.max_page_size)
+                except ValueError as exc:
+                    raise InvalidPagination() from exc
         return self.page_size
 
     def _get_ordering(self) -> tuple[str, ...]:
@@ -185,7 +195,7 @@ class CursorPaginator:
             reverse = bool(int(tokens.get("r", ["0"])[0]))
             position = tokens.get("p", [None])[0]
         except (TypeError, ValueError) as exc:
-            raise InvalidCursor() from exc
+            raise InvalidPagination() from exc
         return Cursor(offset=offset, reverse=reverse, position=position)
 
     def _encode_cursor(self, cursor: Cursor) -> str:

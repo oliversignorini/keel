@@ -1,12 +1,12 @@
-"""Session authentication for Ninja routes (PRD §7's error table;
-``keel/core/authentication.py``'s docstring, kept for the DRF views that
-still exist during the migration, explains the 401-vs-403 distinction this
-preserves).
+"""Session authentication for Ninja routes (PRD §7's error table).
 
-Deny by default (PRD §4 task 1.12): every ``KeelAPI`` operation must pass
-``auth=session_auth`` explicitly — there is no global default, so an
-operation that forgets it is a bug caught by ``keel/core/tests/
-test_ninja_wiring.py``, not a silently-open endpoint.
+Deny by default (PRD §4 task 1.12): every ``KeelAPI`` operation is mounted
+through one of ``keel.core.ninja_authz``'s router constructors
+(``keel_router`` / ``public_router`` / ``optional_auth_router``), each of
+which declares its auth explicitly — there is no bare ``Router()`` with an
+implicit default anywhere in the app routers. An operation that forgot to
+go through one of those constructors is a bug caught by
+``keel/core/tests/test_ninja_wiring.py``, not a silently-open endpoint.
 
 Anonymous request → 401 ``not_authenticated``. Authenticated session
 present but the request is an unsafe method (POST/PUT/PATCH/DELETE)
@@ -16,13 +16,18 @@ outcome DRF's ``SessionAuthentication.enforce_csrf`` produces (via
 give a plain view. Reproducing that exact mapping is why this hand-rolls
 the CSRF check with ``CsrfViewMiddleware`` rather than turning on Ninja's
 built-in ``csrf=True`` handling, which answers 403.
+
+Rate limiting is a separate layer (``keel.core.ninja_throttle.
+ThrottleMiddleware``) that runs ahead of routing for every ``/api/v1/``
+request — not part of either callable below, so it applies uniformly to
+routes built with ``public_router()``/``optional_auth_router()`` too,
+which never call into this module at all.
 """
 
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
 
 from keel.core.exceptions import AuthenticationFailed, NotAuthenticated
-from keel.core.ninja_throttle import throttle
 
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 
@@ -51,16 +56,13 @@ def enforce_csrf(request: HttpRequest) -> None:
 
 
 def session_auth(request: HttpRequest) -> object:
-    """The one auth callable every ``KeelAPI`` operation must declare
-    unless it is explicitly public (``optional_session_auth`` below).
-    General rate limiting (PRD §3 NFR "Security") runs here too, ahead of
-    the auth check, so it applies uniformly regardless of whether the
-    request turns out to be authenticated.
+    """The one auth callable every ``keel_router()`` operation uses unless
+    it is explicitly public (``optional_session_auth`` below, or a
+    ``public_router()``/``keel.core.ninja_authz``).
 
     Returns the authenticated user (so Ninja's ``request.auth`` is
     populated) or raises — never returns ``None``, which Ninja would
     otherwise turn into its own generic 401 envelope instead of ours."""
-    throttle(request)
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:
         raise NotAuthenticated()
@@ -76,7 +78,6 @@ def optional_session_auth(request: HttpRequest) -> object:
     returns a user object (possibly ``AnonymousUser``) so
     ``request.auth.is_authenticated`` is always safe to read. A
     write on an authenticated session still gets the CSRF check."""
-    throttle(request)
     user = getattr(request, "user", None)
     if user is not None and user.is_authenticated and request.method not in _SAFE_METHODS:
         enforce_csrf(request)

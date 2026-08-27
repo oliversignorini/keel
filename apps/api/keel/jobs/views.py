@@ -19,7 +19,7 @@ from ninja import Status
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.ninja_pagination import Page, paginate
 from keel.jobs import idempotency, selectors, services
-from keel.jobs.schemas import JobCreateIn, JobOut
+from keel.jobs.schemas import JobCreateIn, JobOut, JobStatus
 from keel.organizations.permissions import Perm
 
 
@@ -38,7 +38,7 @@ router = JobResource.router
 def list_jobs(
     request: Any,
     org_slug: str,
-    status: str | None = None,
+    status: JobStatus | None = None,
     cursor: str | None = None,
     limit: int | None = None,
 ) -> dict:

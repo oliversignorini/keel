@@ -63,7 +63,7 @@ def retrieve_audit_log(request: Any, org_slug: str, id: str) -> AuditLog:
     "/impersonation/exit/",
     response={204: None},
     url_name="impersonation-exit",
-    operation_id="impersonationExit",
+    operation_id="exitImpersonation",
 )
 def impersonation_exit(request: Any) -> Status[None]:
     from keel.accounts.models import User

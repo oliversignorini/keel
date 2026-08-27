@@ -90,10 +90,12 @@ def test_owner_can_create_list_retrieve_update_and_delete_a_widget() -> None:
     assert not Widget.objects.filter(pk=widget_id).exists()
 
 
-def test_put_is_accepted_the_same_as_patch() -> None:
-    """DRF's UpdateModelMixin registered both PUT and PATCH — stage
-    10.D's route-by-route diff caught PUT's absence as a real gap, not
-    just a docs mismatch, so it is tested directly here."""
+def test_put_is_not_registered_only_patch_is() -> None:
+    """api-patterns findings 1/2: PUT and PATCH sharing one operationId
+    made PATCH unreachable from the generated client, and a partial-update
+    handler under PUT would misrepresent PUT's idempotent-by-substitution
+    semantics. The route is PATCH-only now — PUT gets Ninja's normal
+    method-not-allowed response, not a silent partial update."""
     org, owner = _org_with_owner()
     client = _client_for(owner)
     response = client.post(
@@ -109,8 +111,7 @@ def test_put_is_accepted_the_same_as_patch() -> None:
         content_type="application/json",
     )
 
-    assert response.status_code == 200
-    assert response.json()["status"] == "archived"
+    assert response.status_code == 405
 
 
 def test_widgets_view_only_member_cannot_create() -> None:

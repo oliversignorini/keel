@@ -10,10 +10,27 @@ Registered once, on the single ``KeelAPI`` instance
 from typing import Any
 
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
-from ninja import NinjaAPI
+from ninja import NinjaAPI, Schema
 from ninja.errors import ValidationError as NinjaValidationError
 
 from keel.core.exceptions import DomainError
+
+
+class ErrorBodyOut(Schema):
+    code: str
+    message: str
+    details: Any = None
+
+
+class ErrorEnvelope(Schema):
+    """PRD §7's error shape as a published Ninja schema — the response
+    every ``keel.core.ninja_authz`` router constructor attaches to the
+    project's default error-response set ({400, 401, 403, 404, 409, 422,
+    429}) on every operation, so the OpenAPI document (and the generated
+    TypeScript client) describes the envelope this module actually
+    produces instead of leaving every error typed ``unknown``."""
+
+    error: ErrorBodyOut
 
 
 def _validation_details(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -41,14 +58,21 @@ def _envelope(status_code: int, code: str, message: str, details: Any) -> HttpRe
     )
 
 
+def domain_error_response(exc: DomainError) -> HttpResponse:
+    """Render a ``DomainError`` as PRD §7's envelope. Shared by the Ninja
+    exception handler below and ``keel.core.ninja_throttle.ThrottleMiddleware``,
+    which raises/catches ``Throttled`` outside Ninja's own dispatch."""
+    response = _envelope(exc.status_code, exc.code, exc.message, exc.details)
+    wait = getattr(exc, "wait", None)
+    if wait is not None:
+        response["Retry-After"] = f"{int(wait)}"
+    return response
+
+
 def register(api: NinjaAPI) -> None:
     @api.exception_handler(DomainError)
     def _domain_error(request: HttpRequest, exc: DomainError) -> HttpResponse:
-        response = _envelope(exc.status_code, exc.code, exc.message, exc.details)
-        wait = getattr(exc, "wait", None)
-        if wait is not None:
-            response["Retry-After"] = f"{int(wait)}"
-        return response
+        return domain_error_response(exc)
 
     @api.exception_handler(Http404)
     def _not_found(request: HttpRequest, exc: Http404) -> HttpResponse:

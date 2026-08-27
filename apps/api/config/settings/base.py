@@ -107,6 +107,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Rate limiting over every /api/v1/ request (PRD §3 NFR "Security") —
+    # after AuthenticationMiddleware so request.user is populated for
+    # UserRateThrottle, and applied uniformly regardless of which auth
+    # callable (or none, for a public router) the route underneath uses.
+    "keel.core.ninja_throttle.ThrottleMiddleware",
     "keel.core.middleware.ImpersonationMiddleware",
     "keel.jobs.idempotency.IdempotencyKeyMiddleware",
     "allauth.account.middleware.AccountMiddleware",

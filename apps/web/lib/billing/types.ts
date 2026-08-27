@@ -1,29 +1,31 @@
 /**
  * Hand-written types for the billing API surface (PRD §7; phase-4.md
- * Worktree C), for exactly the same reason lib/org/types.ts exists — see
- * that file's docstring.
+ * Worktree C).
  *
- * `CheckoutSessionView`, `BillingPortalView`, `SubscriptionView` and
- * `CreditBalanceView` (apps/api/keel/billing/views.py) are plain
- * `APIView`s with no `serializer_class`, so drf-spectacular emits no
- * response schema and orval generates `data: void` for all four —
- * verified in packages/api-client/src/generated/identity.query.ts after
- * regenerating against the post-billing-merge spec.
+ * Phase 10 (DRF -> Django Ninja) gave the checkout, portal, subscription
+ * and credit-balance routes real generated schemas (`CheckoutSessionOut`,
+ * `BillingPortalOut`, `SubscriptionEnvelopeOut`, `CreditBalanceOut` —
+ * `apps/api/keel/billing/schemas.py`), so the shapes those routes used to
+ * need hand-transcribed here are now aliases onto the generated type.
  *
- * `GET /api/v1/plans/` *is* typed by orval (PlanViewSet has a real
- * `serializer_class`), but only down to `prices: {[key: string]:
- * unknown}[]` — `PlanSerializer.get_prices` is a `SerializerMethodField`,
- * which drf-spectacular cannot see inside. Only the price shape is
- * restated below; the rest of `Plan` comes from the generated type.
- *
- * Every shape here is transcribed from apps/api/keel/billing/serializers.py
- * rather than guessed. Delete one the moment the matching view grows a
- * real `serializer_class` and `pnpm generate` produces it directly.
+ * `GET /api/v1/plans/` still needs `PlanPrice`/`PlanEntitlements` below:
+ * `PlanOut.prices`/`entitlements` are typed by the generated schema, but
+ * only down to `Record<string, unknown>` — `Plan.entitlements` is a
+ * Postgres JSONField with no schema of its own (api-patterns finding 15;
+ * a real `EntitlementsOut` schema is fold-into-phase-14, not this pass).
  */
 
-import type { PlanOut } from "@keel/api-client";
+import type {
+  CheckoutIn,
+  CheckoutSessionOut,
+  CreditBalanceOut,
+  PlanOut,
+  SubscriptionEnvelopeOut,
+  SubscriptionOut,
+  SubscriptionOutStatus,
+} from "@keel/api-client";
 
-/** `PriceSerializer` — one row of `PlanSerializer.get_prices`. */
+/** `PriceOut` — one row of `PlanOut.prices`. */
 export interface PlanPrice {
   id: string;
   interval: BillingInterval;
@@ -35,8 +37,8 @@ export interface PlanPrice {
 /** `Price.INTERVAL_MONTH` / `Price.INTERVAL_YEAR` (billing/models.py). */
 export type BillingInterval = "month" | "year";
 
-/** `GET /api/v1/plans/` with `prices` narrowed past the
- * SerializerMethodField, and `entitlements` past the JSONField. */
+/** `GET /api/v1/plans/` with `prices` narrowed past the generated
+ * `Record<string, unknown>`, and `entitlements` past the JSONField. */
 export interface PlanWithPrices extends Omit<PlanOut, "prices" | "entitlements"> {
   prices: PlanPrice[];
   entitlements: PlanEntitlements;
@@ -51,53 +53,30 @@ export interface PlanEntitlements {
   [key: string]: unknown;
 }
 
-/** `SubscriptionSerializer`. `plan` is the plan *code* (the serializer
- * declares `source="plan.code"`), not an id. */
-export interface Subscription {
-  id: string;
-  plan: string;
-  status: SubscriptionStatus;
-  quantity: number;
-  current_period_end: string | null;
-  trial_end: string | null;
-  cancel_at_period_end: boolean;
-}
+/** `plan` is the plan *code* (`SubscriptionOut.resolve_plan`), not an id. */
+export type Subscription = SubscriptionOut;
 
-/** Stripe's subscription statuses, passed through verbatim by the webhook
- * handlers (billing/webhooks.py). Only `trialing` and `past_due` are
- * given meaning by this app's UI — the trial and dunning banners. */
-export type SubscriptionStatus =
-  | "trialing"
-  | "active"
-  | "past_due"
-  | "canceled"
-  | "incomplete"
-  | "incomplete_expired"
-  | "unpaid"
-  | "paused";
+/** Stripe's own subscription-status vocabulary (billing/schemas.py's
+ * `SubscriptionStatus` — Stripe, not this table, is the source of truth).
+ * Only `trialing` and `past_due` are given meaning by this app's UI — the
+ * trial and dunning banners. */
+export type SubscriptionStatus = SubscriptionOutStatus;
 
-/** `GET /organizations/{slug}/billing/subscription/` — `null` when the
+/** `GET /orgs/{slug}/billing/subscription/` — `null` when the
  * organisation has never checked out. */
-export interface SubscriptionResponse {
-  subscription: Subscription | null;
-}
+export type SubscriptionResponse = SubscriptionEnvelopeOut;
 
-/** `POST /organizations/{slug}/billing/checkout/` and `.../portal/` both
- * return a Stripe-hosted URL to redirect to. */
-export interface StripeRedirectResponse {
-  url: string;
-}
+/** `POST /orgs/{slug}/billing/checkout/` and `.../portal/` both return a
+ * Stripe-hosted URL to redirect to (`CheckoutSessionOut`/
+ * `BillingPortalOut` are identical one-field shapes). */
+export type StripeRedirectResponse = CheckoutSessionOut;
 
-/** `POST /organizations/{slug}/billing/checkout/` body. */
-export interface CheckoutBody {
-  price_id: string;
-}
+/** `POST /orgs/{slug}/billing/checkout/` body. */
+export type CheckoutBody = CheckoutIn;
 
-/** `GET /organizations/{slug}/billing/credits/` — 404 (not zero) when
- * `BILLING_CREDITS` is off (billing/views.py `CreditBalanceView`). */
-export interface CreditBalanceResponse {
-  balance: number;
-}
+/** `GET /orgs/{slug}/billing/credits/` — 404 (not zero) when
+ * `BILLING_CREDITS` is off (billing/views.py `get_credit_balance`). */
+export type CreditBalanceResponse = CreditBalanceOut;
 
 /** The per-organisation entitlement blob on `GET /api/v1/me/`, resolved
  * by `billing.entitlements.resolve_entitlements`. `lib/org/types.ts`

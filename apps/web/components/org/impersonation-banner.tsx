@@ -1,6 +1,6 @@
 "use client";
 
-import { impersonationExit } from "@keel/api-client";
+import { exitImpersonation } from "@keel/api-client";
 import { ImpersonationBanner as BaseImpersonationBanner } from "@keel/ui";
 
 import { useMe } from "@/lib/org/use-me";
@@ -20,7 +20,7 @@ export function ImpersonationBannerHost() {
   if (!me?.impersonator) return null;
 
   async function exit() {
-    await impersonationExit();
+    await exitImpersonation();
     window.location.reload();
   }
 

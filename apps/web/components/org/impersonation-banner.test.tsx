@@ -2,14 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const useMeMock = vi.fn();
-const impersonationExitMock = vi.fn().mockResolvedValue(undefined);
+const exitImpersonationMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/org/use-me", () => ({
   useMe: () => useMeMock(),
 }));
 
 vi.mock("@keel/api-client", () => ({
-  impersonationExit: () => impersonationExitMock(),
+  exitImpersonation: () => exitImpersonationMock(),
 }));
 
 import { ImpersonationBannerHost } from "./impersonation-banner";
