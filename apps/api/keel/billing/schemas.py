@@ -1,15 +1,38 @@
 """Billing schemas (PRD §7; docs/plans/phase-4.md B.1; phase-10.md 10.C)."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from ninja import Schema
 
+from keel.billing.models import Price
+
+# api-patterns finding 14: a published vocabulary, not a bare `str` — must
+# match Price.INTERVAL_CHOICES (keel/billing/models.py).
+PriceInterval = Literal["month", "year"]
+assert set(PriceInterval.__args__) == {choice for choice, _ in Price.INTERVAL_CHOICES}  # type: ignore[attr-defined]
+
+# Subscription.status has no model-level choices (keel/billing/models.py) —
+# Stripe, not this table, is the source of truth for a subscription's
+# status vocabulary (https://docs.stripe.com/api/subscriptions/object,
+# `status`). Published here so the generated client gets an enum instead
+# of `str`; keep in step with Stripe's own set if it ever changes.
+SubscriptionStatus = Literal[
+    "incomplete",
+    "incomplete_expired",
+    "trialing",
+    "active",
+    "past_due",
+    "canceled",
+    "unpaid",
+    "paused",
+]
+
 
 class PriceOut(Schema):
     id: str
-    interval: str
+    interval: PriceInterval
     unit_amount: int
     currency: str
 
@@ -41,7 +64,7 @@ class PlanOut(Schema):
 class SubscriptionOut(Schema):
     id: str
     plan: str
-    status: str
+    status: SubscriptionStatus
     quantity: int
     current_period_end: datetime | None
     trial_end: datetime | None
@@ -58,3 +81,23 @@ class SubscriptionOut(Schema):
 
 class CheckoutIn(Schema):
     price_id: UUID
+
+
+# --- Response shapes for the routes that used to return a bare dict -------
+# (api-patterns finding 4: the generated client typed each of these `void`.)
+
+
+class CheckoutSessionOut(Schema):
+    url: str
+
+
+class BillingPortalOut(Schema):
+    url: str
+
+
+class SubscriptionEnvelopeOut(Schema):
+    subscription: SubscriptionOut | None
+
+
+class CreditBalanceOut(Schema):
+    balance: int

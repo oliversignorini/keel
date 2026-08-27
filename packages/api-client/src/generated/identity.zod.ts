@@ -1150,19 +1150,28 @@ export const authConfigResponse = zod.object({
 /**
  * @summary Invite Detail
  */
-export const inviteDetailParams = zod.object({
+export const retrieveInviteParams = zod.object({
   "token": zod.string()
+})
+
+export const retrieveInviteResponse = zod.object({
+  "email": zod.string(),
+  "organization": zod.object({
+  "name": zod.string(),
+  "slug": zod.string()
+}),
+  "requires_signup": zod.boolean()
 })
 
 
 /**
  * @summary Invite Accept
  */
-export const inviteAcceptParams = zod.object({
+export const acceptInviteParams = zod.object({
   "token": zod.string()
 })
 
-export const inviteAcceptResponse = zod.object({
+export const acceptInviteResponse = zod.object({
   "id": zod.string(),
   "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
@@ -1171,13 +1180,38 @@ export const inviteAcceptResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
   "user": zod.object({
   "email": zod.string(),
   "id": zod.string(),
   "name": zod.string()
 })
 })
+
+
+/**
+ * @summary Me
+ */
+export const retrieveMeResponse = zod.object({
+  "impersonator": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+}),zod.null()]),
+  "organizations": zod.array(zod.object({
+  "entitlements": zod.record(zod.string(), zod.unknown()),
+  "id": zod.string(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string()),
+  "role": zod.union([zod.string(),zod.null()]),
+  "slug": zod.string()
+})),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
+}).describe('``GET \/api\/v1\/me\/`` — PRD §7: \"the single endpoint the client\nrenders from.\" Composes the shapes already resolved by\n``keel.organizations.views.me`` rather than restating them.')
 
 
 /**
@@ -1341,6 +1375,10 @@ export const createCheckoutSessionBody = zod.object({
   "price_id": zod.string().uuid()
 })
 
+export const createCheckoutSessionResponse = zod.object({
+  "url": zod.string()
+})
+
 
 /**
  * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
@@ -1348,8 +1386,12 @@ a **404**, not a zero balance — see the DRF-era docstring this
 replaces for the full reasoning; unchanged here.
  * @summary Get Credit Balance
  */
-export const getCreditBalanceParams = zod.object({
+export const retrieveCreditBalanceParams = zod.object({
   "org_slug": zod.string()
+})
+
+export const retrieveCreditBalanceResponse = zod.object({
+  "balance": zod.number()
 })
 
 
@@ -1360,12 +1402,28 @@ export const createBillingPortalSessionParams = zod.object({
   "org_slug": zod.string()
 })
 
+export const createBillingPortalSessionResponse = zod.object({
+  "url": zod.string()
+})
+
 
 /**
  * @summary Get Subscription
  */
-export const getSubscriptionParams = zod.object({
+export const retrieveSubscriptionParams = zod.object({
   "org_slug": zod.string()
+})
+
+export const retrieveSubscriptionResponse = zod.object({
+  "subscription": zod.union([zod.object({
+  "cancel_at_period_end": zod.boolean(),
+  "current_period_end": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "plan": zod.string(),
+  "quantity": zod.number(),
+  "status": zod.enum(['incomplete', 'incomplete_expired', 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'paused']),
+  "trial_end": zod.union([zod.string().datetime({}),zod.null()])
+}),zod.null()])
 })
 
 
@@ -1398,7 +1456,7 @@ view above — the mechanism the cross-tenant test in
  */
 export const retrieveUploadParams = zod.object({
   "org_slug": zod.string(),
-  "file_id": zod.string()
+  "id": zod.string()
 })
 
 export const retrieveUploadResponse = zod.object({
@@ -1407,7 +1465,7 @@ export const retrieveUploadResponse = zod.object({
   "id": zod.string(),
   "key": zod.string(),
   "size": zod.number(),
-  "status": zod.string()
+  "status": zod.enum(['pending', 'complete'])
 })
 
 
@@ -1416,7 +1474,7 @@ export const retrieveUploadResponse = zod.object({
  */
 export const completeUploadParams = zod.object({
   "org_slug": zod.string(),
-  "file_id": zod.string()
+  "id": zod.string()
 })
 
 export const completeUploadResponse = zod.object({
@@ -1425,7 +1483,7 @@ export const completeUploadResponse = zod.object({
   "id": zod.string(),
   "key": zod.string(),
   "size": zod.number(),
-  "status": zod.string()
+  "status": zod.enum(['pending', 'complete'])
 })
 
 
@@ -1462,7 +1520,7 @@ export const listInvitationsResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string()
+  "status": zod.enum(['pending', 'accepted', 'revoked', 'expired'])
 }))
 })
 
@@ -1483,7 +1541,7 @@ export const createInvitationBody = zod.object({
 /**
  * @summary Revoke Invitation
  */
-export const revokeInvitationParams = zod.object({
+export const deleteInvitationParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1515,7 +1573,7 @@ export const retrieveInvitationResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string()
+  "status": zod.enum(['pending', 'accepted', 'revoked', 'expired'])
 })
 
 
@@ -1527,7 +1585,7 @@ export const listJobsParams = zod.object({
 })
 
 export const listJobsQueryParams = zod.object({
-  "status": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.union([zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']),zod.null()]).optional(),
   "cursor": zod.union([zod.string(),zod.null()]).optional(),
   "limit": zod.union([zod.number(),zod.null()]).optional()
 })
@@ -1543,7 +1601,7 @@ export const listJobsResponse = zod.object({
   "params": zod.record(zod.string(), zod.unknown()),
   "result_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']),
   "steps": zod.array(zod.object({
   "error": zod.string(),
   "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
@@ -1552,7 +1610,7 @@ export const listJobsResponse = zod.object({
   "ordinal": zod.number(),
   "output_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string()
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed'])
 })),
   "type": zod.string()
 }))
@@ -1588,7 +1646,7 @@ export const retrieveJobResponse = zod.object({
   "params": zod.record(zod.string(), zod.unknown()),
   "result_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']),
   "steps": zod.array(zod.object({
   "error": zod.string(),
   "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
@@ -1597,7 +1655,7 @@ export const retrieveJobResponse = zod.object({
   "ordinal": zod.number(),
   "output_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string()
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed'])
 })),
   "type": zod.string()
 })
@@ -1619,7 +1677,7 @@ export const cancelJobResponse = zod.object({
   "params": zod.record(zod.string(), zod.unknown()),
   "result_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string(),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']),
   "steps": zod.array(zod.object({
   "error": zod.string(),
   "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
@@ -1628,7 +1686,7 @@ export const cancelJobResponse = zod.object({
   "ordinal": zod.number(),
   "output_ref": zod.string(),
   "started_at": zod.union([zod.string().datetime({}),zod.null()]),
-  "status": zod.string()
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed'])
 })),
   "type": zod.string()
 })
@@ -1658,7 +1716,7 @@ export const listMembersResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
   "user": zod.object({
   "email": zod.string(),
   "id": zod.string(),
@@ -1671,7 +1729,7 @@ export const listMembersResponse = zod.object({
 /**
  * @summary Remove Member
  */
-export const removeMemberParams = zod.object({
+export const deleteMemberParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1694,7 +1752,7 @@ export const retrieveMemberResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
   "user": zod.object({
   "email": zod.string(),
   "id": zod.string(),
@@ -1724,7 +1782,7 @@ export const updateMemberRoleResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
   "user": zod.object({
   "email": zod.string(),
   "id": zod.string(),
@@ -1793,7 +1851,7 @@ export const transferOrganizationResponse = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string())
 }),
-  "status": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
   "user": zod.object({
   "email": zod.string(),
   "id": zod.string(),
@@ -1850,7 +1908,7 @@ export const createWidgetBody = zod.object({
 /**
  * @summary Destroy Widget
  */
-export const destroyWidgetParams = zod.object({
+export const deleteWidgetParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1883,13 +1941,13 @@ export const updateWidgetParams = zod.object({
   "id": zod.string()
 })
 
-export const updateWidgetBodyNameMaxFour = 255;
+export const updateWidgetBodyNameMaxOne = 255;
 
 
 
 export const updateWidgetBody = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
-  "name": zod.union([zod.string().min(1).max(updateWidgetBodyNameMaxFour),zod.null()]).optional(),
+  "name": zod.union([zod.string().min(1).max(updateWidgetBodyNameMaxOne),zod.null()]).optional(),
   "status": zod.union([zod.string(),zod.null()]).optional()
 })
 
@@ -1901,6 +1959,14 @@ export const updateWidgetResponse = zod.object({
   "name": zod.string(),
   "status": zod.string(),
   "updated_at": zod.string().datetime({})
+})
+
+
+/**
+ * @summary Permissions Registry
+ */
+export const retrievePermissionCodesResponse = zod.object({
+  "codes": zod.array(zod.string())
 })
 
 
@@ -1923,9 +1989,18 @@ export const listPlansResponse = zod.object({
   "prices": zod.array(zod.object({
   "currency": zod.string(),
   "id": zod.string(),
-  "interval": zod.string(),
+  "interval": zod.enum(['month', 'year']),
   "unit_amount": zod.number()
 })),
   "sort_order": zod.number()
 }))
 })
+
+
+/**
+ * PRD §6 "Stripe webhook": acknowledge in under 200ms, work happens
+async. The only synchronous work below a signature check is one
+``get_or_create`` and enqueuing a task.
+ * @summary Stripe Webhook
+ */
+export const receiveStripeWebhookResponse = zod.unknown()

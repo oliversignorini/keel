@@ -21,16 +21,19 @@ route is wired, not merely declared (PRD §4 invariant 7's "the exemption
 list is where leaks hide" applies exactly as much to an unmounted router).
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 from django.utils.module_loading import import_string
 from ninja import Router
+from ninja.constants import NOT_SET
 
 from keel.core.authz import _resolve_organization
 from keel.core.exceptions import PermissionDeniedWithReason
-from keel.core.ninja_auth import session_auth
+from keel.core.ninja_auth import optional_session_auth, session_auth
+from keel.core.ninja_exceptions import ErrorEnvelope
 
 
 class GlobalResource:
@@ -135,13 +138,97 @@ def resolve_and_authorize(
     return organization
 
 
+# {400, 401, 403, 404, 409, 422, 429}: the status set the codebase's own
+# DomainError subclasses (keel.core.exceptions) actually raise across the
+# six migrated apps. Attached to every operation built through _KeelRouter
+# below (api-patterns finding 3) so the OpenAPI document — and the
+# generated TypeScript client — describes the envelope the exception
+# handlers (keel.core.ninja_exceptions) actually produce, instead of
+# leaving every error typed ``unknown``.
+_DEFAULT_ERROR_RESPONSES: dict[int, Any] = {
+    400: ErrorEnvelope,
+    401: ErrorEnvelope,
+    403: ErrorEnvelope,
+    404: ErrorEnvelope,
+    409: ErrorEnvelope,
+    422: ErrorEnvelope,
+    429: ErrorEnvelope,
+}
+
+
+def _with_default_errors(response: Any) -> dict[Any, Any]:
+    if response is NOT_SET:
+        # Ninja only special-cases NOT_SET (skip response validation
+        # entirely) when `response` is passed bare, not as a dict value —
+        # `Any` is the closest equivalent once every operation is forced
+        # into dict form to attach the shared error responses below: it
+        # still validates against (and passes through) an arbitrary body.
+        merged: dict[Any, Any] = {200: Any}
+    elif isinstance(response, dict):
+        merged = dict(response)
+    else:
+        merged = {200: response}
+    for status, schema in _DEFAULT_ERROR_RESPONSES.items():
+        merged.setdefault(status, schema)
+    return merged
+
+
+class _KeelRouter(Router):
+    """A ``ninja.Router`` whose every operation is declared with the
+    project's default error-response set (see ``_DEFAULT_ERROR_RESPONSES``
+    above) merged into whatever ``response=`` the route already declares —
+    an operation's own explicit schema for one of those statuses (e.g. a
+    custom 404 payload) is never overridden. Every route built through one
+    of this module's router constructors gets this for free; nothing
+    below repeats the error-response set per call site."""
+
+    def api_operation(
+        self,
+        methods: Sequence[str],
+        path: str,
+        *,
+        response: Any = NOT_SET,
+        **kwargs: Any,
+    ) -> Any:
+        return super().api_operation(
+            methods, path, response=_with_default_errors(response), **kwargs
+        )
+
+
+def _router(*, auth: Any, **kwargs: Any) -> Router:
+    """Single internal constructor every sanctioned router builder below
+    funnels through, so a new one (or a change to how routers are built)
+    can't silently miss one of the three named cases. Rate limiting is not
+    wired here — it is a request-layer concern
+    (``keel.core.ninja_throttle.ThrottleMiddleware``) applied uniformly
+    ahead of routing, regardless of which of these a route is mounted
+    with (PRD §3 NFR "Security")."""
+    return _KeelRouter(auth=auth, **kwargs)
+
+
 def keel_router(**kwargs: Any) -> Router:
     """A Ninja ``Router`` pre-wired with this project's deny-by-default
-    auth and general rate limiting (PRD §4 task 1.12, §3 NFR "Security")
-    — every ``KeelAPI`` operation goes through ``session_auth`` and
-    ``throttle`` the same way every DRF view went through
-    ``DEFAULT_AUTHENTICATION_CLASSES`` / ``DEFAULT_THROTTLE_CLASSES``."""
-    return Router(auth=session_auth, **kwargs)
+    auth (PRD §4 task 1.12) — every operation goes through
+    ``session_auth``, the same way every DRF view went through
+    ``DEFAULT_AUTHENTICATION_CLASSES``."""
+    return _router(auth=session_auth, **kwargs)
+
+
+def public_router(**kwargs: Any) -> Router:
+    """Explicitly public: no session required (e.g. ``GET /plans/``, the
+    Stripe webhook, which authenticates its own signature). Use this
+    instead of a bare ``Router(auth=None)`` so ``test_ninja_wiring.py``'s
+    deny-by-default walk can recognise the router as *declared* public
+    rather than merely defaulted-open."""
+    return _router(auth=None, **kwargs)
+
+
+def optional_auth_router(**kwargs: Any) -> Router:
+    """Works signed in or signed out — every operation goes through
+    ``optional_session_auth`` (PRD §6 "Invitation"). ``request.auth`` may
+    be an ``AnonymousUser``; an authenticated write still gets the CSRF
+    check."""
+    return _router(auth=optional_session_auth, **kwargs)
 
 
 __all__ = [
@@ -149,6 +236,8 @@ __all__ = [
     "OrgScopedResource",
     "import_string",
     "keel_router",
+    "optional_auth_router",
+    "public_router",
     "registered_global_resources",
     "registered_scoped_resources",
     "resolve_and_authorize",

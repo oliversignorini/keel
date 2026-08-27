@@ -71,14 +71,14 @@ def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
     return _get_widget_or_404(organization, id)
 
 
-# DRF's UpdateModelMixin registered both PUT and PATCH, routed to the same
-# update()/partial_update() pair — every WidgetPatchIn field is already
-# optional, so the two never behaved differently. One handler for both
-# keeps that surface (stage 10.D's route-by-route diff caught PUT's
-# absence as the one real gap, not just a documentation mismatch).
-@router.api_operation(
-    ["PUT", "PATCH"], "/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="updateWidget"
-)
+# PATCH only — every field is optional and only the fields present in the
+# body are changed (api-patterns findings 1/2). PUT was dropped rather
+# than given real replace-the-whole-resource semantics: a partial-update
+# body under PUT would advertise idempotent-by-substitution behaviour it
+# doesn't have, and the two methods sharing one operationId made PATCH
+# unreachable from the generated client anyway (orval kept whichever
+# method it resolves the collision to).
+@router.patch("/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="updateWidget")
 def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
     widget = _get_widget_or_404(organization, id)
@@ -91,7 +91,7 @@ def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) 
     )
 
 
-@router.delete("/{org_slug}/widgets/{id}/", response={204: None}, operation_id="destroyWidget")
+@router.delete("/{org_slug}/widgets/{id}/", response={204: None}, operation_id="deleteWidget")
 def destroy_widget(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
     widget = _get_widget_or_404(organization, id)

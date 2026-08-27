@@ -19,19 +19,25 @@ from typing import Any
 import stripe
 from django.db.models import Prefetch
 from django.http import Http404, HttpRequest, HttpResponse
-from ninja import Router
 
 from keel.billing import credits, services, stripe_client, tasks
 from keel.billing.models import Plan, Price, StripeEvent, Subscription
-from keel.billing.schemas import CheckoutIn, PlanOut, SubscriptionOut
+from keel.billing.schemas import (
+    BillingPortalOut,
+    CheckoutIn,
+    CheckoutSessionOut,
+    CreditBalanceOut,
+    PlanOut,
+    SubscriptionEnvelopeOut,
+)
 from keel.core.exceptions import UnprocessableEntity
-from keel.core.ninja_authz import GlobalResource, keel_router, resolve_and_authorize
+from keel.core.ninja_authz import GlobalResource, keel_router, public_router, resolve_and_authorize
 from keel.core.ninja_pagination import Page, paginate
 from keel.organizations.permissions import Perm
 
 # --- Plans: public, no auth ------------------------------------------------
 
-plans_router = Router(auth=None)
+plans_router = public_router()
 
 
 class PlanResource(GlobalResource):
@@ -91,7 +97,11 @@ def _frontend_base() -> str:
     return base.rstrip("/")
 
 
-@router.post("/{org_slug}/billing/checkout/", operation_id="createCheckoutSession")
+@router.post(
+    "/{org_slug}/billing/checkout/",
+    response=CheckoutSessionOut,
+    operation_id="createCheckoutSession",
+)
 def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
     price = Price.objects.filter(pk=str(payload.price_id), is_active=True).first()
@@ -108,7 +118,11 @@ def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) ->
     return {"url": url}
 
 
-@router.post("/{org_slug}/billing/portal/", operation_id="createBillingPortalSession")
+@router.post(
+    "/{org_slug}/billing/portal/",
+    response=BillingPortalOut,
+    operation_id="createBillingPortalSession",
+)
 def create_billing_portal_session(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
     url = services.create_portal_session(
@@ -120,16 +134,20 @@ def create_billing_portal_session(request: Any, org_slug: str) -> dict:
     return {"url": url}
 
 
-@router.get("/{org_slug}/billing/subscription/", operation_id="getSubscription")
+@router.get(
+    "/{org_slug}/billing/subscription/",
+    response=SubscriptionEnvelopeOut,
+    operation_id="retrieveSubscription",
+)
 def get_subscription(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
     subscription = Subscription.objects.filter(organization=organization).first()
-    if subscription is None:
-        return {"subscription": None}
-    return {"subscription": SubscriptionOut.from_orm(subscription).dict()}
+    return {"subscription": subscription}
 
 
-@router.get("/{org_slug}/billing/credits/", operation_id="getCreditBalance")
+@router.get(
+    "/{org_slug}/billing/credits/", response=CreditBalanceOut, operation_id="retrieveCreditBalance"
+)
 def get_credit_balance(request: Any, org_slug: str) -> dict:
     """Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
     a **404**, not a zero balance — see the DRF-era docstring this
@@ -146,10 +164,10 @@ def get_credit_balance(request: Any, org_slug: str) -> dict:
 # is what keeps it session-independent, matching DRF's own
 # `authentication_classes = ()` + `permission_classes = (AllowAny,)`.
 
-webhook_router = Router(auth=None)
+webhook_router = public_router()
 
 
-@webhook_router.post("/stripe/webhook/", operation_id="stripeWebhook")
+@webhook_router.post("/stripe/webhook/", operation_id="receiveStripeWebhook")
 def stripe_webhook(request: HttpRequest) -> HttpResponse:
     """PRD §6 "Stripe webhook": acknowledge in under 200ms, work happens
     async. The only synchronous work below a signature check is one

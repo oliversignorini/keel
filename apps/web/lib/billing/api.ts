@@ -9,10 +9,11 @@
  */
 
 import {
+  unwrapData,
   createBillingPortalSession,
   createCheckoutSession as generatedCreateCheckoutSession,
-  getCreditBalance as generatedGetCreditBalance,
-  getSubscription as generatedGetSubscription,
+  retrieveCreditBalance as generatedRetrieveCreditBalance,
+  retrieveSubscription as generatedRetrieveSubscription,
   listPlans as listPlansGenerated,
 } from "@keel/api-client";
 
@@ -29,12 +30,12 @@ import type {
  * app/pricing/page.tsx). */
 export async function listPlans(): Promise<PlanWithPrices[]> {
   const result = await listPlansGenerated();
-  return result.data.results as unknown as PlanWithPrices[];
+  return unwrapData(result).results as unknown as PlanWithPrices[];
 }
 
 export async function getSubscription(orgSlug: string): Promise<SubscriptionResponse> {
-  const result = await generatedGetSubscription(orgSlug);
-  return result.data as unknown as SubscriptionResponse;
+  const result = await generatedRetrieveSubscription(orgSlug);
+  return unwrapData(result);
 }
 
 /** Requires `billing.manage`. The returned URL is Stripe's Customer
@@ -43,7 +44,7 @@ export async function getSubscription(orgSlug: string): Promise<SubscriptionResp
  * access"). */
 export async function createPortalSession(orgSlug: string): Promise<StripeRedirectResponse> {
   const result = await createBillingPortalSession(orgSlug, { method: "POST" });
-  return result.data as unknown as StripeRedirectResponse;
+  return unwrapData(result);
 }
 
 /** Requires `billing.manage`. */
@@ -51,14 +52,14 @@ export async function createCheckoutSession(
   orgSlug: string,
   body: CheckoutBody,
 ): Promise<StripeRedirectResponse> {
-  const result = await generatedCreateCheckoutSession(orgSlug, body as never);
-  return result.data as unknown as StripeRedirectResponse;
+  const result = await generatedCreateCheckoutSession(orgSlug, body);
+  return unwrapData(result);
 }
 
 /** Requires `billing.view`. Throws `NotFoundError` when `BILLING_CREDITS`
  * is off server-side — the flag decides whether this endpoint exists at
- * all (billing/views.py `CreditBalanceView`). */
+ * all (billing/views.py `get_credit_balance`). */
 export async function getCreditBalance(orgSlug: string): Promise<CreditBalanceResponse> {
-  const result = await generatedGetCreditBalance(orgSlug);
-  return result.data as unknown as CreditBalanceResponse;
+  const result = await generatedRetrieveCreditBalance(orgSlug);
+  return unwrapData(result);
 }

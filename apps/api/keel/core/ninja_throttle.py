@@ -6,13 +6,24 @@ Ported from Django REST Framework's ``SimpleRateThrottle`` /
 window over Django's cache (Redis in production), same
 ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE`` settings, same 429 +
 ``Retry-After`` behaviour — with no dependency on that framework.
+
+Applied as a layer over every ``/api/v1/`` request (``ThrottleMiddleware``
+below), not tucked inside the deny-by-default auth callables
+(``keel.core.ninja_auth``) — a request that arrived is what gets rate
+limited, regardless of whether the route it hit turns out to require a
+session. Auth-gated routes and the project's public routers
+(``keel.core.ninja_authz.public_router`` — ``GET /plans/``, the Stripe
+webhook) are covered identically because neither ever calls
+``session_auth``/``optional_session_auth``, only routes through this
+middleware.
 """
 
 import time
+from collections.abc import Callable
 
 from django.conf import settings
 from django.core.cache import cache as default_cache
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 
 from keel.core.exceptions import Throttled
 
@@ -126,3 +137,27 @@ def throttle(request: HttpRequest) -> None:
     each of which is a no-op for the request shape the other one covers."""
     AnonRateThrottle().check(request)
     UserRateThrottle().check(request)
+
+
+class ThrottleMiddleware:
+    """Runs ``throttle()`` ahead of routing for every ``/api/v1/`` request,
+    Ninja auth or not. Placed after ``AuthenticationMiddleware`` in
+    ``MIDDLEWARE`` (``config/settings/base.py``) so ``request.user`` is
+    already populated — ``UserRateThrottle`` keys on it.
+
+    A ``Throttled`` raised here is caught and rendered through the same
+    envelope ``keel.core.ninja_exceptions`` uses for one consistent 429
+    body, since this runs outside Ninja's own exception-handler dispatch."""
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        if request.path.startswith("/api/v1/"):
+            try:
+                throttle(request)
+            except Throttled as exc:
+                from keel.core.ninja_exceptions import domain_error_response
+
+                return domain_error_response(exc)
+        return self.get_response(request)

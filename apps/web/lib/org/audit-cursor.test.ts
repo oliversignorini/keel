@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@keel/api-client", () => ({
   listAuditLogs: vi.fn(),
+  unwrapData: (result: { data: unknown }) => result.data,
 }));
 
 import { listAuditLogs as generatedListAuditLogs } from "@keel/api-client";

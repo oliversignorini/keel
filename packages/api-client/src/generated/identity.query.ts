@@ -284,8 +284,16 @@ export interface BaseSignup {
   email: Email;
 }
 
+export interface BillingPortalOut {
+  url: string;
+}
+
 export interface CheckoutIn {
   price_id: string;
+}
+
+export interface CheckoutSessionOut {
+  url: string;
 }
 
 /**
@@ -328,6 +336,10 @@ export interface ConflictResponse {
   status: ConflictResponseStatus;
 }
 
+export interface CreditBalanceOut {
+  balance: number;
+}
+
 /**
  * The email address.
 
@@ -361,6 +373,24 @@ export interface EndSessions {
   sessions: number[];
 }
 
+export interface ErrorBodyOut {
+  code: string;
+  details?: unknown;
+  message: string;
+}
+
+/**
+ * PRD §7's error shape as a published Ninja schema — the response
+every ``keel.core.ninja_authz`` router constructor attaches to the
+project's default error-response set ({400, 401, 403, 404, 409, 422,
+429}) on every operation, so the OpenAPI document (and the generated
+TypeScript client) describes the envelope this module actually
+produces instead of leaving every error typed ``unknown``.
+ */
+export interface ErrorEnvelope {
+  error: ErrorBodyOut;
+}
+
 export type ErrorResponseErrorsItem = {
   /** An error code.
  */
@@ -386,13 +416,22 @@ export interface ErrorResponse {
   status?: ErrorResponseStatus;
 }
 
+export type FileUploadOutStatus = typeof FileUploadOutStatus[keyof typeof FileUploadOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const FileUploadOutStatus = {
+  pending: 'pending',
+  complete: 'complete',
+} as const;
+
 export interface FileUploadOut {
   content_type: string;
   created_at: string;
   id: string;
   key: string;
   size: number;
-  status: string;
+  status: FileUploadOutStatus;
 }
 
 export type FlowId = typeof FlowId[keyof typeof FlowId];
@@ -444,6 +483,17 @@ export type InvitationOutInvitedBy = UserSummaryOut | null;
 
 export type InvitationOutRevokedAt = string | null;
 
+export type InvitationOutStatus = typeof InvitationOutStatus[keyof typeof InvitationOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InvitationOutStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  revoked: 'revoked',
+  expired: 'expired',
+} as const;
+
 export interface InvitationOut {
   accepted_at: InvitationOutAcceptedAt;
   created_at: string;
@@ -453,7 +503,18 @@ export interface InvitationOut {
   invited_by: InvitationOutInvitedBy;
   revoked_at: InvitationOutRevokedAt;
   role: RoleOut;
-  status: string;
+  status: InvitationOutStatus;
+}
+
+export interface InviteDetailOut {
+  email: string;
+  organization: InviteOrganizationOut;
+  requires_signup: boolean;
+}
+
+export interface InviteOrganizationOut {
+  name: string;
+  slug: string;
 }
 
 export type JobCreateInParams = { [key: string]: unknown };
@@ -469,6 +530,18 @@ export type JobOutParams = { [key: string]: unknown };
 
 export type JobOutStartedAt = string | null;
 
+export type JobOutStatus = typeof JobOutStatus[keyof typeof JobOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const JobOutStatus = {
+  queued: 'queued',
+  running: 'running',
+  succeeded: 'succeeded',
+  partial: 'partial',
+  failed: 'failed',
+} as const;
+
 export interface JobOut {
   created_at: string;
   error: string;
@@ -477,7 +550,7 @@ export interface JobOut {
   params: JobOutParams;
   result_ref: string;
   started_at: JobOutStartedAt;
-  status: string;
+  status: JobOutStatus;
   steps: JobStepOut[];
   type: string;
 }
@@ -485,6 +558,18 @@ export interface JobOut {
 export type JobStepOutFinishedAt = string | null;
 
 export type JobStepOutStartedAt = string | null;
+
+export type JobStepOutStatus = typeof JobStepOutStatus[keyof typeof JobStepOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const JobStepOutStatus = {
+  queued: 'queued',
+  running: 'running',
+  succeeded: 'succeeded',
+  partial: 'partial',
+  failed: 'failed',
+} as const;
 
 export interface JobStepOut {
   error: string;
@@ -494,7 +579,7 @@ export interface JobStepOut {
   ordinal: number;
   output_ref: string;
   started_at: JobStepOutStartedAt;
-  status: string;
+  status: JobStepOutStatus;
 }
 
 export type LoginAllOf = {
@@ -535,13 +620,54 @@ export interface MFATrust {
   trust: boolean;
 }
 
+export type MeOrganizationOutEntitlements = { [key: string]: unknown };
+
+export type MeOrganizationOutRole = string | null;
+
+export interface MeOrganizationOut {
+  entitlements: MeOrganizationOutEntitlements;
+  id: string;
+  name: string;
+  permissions: string[];
+  role: MeOrganizationOutRole;
+  slug: string;
+}
+
+export type MeOutImpersonator = MeUserOut | null;
+
+/**
+ * ``GET /api/v1/me/`` — PRD §7: "the single endpoint the client
+renders from." Composes the shapes already resolved by
+``keel.organizations.views.me`` rather than restating them.
+ */
+export interface MeOut {
+  impersonator: MeOutImpersonator;
+  organizations: MeOrganizationOut[];
+  user: MeUserOut;
+}
+
+export interface MeUserOut {
+  email: string;
+  id: string;
+  name: string;
+}
+
 export type MembershipOutJoinedAt = string | null;
+
+export type MembershipOutStatus = typeof MembershipOutStatus[keyof typeof MembershipOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MembershipOutStatus = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
 
 export interface MembershipOut {
   id: string;
   joined_at: MembershipOutJoinedAt;
   role: RoleOut;
-  status: string;
+  status: MembershipOutStatus;
   user: UserSummaryOut;
 }
 
@@ -661,6 +787,10 @@ export type PasskeySignup = BaseSignup;
  */
 export type Password = string;
 
+export interface PermissionCodesOut {
+  codes: string[];
+}
+
 /**
  * The phone number.
 
@@ -706,10 +836,19 @@ export interface PresignedUploadRequest {
   size: number;
 }
 
+export type PriceOutInterval = typeof PriceOutInterval[keyof typeof PriceOutInterval];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PriceOutInterval = {
+  month: 'month',
+  year: 'year',
+} as const;
+
 export interface PriceOut {
   currency: string;
   id: string;
-  interval: string;
+  interval: PriceOutInterval;
   unit_amount: number;
 }
 
@@ -994,6 +1133,41 @@ export type StatusOK = typeof StatusOK[keyof typeof StatusOK];
 export const StatusOK = {
   NUMBER_200: 200,
 } as const;
+
+export type SubscriptionEnvelopeOutSubscription = SubscriptionOut | null;
+
+export interface SubscriptionEnvelopeOut {
+  subscription: SubscriptionEnvelopeOutSubscription;
+}
+
+export type SubscriptionOutCurrentPeriodEnd = string | null;
+
+export type SubscriptionOutStatus = typeof SubscriptionOutStatus[keyof typeof SubscriptionOutStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SubscriptionOutStatus = {
+  incomplete: 'incomplete',
+  incomplete_expired: 'incomplete_expired',
+  trialing: 'trialing',
+  active: 'active',
+  past_due: 'past_due',
+  canceled: 'canceled',
+  unpaid: 'unpaid',
+  paused: 'paused',
+} as const;
+
+export type SubscriptionOutTrialEnd = string | null;
+
+export interface SubscriptionOut {
+  cancel_at_period_end: boolean;
+  current_period_end: SubscriptionOutCurrentPeriodEnd;
+  id: string;
+  plan: string;
+  quantity: number;
+  status: SubscriptionOutStatus;
+  trial_end: SubscriptionOutTrialEnd;
+}
 
 export type TOTPAuthenticatorAllOfType = typeof TOTPAuthenticatorAllOfType[keyof typeof TOTPAuthenticatorAllOfType];
 
@@ -1476,7 +1650,7 @@ limit?: number | null;
 };
 
 export type ListJobsParams = {
-status?: string | null;
+status?: 'queued' | 'running' | 'succeeded' | 'partial' | 'failed' | null;
 cursor?: string | null;
 limit?: number | null;
 };
@@ -4852,19 +5026,56 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
 /**
  * @summary Impersonation Exit
  */
-export type impersonationExitResponse204 = {
+export type exitImpersonationResponse204 = {
   data: void
   status: 204
 }
+
+export type exitImpersonationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type exitImpersonationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type exitImpersonationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type exitImpersonationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type exitImpersonationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type exitImpersonationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type exitImpersonationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type impersonationExitResponseSuccess = (impersonationExitResponse204) & {
+export type exitImpersonationResponseSuccess = (exitImpersonationResponse204) & {
   headers: Headers;
 };
-;
+export type exitImpersonationResponseError = (exitImpersonationResponse400 | exitImpersonationResponse401 | exitImpersonationResponse403 | exitImpersonationResponse404 | exitImpersonationResponse409 | exitImpersonationResponse422 | exitImpersonationResponse429) & {
+  headers: Headers;
+};
 
-export type impersonationExitResponse = (impersonationExitResponseSuccess)
+export type exitImpersonationResponse = (exitImpersonationResponseSuccess | exitImpersonationResponseError)
 
-export const getImpersonationExitUrl = () => {
+export const getExitImpersonationUrl = () => {
 
 
   
@@ -4872,9 +5083,9 @@ export const getImpersonationExitUrl = () => {
   return `/api/v1/impersonation/exit/`
 }
 
-export const impersonationExit = async ( options?: RequestInit): Promise<impersonationExitResponse> => {
+export const exitImpersonation = async ( options?: RequestInit): Promise<exitImpersonationResponse> => {
   
-  return identityFetch<impersonationExitResponse>(getImpersonationExitUrl(),
+  return identityFetch<exitImpersonationResponse>(getExitImpersonationUrl(),
   {      
     ...options,
     method: 'POST'
@@ -4886,11 +5097,11 @@ export const impersonationExit = async ( options?: RequestInit): Promise<imperso
 
 
 
-export const getImpersonationExitMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext> => {
+export const getExitImpersonationMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exitImpersonation>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof exitImpersonation>>, TError,void, TContext> => {
 
-const mutationKey = ['impersonationExit'];
+const mutationKey = ['exitImpersonation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -4900,10 +5111,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof impersonationExit>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exitImpersonation>>, void> = () => {
           
 
-          return  impersonationExit(requestOptions)
+          return  exitImpersonation(requestOptions)
         }
 
         
@@ -4911,23 +5122,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ImpersonationExitMutationResult = NonNullable<Awaited<ReturnType<typeof impersonationExit>>>
+    export type ExitImpersonationMutationResult = NonNullable<Awaited<ReturnType<typeof exitImpersonation>>>
     
-    export type ImpersonationExitMutationError = unknown
+    export type ExitImpersonationMutationError = ErrorEnvelope
 
     /**
  * @summary Impersonation Exit
  */
-export const useImpersonationExit = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useExitImpersonation = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exitImpersonation>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof impersonationExit>>,
+        Awaited<ReturnType<typeof exitImpersonation>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getImpersonationExitMutationOptions(options);
+      const mutationOptions = getExitImpersonationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -4935,19 +5146,56 @@ export const useImpersonationExit = <TError = unknown,
 /**
  * @summary Invite Detail
  */
-export type inviteDetailResponse200 = {
-  data: void
+export type retrieveInviteResponse200 = {
+  data: InviteDetailOut
   status: 200
 }
+
+export type retrieveInviteResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveInviteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveInviteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveInviteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveInviteResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveInviteResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveInviteResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type inviteDetailResponseSuccess = (inviteDetailResponse200) & {
+export type retrieveInviteResponseSuccess = (retrieveInviteResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveInviteResponseError = (retrieveInviteResponse400 | retrieveInviteResponse401 | retrieveInviteResponse403 | retrieveInviteResponse404 | retrieveInviteResponse409 | retrieveInviteResponse422 | retrieveInviteResponse429) & {
+  headers: Headers;
+};
 
-export type inviteDetailResponse = (inviteDetailResponseSuccess)
+export type retrieveInviteResponse = (retrieveInviteResponseSuccess | retrieveInviteResponseError)
 
-export const getInviteDetailUrl = (token: string,) => {
+export const getRetrieveInviteUrl = (token: string,) => {
 
 
   
@@ -4955,9 +5203,9 @@ export const getInviteDetailUrl = (token: string,) => {
   return `/api/v1/invite/${token}/`
 }
 
-export const inviteDetail = async (token: string, options?: RequestInit): Promise<inviteDetailResponse> => {
+export const retrieveInvite = async (token: string, options?: RequestInit): Promise<retrieveInviteResponse> => {
   
-  return identityFetch<inviteDetailResponse>(getInviteDetailUrl(token),
+  return identityFetch<retrieveInviteResponse>(getRetrieveInviteUrl(token),
   {      
     ...options,
     method: 'GET'
@@ -4970,69 +5218,69 @@ export const inviteDetail = async (token: string, options?: RequestInit): Promis
 
 
 
-export const getInviteDetailQueryKey = (token?: string,) => {
+export const getRetrieveInviteQueryKey = (token?: string,) => {
     return [
     `/api/v1/invite/${token}/`
     ] as const;
     }
 
     
-export const getInviteDetailQueryOptions = <TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveInviteQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getInviteDetailQueryKey(token);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveInviteQueryKey(token);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof inviteDetail>>> = ({ signal }) => inviteDetail(token, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveInvite>>> = ({ signal }) => retrieveInvite(token, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type InviteDetailQueryResult = NonNullable<Awaited<ReturnType<typeof inviteDetail>>>
-export type InviteDetailQueryError = unknown
+export type RetrieveInviteQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveInvite>>>
+export type RetrieveInviteQueryError = ErrorEnvelope
 
 
-export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
- token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>> & Pick<
+export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof inviteDetail>>,
+          Awaited<ReturnType<typeof retrieveInvite>>,
           TError,
-          Awaited<ReturnType<typeof inviteDetail>>
+          Awaited<ReturnType<typeof retrieveInvite>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>> & Pick<
+export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof inviteDetail>>,
+          Awaited<ReturnType<typeof retrieveInvite>>,
           TError,
-          Awaited<ReturnType<typeof inviteDetail>>
+          Awaited<ReturnType<typeof retrieveInvite>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Invite Detail
  */
 
-export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getInviteDetailQueryOptions(token,options)
+  const queryOptions = getRetrieveInviteQueryOptions(token,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5048,19 +5296,56 @@ export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>
 /**
  * @summary Invite Accept
  */
-export type inviteAcceptResponse200 = {
+export type acceptInviteResponse200 = {
   data: MembershipOut
   status: 200
 }
+
+export type acceptInviteResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type acceptInviteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type acceptInviteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type acceptInviteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type acceptInviteResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type acceptInviteResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type acceptInviteResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type inviteAcceptResponseSuccess = (inviteAcceptResponse200) & {
+export type acceptInviteResponseSuccess = (acceptInviteResponse200) & {
   headers: Headers;
 };
-;
+export type acceptInviteResponseError = (acceptInviteResponse400 | acceptInviteResponse401 | acceptInviteResponse403 | acceptInviteResponse404 | acceptInviteResponse409 | acceptInviteResponse422 | acceptInviteResponse429) & {
+  headers: Headers;
+};
 
-export type inviteAcceptResponse = (inviteAcceptResponseSuccess)
+export type acceptInviteResponse = (acceptInviteResponseSuccess | acceptInviteResponseError)
 
-export const getInviteAcceptUrl = (token: string,) => {
+export const getAcceptInviteUrl = (token: string,) => {
 
 
   
@@ -5068,9 +5353,9 @@ export const getInviteAcceptUrl = (token: string,) => {
   return `/api/v1/invite/${token}/`
 }
 
-export const inviteAccept = async (token: string, options?: RequestInit): Promise<inviteAcceptResponse> => {
+export const acceptInvite = async (token: string, options?: RequestInit): Promise<acceptInviteResponse> => {
   
-  return identityFetch<inviteAcceptResponse>(getInviteAcceptUrl(token),
+  return identityFetch<acceptInviteResponse>(getAcceptInviteUrl(token),
   {      
     ...options,
     method: 'POST'
@@ -5082,11 +5367,11 @@ export const inviteAccept = async (token: string, options?: RequestInit): Promis
 
 
 
-export const getInviteAcceptMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext> => {
+export const getAcceptInviteMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext> => {
 
-const mutationKey = ['inviteAccept'];
+const mutationKey = ['acceptInvite'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5096,10 +5381,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteAccept>>, {token: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvite>>, {token: string}> = (props) => {
           const {token} = props ?? {};
 
-          return  inviteAccept(token,requestOptions)
+          return  acceptInvite(token,requestOptions)
         }
 
         
@@ -5107,23 +5392,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type InviteAcceptMutationResult = NonNullable<Awaited<ReturnType<typeof inviteAccept>>>
+    export type AcceptInviteMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvite>>>
     
-    export type InviteAcceptMutationError = unknown
+    export type AcceptInviteMutationError = ErrorEnvelope
 
     /**
  * @summary Invite Accept
  */
-export const useInviteAccept = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useAcceptInvite = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof inviteAccept>>,
+        Awaited<ReturnType<typeof acceptInvite>>,
         TError,
         {token: string},
         TContext
       > => {
 
-      const mutationOptions = getInviteAcceptMutationOptions(options);
+      const mutationOptions = getAcceptInviteMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -5131,19 +5416,56 @@ export const useInviteAccept = <TError = unknown,
 /**
  * @summary Me
  */
-export type meResponse200 = {
-  data: void
+export type retrieveMeResponse200 = {
+  data: MeOut
   status: 200
 }
+
+export type retrieveMeResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveMeResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveMeResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveMeResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveMeResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveMeResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveMeResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type meResponseSuccess = (meResponse200) & {
+export type retrieveMeResponseSuccess = (retrieveMeResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveMeResponseError = (retrieveMeResponse400 | retrieveMeResponse401 | retrieveMeResponse403 | retrieveMeResponse404 | retrieveMeResponse409 | retrieveMeResponse422 | retrieveMeResponse429) & {
+  headers: Headers;
+};
 
-export type meResponse = (meResponseSuccess)
+export type retrieveMeResponse = (retrieveMeResponseSuccess | retrieveMeResponseError)
 
-export const getMeUrl = () => {
+export const getRetrieveMeUrl = () => {
 
 
   
@@ -5151,9 +5473,9 @@ export const getMeUrl = () => {
   return `/api/v1/me/`
 }
 
-export const me = async ( options?: RequestInit): Promise<meResponse> => {
+export const retrieveMe = async ( options?: RequestInit): Promise<retrieveMeResponse> => {
   
-  return identityFetch<meResponse>(getMeUrl(),
+  return identityFetch<retrieveMeResponse>(getRetrieveMeUrl(),
   {      
     ...options,
     method: 'GET'
@@ -5166,69 +5488,69 @@ export const me = async ( options?: RequestInit): Promise<meResponse> => {
 
 
 
-export const getMeQueryKey = () => {
+export const getRetrieveMeQueryKey = () => {
     return [
     `/api/v1/me/`
     ] as const;
     }
 
     
-export const getMeQueryOptions = <TData = Awaited<ReturnType<typeof me>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveMeQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getMeQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveMeQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = ({ signal }) => me({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveMe>>> = ({ signal }) => retrieveMe({ signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>
-export type MeQueryError = unknown
+export type RetrieveMeQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveMe>>>
+export type RetrieveMeQueryError = ErrorEnvelope
 
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof retrieveMe>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof retrieveMe>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
+export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof retrieveMe>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof retrieveMe>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Me
  */
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getMeQueryOptions(options)
+  const queryOptions = getRetrieveMeQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5248,13 +5570,50 @@ export type listOrganizationsResponse200 = {
   data: PageOrganizationOut
   status: 200
 }
+
+export type listOrganizationsResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listOrganizationsResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listOrganizationsResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listOrganizationsResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listOrganizationsResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listOrganizationsResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listOrganizationsResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listOrganizationsResponseSuccess = (listOrganizationsResponse200) & {
   headers: Headers;
 };
-;
+export type listOrganizationsResponseError = (listOrganizationsResponse400 | listOrganizationsResponse401 | listOrganizationsResponse403 | listOrganizationsResponse404 | listOrganizationsResponse409 | listOrganizationsResponse422 | listOrganizationsResponse429) & {
+  headers: Headers;
+};
 
-export type listOrganizationsResponse = (listOrganizationsResponseSuccess)
+export type listOrganizationsResponse = (listOrganizationsResponseSuccess | listOrganizationsResponseError)
 
 export const getListOrganizationsUrl = (params?: ListOrganizationsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -5293,7 +5652,7 @@ export const getListOrganizationsQueryKey = (params?: ListOrganizationsParams,) 
     }
 
     
-export const getListOrganizationsQueryOptions = <TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListOrganizationsQueryOptions = <TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -5312,10 +5671,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListOrganizationsQueryResult = NonNullable<Awaited<ReturnType<typeof listOrganizations>>>
-export type ListOrganizationsQueryError = unknown
+export type ListOrganizationsQueryError = ErrorEnvelope
 
 
-export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params: undefined |  ListOrganizationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listOrganizations>>,
@@ -5325,7 +5684,7 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listOrganizations>>,
@@ -5335,7 +5694,7 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
@@ -5343,7 +5702,7 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
  * @summary List Organizations
  */
 
-export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
@@ -5368,13 +5727,50 @@ export type createOrganizationResponse201 = {
   data: OrganizationOut
   status: 201
 }
+
+export type createOrganizationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createOrganizationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createOrganizationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createOrganizationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createOrganizationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createOrganizationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createOrganizationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type createOrganizationResponseSuccess = (createOrganizationResponse201) & {
   headers: Headers;
 };
-;
+export type createOrganizationResponseError = (createOrganizationResponse400 | createOrganizationResponse401 | createOrganizationResponse403 | createOrganizationResponse404 | createOrganizationResponse409 | createOrganizationResponse422 | createOrganizationResponse429) & {
+  headers: Headers;
+};
 
-export type createOrganizationResponse = (createOrganizationResponseSuccess)
+export type createOrganizationResponse = (createOrganizationResponseSuccess | createOrganizationResponseError)
 
 export const getCreateOrganizationUrl = () => {
 
@@ -5399,7 +5795,7 @@ export const createOrganization = async (organizationCreateIn: OrganizationCreat
 
 
 
-export const getCreateOrganizationMutationOptions = <TError = unknown,
+export const getCreateOrganizationMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext> => {
 
@@ -5426,12 +5822,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof createOrganization>>>
     export type CreateOrganizationMutationBody = OrganizationCreateIn
-    export type CreateOrganizationMutationError = unknown
+    export type CreateOrganizationMutationError = ErrorEnvelope
 
     /**
  * @summary Create Organization
  */
-export const useCreateOrganization = <TError = unknown,
+export const useCreateOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createOrganization>>,
@@ -5452,13 +5848,50 @@ export type deleteOrganizationResponse204 = {
   data: void
   status: 204
 }
+
+export type deleteOrganizationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type deleteOrganizationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteOrganizationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteOrganizationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteOrganizationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type deleteOrganizationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type deleteOrganizationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type deleteOrganizationResponseSuccess = (deleteOrganizationResponse204) & {
   headers: Headers;
 };
-;
+export type deleteOrganizationResponseError = (deleteOrganizationResponse400 | deleteOrganizationResponse401 | deleteOrganizationResponse403 | deleteOrganizationResponse404 | deleteOrganizationResponse409 | deleteOrganizationResponse422 | deleteOrganizationResponse429) & {
+  headers: Headers;
+};
 
-export type deleteOrganizationResponse = (deleteOrganizationResponseSuccess)
+export type deleteOrganizationResponse = (deleteOrganizationResponseSuccess | deleteOrganizationResponseError)
 
 export const getDeleteOrganizationUrl = (orgSlug: string,) => {
 
@@ -5482,7 +5915,7 @@ export const deleteOrganization = async (orgSlug: string, options?: RequestInit)
 
 
 
-export const getDeleteOrganizationMutationOptions = <TError = unknown,
+export const getDeleteOrganizationMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext> => {
 
@@ -5509,12 +5942,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOrganization>>>
     
-    export type DeleteOrganizationMutationError = unknown
+    export type DeleteOrganizationMutationError = ErrorEnvelope
 
     /**
  * @summary Organization Delete
  */
-export const useDeleteOrganization = <TError = unknown,
+export const useDeleteOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteOrganization>>,
@@ -5535,13 +5968,50 @@ export type retrieveOrganizationResponse200 = {
   data: OrganizationOut
   status: 200
 }
+
+export type retrieveOrganizationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveOrganizationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveOrganizationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveOrganizationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveOrganizationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveOrganizationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveOrganizationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveOrganizationResponseSuccess = (retrieveOrganizationResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveOrganizationResponseError = (retrieveOrganizationResponse400 | retrieveOrganizationResponse401 | retrieveOrganizationResponse403 | retrieveOrganizationResponse404 | retrieveOrganizationResponse409 | retrieveOrganizationResponse422 | retrieveOrganizationResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveOrganizationResponse = (retrieveOrganizationResponseSuccess)
+export type retrieveOrganizationResponse = (retrieveOrganizationResponseSuccess | retrieveOrganizationResponseError)
 
 export const getRetrieveOrganizationUrl = (orgSlug: string,) => {
 
@@ -5573,7 +6043,7 @@ export const getRetrieveOrganizationQueryKey = (orgSlug?: string,) => {
     }
 
     
-export const getRetrieveOrganizationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveOrganizationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -5592,10 +6062,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveOrganizationQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveOrganization>>>
-export type RetrieveOrganizationQueryError = unknown
+export type RetrieveOrganizationQueryError = ErrorEnvelope
 
 
-export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof retrieveOrganization>>,
@@ -5605,7 +6075,7 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof retrieveOrganization>>,
@@ -5615,7 +6085,7 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
@@ -5623,7 +6093,7 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
  * @summary Organization Detail
  */
 
-export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
@@ -5648,13 +6118,50 @@ export type updateOrganizationResponse200 = {
   data: OrganizationOut
   status: 200
 }
+
+export type updateOrganizationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateOrganizationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateOrganizationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateOrganizationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateOrganizationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type updateOrganizationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateOrganizationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type updateOrganizationResponseSuccess = (updateOrganizationResponse200) & {
   headers: Headers;
 };
-;
+export type updateOrganizationResponseError = (updateOrganizationResponse400 | updateOrganizationResponse401 | updateOrganizationResponse403 | updateOrganizationResponse404 | updateOrganizationResponse409 | updateOrganizationResponse422 | updateOrganizationResponse429) & {
+  headers: Headers;
+};
 
-export type updateOrganizationResponse = (updateOrganizationResponseSuccess)
+export type updateOrganizationResponse = (updateOrganizationResponseSuccess | updateOrganizationResponseError)
 
 export const getUpdateOrganizationUrl = (orgSlug: string,) => {
 
@@ -5680,7 +6187,7 @@ export const updateOrganization = async (orgSlug: string,
 
 
 
-export const getUpdateOrganizationMutationOptions = <TError = unknown,
+export const getUpdateOrganizationMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext> => {
 
@@ -5707,12 +6214,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrganization>>>
     export type UpdateOrganizationMutationBody = OrganizationUpdateIn
-    export type UpdateOrganizationMutationError = unknown
+    export type UpdateOrganizationMutationError = ErrorEnvelope
 
     /**
  * @summary Organization Update
  */
-export const useUpdateOrganization = <TError = unknown,
+export const useUpdateOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateOrganization>>,
@@ -5733,13 +6240,50 @@ export type listAuditLogsResponse200 = {
   data: PageAuditLogOut
   status: 200
 }
+
+export type listAuditLogsResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listAuditLogsResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listAuditLogsResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listAuditLogsResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listAuditLogsResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listAuditLogsResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listAuditLogsResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listAuditLogsResponseSuccess = (listAuditLogsResponse200) & {
   headers: Headers;
 };
-;
+export type listAuditLogsResponseError = (listAuditLogsResponse400 | listAuditLogsResponse401 | listAuditLogsResponse403 | listAuditLogsResponse404 | listAuditLogsResponse409 | listAuditLogsResponse422 | listAuditLogsResponse429) & {
+  headers: Headers;
+};
 
-export type listAuditLogsResponse = (listAuditLogsResponseSuccess)
+export type listAuditLogsResponse = (listAuditLogsResponseSuccess | listAuditLogsResponseError)
 
 export const getListAuditLogsUrl = (orgSlug: string,
     params?: ListAuditLogsParams,) => {
@@ -5781,7 +6325,7 @@ export const getListAuditLogsQueryKey = (orgSlug?: string,
     }
 
     
-export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(orgSlug: string,
+export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5801,10 +6345,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditLogs>>>
-export type ListAuditLogsQueryError = unknown
+export type ListAuditLogsQueryError = ErrorEnvelope
 
 
-export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListAuditLogsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5815,7 +6359,7 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5826,7 +6370,7 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5835,7 +6379,7 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
  * @summary List Audit Logs
  */
 
-export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -5861,13 +6405,50 @@ export type retrieveAuditLogResponse200 = {
   data: AuditLogOut
   status: 200
 }
+
+export type retrieveAuditLogResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveAuditLogResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveAuditLogResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveAuditLogResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveAuditLogResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveAuditLogResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveAuditLogResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveAuditLogResponseSuccess = (retrieveAuditLogResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveAuditLogResponseError = (retrieveAuditLogResponse400 | retrieveAuditLogResponse401 | retrieveAuditLogResponse403 | retrieveAuditLogResponse404 | retrieveAuditLogResponse409 | retrieveAuditLogResponse422 | retrieveAuditLogResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveAuditLogResponse = (retrieveAuditLogResponseSuccess)
+export type retrieveAuditLogResponse = (retrieveAuditLogResponseSuccess | retrieveAuditLogResponseError)
 
 export const getRetrieveAuditLogUrl = (orgSlug: string,
     id: string,) => {
@@ -5902,7 +6483,7 @@ export const getRetrieveAuditLogQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(orgSlug: string,
+export const getRetrieveAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5922,10 +6503,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveAuditLog>>>
-export type RetrieveAuditLogQueryError = unknown
+export type RetrieveAuditLogQueryError = ErrorEnvelope
 
 
-export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5936,7 +6517,7 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5947,7 +6528,7 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5956,7 +6537,7 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
  * @summary Retrieve Audit Log
  */
 
-export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -5979,16 +6560,53 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
  * @summary Create Checkout Session
  */
 export type createCheckoutSessionResponse200 = {
-  data: void
+  data: CheckoutSessionOut
   status: 200
+}
+
+export type createCheckoutSessionResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createCheckoutSessionResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createCheckoutSessionResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createCheckoutSessionResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createCheckoutSessionResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createCheckoutSessionResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createCheckoutSessionResponse429 = {
+  data: ErrorEnvelope
+  status: 429
 }
     
 export type createCheckoutSessionResponseSuccess = (createCheckoutSessionResponse200) & {
   headers: Headers;
 };
-;
+export type createCheckoutSessionResponseError = (createCheckoutSessionResponse400 | createCheckoutSessionResponse401 | createCheckoutSessionResponse403 | createCheckoutSessionResponse404 | createCheckoutSessionResponse409 | createCheckoutSessionResponse422 | createCheckoutSessionResponse429) & {
+  headers: Headers;
+};
 
-export type createCheckoutSessionResponse = (createCheckoutSessionResponseSuccess)
+export type createCheckoutSessionResponse = (createCheckoutSessionResponseSuccess | createCheckoutSessionResponseError)
 
 export const getCreateCheckoutSessionUrl = (orgSlug: string,) => {
 
@@ -6014,7 +6632,7 @@ export const createCheckoutSession = async (orgSlug: string,
 
 
 
-export const getCreateCheckoutSessionMutationOptions = <TError = unknown,
+export const getCreateCheckoutSessionMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext> => {
 
@@ -6041,12 +6659,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateCheckoutSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createCheckoutSession>>>
     export type CreateCheckoutSessionMutationBody = CheckoutIn
-    export type CreateCheckoutSessionMutationError = unknown
+    export type CreateCheckoutSessionMutationError = ErrorEnvelope
 
     /**
  * @summary Create Checkout Session
  */
-export const useCreateCheckoutSession = <TError = unknown,
+export const useCreateCheckoutSession = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createCheckoutSession>>,
@@ -6066,19 +6684,56 @@ a **404**, not a zero balance — see the DRF-era docstring this
 replaces for the full reasoning; unchanged here.
  * @summary Get Credit Balance
  */
-export type getCreditBalanceResponse200 = {
-  data: void
+export type retrieveCreditBalanceResponse200 = {
+  data: CreditBalanceOut
   status: 200
 }
+
+export type retrieveCreditBalanceResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveCreditBalanceResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveCreditBalanceResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveCreditBalanceResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveCreditBalanceResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveCreditBalanceResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveCreditBalanceResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type getCreditBalanceResponseSuccess = (getCreditBalanceResponse200) & {
+export type retrieveCreditBalanceResponseSuccess = (retrieveCreditBalanceResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveCreditBalanceResponseError = (retrieveCreditBalanceResponse400 | retrieveCreditBalanceResponse401 | retrieveCreditBalanceResponse403 | retrieveCreditBalanceResponse404 | retrieveCreditBalanceResponse409 | retrieveCreditBalanceResponse422 | retrieveCreditBalanceResponse429) & {
+  headers: Headers;
+};
 
-export type getCreditBalanceResponse = (getCreditBalanceResponseSuccess)
+export type retrieveCreditBalanceResponse = (retrieveCreditBalanceResponseSuccess | retrieveCreditBalanceResponseError)
 
-export const getGetCreditBalanceUrl = (orgSlug: string,) => {
+export const getRetrieveCreditBalanceUrl = (orgSlug: string,) => {
 
 
   
@@ -6086,9 +6741,9 @@ export const getGetCreditBalanceUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/billing/credits/`
 }
 
-export const getCreditBalance = async (orgSlug: string, options?: RequestInit): Promise<getCreditBalanceResponse> => {
+export const retrieveCreditBalance = async (orgSlug: string, options?: RequestInit): Promise<retrieveCreditBalanceResponse> => {
   
-  return identityFetch<getCreditBalanceResponse>(getGetCreditBalanceUrl(orgSlug),
+  return identityFetch<retrieveCreditBalanceResponse>(getRetrieveCreditBalanceUrl(orgSlug),
   {      
     ...options,
     method: 'GET'
@@ -6101,69 +6756,69 @@ export const getCreditBalance = async (orgSlug: string, options?: RequestInit): 
 
 
 
-export const getGetCreditBalanceQueryKey = (orgSlug?: string,) => {
+export const getRetrieveCreditBalanceQueryKey = (orgSlug?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/billing/credits/`
     ] as const;
     }
 
     
-export const getGetCreditBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveCreditBalanceQueryOptions = <TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCreditBalanceQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveCreditBalanceQueryKey(orgSlug);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCreditBalance>>> = ({ signal }) => getCreditBalance(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveCreditBalance>>> = ({ signal }) => retrieveCreditBalance(orgSlug, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetCreditBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getCreditBalance>>>
-export type GetCreditBalanceQueryError = unknown
+export type RetrieveCreditBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveCreditBalance>>>
+export type RetrieveCreditBalanceQueryError = ErrorEnvelope
 
 
-export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>> & Pick<
+export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCreditBalance>>,
+          Awaited<ReturnType<typeof retrieveCreditBalance>>,
           TError,
-          Awaited<ReturnType<typeof getCreditBalance>>
+          Awaited<ReturnType<typeof retrieveCreditBalance>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>> & Pick<
+export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCreditBalance>>,
+          Awaited<ReturnType<typeof retrieveCreditBalance>>,
           TError,
-          Awaited<ReturnType<typeof getCreditBalance>>
+          Awaited<ReturnType<typeof retrieveCreditBalance>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Get Credit Balance
  */
 
-export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetCreditBalanceQueryOptions(orgSlug,options)
+  const queryOptions = getRetrieveCreditBalanceQueryOptions(orgSlug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6180,16 +6835,53 @@ export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditB
  * @summary Create Billing Portal Session
  */
 export type createBillingPortalSessionResponse200 = {
-  data: void
+  data: BillingPortalOut
   status: 200
+}
+
+export type createBillingPortalSessionResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createBillingPortalSessionResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createBillingPortalSessionResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createBillingPortalSessionResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createBillingPortalSessionResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createBillingPortalSessionResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createBillingPortalSessionResponse429 = {
+  data: ErrorEnvelope
+  status: 429
 }
     
 export type createBillingPortalSessionResponseSuccess = (createBillingPortalSessionResponse200) & {
   headers: Headers;
 };
-;
+export type createBillingPortalSessionResponseError = (createBillingPortalSessionResponse400 | createBillingPortalSessionResponse401 | createBillingPortalSessionResponse403 | createBillingPortalSessionResponse404 | createBillingPortalSessionResponse409 | createBillingPortalSessionResponse422 | createBillingPortalSessionResponse429) & {
+  headers: Headers;
+};
 
-export type createBillingPortalSessionResponse = (createBillingPortalSessionResponseSuccess)
+export type createBillingPortalSessionResponse = (createBillingPortalSessionResponseSuccess | createBillingPortalSessionResponseError)
 
 export const getCreateBillingPortalSessionUrl = (orgSlug: string,) => {
 
@@ -6213,7 +6905,7 @@ export const createBillingPortalSession = async (orgSlug: string, options?: Requ
 
 
 
-export const getCreateBillingPortalSessionMutationOptions = <TError = unknown,
+export const getCreateBillingPortalSessionMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext> => {
 
@@ -6240,12 +6932,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateBillingPortalSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createBillingPortalSession>>>
     
-    export type CreateBillingPortalSessionMutationError = unknown
+    export type CreateBillingPortalSessionMutationError = ErrorEnvelope
 
     /**
  * @summary Create Billing Portal Session
  */
-export const useCreateBillingPortalSession = <TError = unknown,
+export const useCreateBillingPortalSession = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createBillingPortalSession>>,
@@ -6262,19 +6954,56 @@ export const useCreateBillingPortalSession = <TError = unknown,
 /**
  * @summary Get Subscription
  */
-export type getSubscriptionResponse200 = {
-  data: void
+export type retrieveSubscriptionResponse200 = {
+  data: SubscriptionEnvelopeOut
   status: 200
 }
+
+export type retrieveSubscriptionResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveSubscriptionResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveSubscriptionResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveSubscriptionResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveSubscriptionResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveSubscriptionResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveSubscriptionResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type getSubscriptionResponseSuccess = (getSubscriptionResponse200) & {
+export type retrieveSubscriptionResponseSuccess = (retrieveSubscriptionResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveSubscriptionResponseError = (retrieveSubscriptionResponse400 | retrieveSubscriptionResponse401 | retrieveSubscriptionResponse403 | retrieveSubscriptionResponse404 | retrieveSubscriptionResponse409 | retrieveSubscriptionResponse422 | retrieveSubscriptionResponse429) & {
+  headers: Headers;
+};
 
-export type getSubscriptionResponse = (getSubscriptionResponseSuccess)
+export type retrieveSubscriptionResponse = (retrieveSubscriptionResponseSuccess | retrieveSubscriptionResponseError)
 
-export const getGetSubscriptionUrl = (orgSlug: string,) => {
+export const getRetrieveSubscriptionUrl = (orgSlug: string,) => {
 
 
   
@@ -6282,9 +7011,9 @@ export const getGetSubscriptionUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/billing/subscription/`
 }
 
-export const getSubscription = async (orgSlug: string, options?: RequestInit): Promise<getSubscriptionResponse> => {
+export const retrieveSubscription = async (orgSlug: string, options?: RequestInit): Promise<retrieveSubscriptionResponse> => {
   
-  return identityFetch<getSubscriptionResponse>(getGetSubscriptionUrl(orgSlug),
+  return identityFetch<retrieveSubscriptionResponse>(getRetrieveSubscriptionUrl(orgSlug),
   {      
     ...options,
     method: 'GET'
@@ -6297,69 +7026,69 @@ export const getSubscription = async (orgSlug: string, options?: RequestInit): P
 
 
 
-export const getGetSubscriptionQueryKey = (orgSlug?: string,) => {
+export const getRetrieveSubscriptionQueryKey = (orgSlug?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/billing/subscription/`
     ] as const;
     }
 
     
-export const getGetSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSubscriptionQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveSubscriptionQueryKey(orgSlug);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscription>>> = ({ signal }) => getSubscription(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveSubscription>>> = ({ signal }) => retrieveSubscription(orgSlug, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type GetSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscription>>>
-export type GetSubscriptionQueryError = unknown
+export type RetrieveSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveSubscription>>>
+export type RetrieveSubscriptionQueryError = ErrorEnvelope
 
 
-export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>> & Pick<
+export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSubscription>>,
+          Awaited<ReturnType<typeof retrieveSubscription>>,
           TError,
-          Awaited<ReturnType<typeof getSubscription>>
+          Awaited<ReturnType<typeof retrieveSubscription>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>> & Pick<
+export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSubscription>>,
+          Awaited<ReturnType<typeof retrieveSubscription>>,
           TError,
-          Awaited<ReturnType<typeof getSubscription>>
+          Awaited<ReturnType<typeof retrieveSubscription>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Get Subscription
  */
 
-export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getGetSubscriptionQueryOptions(orgSlug,options)
+  const queryOptions = getRetrieveSubscriptionQueryOptions(orgSlug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6379,13 +7108,50 @@ export type createUploadResponse201 = {
   data: CreateUpload201
   status: 201
 }
+
+export type createUploadResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createUploadResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createUploadResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createUploadResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createUploadResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createUploadResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createUploadResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type createUploadResponseSuccess = (createUploadResponse201) & {
   headers: Headers;
 };
-;
+export type createUploadResponseError = (createUploadResponse400 | createUploadResponse401 | createUploadResponse403 | createUploadResponse404 | createUploadResponse409 | createUploadResponse422 | createUploadResponse429) & {
+  headers: Headers;
+};
 
-export type createUploadResponse = (createUploadResponseSuccess)
+export type createUploadResponse = (createUploadResponseSuccess | createUploadResponseError)
 
 export const getCreateUploadUrl = (orgSlug: string,) => {
 
@@ -6411,7 +7177,7 @@ export const createUpload = async (orgSlug: string,
 
 
 
-export const getCreateUploadMutationOptions = <TError = unknown,
+export const getCreateUploadMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext> => {
 
@@ -6438,12 +7204,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateUploadMutationResult = NonNullable<Awaited<ReturnType<typeof createUpload>>>
     export type CreateUploadMutationBody = PresignedUploadRequest
-    export type CreateUploadMutationError = unknown
+    export type CreateUploadMutationError = ErrorEnvelope
 
     /**
  * @summary Create Upload
  */
-export const useCreateUpload = <TError = unknown,
+export const useCreateUpload = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUpload>>,
@@ -6467,27 +7233,64 @@ export type retrieveUploadResponse200 = {
   data: FileUploadOut
   status: 200
 }
+
+export type retrieveUploadResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveUploadResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveUploadResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveUploadResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveUploadResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveUploadResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveUploadResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveUploadResponseSuccess = (retrieveUploadResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveUploadResponseError = (retrieveUploadResponse400 | retrieveUploadResponse401 | retrieveUploadResponse403 | retrieveUploadResponse404 | retrieveUploadResponse409 | retrieveUploadResponse422 | retrieveUploadResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveUploadResponse = (retrieveUploadResponseSuccess)
+export type retrieveUploadResponse = (retrieveUploadResponseSuccess | retrieveUploadResponseError)
 
 export const getRetrieveUploadUrl = (orgSlug: string,
-    fileId: string,) => {
+    id: string,) => {
 
 
   
 
-  return `/api/v1/orgs/${orgSlug}/files/${fileId}/`
+  return `/api/v1/orgs/${orgSlug}/files/${id}/`
 }
 
 export const retrieveUpload = async (orgSlug: string,
-    fileId: string, options?: RequestInit): Promise<retrieveUploadResponse> => {
+    id: string, options?: RequestInit): Promise<retrieveUploadResponse> => {
   
-  return identityFetch<retrieveUploadResponse>(getRetrieveUploadUrl(orgSlug,fileId),
+  return identityFetch<retrieveUploadResponse>(getRetrieveUploadUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -6501,39 +7304,39 @@ export const retrieveUpload = async (orgSlug: string,
 
 
 export const getRetrieveUploadQueryKey = (orgSlug?: string,
-    fileId?: string,) => {
+    id?: string,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/files/${fileId}/`
+    `/api/v1/orgs/${orgSlug}/files/${id}/`
     ] as const;
     }
 
     
-export const getRetrieveUploadQueryOptions = <TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveUploadQueryOptions = <TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getRetrieveUploadQueryKey(orgSlug,fileId);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveUploadQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveUpload>>> = ({ signal }) => retrieveUpload(orgSlug,fileId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveUpload>>> = ({ signal }) => retrieveUpload(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && fileId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
 export type RetrieveUploadQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveUpload>>>
-export type RetrieveUploadQueryError = unknown
+export type RetrieveUploadQueryError = ErrorEnvelope
 
 
-export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
-    fileId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof retrieveUpload>>,
           TError,
@@ -6542,9 +7345,9 @@ export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUplo
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof retrieveUpload>>,
           TError,
@@ -6553,22 +7356,22 @@ export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUplo
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Upload
  */
 
-export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getRetrieveUploadQueryOptions(orgSlug,fileId,options)
+  const queryOptions = getRetrieveUploadQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6588,27 +7391,64 @@ export type completeUploadResponse200 = {
   data: FileUploadOut
   status: 200
 }
+
+export type completeUploadResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type completeUploadResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type completeUploadResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type completeUploadResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type completeUploadResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type completeUploadResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type completeUploadResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type completeUploadResponseSuccess = (completeUploadResponse200) & {
   headers: Headers;
 };
-;
+export type completeUploadResponseError = (completeUploadResponse400 | completeUploadResponse401 | completeUploadResponse403 | completeUploadResponse404 | completeUploadResponse409 | completeUploadResponse422 | completeUploadResponse429) & {
+  headers: Headers;
+};
 
-export type completeUploadResponse = (completeUploadResponseSuccess)
+export type completeUploadResponse = (completeUploadResponseSuccess | completeUploadResponseError)
 
 export const getCompleteUploadUrl = (orgSlug: string,
-    fileId: string,) => {
+    id: string,) => {
 
 
   
 
-  return `/api/v1/orgs/${orgSlug}/files/${fileId}/complete/`
+  return `/api/v1/orgs/${orgSlug}/files/${id}/complete/`
 }
 
 export const completeUpload = async (orgSlug: string,
-    fileId: string, options?: RequestInit): Promise<completeUploadResponse> => {
+    id: string, options?: RequestInit): Promise<completeUploadResponse> => {
   
-  return identityFetch<completeUploadResponse>(getCompleteUploadUrl(orgSlug,fileId),
+  return identityFetch<completeUploadResponse>(getCompleteUploadUrl(orgSlug,id),
   {      
     ...options,
     method: 'POST'
@@ -6620,9 +7460,9 @@ export const completeUpload = async (orgSlug: string,
 
 
 
-export const getCompleteUploadMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext> => {
+export const getCompleteUploadMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;id: string}, TContext> => {
 
 const mutationKey = ['completeUpload'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -6634,10 +7474,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeUpload>>, {orgSlug: string;fileId: string}> = (props) => {
-          const {orgSlug,fileId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeUpload>>, {orgSlug: string;id: string}> = (props) => {
+          const {orgSlug,id} = props ?? {};
 
-          return  completeUpload(orgSlug,fileId,requestOptions)
+          return  completeUpload(orgSlug,id,requestOptions)
         }
 
         
@@ -6647,17 +7487,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeUpload>>>
     
-    export type CompleteUploadMutationError = unknown
+    export type CompleteUploadMutationError = ErrorEnvelope
 
     /**
  * @summary Complete Upload
  */
-export const useCompleteUpload = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCompleteUpload = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof completeUpload>>,
         TError,
-        {orgSlug: string;fileId: string},
+        {orgSlug: string;id: string},
         TContext
       > => {
 
@@ -6673,13 +7513,50 @@ export type listInvitationsResponse200 = {
   data: PageInvitationOut
   status: 200
 }
+
+export type listInvitationsResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listInvitationsResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listInvitationsResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listInvitationsResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listInvitationsResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listInvitationsResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listInvitationsResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listInvitationsResponseSuccess = (listInvitationsResponse200) & {
   headers: Headers;
 };
-;
+export type listInvitationsResponseError = (listInvitationsResponse400 | listInvitationsResponse401 | listInvitationsResponse403 | listInvitationsResponse404 | listInvitationsResponse409 | listInvitationsResponse422 | listInvitationsResponse429) & {
+  headers: Headers;
+};
 
-export type listInvitationsResponse = (listInvitationsResponseSuccess)
+export type listInvitationsResponse = (listInvitationsResponseSuccess | listInvitationsResponseError)
 
 export const getListInvitationsUrl = (orgSlug: string,
     params?: ListInvitationsParams,) => {
@@ -6721,7 +7598,7 @@ export const getListInvitationsQueryKey = (orgSlug?: string,
     }
 
     
-export const getListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(orgSlug: string,
+export const getListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -6741,10 +7618,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof listInvitations>>>
-export type ListInvitationsQueryError = unknown
+export type ListInvitationsQueryError = ErrorEnvelope
 
 
-export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListInvitationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -6755,7 +7632,7 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -6766,7 +7643,7 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -6775,7 +7652,7 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
  * @summary List Invitations
  */
 
-export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -6801,13 +7678,50 @@ export type createInvitationResponse201 = {
   data: InvitationOut
   status: 201
 }
+
+export type createInvitationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createInvitationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createInvitationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createInvitationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createInvitationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createInvitationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createInvitationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type createInvitationResponseSuccess = (createInvitationResponse201) & {
   headers: Headers;
 };
-;
+export type createInvitationResponseError = (createInvitationResponse400 | createInvitationResponse401 | createInvitationResponse403 | createInvitationResponse404 | createInvitationResponse409 | createInvitationResponse422 | createInvitationResponse429) & {
+  headers: Headers;
+};
 
-export type createInvitationResponse = (createInvitationResponseSuccess)
+export type createInvitationResponse = (createInvitationResponseSuccess | createInvitationResponseError)
 
 export const getCreateInvitationUrl = (orgSlug: string,) => {
 
@@ -6833,7 +7747,7 @@ export const createInvitation = async (orgSlug: string,
 
 
 
-export const getCreateInvitationMutationOptions = <TError = unknown,
+export const getCreateInvitationMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext> => {
 
@@ -6860,12 +7774,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof createInvitation>>>
     export type CreateInvitationMutationBody = InvitationCreateIn
-    export type CreateInvitationMutationError = unknown
+    export type CreateInvitationMutationError = ErrorEnvelope
 
     /**
  * @summary Create Invitation
  */
-export const useCreateInvitation = <TError = unknown,
+export const useCreateInvitation = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createInvitation>>,
@@ -6882,19 +7796,56 @@ export const useCreateInvitation = <TError = unknown,
 /**
  * @summary Revoke Invitation
  */
-export type revokeInvitationResponse204 = {
+export type deleteInvitationResponse204 = {
   data: void
   status: 204
 }
+
+export type deleteInvitationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type deleteInvitationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteInvitationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteInvitationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteInvitationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type deleteInvitationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type deleteInvitationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type revokeInvitationResponseSuccess = (revokeInvitationResponse204) & {
+export type deleteInvitationResponseSuccess = (deleteInvitationResponse204) & {
   headers: Headers;
 };
-;
+export type deleteInvitationResponseError = (deleteInvitationResponse400 | deleteInvitationResponse401 | deleteInvitationResponse403 | deleteInvitationResponse404 | deleteInvitationResponse409 | deleteInvitationResponse422 | deleteInvitationResponse429) & {
+  headers: Headers;
+};
 
-export type revokeInvitationResponse = (revokeInvitationResponseSuccess)
+export type deleteInvitationResponse = (deleteInvitationResponseSuccess | deleteInvitationResponseError)
 
-export const getRevokeInvitationUrl = (orgSlug: string,
+export const getDeleteInvitationUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -6903,10 +7854,10 @@ export const getRevokeInvitationUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/invitations/${id}/`
 }
 
-export const revokeInvitation = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<revokeInvitationResponse> => {
+export const deleteInvitation = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<deleteInvitationResponse> => {
   
-  return identityFetch<revokeInvitationResponse>(getRevokeInvitationUrl(orgSlug,id),
+  return identityFetch<deleteInvitationResponse>(getDeleteInvitationUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -6918,11 +7869,11 @@ export const revokeInvitation = async (orgSlug: string,
 
 
 
-export const getRevokeInvitationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getDeleteInvitationMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteInvitation>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['revokeInvitation'];
+const mutationKey = ['deleteInvitation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6932,10 +7883,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeInvitation>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteInvitation>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  revokeInvitation(orgSlug,id,requestOptions)
+          return  deleteInvitation(orgSlug,id,requestOptions)
         }
 
         
@@ -6943,23 +7894,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeInvitation>>>
+    export type DeleteInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteInvitation>>>
     
-    export type RevokeInvitationMutationError = unknown
+    export type DeleteInvitationMutationError = ErrorEnvelope
 
     /**
  * @summary Revoke Invitation
  */
-export const useRevokeInvitation = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useDeleteInvitation = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof revokeInvitation>>,
+        Awaited<ReturnType<typeof deleteInvitation>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getRevokeInvitationMutationOptions(options);
+      const mutationOptions = getDeleteInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6971,13 +7922,50 @@ export type retrieveInvitationResponse200 = {
   data: InvitationOut
   status: 200
 }
+
+export type retrieveInvitationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveInvitationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveInvitationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveInvitationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveInvitationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveInvitationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveInvitationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveInvitationResponseSuccess = (retrieveInvitationResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveInvitationResponseError = (retrieveInvitationResponse400 | retrieveInvitationResponse401 | retrieveInvitationResponse403 | retrieveInvitationResponse404 | retrieveInvitationResponse409 | retrieveInvitationResponse422 | retrieveInvitationResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveInvitationResponse = (retrieveInvitationResponseSuccess)
+export type retrieveInvitationResponse = (retrieveInvitationResponseSuccess | retrieveInvitationResponseError)
 
 export const getRetrieveInvitationUrl = (orgSlug: string,
     id: string,) => {
@@ -7012,7 +8000,7 @@ export const getRetrieveInvitationQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveInvitationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(orgSlug: string,
+export const getRetrieveInvitationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7032,10 +8020,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveInvitation>>>
-export type RetrieveInvitationQueryError = unknown
+export type RetrieveInvitationQueryError = ErrorEnvelope
 
 
-export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7046,7 +8034,7 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7057,7 +8045,7 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7066,7 +8054,7 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
  * @summary Retrieve Invitation
  */
 
-export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -7092,13 +8080,50 @@ export type listJobsResponse200 = {
   data: PageJobOut
   status: 200
 }
+
+export type listJobsResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listJobsResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listJobsResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listJobsResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listJobsResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listJobsResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listJobsResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listJobsResponseSuccess = (listJobsResponse200) & {
   headers: Headers;
 };
-;
+export type listJobsResponseError = (listJobsResponse400 | listJobsResponse401 | listJobsResponse403 | listJobsResponse404 | listJobsResponse409 | listJobsResponse422 | listJobsResponse429) & {
+  headers: Headers;
+};
 
-export type listJobsResponse = (listJobsResponseSuccess)
+export type listJobsResponse = (listJobsResponseSuccess | listJobsResponseError)
 
 export const getListJobsUrl = (orgSlug: string,
     params?: ListJobsParams,) => {
@@ -7140,7 +8165,7 @@ export const getListJobsQueryKey = (orgSlug?: string,
     }
 
     
-export const getListJobsQueryOptions = <TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(orgSlug: string,
+export const getListJobsQueryOptions = <TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7160,10 +8185,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListJobsQueryResult = NonNullable<Awaited<ReturnType<typeof listJobs>>>
-export type ListJobsQueryError = unknown
+export type ListJobsQueryError = ErrorEnvelope
 
 
-export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListJobsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7174,7 +8199,7 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7185,7 +8210,7 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7194,7 +8219,7 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
  * @summary List Jobs
  */
 
-export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -7220,13 +8245,50 @@ export type createJobResponse202 = {
   data: JobOut
   status: 202
 }
+
+export type createJobResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createJobResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createJobResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createJobResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createJobResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createJobResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createJobResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type createJobResponseSuccess = (createJobResponse202) & {
   headers: Headers;
 };
-;
+export type createJobResponseError = (createJobResponse400 | createJobResponse401 | createJobResponse403 | createJobResponse404 | createJobResponse409 | createJobResponse422 | createJobResponse429) & {
+  headers: Headers;
+};
 
-export type createJobResponse = (createJobResponseSuccess)
+export type createJobResponse = (createJobResponseSuccess | createJobResponseError)
 
 export const getCreateJobUrl = (orgSlug: string,) => {
 
@@ -7252,7 +8314,7 @@ export const createJob = async (orgSlug: string,
 
 
 
-export const getCreateJobMutationOptions = <TError = unknown,
+export const getCreateJobMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext> => {
 
@@ -7279,12 +8341,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateJobMutationResult = NonNullable<Awaited<ReturnType<typeof createJob>>>
     export type CreateJobMutationBody = JobCreateIn
-    export type CreateJobMutationError = unknown
+    export type CreateJobMutationError = ErrorEnvelope
 
     /**
  * @summary Create Job
  */
-export const useCreateJob = <TError = unknown,
+export const useCreateJob = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createJob>>,
@@ -7305,13 +8367,50 @@ export type retrieveJobResponse200 = {
   data: JobOut
   status: 200
 }
+
+export type retrieveJobResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveJobResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveJobResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveJobResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveJobResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveJobResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveJobResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveJobResponseSuccess = (retrieveJobResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveJobResponseError = (retrieveJobResponse400 | retrieveJobResponse401 | retrieveJobResponse403 | retrieveJobResponse404 | retrieveJobResponse409 | retrieveJobResponse422 | retrieveJobResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveJobResponse = (retrieveJobResponseSuccess)
+export type retrieveJobResponse = (retrieveJobResponseSuccess | retrieveJobResponseError)
 
 export const getRetrieveJobUrl = (orgSlug: string,
     id: string,) => {
@@ -7346,7 +8445,7 @@ export const getRetrieveJobQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveJobQueryOptions = <TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(orgSlug: string,
+export const getRetrieveJobQueryOptions = <TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7366,10 +8465,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveJobQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveJob>>>
-export type RetrieveJobQueryError = unknown
+export type RetrieveJobQueryError = ErrorEnvelope
 
 
-export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7380,7 +8479,7 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7391,7 +8490,7 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7400,7 +8499,7 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
  * @summary Retrieve Job
  */
 
-export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -7426,13 +8525,50 @@ export type cancelJobResponse200 = {
   data: JobOut
   status: 200
 }
+
+export type cancelJobResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type cancelJobResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type cancelJobResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type cancelJobResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type cancelJobResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type cancelJobResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type cancelJobResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type cancelJobResponseSuccess = (cancelJobResponse200) & {
   headers: Headers;
 };
-;
+export type cancelJobResponseError = (cancelJobResponse400 | cancelJobResponse401 | cancelJobResponse403 | cancelJobResponse404 | cancelJobResponse409 | cancelJobResponse422 | cancelJobResponse429) & {
+  headers: Headers;
+};
 
-export type cancelJobResponse = (cancelJobResponseSuccess)
+export type cancelJobResponse = (cancelJobResponseSuccess | cancelJobResponseError)
 
 export const getCancelJobUrl = (orgSlug: string,
     id: string,) => {
@@ -7458,7 +8594,7 @@ export const cancelJob = async (orgSlug: string,
 
 
 
-export const getCancelJobMutationOptions = <TError = unknown,
+export const getCancelJobMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext> => {
 
@@ -7485,12 +8621,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof cancelJob>>>
     
-    export type CancelJobMutationError = unknown
+    export type CancelJobMutationError = ErrorEnvelope
 
     /**
  * @summary Cancel Job
  */
-export const useCancelJob = <TError = unknown,
+export const useCancelJob = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof cancelJob>>,
@@ -7511,13 +8647,50 @@ export type listMembersResponse200 = {
   data: PageMembershipOut
   status: 200
 }
+
+export type listMembersResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listMembersResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listMembersResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listMembersResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listMembersResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listMembersResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listMembersResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listMembersResponseSuccess = (listMembersResponse200) & {
   headers: Headers;
 };
-;
+export type listMembersResponseError = (listMembersResponse400 | listMembersResponse401 | listMembersResponse403 | listMembersResponse404 | listMembersResponse409 | listMembersResponse422 | listMembersResponse429) & {
+  headers: Headers;
+};
 
-export type listMembersResponse = (listMembersResponseSuccess)
+export type listMembersResponse = (listMembersResponseSuccess | listMembersResponseError)
 
 export const getListMembersUrl = (orgSlug: string,
     params?: ListMembersParams,) => {
@@ -7559,7 +8732,7 @@ export const getListMembersQueryKey = (orgSlug?: string,
     }
 
     
-export const getListMembersQueryOptions = <TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(orgSlug: string,
+export const getListMembersQueryOptions = <TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7579,10 +8752,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListMembersQueryResult = NonNullable<Awaited<ReturnType<typeof listMembers>>>
-export type ListMembersQueryError = unknown
+export type ListMembersQueryError = ErrorEnvelope
 
 
-export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7593,7 +8766,7 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7604,7 +8777,7 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7613,7 +8786,7 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
  * @summary List Members
  */
 
-export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -7635,19 +8808,56 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
 /**
  * @summary Remove Member
  */
-export type removeMemberResponse204 = {
+export type deleteMemberResponse204 = {
   data: void
   status: 204
 }
+
+export type deleteMemberResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type deleteMemberResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteMemberResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteMemberResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteMemberResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type deleteMemberResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type deleteMemberResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type removeMemberResponseSuccess = (removeMemberResponse204) & {
+export type deleteMemberResponseSuccess = (deleteMemberResponse204) & {
   headers: Headers;
 };
-;
+export type deleteMemberResponseError = (deleteMemberResponse400 | deleteMemberResponse401 | deleteMemberResponse403 | deleteMemberResponse404 | deleteMemberResponse409 | deleteMemberResponse422 | deleteMemberResponse429) & {
+  headers: Headers;
+};
 
-export type removeMemberResponse = (removeMemberResponseSuccess)
+export type deleteMemberResponse = (deleteMemberResponseSuccess | deleteMemberResponseError)
 
-export const getRemoveMemberUrl = (orgSlug: string,
+export const getDeleteMemberUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7656,10 +8866,10 @@ export const getRemoveMemberUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
-export const removeMember = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<removeMemberResponse> => {
+export const deleteMember = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<deleteMemberResponse> => {
   
-  return identityFetch<removeMemberResponse>(getRemoveMemberUrl(orgSlug,id),
+  return identityFetch<deleteMemberResponse>(getDeleteMemberUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -7671,11 +8881,11 @@ export const removeMember = async (orgSlug: string,
 
 
 
-export const getRemoveMemberMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getDeleteMemberMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMember>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['removeMember'];
+const mutationKey = ['deleteMember'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -7685,10 +8895,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeMember>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMember>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  removeMember(orgSlug,id,requestOptions)
+          return  deleteMember(orgSlug,id,requestOptions)
         }
 
         
@@ -7696,23 +8906,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RemoveMemberMutationResult = NonNullable<Awaited<ReturnType<typeof removeMember>>>
+    export type DeleteMemberMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMember>>>
     
-    export type RemoveMemberMutationError = unknown
+    export type DeleteMemberMutationError = ErrorEnvelope
 
     /**
  * @summary Remove Member
  */
-export const useRemoveMember = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useDeleteMember = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof removeMember>>,
+        Awaited<ReturnType<typeof deleteMember>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getRemoveMemberMutationOptions(options);
+      const mutationOptions = getDeleteMemberMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -7724,13 +8934,50 @@ export type retrieveMemberResponse200 = {
   data: MembershipOut
   status: 200
 }
+
+export type retrieveMemberResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveMemberResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveMemberResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveMemberResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveMemberResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveMemberResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveMemberResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveMemberResponseSuccess = (retrieveMemberResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveMemberResponseError = (retrieveMemberResponse400 | retrieveMemberResponse401 | retrieveMemberResponse403 | retrieveMemberResponse404 | retrieveMemberResponse409 | retrieveMemberResponse422 | retrieveMemberResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveMemberResponse = (retrieveMemberResponseSuccess)
+export type retrieveMemberResponse = (retrieveMemberResponseSuccess | retrieveMemberResponseError)
 
 export const getRetrieveMemberUrl = (orgSlug: string,
     id: string,) => {
@@ -7765,7 +9012,7 @@ export const getRetrieveMemberQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveMemberQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(orgSlug: string,
+export const getRetrieveMemberQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7785,10 +9032,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveMemberQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveMember>>>
-export type RetrieveMemberQueryError = unknown
+export type RetrieveMemberQueryError = ErrorEnvelope
 
 
-export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7799,7 +9046,7 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7810,7 +9057,7 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7819,7 +9066,7 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
  * @summary Retrieve Member
  */
 
-export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -7845,13 +9092,50 @@ export type updateMemberRoleResponse200 = {
   data: MembershipOut
   status: 200
 }
+
+export type updateMemberRoleResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateMemberRoleResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateMemberRoleResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateMemberRoleResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateMemberRoleResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type updateMemberRoleResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateMemberRoleResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type updateMemberRoleResponseSuccess = (updateMemberRoleResponse200) & {
   headers: Headers;
 };
-;
+export type updateMemberRoleResponseError = (updateMemberRoleResponse400 | updateMemberRoleResponse401 | updateMemberRoleResponse403 | updateMemberRoleResponse404 | updateMemberRoleResponse409 | updateMemberRoleResponse422 | updateMemberRoleResponse429) & {
+  headers: Headers;
+};
 
-export type updateMemberRoleResponse = (updateMemberRoleResponseSuccess)
+export type updateMemberRoleResponse = (updateMemberRoleResponseSuccess | updateMemberRoleResponseError)
 
 export const getUpdateMemberRoleUrl = (orgSlug: string,
     id: string,) => {
@@ -7869,7 +9153,7 @@ export const updateMemberRole = async (orgSlug: string,
   return identityFetch<updateMemberRoleResponse>(getUpdateMemberRoleUrl(orgSlug,id),
   {      
     ...options,
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       membershipRoleUpdateIn,)
@@ -7879,7 +9163,7 @@ export const updateMemberRole = async (orgSlug: string,
 
 
 
-export const getUpdateMemberRoleMutationOptions = <TError = unknown,
+export const getUpdateMemberRoleMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext> => {
 
@@ -7906,12 +9190,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateMemberRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateMemberRole>>>
     export type UpdateMemberRoleMutationBody = MembershipRoleUpdateIn
-    export type UpdateMemberRoleMutationError = unknown
+    export type UpdateMemberRoleMutationError = ErrorEnvelope
 
     /**
  * @summary Update Member Role
  */
-export const useUpdateMemberRole = <TError = unknown,
+export const useUpdateMemberRole = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateMemberRole>>,
@@ -7932,13 +9216,50 @@ export type listRolesResponse200 = {
   data: PageRoleOut
   status: 200
 }
+
+export type listRolesResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listRolesResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listRolesResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listRolesResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listRolesResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listRolesResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listRolesResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listRolesResponseSuccess = (listRolesResponse200) & {
   headers: Headers;
 };
-;
+export type listRolesResponseError = (listRolesResponse400 | listRolesResponse401 | listRolesResponse403 | listRolesResponse404 | listRolesResponse409 | listRolesResponse422 | listRolesResponse429) & {
+  headers: Headers;
+};
 
-export type listRolesResponse = (listRolesResponseSuccess)
+export type listRolesResponse = (listRolesResponseSuccess | listRolesResponseError)
 
 export const getListRolesUrl = (orgSlug: string,
     params?: ListRolesParams,) => {
@@ -7980,7 +9301,7 @@ export const getListRolesQueryKey = (orgSlug?: string,
     }
 
     
-export const getListRolesQueryOptions = <TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(orgSlug: string,
+export const getListRolesQueryOptions = <TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -8000,10 +9321,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListRolesQueryResult = NonNullable<Awaited<ReturnType<typeof listRoles>>>
-export type ListRolesQueryError = unknown
+export type ListRolesQueryError = ErrorEnvelope
 
 
-export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListRolesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -8014,7 +9335,7 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -8025,7 +9346,7 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -8034,7 +9355,7 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
  * @summary List Roles
  */
 
-export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -8060,13 +9381,50 @@ export type retrieveRoleResponse200 = {
   data: RoleOut
   status: 200
 }
+
+export type retrieveRoleResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveRoleResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveRoleResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveRoleResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveRoleResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveRoleResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveRoleResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveRoleResponseSuccess = (retrieveRoleResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveRoleResponseError = (retrieveRoleResponse400 | retrieveRoleResponse401 | retrieveRoleResponse403 | retrieveRoleResponse404 | retrieveRoleResponse409 | retrieveRoleResponse422 | retrieveRoleResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveRoleResponse = (retrieveRoleResponseSuccess)
+export type retrieveRoleResponse = (retrieveRoleResponseSuccess | retrieveRoleResponseError)
 
 export const getRetrieveRoleUrl = (orgSlug: string,
     id: string,) => {
@@ -8101,7 +9459,7 @@ export const getRetrieveRoleQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveRoleQueryOptions = <TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(orgSlug: string,
+export const getRetrieveRoleQueryOptions = <TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -8121,10 +9479,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveRoleQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveRole>>>
-export type RetrieveRoleQueryError = unknown
+export type RetrieveRoleQueryError = ErrorEnvelope
 
 
-export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -8135,7 +9493,7 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -8146,7 +9504,7 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -8155,7 +9513,7 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
  * @summary Retrieve Role
  */
 
-export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -8181,13 +9539,50 @@ export type transferOrganizationResponse200 = {
   data: MembershipOut
   status: 200
 }
+
+export type transferOrganizationResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type transferOrganizationResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type transferOrganizationResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type transferOrganizationResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type transferOrganizationResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type transferOrganizationResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type transferOrganizationResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type transferOrganizationResponseSuccess = (transferOrganizationResponse200) & {
   headers: Headers;
 };
-;
+export type transferOrganizationResponseError = (transferOrganizationResponse400 | transferOrganizationResponse401 | transferOrganizationResponse403 | transferOrganizationResponse404 | transferOrganizationResponse409 | transferOrganizationResponse422 | transferOrganizationResponse429) & {
+  headers: Headers;
+};
 
-export type transferOrganizationResponse = (transferOrganizationResponseSuccess)
+export type transferOrganizationResponse = (transferOrganizationResponseSuccess | transferOrganizationResponseError)
 
 export const getTransferOrganizationUrl = (orgSlug: string,) => {
 
@@ -8213,7 +9608,7 @@ export const transferOrganization = async (orgSlug: string,
 
 
 
-export const getTransferOrganizationMutationOptions = <TError = unknown,
+export const getTransferOrganizationMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext> => {
 
@@ -8240,12 +9635,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TransferOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof transferOrganization>>>
     export type TransferOrganizationMutationBody = TransferIn
-    export type TransferOrganizationMutationError = unknown
+    export type TransferOrganizationMutationError = ErrorEnvelope
 
     /**
  * @summary Organization Transfer
  */
-export const useTransferOrganization = <TError = unknown,
+export const useTransferOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof transferOrganization>>,
@@ -8266,13 +9661,50 @@ export type listWidgetsResponse200 = {
   data: PageWidgetOut
   status: 200
 }
+
+export type listWidgetsResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listWidgetsResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listWidgetsResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listWidgetsResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listWidgetsResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listWidgetsResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listWidgetsResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listWidgetsResponseSuccess = (listWidgetsResponse200) & {
   headers: Headers;
 };
-;
+export type listWidgetsResponseError = (listWidgetsResponse400 | listWidgetsResponse401 | listWidgetsResponse403 | listWidgetsResponse404 | listWidgetsResponse409 | listWidgetsResponse422 | listWidgetsResponse429) & {
+  headers: Headers;
+};
 
-export type listWidgetsResponse = (listWidgetsResponseSuccess)
+export type listWidgetsResponse = (listWidgetsResponseSuccess | listWidgetsResponseError)
 
 export const getListWidgetsUrl = (orgSlug: string,
     params?: ListWidgetsParams,) => {
@@ -8314,7 +9746,7 @@ export const getListWidgetsQueryKey = (orgSlug?: string,
     }
 
     
-export const getListWidgetsQueryOptions = <TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(orgSlug: string,
+export const getListWidgetsQueryOptions = <TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -8334,10 +9766,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListWidgetsQueryResult = NonNullable<Awaited<ReturnType<typeof listWidgets>>>
-export type ListWidgetsQueryError = unknown
+export type ListWidgetsQueryError = ErrorEnvelope
 
 
-export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListWidgetsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -8348,7 +9780,7 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -8359,7 +9791,7 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -8368,7 +9800,7 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
  * @summary List Widgets
  */
 
-export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -8394,13 +9826,50 @@ export type createWidgetResponse201 = {
   data: WidgetOut
   status: 201
 }
+
+export type createWidgetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createWidgetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createWidgetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createWidgetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type createWidgetResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createWidgetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createWidgetResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type createWidgetResponseSuccess = (createWidgetResponse201) & {
   headers: Headers;
 };
-;
+export type createWidgetResponseError = (createWidgetResponse400 | createWidgetResponse401 | createWidgetResponse403 | createWidgetResponse404 | createWidgetResponse409 | createWidgetResponse422 | createWidgetResponse429) & {
+  headers: Headers;
+};
 
-export type createWidgetResponse = (createWidgetResponseSuccess)
+export type createWidgetResponse = (createWidgetResponseSuccess | createWidgetResponseError)
 
 export const getCreateWidgetUrl = (orgSlug: string,) => {
 
@@ -8426,7 +9895,7 @@ export const createWidget = async (orgSlug: string,
 
 
 
-export const getCreateWidgetMutationOptions = <TError = unknown,
+export const getCreateWidgetMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext> => {
 
@@ -8453,12 +9922,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof createWidget>>>
     export type CreateWidgetMutationBody = WidgetIn
-    export type CreateWidgetMutationError = unknown
+    export type CreateWidgetMutationError = ErrorEnvelope
 
     /**
  * @summary Create Widget
  */
-export const useCreateWidget = <TError = unknown,
+export const useCreateWidget = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createWidget>>,
@@ -8475,19 +9944,56 @@ export const useCreateWidget = <TError = unknown,
 /**
  * @summary Destroy Widget
  */
-export type destroyWidgetResponse204 = {
+export type deleteWidgetResponse204 = {
   data: void
   status: 204
 }
+
+export type deleteWidgetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type deleteWidgetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteWidgetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteWidgetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteWidgetResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type deleteWidgetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type deleteWidgetResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type destroyWidgetResponseSuccess = (destroyWidgetResponse204) & {
+export type deleteWidgetResponseSuccess = (deleteWidgetResponse204) & {
   headers: Headers;
 };
-;
+export type deleteWidgetResponseError = (deleteWidgetResponse400 | deleteWidgetResponse401 | deleteWidgetResponse403 | deleteWidgetResponse404 | deleteWidgetResponse409 | deleteWidgetResponse422 | deleteWidgetResponse429) & {
+  headers: Headers;
+};
 
-export type destroyWidgetResponse = (destroyWidgetResponseSuccess)
+export type deleteWidgetResponse = (deleteWidgetResponseSuccess | deleteWidgetResponseError)
 
-export const getDestroyWidgetUrl = (orgSlug: string,
+export const getDeleteWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -8496,10 +10002,10 @@ export const getDestroyWidgetUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
-export const destroyWidget = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<destroyWidgetResponse> => {
+export const deleteWidget = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<deleteWidgetResponse> => {
   
-  return identityFetch<destroyWidgetResponse>(getDestroyWidgetUrl(orgSlug,id),
+  return identityFetch<deleteWidgetResponse>(getDeleteWidgetUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -8511,11 +10017,11 @@ export const destroyWidget = async (orgSlug: string,
 
 
 
-export const getDestroyWidgetMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getDeleteWidgetMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteWidget>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['destroyWidget'];
+const mutationKey = ['deleteWidget'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8525,10 +10031,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof destroyWidget>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteWidget>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  destroyWidget(orgSlug,id,requestOptions)
+          return  deleteWidget(orgSlug,id,requestOptions)
         }
 
         
@@ -8536,23 +10042,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DestroyWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof destroyWidget>>>
+    export type DeleteWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof deleteWidget>>>
     
-    export type DestroyWidgetMutationError = unknown
+    export type DeleteWidgetMutationError = ErrorEnvelope
 
     /**
  * @summary Destroy Widget
  */
-export const useDestroyWidget = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useDeleteWidget = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof destroyWidget>>,
+        Awaited<ReturnType<typeof deleteWidget>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getDestroyWidgetMutationOptions(options);
+      const mutationOptions = getDeleteWidgetMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -8564,13 +10070,50 @@ export type retrieveWidgetResponse200 = {
   data: WidgetOut
   status: 200
 }
+
+export type retrieveWidgetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrieveWidgetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrieveWidgetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrieveWidgetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrieveWidgetResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrieveWidgetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrieveWidgetResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type retrieveWidgetResponseSuccess = (retrieveWidgetResponse200) & {
   headers: Headers;
 };
-;
+export type retrieveWidgetResponseError = (retrieveWidgetResponse400 | retrieveWidgetResponse401 | retrieveWidgetResponse403 | retrieveWidgetResponse404 | retrieveWidgetResponse409 | retrieveWidgetResponse422 | retrieveWidgetResponse429) & {
+  headers: Headers;
+};
 
-export type retrieveWidgetResponse = (retrieveWidgetResponseSuccess)
+export type retrieveWidgetResponse = (retrieveWidgetResponseSuccess | retrieveWidgetResponseError)
 
 export const getRetrieveWidgetUrl = (orgSlug: string,
     id: string,) => {
@@ -8605,7 +10148,7 @@ export const getRetrieveWidgetQueryKey = (orgSlug?: string,
     }
 
     
-export const getRetrieveWidgetQueryOptions = <TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(orgSlug: string,
+export const getRetrieveWidgetQueryOptions = <TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -8625,10 +10168,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type RetrieveWidgetQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveWidget>>>
-export type RetrieveWidgetQueryError = unknown
+export type RetrieveWidgetQueryError = ErrorEnvelope
 
 
-export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -8639,7 +10182,7 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -8650,7 +10193,7 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -8659,7 +10202,7 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
  * @summary Retrieve Widget
  */
 
-export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
@@ -8685,13 +10228,50 @@ export type updateWidgetResponse200 = {
   data: WidgetOut
   status: 200
 }
+
+export type updateWidgetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateWidgetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateWidgetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateWidgetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateWidgetResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type updateWidgetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateWidgetResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type updateWidgetResponseSuccess = (updateWidgetResponse200) & {
   headers: Headers;
 };
-;
+export type updateWidgetResponseError = (updateWidgetResponse400 | updateWidgetResponse401 | updateWidgetResponse403 | updateWidgetResponse404 | updateWidgetResponse409 | updateWidgetResponse422 | updateWidgetResponse429) & {
+  headers: Headers;
+};
 
-export type updateWidgetResponse = (updateWidgetResponseSuccess)
+export type updateWidgetResponse = (updateWidgetResponseSuccess | updateWidgetResponseError)
 
 export const getUpdateWidgetUrl = (orgSlug: string,
     id: string,) => {
@@ -8709,7 +10289,7 @@ export const updateWidget = async (orgSlug: string,
   return identityFetch<updateWidgetResponse>(getUpdateWidgetUrl(orgSlug,id),
   {      
     ...options,
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       widgetPatchIn,)
@@ -8719,7 +10299,7 @@ export const updateWidget = async (orgSlug: string,
 
 
 
-export const getUpdateWidgetMutationOptions = <TError = unknown,
+export const getUpdateWidgetMutationOptions = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext> => {
 
@@ -8746,12 +10326,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof updateWidget>>>
     export type UpdateWidgetMutationBody = WidgetPatchIn
-    export type UpdateWidgetMutationError = unknown
+    export type UpdateWidgetMutationError = ErrorEnvelope
 
     /**
  * @summary Update Widget
  */
-export const useUpdateWidget = <TError = unknown,
+export const useUpdateWidget = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateWidget>>,
@@ -8768,19 +10348,56 @@ export const useUpdateWidget = <TError = unknown,
 /**
  * @summary Permissions Registry
  */
-export type permissionsRegistryResponse200 = {
-  data: void
+export type retrievePermissionCodesResponse200 = {
+  data: PermissionCodesOut
   status: 200
 }
+
+export type retrievePermissionCodesResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type retrievePermissionCodesResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type retrievePermissionCodesResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type retrievePermissionCodesResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type retrievePermissionCodesResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type retrievePermissionCodesResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type retrievePermissionCodesResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type permissionsRegistryResponseSuccess = (permissionsRegistryResponse200) & {
+export type retrievePermissionCodesResponseSuccess = (retrievePermissionCodesResponse200) & {
   headers: Headers;
 };
-;
+export type retrievePermissionCodesResponseError = (retrievePermissionCodesResponse400 | retrievePermissionCodesResponse401 | retrievePermissionCodesResponse403 | retrievePermissionCodesResponse404 | retrievePermissionCodesResponse409 | retrievePermissionCodesResponse422 | retrievePermissionCodesResponse429) & {
+  headers: Headers;
+};
 
-export type permissionsRegistryResponse = (permissionsRegistryResponseSuccess)
+export type retrievePermissionCodesResponse = (retrievePermissionCodesResponseSuccess | retrievePermissionCodesResponseError)
 
-export const getPermissionsRegistryUrl = () => {
+export const getRetrievePermissionCodesUrl = () => {
 
 
   
@@ -8788,9 +10405,9 @@ export const getPermissionsRegistryUrl = () => {
   return `/api/v1/permissions/`
 }
 
-export const permissionsRegistry = async ( options?: RequestInit): Promise<permissionsRegistryResponse> => {
+export const retrievePermissionCodes = async ( options?: RequestInit): Promise<retrievePermissionCodesResponse> => {
   
-  return identityFetch<permissionsRegistryResponse>(getPermissionsRegistryUrl(),
+  return identityFetch<retrievePermissionCodesResponse>(getRetrievePermissionCodesUrl(),
   {      
     ...options,
     method: 'GET'
@@ -8803,69 +10420,69 @@ export const permissionsRegistry = async ( options?: RequestInit): Promise<permi
 
 
 
-export const getPermissionsRegistryQueryKey = () => {
+export const getRetrievePermissionCodesQueryKey = () => {
     return [
     `/api/v1/permissions/`
     ] as const;
     }
 
     
-export const getPermissionsRegistryQueryOptions = <TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrievePermissionCodesQueryOptions = <TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getPermissionsRegistryQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getRetrievePermissionCodesQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof permissionsRegistry>>> = ({ signal }) => permissionsRegistry({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrievePermissionCodes>>> = ({ signal }) => retrievePermissionCodes({ signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type PermissionsRegistryQueryResult = NonNullable<Awaited<ReturnType<typeof permissionsRegistry>>>
-export type PermissionsRegistryQueryError = unknown
+export type RetrievePermissionCodesQueryResult = NonNullable<Awaited<ReturnType<typeof retrievePermissionCodes>>>
+export type RetrievePermissionCodesQueryError = ErrorEnvelope
 
 
-export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>> & Pick<
+export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof permissionsRegistry>>,
+          Awaited<ReturnType<typeof retrievePermissionCodes>>,
           TError,
-          Awaited<ReturnType<typeof permissionsRegistry>>
+          Awaited<ReturnType<typeof retrievePermissionCodes>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>> & Pick<
+export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof permissionsRegistry>>,
+          Awaited<ReturnType<typeof retrievePermissionCodes>>,
           TError,
-          Awaited<ReturnType<typeof permissionsRegistry>>
+          Awaited<ReturnType<typeof retrievePermissionCodes>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Permissions Registry
  */
 
-export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getPermissionsRegistryQueryOptions(options)
+  const queryOptions = getRetrievePermissionCodesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8885,13 +10502,50 @@ export type listPlansResponse200 = {
   data: PagePlanOut
   status: 200
 }
+
+export type listPlansResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listPlansResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listPlansResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listPlansResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listPlansResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listPlansResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listPlansResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
 export type listPlansResponseSuccess = (listPlansResponse200) & {
   headers: Headers;
 };
-;
+export type listPlansResponseError = (listPlansResponse400 | listPlansResponse401 | listPlansResponse403 | listPlansResponse404 | listPlansResponse409 | listPlansResponse422 | listPlansResponse429) & {
+  headers: Headers;
+};
 
-export type listPlansResponse = (listPlansResponseSuccess)
+export type listPlansResponse = (listPlansResponseSuccess | listPlansResponseError)
 
 export const getListPlansUrl = (params?: ListPlansParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -8930,7 +10584,7 @@ export const getListPlansQueryKey = (params?: ListPlansParams,) => {
     }
 
     
-export const getListPlansQueryOptions = <TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListPlansQueryOptions = <TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -8949,10 +10603,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listPlans>>>
-export type ListPlansQueryError = unknown
+export type ListPlansQueryError = ErrorEnvelope
 
 
-export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params: undefined |  ListPlansParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listPlans>>,
@@ -8962,7 +10616,7 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listPlans>>,
@@ -8972,7 +10626,7 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
@@ -8980,7 +10634,7 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
  * @summary List Plans
  */
 
-export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
@@ -9004,19 +10658,56 @@ async. The only synchronous work below a signature check is one
 ``get_or_create`` and enqueuing a task.
  * @summary Stripe Webhook
  */
-export type stripeWebhookResponse200 = {
-  data: void
+export type receiveStripeWebhookResponse200 = {
+  data: unknown
   status: 200
 }
+
+export type receiveStripeWebhookResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type receiveStripeWebhookResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type receiveStripeWebhookResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type receiveStripeWebhookResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type receiveStripeWebhookResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type receiveStripeWebhookResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type receiveStripeWebhookResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
     
-export type stripeWebhookResponseSuccess = (stripeWebhookResponse200) & {
+export type receiveStripeWebhookResponseSuccess = (receiveStripeWebhookResponse200) & {
   headers: Headers;
 };
-;
+export type receiveStripeWebhookResponseError = (receiveStripeWebhookResponse400 | receiveStripeWebhookResponse401 | receiveStripeWebhookResponse403 | receiveStripeWebhookResponse404 | receiveStripeWebhookResponse409 | receiveStripeWebhookResponse422 | receiveStripeWebhookResponse429) & {
+  headers: Headers;
+};
 
-export type stripeWebhookResponse = (stripeWebhookResponseSuccess)
+export type receiveStripeWebhookResponse = (receiveStripeWebhookResponseSuccess | receiveStripeWebhookResponseError)
 
-export const getStripeWebhookUrl = () => {
+export const getReceiveStripeWebhookUrl = () => {
 
 
   
@@ -9024,9 +10715,9 @@ export const getStripeWebhookUrl = () => {
   return `/api/v1/stripe/webhook/`
 }
 
-export const stripeWebhook = async ( options?: RequestInit): Promise<stripeWebhookResponse> => {
+export const receiveStripeWebhook = async ( options?: RequestInit): Promise<receiveStripeWebhookResponse> => {
   
-  return identityFetch<stripeWebhookResponse>(getStripeWebhookUrl(),
+  return identityFetch<receiveStripeWebhookResponse>(getReceiveStripeWebhookUrl(),
   {      
     ...options,
     method: 'POST'
@@ -9038,11 +10729,11 @@ export const stripeWebhook = async ( options?: RequestInit): Promise<stripeWebho
 
 
 
-export const getStripeWebhookMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext> => {
+export const getReceiveStripeWebhookMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,void, TContext> => {
 
-const mutationKey = ['stripeWebhook'];
+const mutationKey = ['receiveStripeWebhook'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -9052,10 +10743,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stripeWebhook>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveStripeWebhook>>, void> = () => {
           
 
-          return  stripeWebhook(requestOptions)
+          return  receiveStripeWebhook(requestOptions)
         }
 
         
@@ -9063,23 +10754,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type StripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof stripeWebhook>>>
+    export type ReceiveStripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveStripeWebhook>>>
     
-    export type StripeWebhookMutationError = unknown
+    export type ReceiveStripeWebhookMutationError = ErrorEnvelope
 
     /**
  * @summary Stripe Webhook
  */
-export const useStripeWebhook = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useReceiveStripeWebhook = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof stripeWebhook>>,
+        Awaited<ReturnType<typeof receiveStripeWebhook>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getStripeWebhookMutationOptions(options);
+      const mutationOptions = getReceiveStripeWebhookMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

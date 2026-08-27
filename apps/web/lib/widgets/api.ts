@@ -5,8 +5,9 @@
  * error handling.
  */
 import {
+  unwrapData,
   createWidget as generatedCreateWidget,
-  destroyWidget,
+  deleteWidget as generatedDeleteWidget,
   listWidgets as generatedListWidgets,
   retrieveWidget,
   updateWidget as generatedUpdateWidget,
@@ -25,17 +26,17 @@ export async function listWidgets(
   params?: { cursor?: string; limit?: number },
 ): Promise<PageWidgetOut> {
   const result = await generatedListWidgets(orgSlug, params);
-  return result.data;
+  return unwrapData(result);
 }
 
 export async function getWidget(orgSlug: string, id: string): Promise<WidgetOut> {
   const result = await retrieveWidget(orgSlug, id);
-  return result.data;
+  return unwrapData(result);
 }
 
 export async function createWidget(orgSlug: string, body: WidgetWriteBody): Promise<WidgetOut> {
   const result = await generatedCreateWidget(orgSlug, body as never);
-  return result.data;
+  return unwrapData(result);
 }
 
 export async function updateWidget(
@@ -44,9 +45,9 @@ export async function updateWidget(
   body: Partial<WidgetWriteBody>,
 ): Promise<WidgetOut> {
   const result = await generatedUpdateWidget(orgSlug, id, body as never);
-  return result.data;
+  return unwrapData(result);
 }
 
 export async function deleteWidget(orgSlug: string, id: string): Promise<void> {
-  await destroyWidget(orgSlug, id);
+  await generatedDeleteWidget(orgSlug, id);
 }

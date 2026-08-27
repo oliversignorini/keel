@@ -19,12 +19,16 @@ from typing import Any
 
 from django.http import Http404
 from django.utils import timezone
-from ninja import Router, Status
+from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
-from keel.core.ninja_auth import optional_session_auth
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
+from keel.core.ninja_authz import (
+    OrgScopedResource,
+    keel_router,
+    optional_auth_router,
+    resolve_and_authorize,
+)
 from keel.core.ninja_pagination import Page, paginate
 from keel.organizations import selectors, services
 from keel.organizations.models import Invitation, Membership, Role
@@ -32,11 +36,14 @@ from keel.organizations.permissions import Perm
 from keel.organizations.schemas import (
     InvitationCreateIn,
     InvitationOut,
+    InviteDetailOut,
     MembershipOut,
     MembershipRoleUpdateIn,
+    MeOut,
     OrganizationCreateIn,
     OrganizationOut,
     OrganizationUpdateIn,
+    PermissionCodesOut,
     RoleOut,
     TransferIn,
     resolve_create_slug,
@@ -174,10 +181,8 @@ def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
     return membership
 
 
-# Same PUT+PATCH parity note as keel.widgets.views.update_widget — DRF's
-# update()/partial_update() were the same code for members too.
-@nested_router.api_operation(
-    ["PUT", "PATCH"],
+# PATCH only — same reasoning as keel.widgets.views.update_widget.
+@nested_router.patch(
     "/{org_slug}/members/{id}/",
     response=MembershipOut,
     operation_id="updateMemberRole",
@@ -194,7 +199,7 @@ def update_member_role(
 
 
 @nested_router.delete(
-    "/{org_slug}/members/{id}/", response={204: None}, operation_id="removeMember"
+    "/{org_slug}/members/{id}/", response={204: None}, operation_id="deleteMember"
 )
 def remove_member(request: Any, org_slug: str, id: str) -> Any:
 
@@ -270,7 +275,7 @@ def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
 
 
 @nested_router.delete(
-    "/{org_slug}/invitations/{id}/", response={204: None}, operation_id="revokeInvitation"
+    "/{org_slug}/invitations/{id}/", response={204: None}, operation_id="deleteInvitation"
 )
 def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 
@@ -287,7 +292,7 @@ def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 me_router = keel_router(tags=["me"])
 
 
-@me_router.get("/me/", operation_id="me")
+@me_router.get("/me/", response=MeOut, operation_id="retrieveMe")
 def me(request: Any) -> dict:
     user = request.auth
     organizations: list[dict[str, Any]] = []
@@ -315,14 +320,14 @@ def me(request: Any) -> dict:
     }
 
 
-@me_router.get("/permissions/", operation_id="permissionsRegistry")
+@me_router.get("/permissions/", response=PermissionCodesOut, operation_id="retrievePermissionCodes")
 def permissions_registry(request: Any) -> dict:
     return {"codes": selectors.registered_permission_codes()}
 
 
 # --- /invite/<token>/: public GET, authenticated POST ----------------------
 
-invite_router = Router(auth=optional_session_auth)
+invite_router = optional_auth_router()
 
 
 def _resolve_valid_invitation(token: str) -> Invitation:
@@ -337,7 +342,7 @@ def _resolve_valid_invitation(token: str) -> Invitation:
     return invitation
 
 
-@invite_router.get("/invite/{token}/", operation_id="inviteDetail")
+@invite_router.get("/invite/{token}/", response=InviteDetailOut, operation_id="retrieveInvite")
 def invite_detail(request: Any, token: str) -> dict:
     invitation = _resolve_valid_invitation(token)
     return {
@@ -350,7 +355,7 @@ def invite_detail(request: Any, token: str) -> dict:
     }
 
 
-@invite_router.post("/invite/{token}/", response=MembershipOut, operation_id="inviteAccept")
+@invite_router.post("/invite/{token}/", response=MembershipOut, operation_id="acceptInvite")
 def invite_accept(request: Any, token: str) -> Any:
     if not request.auth.is_authenticated:
         raise NotAuthenticated()

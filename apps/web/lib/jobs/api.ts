@@ -4,6 +4,7 @@
  */
 
 import {
+  unwrapData,
   cancelJob as generatedCancelJob,
   createJob as generatedCreateJob,
   listJobs as generatedListJobs,
@@ -27,7 +28,7 @@ export const API_STREAM_URL = process.env.NEXT_PUBLIC_API_STREAM_URL ?? "http://
  * page's worth the tray needs to reconcile with on mount/reload. */
 export async function listJobs(orgSlug: string): Promise<Job[]> {
   const result = await generatedListJobs(orgSlug);
-  return result.data.results;
+  return unwrapData(result).results;
 }
 
 /** Requires `jobs.create`. `idempotencyKey`, when given, is honoured by
@@ -41,20 +42,20 @@ export async function createJob(
   const result = await generatedCreateJob(orgSlug, body as never, {
     headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
   });
-  return result.data;
+  return unwrapData(result);
 }
 
 /** Requires `jobs.view`. The polling-fallback primitive `useJobStream`
  * calls on an interval once the SSE connection has dropped. */
 export async function getJob(orgSlug: string, jobId: string): Promise<Job> {
   const result = await retrieveJob(orgSlug, jobId);
-  return result.data;
+  return unwrapData(result);
 }
 
 /** Requires `jobs.create`. */
 export async function cancelJob(orgSlug: string, jobId: string): Promise<Job> {
   const result = await generatedCancelJob(orgSlug, jobId, {});
-  return result.data;
+  return unwrapData(result);
 }
 
 /** `GET .../jobs/stream/` — SSE, served only by the stream service

@@ -2,7 +2,7 @@
 phase-10.md 10.C)."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from django.utils import timezone
@@ -10,7 +10,17 @@ from django.utils.text import slugify
 from ninja import Schema
 from pydantic import Field, field_validator
 
-from keel.organizations.models import Organization
+from keel.organizations.models import Membership, Organization
+
+# api-patterns finding 14: a published vocabulary, not a bare `str` — must
+# match Membership.STATUS_CHOICES (keel/organizations/models.py).
+MembershipStatus = Literal["active", "suspended"]
+assert set(MembershipStatus.__args__) == {choice for choice, _ in Membership.STATUS_CHOICES}  # type: ignore[attr-defined]
+
+# Invitation.status has no model column — it is derived by
+# InvitationOut.resolve_status below from three timestamp fields. Published
+# here as the enum that derivation actually produces.
+InvitationStatus = Literal["pending", "accepted", "revoked", "expired"]
 
 
 class UserSummaryOut(Schema):
@@ -80,7 +90,7 @@ class MembershipOut(Schema):
     id: str
     user: UserSummaryOut
     role: RoleOut
-    status: str
+    status: MembershipStatus
     joined_at: datetime | None
 
     @staticmethod
@@ -100,7 +110,7 @@ class InvitationOut(Schema):
     expires_at: datetime
     accepted_at: datetime | None
     revoked_at: datetime | None
-    status: str
+    status: InvitationStatus
     created_at: datetime
 
     @staticmethod
@@ -108,7 +118,7 @@ class InvitationOut(Schema):
         return str(obj.id)
 
     @staticmethod
-    def resolve_status(obj: Any) -> str:
+    def resolve_status(obj: Any) -> InvitationStatus:
         if obj.accepted_at is not None:
             return "accepted"
         if obj.revoked_at is not None:
@@ -125,3 +135,48 @@ class InvitationCreateIn(Schema):
 
 class TransferIn(Schema):
     membership_id: str
+
+
+# --- /me/, /permissions/, /invite/<token>/ response shapes -----------------
+# (api-patterns finding 4: these routes previously returned a bare dict, so
+# the generated client typed them `void`.)
+
+
+class MeUserOut(Schema):
+    id: str
+    email: str
+    name: str
+
+
+class MeOrganizationOut(Schema):
+    id: str
+    slug: str
+    name: str
+    role: str | None
+    permissions: list[str]
+    entitlements: dict[str, Any]
+
+
+class MeOut(Schema):
+    """``GET /api/v1/me/`` — PRD §7: "the single endpoint the client
+    renders from." Composes the shapes already resolved by
+    ``keel.organizations.views.me`` rather than restating them."""
+
+    user: MeUserOut
+    organizations: list[MeOrganizationOut]
+    impersonator: MeUserOut | None
+
+
+class PermissionCodesOut(Schema):
+    codes: list[str]
+
+
+class InviteOrganizationOut(Schema):
+    name: str
+    slug: str
+
+
+class InviteDetailOut(Schema):
+    organization: InviteOrganizationOut
+    email: str
+    requires_signup: bool

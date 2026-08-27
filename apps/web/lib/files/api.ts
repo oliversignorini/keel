@@ -4,6 +4,7 @@
  */
 
 import {
+  unwrapData,
   completeUpload as generatedCompleteUpload,
   createUpload,
   retrieveUpload,
@@ -18,7 +19,7 @@ export async function createPresignedUpload(
   body: PresignedUploadRequest,
 ): Promise<PresignedUploadResponse> {
   const result = await createUpload(orgSlug, body as never);
-  return result.data as unknown as PresignedUploadResponse;
+  return unwrapData(result) as unknown as PresignedUploadResponse;
 }
 
 /** The browser's direct upload to R2 — never proxied through Django
@@ -56,12 +57,12 @@ export function uploadToPresignedUrl(
  * object actually exists before doing so). */
 export async function completeUpload(orgSlug: string, fileId: string): Promise<FileUploadResource> {
   const result = await generatedCompleteUpload(orgSlug, fileId, { method: "POST" });
-  return result.data as unknown as FileUploadResource;
+  return unwrapData(result) as unknown as FileUploadResource;
 }
 
 /** Requires `files.view`. Used to reconcile a `FileUpload` row's status
  * after a page reload — see `<FileUpload>`'s docstring. */
 export async function getFileUpload(orgSlug: string, fileId: string): Promise<FileUploadResource> {
   const result = await retrieveUpload(orgSlug, fileId);
-  return result.data as unknown as FileUploadResource;
+  return unwrapData(result) as unknown as FileUploadResource;
 }
