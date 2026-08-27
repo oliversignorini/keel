@@ -17,12 +17,14 @@ describe("resolveGuardRedirect", () => {
     expect(resolveGuardRedirect("/app/acme", true)).toBeNull();
   });
 
-  it("sends an authenticated visitor away from /login", () => {
-    expect(resolveGuardRedirect("/login", true)).toBe("/app");
-  });
-
-  it("sends an authenticated visitor away from /signup", () => {
-    expect(resolveGuardRedirect("/signup", true)).toBe("/app");
+  it("does not redirect a visitor with a session cookie away from /login or /signup (ADR 0002)", () => {
+    // A pending, not-yet-authenticated allauth flow (email verification,
+    // MFA) sets a real sessionid cookie too — bouncing that visitor away
+    // from /login sends them into a page that immediately 401s and
+    // bounces them right back, with no way to ever reach the login form.
+    // See route-guard.ts's docstring for the full incident.
+    expect(resolveGuardRedirect("/login", true)).toBeNull();
+    expect(resolveGuardRedirect("/signup", true)).toBeNull();
   });
 
   it("lets an unauthenticated visitor reach /login", () => {

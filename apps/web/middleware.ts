@@ -31,6 +31,21 @@ export function middleware(request: NextRequest) {
   const onAppHost = isAppHost(host);
   const hasSession = request.cookies.has(SESSION_COOKIE_NAME);
 
+  // docs/adr/0002-auth-bff-shape.md: `/_allauth/…` must stay the literal
+  // wire path (it's baked into every generated allauth client function),
+  // but Next.js treats a real `app/_allauth` folder as an unrouted
+  // "private folder" — so the actual handler lives at the routable
+  // `/api/internal/allauth/…` and this rewrite is what keeps the two in
+  // sync. This has to be a middleware rewrite rather than a
+  // `next.config.ts` `rewrites()` entry: `withContentCollections` (see
+  // that file) drops a `rewrites` key from the config object entirely,
+  // so one declared there is silently never called.
+  if (pathname === "/_allauth" || pathname.startsWith("/_allauth/")) {
+    const target = request.nextUrl.clone();
+    target.pathname = `/api/internal/allauth${pathname.slice("/_allauth".length)}`;
+    return NextResponse.rewrite(target);
+  }
+
   // A stray /app/* request on the apex (the pre-6.A URL shape, or a stale
   // bookmark) is sent to its new home on the app host rather than served
   // twice from two hosts.
@@ -64,16 +79,6 @@ export function middleware(request: NextRequest) {
     target.host = toApexHost(host);
     target.pathname = "/login";
     target.search = `?next=${encodeURIComponent(next)}`;
-    return NextResponse.redirect(target);
-  }
-
-  if (redirectTo === "/app") {
-    // Already authenticated, landed on an auth-only page: send them to
-    // the app host's root, which internally rewrites to /app below.
-    const target = request.nextUrl.clone();
-    target.host = toAppHost(host);
-    target.pathname = "/";
-    target.search = "";
     return NextResponse.redirect(target);
   }
 

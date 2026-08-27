@@ -17,11 +17,16 @@ import { CSRF_HEADER_NAME, isUnsafeMethod, readCsrfCookie } from "./csrf";
 type SuccessOnly<T> = T extends { data: ErrorEnvelope } ? never : T;
 
 /**
- * Django API origin. Same-origin in prod (api.<domain> behind the app's
- * registrable domain, per keel-prd.md §4 "Auth architecture") but distinct
- * in dev, so it is always explicit rather than relying on a relative URL.
+ * Always same-origin (docs/adr/0002-auth-bff-shape.md): every generated
+ * call is proxied by the Next.js BFF itself
+ * (apps/web/app/api/v1/[...path]/route.ts, apps/web/app/api/internal/
+ * allauth/[...path]/route.ts), which is the only thing that needs to know
+ * Django's real address — see apps/web/lib/api/internal-origins.ts. This
+ * is deliberately not read from an env var any more: there is no
+ * deployment shape where a browser `fetch()` through this client should
+ * ever target anything other than its own origin.
  */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+export const API_BASE_URL = "";
 
 /**
  * The orval fetch-client mutator. Every generated request function in

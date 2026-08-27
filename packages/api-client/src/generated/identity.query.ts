@@ -5414,6 +5414,10 @@ export const useAcceptInvite = <TError = ErrorEnvelope,
     }
     
 /**
+ * Three queries total regardless of how many organisations the user
+belongs to (api-patterns finding 12 — this used to be 2N+1: one
+membership lookup and one subscription lookup per organisation, in a
+Python loop).
  * @summary Me
  */
 export type retrieveMeResponse200 = {

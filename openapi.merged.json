@@ -4572,6 +4572,20 @@
         "title": "WidgetPatchIn",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "csrfHeader": {
+        "description": "Required on every unsafe method (POST/PUT/PATCH/DELETE) once sessionCookie is presented \u2014 read from the non-HttpOnly csrftoken cookie (docs/auth-client-contract.md 'CSRF token acquisition').",
+        "in": "header",
+        "name": "X-CSRFToken",
+        "type": "apiKey"
+      },
+      "sessionCookie": {
+        "description": "The Django session cookie, HttpOnly, set by /_allauth/browser/v1/auth/login (docs/auth-client-contract.md).",
+        "in": "cookie",
+        "name": "sessionid",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
@@ -4613,6 +4627,12 @@
             "description": "An input error occurred."
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Remove an email address",
         "tags": [
           "Account: Email"
@@ -4634,6 +4654,11 @@
             "$ref": "#/components/responses/Authentication"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List email addresses",
         "tags": [
           "Account: Email"
@@ -4670,6 +4695,12 @@
             "description": "An input error occurred."
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Change primary email address",
         "tags": [
           "Account: Email"
@@ -4719,6 +4750,12 @@
             "description": "Conflict. For example, when no user is authenticated and no email verification flow is pending.\n"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Add/Change email address\n",
         "tags": [
           "Account: Email"
@@ -4765,6 +4802,12 @@
             "description": "Too many email verification mails were already sent.\n"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Request email verification",
         "tags": [
           "Account: Email"
@@ -4791,6 +4834,12 @@
             "$ref": "#/components/responses/Authentication"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Change password",
         "tags": [
           "Account: Password"
@@ -4814,6 +4863,11 @@
             "$ref": "#/components/responses/Authentication"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Get the phone number",
         "tags": [
           "Account: Phone"
@@ -4865,6 +4919,12 @@
             "description": "Conflict. For example, when no user is authenticated and no phone verification flow is pending.\n"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Change the phone number\n",
         "tags": [
           "Account: Phone"
@@ -4906,6 +4966,12 @@
             "description": "An input error occurred."
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Disconnect a third-party provider account\n",
         "tags": [
           "Account: Providers"
@@ -4923,6 +4989,11 @@
             "$ref": "#/components/responses/ProviderAccounts"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List the connected third-party provider accounts",
         "tags": [
           "Account: Providers"
@@ -4981,6 +5052,12 @@
             "description": "Conflict. The \"login by code\" flow is not pending.\n"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Confirm login code",
         "tags": [
           "Authentication: Login By Code"
@@ -5026,6 +5103,7 @@
             "description": "Conflict. The email verification (by code) flow is not pending.\n"
           }
         },
+        "security": [],
         "summary": "Get email verification information",
         "tags": [
           "Authentication: Account"
@@ -5075,6 +5153,7 @@
             "description": "Conflict. The email verification (by code) flow is not pending.\n"
           }
         },
+        "security": [],
         "summary": "Verify an email",
         "tags": [
           "Authentication: Account"
@@ -5108,6 +5187,7 @@
             "$ref": "#/components/responses/TooManyRequests"
           }
         },
+        "security": [],
         "summary": "Resend email verification code",
         "tags": [
           "Authentication: Account"
@@ -5172,6 +5252,7 @@
             "description": "Conflict. For example, when logging in when a user is already logged in.\n"
           }
         },
+        "security": [],
         "summary": "Login",
         "tags": [
           "Authentication: Account"
@@ -5208,6 +5289,7 @@
             "$ref": "#/components/responses/Authentication"
           }
         },
+        "security": [],
         "summary": "Request password",
         "tags": [
           "Authentication: Password Reset"
@@ -5253,6 +5335,7 @@
             "description": "Conflict. There is no password reset (by code) flow pending.\n"
           }
         },
+        "security": [],
         "summary": "Get password reset information",
         "tags": [
           "Authentication: Password Reset"
@@ -5297,6 +5380,7 @@
             "description": "Conflict. There is no password reset (by code) flow pending.\n"
           }
         },
+        "security": [],
         "summary": "Reset password",
         "tags": [
           "Authentication: Password Reset"
@@ -5343,6 +5427,12 @@
             "description": "Conflict. The phone verification flow is not pending.\n"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Verify a phone number",
         "tags": [
           "Authentication: Account"
@@ -5376,6 +5466,12 @@
             "$ref": "#/components/responses/TooManyRequests"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Resend phone number verification code",
         "tags": [
           "Authentication: Account"
@@ -5402,6 +5498,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Provider redirect",
         "tags": [
           "Authentication: Providers"
@@ -5427,6 +5524,7 @@
             "description": "Conflict. The provider signup flow is not pending.\n"
           }
         },
+        "security": [],
         "summary": "Provider signup information",
         "tags": [
           "Authentication: Providers"
@@ -5493,6 +5591,7 @@
             "description": "Conflict. The provider signup flow is not pending.\n"
           }
         },
+        "security": [],
         "summary": "Provider signup",
         "tags": [
           "Authentication: Providers"
@@ -5559,6 +5658,7 @@
             "description": "Forbidden. For example, when signup is closed.\n"
           }
         },
+        "security": [],
         "summary": "Provider token",
         "tags": [
           "Authentication: Providers"
@@ -5597,6 +5697,12 @@
             "description": "An input error occurred."
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Reauthenticate",
         "tags": [
           "Authentication: Account"
@@ -5617,6 +5723,12 @@
             "$ref": "#/components/responses/Unauthenticated"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "Logout",
         "tags": [
           "Authentication: Current Session"
@@ -5641,6 +5753,7 @@
             "$ref": "#/components/responses/SessionGone"
           }
         },
+        "security": [],
         "summary": "Get authentication status\n",
         "tags": [
           "Authentication: Current Session"
@@ -5666,6 +5779,12 @@
             "$ref": "#/components/responses/Authentication"
           }
         },
+        "security": [
+          {
+            "csrfHeader": [],
+            "sessionCookie": []
+          }
+        ],
         "summary": "End one or more sessions",
         "tags": [
           "Sessions"
@@ -5683,6 +5802,11 @@
             "$ref": "#/components/responses/Sessions"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List sessions",
         "tags": [
           "Sessions"
@@ -5751,6 +5875,7 @@
             "description": "Conflict. For example, when signing up while user is logged in.\n"
           }
         },
+        "security": [],
         "summary": "Signup",
         "tags": [
           "Authentication: Account"
@@ -5766,6 +5891,7 @@
             "$ref": "#/components/responses/Configuration"
           }
         },
+        "security": [],
         "summary": "Get configuration",
         "tags": [
           "Configuration"
@@ -5953,6 +6079,12 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {}
+        ],
         "summary": "Invite Detail"
       },
       "post": {
@@ -6050,11 +6182,18 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {}
+        ],
         "summary": "Invite Accept"
       }
     },
     "/api/v1/me/": {
       "get": {
+        "description": "Three queries total regardless of how many organisations the user\nbelongs to (api-patterns finding 12 \u2014 this used to be 2N+1: one\nmembership lookup and one subscription lookup per organisation, in a\nPython loop).",
         "operationId": "retrieveMe",
         "parameters": [],
         "responses": {
@@ -6139,6 +6278,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Me",
         "tags": [
           "me"
@@ -6264,6 +6408,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Organizations",
         "tags": [
           "organizations"
@@ -6559,6 +6708,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Organization Detail",
         "tags": [
           "organizations"
@@ -6803,6 +6957,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Audit Logs",
         "tags": [
           "audit"
@@ -6914,6 +7073,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Audit Log",
         "tags": [
           "audit"
@@ -7129,6 +7293,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Get Credit Balance",
         "tags": [
           "billing"
@@ -7333,6 +7502,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Get Subscription",
         "tags": [
           "billing"
@@ -7559,6 +7733,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Upload",
         "tags": [
           "files"
@@ -7804,6 +7983,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Invitations",
         "tags": [
           "organizations"
@@ -8127,6 +8311,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Invitation",
         "tags": [
           "organizations"
@@ -8284,6 +8473,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Jobs",
         "tags": [
           "jobs"
@@ -8505,6 +8699,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Job",
         "tags": [
           "jobs"
@@ -8750,6 +8949,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Members",
         "tags": [
           "organizations"
@@ -8963,6 +9167,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Member",
         "tags": [
           "organizations"
@@ -9216,6 +9425,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Roles",
         "tags": [
           "organizations"
@@ -9327,6 +9541,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Role",
         "tags": [
           "organizations"
@@ -9573,6 +9792,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "List Widgets",
         "tags": [
           "widgets"
@@ -9896,6 +10120,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Retrieve Widget",
         "tags": [
           "widgets"
@@ -10107,6 +10336,11 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "summary": "Permissions Registry",
         "tags": [
           "me"
@@ -10232,6 +10466,7 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [],
         "summary": "List Plans"
       }
     },
@@ -10322,10 +10557,23 @@
             "description": "Too Many Requests"
           }
         },
+        "security": [],
         "summary": "Stripe Webhook"
       }
     }
   },
+  "security": [
+    {
+      "csrfHeader": [],
+      "sessionCookie": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Same-origin, as seen by the Next.js BFF that proxies every browser request to the real API origin server-side.",
+      "url": "/"
+    }
+  ],
   "tags": [
     {
       "description": "Exposes information on the configuration of django-allauth.\n",

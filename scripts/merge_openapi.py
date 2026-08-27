@@ -107,13 +107,98 @@ def merge(base: dict, extra: dict, extra_label: str) -> dict:
     if overlap:
         raise ValueError(f"Both OpenAPI sources define the same path(s): {sorted(overlap)}")
 
-    return {
+    merged = {
         "openapi": base["openapi"],
         "info": base["info"],
         "paths": {**base.get("paths", {}), **extra.get("paths", {})},
         "components": _merge_components(base_components, extra.get("components", {}) or {}),
         "tags": _merge_tags(base.get("tags", []), extra.get("tags", [])),
     }
+    # api-patterns finding 5: document-level `servers`/`security` used to
+    # be dropped by construction — neither key was in this dict at all —
+    # even though build_ninja_spec() below now produces both. Only `base`
+    # (the Ninja spec) sets these; allauth's own schema builder never has,
+    # so there is nothing to merge here beyond carrying `base`'s through.
+    if "servers" in base:
+        merged["servers"] = base["servers"]
+    if "security" in base:
+        merged["security"] = base["security"]
+    return merged
+
+
+
+# api-patterns finding 5: how a caller authenticates was published nowhere
+# machine-readable — django-ninja itself never emits `security`/
+# `securitySchemes`, regardless of a route's real `auth=` callable
+# (keel.core.ninja_auth.session_auth / optional_session_auth / none).
+# These paths are exactly the ones built with `public_router()` — see
+# posd finding 2 — so hand-listing them here, rather than trying to
+# introspect Ninja's operation objects, stays honest about what's
+# actually a manual annotation and what's derived.
+NINJA_PUBLIC_PATHS = {
+    "/api/v1/plans/",
+    "/api/v1/stripe/webhook/",
+}
+# optional_session_auth: a session is accepted and used if present
+# (invite_accept attributes the acceptance to the logged-in user when
+# one exists), but is never required — modelled as "sessionCookie OR no
+# security" via the empty `{}` alternative (OpenAPI 3.1 §4.8.30).
+NINJA_OPTIONAL_AUTH_PATHS = {
+    "/api/v1/invite/{token}/",
+}
+_SAFE_METHODS = {"get", "head"}
+
+
+def _apply_ninja_security(spec: dict) -> None:
+    spec.setdefault("components", {})["securitySchemes"] = {
+        "sessionCookie": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "sessionid",
+            "description": (
+                "The Django session cookie, HttpOnly, set by "
+                "/_allauth/browser/v1/auth/login (docs/auth-client-contract.md)."
+            ),
+        },
+        "csrfHeader": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-CSRFToken",
+            "description": (
+                "Required on every unsafe method (POST/PUT/PATCH/DELETE) once "
+                "sessionCookie is presented — read from the non-HttpOnly "
+                "csrftoken cookie (docs/auth-client-contract.md 'CSRF token "
+                "acquisition')."
+            ),
+        },
+    }
+    spec["security"] = [{"sessionCookie": [], "csrfHeader": []}]
+    # docs/adr/0002-auth-bff-shape.md: the Next.js BFF is the only intended
+    # caller of this document's own origin now — browser code talks to
+    # the BFF's same-origin proxy paths instead. "/" documents that
+    # relationship rather than a guessed production hostname this
+    # template doesn't know yet.
+    spec["servers"] = [
+        {
+            "url": "/",
+            "description": (
+                "Same-origin, as seen by the Next.js BFF that proxies every "
+                "browser request to the real API origin server-side."
+            ),
+        }
+    ]
+
+    for path, methods in spec.get("paths", {}).items():
+        for method, operation in methods.items():
+            if not isinstance(operation, dict):
+                continue
+            if path in NINJA_PUBLIC_PATHS:
+                operation["security"] = []
+            elif path in NINJA_OPTIONAL_AUTH_PATHS:
+                operation["security"] = [{"sessionCookie": []}, {}]
+            elif method in _SAFE_METHODS:
+                operation["security"] = [{"sessionCookie": []}]
+            # else: inherits the document-level default set above.
 
 
 def build_ninja_spec() -> dict:
@@ -123,7 +208,9 @@ def build_ninja_spec() -> dict:
     # subclass with extra behaviour) — coerce to a plain dict so the rest
     # of this script (which round-trips everything through json.dumps)
     # doesn't depend on that subclass's methods surviving the trip.
-    return dict(api.get_openapi_schema())
+    schema = dict(api.get_openapi_schema())
+    _apply_ninja_security(schema)
+    return schema
 
 
 # allauth headless's own schema (allauth.headless.spec.internal.schema.get_schema)
@@ -209,6 +296,43 @@ def _normalize_nullable_to_31(node: Any) -> None:
             _normalize_nullable_to_31(item)
 
 
+# Endpoints reachable with no session at all — the rest default to
+# requiring sessionCookie (+ csrfHeader on unsafe methods), same as the
+# Ninja half. "Optional" flows (2FA/reauthenticate/code-confirm resolve a
+# *pending*, partially-authenticated session, which still carries a
+# sessionCookie — they are not the "no cookie at all" case this set means).
+PUBLIC_ALLAUTH_OPERATION_IDS = {
+    "authConfig",
+    "authGetSession",  # the priming GET; 401 with no session is the documented case
+    "authSignup",
+    "authLogin",
+    "authPasswordRequest",
+    "authPasswordResetInfo",
+    "authPasswordReset",
+    "authEmailVerifyInfo",
+    "authEmailVerify",
+    "authEmailVerifyResend",
+    "authProviderRedirect",
+    "authProviderSignupInfo",
+    "authProviderSignup",
+    "authProviderToken",
+}
+
+
+def _apply_allauth_security(spec: dict) -> None:
+    for methods in spec.get("paths", {}).values():
+        for method, operation in methods.items():
+            if not isinstance(operation, dict):
+                continue
+            operation_id = operation.get("operationId")
+            if operation_id in PUBLIC_ALLAUTH_OPERATION_IDS:
+                operation["security"] = []
+            elif method in _SAFE_METHODS:
+                operation["security"] = [{"sessionCookie": []}]
+            else:
+                operation["security"] = [{"sessionCookie": [], "csrfHeader": []}]
+
+
 def _assign_allauth_operation_ids(spec: dict) -> None:
     missing: list[str] = []
     for path, methods in spec.get("paths", {}).items():
@@ -245,6 +369,7 @@ def build_allauth_spec() -> dict:
     finally:
         uuid.uuid4 = real_uuid4
     _assign_allauth_operation_ids(schema)
+    _apply_allauth_security(schema)
     _normalize_nullable_to_31(schema)
     return schema
 

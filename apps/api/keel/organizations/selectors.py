@@ -34,6 +34,23 @@ def get_membership(*, user: Any, organization: Organization) -> Membership | Non
     )
 
 
+def get_active_memberships_by_organization(
+    *, user: Any, organizations: Any
+) -> dict[Any, Membership]:
+    """One query for every organisation's membership, keyed by
+    ``organization_id`` — the bulk counterpart to ``get_membership``.
+
+    ``GET /api/v1/me/`` (api-patterns finding 12) used to call
+    ``get_membership`` once per organisation in a Python loop, an N+1 that
+    scales with how many organisations a user belongs to. A single
+    ``organization__in`` query plus a dict lookup replaces the whole loop.
+    """
+    memberships = Membership.objects.filter(
+        organization__in=organizations, user=user, status=Membership.STATUS_ACTIVE
+    ).select_related("role")
+    return {membership.organization_id: membership for membership in memberships}
+
+
 def list_members(organization: Organization) -> QuerySet[Membership]:
     return Membership.objects.for_organization(organization).select_related("user", "role")
 

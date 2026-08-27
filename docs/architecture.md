@@ -179,13 +179,17 @@ worker pool exhausts it at a request count far below what
 request/response load testing suggests. `infra/railway.json` declares
 both services from the same image.
 
-**Note on the pipeline today.** The browser calls `api.lvh.me` directly,
-cross-origin, with `credentials: 'include'` — there is no BFF layer in
-Next.js proxying that call. `docs/review-2026-08.md` §2 records this as
-the actual gap behind the Notion "Django is the auth authority" item:
-session handling is already correct (Django is the sole authority, the
-cookie is `HttpOnly`), but the direct cross-origin call is not the BFF
-pattern the architecture direction locks in for Phase 11.
+**Note on the pipeline today.** Since Phase 11
+(`docs/adr/0002-auth-bff-shape.md`), the browser no longer calls
+`api.lvh.me` directly for any programmatic `fetch`/`XMLHttpRequest` —
+every `/api/v1/…` and `/_allauth/…` call is same-origin against Next.js,
+which forwards it to Django server-side
+(`apps/web/app/api/v1/[...path]/route.ts`,
+`apps/web/app/api/internal/allauth/[...path]/route.ts`). Session handling
+was already correct before this (Django is the sole authority, the
+cookie is `HttpOnly`); this closed the remaining gap — the direct
+cross-origin call was not the BFF pattern the architecture direction
+locks in. `docs/auth-flow.md` has the full request-path diagram.
 
 ---
 

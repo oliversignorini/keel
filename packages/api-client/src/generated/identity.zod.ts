@@ -1190,6 +1190,10 @@ export const acceptInviteResponse = zod.object({
 
 
 /**
+ * Three queries total regardless of how many organisations the user
+belongs to (api-patterns finding 12 — this used to be 2N+1: one
+membership lookup and one subscription lookup per organisation, in a
+Python loop).
  * @summary Me
  */
 export const retrieveMeResponse = zod.object({
