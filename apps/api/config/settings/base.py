@@ -63,6 +63,10 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Third party
     "corsheaders",
+    # Serves Swagger UI assets for /api/v1/docs from local static instead
+    # of cdn.jsdelivr.net — keeps the docs working offline and inside
+    # embedded browsers that block third-party CDN scripts.
+    "ninja",
     # allauth headless (PRD §4 "Auth architecture", §8 Phase 2)
     "allauth",
     "allauth.account",
