@@ -48,11 +48,20 @@ def complete_upload(*, file_upload: FileUpload) -> FileUpload:
     actually confirmed present in the bucket (PRD §5.6's acceptance
     criterion is "reaches complete", not "was told to") — trusting the
     browser's completion call alone would let a client mark a row
-    complete for a PUT that failed or never happened."""
+    complete for a PUT that failed or never happened.
+
+    The transition itself is a guarded ``UPDATE ... WHERE status =
+    pending`` (ddia#21), not an unconditional assignment: two concurrent
+    completion calls for the same upload both pass the ``object_exists``
+    check, but only one can move the row from ``pending``. The other's
+    update matches zero rows — treated as already-complete, not an
+    error, since that's exactly what it is."""
     if not r2_client.object_exists(key=file_upload.key):
         raise UnprocessableEntity(
             code="upload_not_found", message="No object was found at the presigned key yet."
         )
-    file_upload.status = FileUpload.STATUS_COMPLETE
-    file_upload.save(update_fields=["status"])
+    FileUpload.objects.filter(pk=file_upload.pk, status=FileUpload.STATUS_PENDING).update(
+        status=FileUpload.STATUS_COMPLETE
+    )
+    file_upload.refresh_from_db()
     return file_upload
