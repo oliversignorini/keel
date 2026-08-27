@@ -133,15 +133,11 @@ def test_a_file_is_unreadable_from_a_different_organization() -> None:
 
     # Owner B is a legitimate owner of *their own* organisation — this
     # is not a permission-denied case, it's a does-not-exist-here case.
-    cross_tenant_response = _client_for(owner_b).get(
-        f"/api/v1/orgs/{org_b.slug}/files/{file_id}/"
-    )
+    cross_tenant_response = _client_for(owner_b).get(f"/api/v1/orgs/{org_b.slug}/files/{file_id}/")
     assert cross_tenant_response.status_code == 404
 
     # Confirming via org_a with an unrelated member is the actual owner path.
-    same_org_response = _client_for(owner_a).get(
-        f"/api/v1/orgs/{org_a.slug}/files/{file_id}/"
-    )
+    same_org_response = _client_for(owner_a).get(f"/api/v1/orgs/{org_a.slug}/files/{file_id}/")
     assert same_org_response.status_code == 200
 
 

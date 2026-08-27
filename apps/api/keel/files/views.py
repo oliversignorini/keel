@@ -48,9 +48,7 @@ def complete_upload(request: Any, org_slug: str, file_id: str) -> FileUpload:
     return file_upload
 
 
-@router.get(
-    "/{org_slug}/files/{file_id}/", response=FileUploadOut, operation_id="retrieveUpload"
-)
+@router.get("/{org_slug}/files/{file_id}/", response=FileUploadOut, operation_id="retrieveUpload")
 def retrieve_upload(request: Any, org_slug: str, file_id: str) -> FileUpload:
     """Scoped to ``organization`` in the same lookup as the completion
     view above — the mechanism the cross-tenant test in

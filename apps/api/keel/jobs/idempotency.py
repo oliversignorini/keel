@@ -87,9 +87,7 @@ def check_and_claim(request: HttpRequest, org_slug: str) -> HttpResponse | None:
             {
                 "error": {
                     "code": "idempotency_key_in_progress",
-                    "message": (
-                        "A request with this Idempotency-Key is already being processed."
-                    ),
+                    "message": ("A request with this Idempotency-Key is already being processed."),
                     "details": None,
                 }
             },

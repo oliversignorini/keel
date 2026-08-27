@@ -57,9 +57,7 @@ def _get_role_or_422(role_id: object) -> Role:
 org_router = keel_router(tags=["organizations"])
 
 
-@org_router.get(
-    "/orgs/", response=Page[OrganizationOut], operation_id="listOrganizations"
-)
+@org_router.get("/orgs/", response=Page[OrganizationOut], operation_id="listOrganizations")
 def list_organizations(request: Any, cursor: str | None = None, limit: int | None = None) -> dict:
     queryset = selectors.list_organizations_for_user(request.auth)
     return paginate(request, queryset)
@@ -75,25 +73,19 @@ def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
     return Status(201, organization)
 
 
-@org_router.get(
-    "/orgs/{org_slug}/", response=OrganizationOut, operation_id="retrieveOrganization"
-)
+@org_router.get("/orgs/{org_slug}/", response=OrganizationOut, operation_id="retrieveOrganization")
 def organization_detail(request: Any, org_slug: str) -> Any:
     return resolve_and_authorize(request, org_slug, (Perm.ORG_VIEW,))
 
 
-@org_router.patch(
-    "/orgs/{org_slug}/", response=OrganizationOut, operation_id="updateOrganization"
-)
+@org_router.patch("/orgs/{org_slug}/", response=OrganizationOut, operation_id="updateOrganization")
 def organization_update(request: Any, org_slug: str, payload: OrganizationUpdateIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_UPDATE,))
     fields = payload.dict(exclude_unset=True)
     return services.update_organization(organization=organization, actor=request.auth, **fields)
 
 
-@org_router.delete(
-    "/orgs/{org_slug}/", response={204: None}, operation_id="deleteOrganization"
-)
+@org_router.delete("/orgs/{org_slug}/", response={204: None}, operation_id="deleteOrganization")
 def organization_delete(request: Any, org_slug: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_DELETE,))
@@ -157,9 +149,7 @@ class InvitationResource(OrgScopedResource):
     detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{id}/"
 
 
-@nested_router.get(
-    "/{org_slug}/members/", response=Page[MembershipOut], operation_id="listMembers"
-)
+@nested_router.get("/{org_slug}/members/", response=Page[MembershipOut], operation_id="listMembers")
 def list_members(
     request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
 ) -> dict:
@@ -225,9 +215,7 @@ def list_roles(
     return paginate(request, queryset)
 
 
-@nested_router.get(
-    "/{org_slug}/roles/{id}/", response=RoleOut, operation_id="retrieveRole"
-)
+@nested_router.get("/{org_slug}/roles/{id}/", response=RoleOut, operation_id="retrieveRole")
 def retrieve_role(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     role = selectors.list_roles_for_organization(organization).filter(pk=id).first()
