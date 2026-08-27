@@ -17,7 +17,7 @@ unpaginated collection PRD §7 calls out as a deviation.
 from typing import Any
 
 import stripe
-from django.db.models import Prefetch
+from django.db.models import Max, Prefetch
 from django.http import Http404, HttpRequest, HttpResponse
 
 from keel.billing import credits, services, stripe_client, tasks
@@ -31,6 +31,7 @@ from keel.billing.schemas import (
     SubscriptionEnvelopeOut,
 )
 from keel.core.exceptions import UnprocessableEntity
+from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import GlobalResource, keel_router, public_router, resolve_and_authorize
 from keel.core.ninja_pagination import Page, paginate
@@ -72,7 +73,12 @@ class PlanResource(GlobalResource):
 
 
 @plans_router.get("/plans/", response=Page[PlanOut], operation_id="listPlans")
-def list_plans(request: HttpRequest, cursor: str | None = None, limit: int | None = None) -> dict:
+def list_plans(
+    request: HttpRequest,
+    response: HttpResponse,
+    cursor: str | None = None,
+    limit: int | None = None,
+) -> dict:
     active_prices = Prefetch(
         "prices",
         queryset=Price.objects.filter(is_active=True).order_by("interval"),
@@ -82,6 +88,16 @@ def list_plans(request: HttpRequest, cursor: str | None = None, limit: int | Non
         Plan.objects.filter(is_active=True)
         .order_by("sort_order", "code")
         .prefetch_related(active_prices)
+    )
+    # api-patterns finding 13: a Reference Data Holder — catalogue data,
+    # unauthenticated, long-lived. The ETag covers both plans and prices
+    # (a price change doesn't touch Plan.updated_at) plus the page the
+    # caller asked for, since a cursor/limit change is a different
+    # representation.
+    plan_agg = Plan.objects.filter(is_active=True).aggregate(latest=Max("updated_at"))
+    price_agg = Price.objects.filter(is_active=True).aggregate(latest=Max("updated_at"))
+    set_reference_data_cache_headers(
+        response, plan_agg["latest"], price_agg["latest"], request.GET.urlencode()
     )
     return paginate(request, queryset, ordering=("sort_order", "code"))
 

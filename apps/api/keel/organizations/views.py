@@ -1,28 +1,29 @@
-"""Views (PRD §7; phase-3.md B.3; phase-10.md 10.C).
+"""Views (PRD Â§7; phase-3.md B.3; phase-10.md 10.C).
 
 ``MembershipResource``/``RoleResource``/``InvitationResource`` declare
 ``required_permissions``, ``organization_scoped = True``, ``test_factory``
-and ``detail_url_template`` — the tenant-isolation meta-test then walks
-each automatically (PRD §4 invariant 7). The organisation itself has no
-separate "row inside the org" to leak across tenants — resolving it *is*
-the tenant boundary — so ``organization_detail``/``organization_transfer``
+and ``detail_url_template`` â€” the tenant-isolation meta-test then walks
+each automatically (PRD Â§4 invariant 7). The organisation itself has no
+separate "row inside the org" to leak across tenants â€” resolving it *is*
+the tenant boundary â€” so ``organization_detail``/``organization_transfer``
 below call ``resolve_and_authorize`` directly rather than declaring an
 ``OrgScopedResource``, same reasoning as ``keel.billing.views``' plain
 routes.
 
 ``invite_router`` uses ``optional_session_auth``: ``GET
-/invite/<token>/`` must work signed-out (phase-3.md B.4 — the client
+/invite/<token>/`` must work signed-out (phase-3.md B.4 â€” the client
 needs org name + locked email to drive signup before there's a session).
 """
 
 from typing import Any
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.utils import timezone
 from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
+from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import (
     OrgScopedResource,
@@ -187,7 +188,7 @@ def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
     return membership
 
 
-# PATCH only — same reasoning as keel.widgets.views.update_widget.
+# PATCH only â€” same reasoning as keel.widgets.views.update_widget.
 @nested_router.patch(
     "/{org_slug}/members/{id}/",
     response=MembershipOut,
@@ -330,8 +331,12 @@ def me(request: Any) -> dict:
 
 
 @me_router.get("/permissions/", response=PermissionCodesOut, operation_id="retrievePermissionCodes")
-def permissions_registry(request: Any) -> dict:
-    return {"codes": selectors.registered_permission_codes()}
+def permissions_registry(request: Any, response: HttpResponse) -> dict:
+    """A Reference Data Holder (api-patterns finding 13) â€” the permission
+    registry only changes on deploy, not per-request."""
+    codes = selectors.registered_permission_codes()
+    set_reference_data_cache_headers(response, sorted(codes))
+    return {"codes": codes}
 
 
 # --- /invite/<token>/: public GET, authenticated POST ----------------------

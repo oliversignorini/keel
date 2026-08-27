@@ -10,6 +10,7 @@ from django.utils.text import slugify
 from ninja import Schema
 from pydantic import Field, field_validator
 
+from keel.billing.schemas import EntitlementsOut
 from keel.organizations.models import Membership, Organization
 
 # api-patterns finding 14: a published vocabulary, not a bare `str` — must
@@ -154,7 +155,7 @@ class MeOrganizationOut(Schema):
     name: str
     role: str | None
     permissions: list[str]
-    entitlements: dict[str, Any]
+    entitlements: EntitlementsOut
 
 
 class MeOut(Schema):

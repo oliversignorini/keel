@@ -250,6 +250,15 @@ CELERY_BEAT_SCHEDULE = {
         "task": "keel.files.tasks.sweep_stale_uploads",
         "schedule": crontab(minute="*/15"),
     },
+    # Phase 14 additions (ddia#4, ddia#10) — see keel/billing/tasks.py.
+    "check-credit-balances": {
+        "task": "keel.billing.tasks.check_credit_balances_task",
+        "schedule": crontab(hour=6, minute=0),  # nightly, report-only
+    },
+    "prune-stripe-event-payloads": {
+        "task": "keel.billing.tasks.prune_stripe_event_payloads",
+        "schedule": crontab(day_of_week=0, hour=6, minute=30),  # weekly
+    },
 }
 
 # --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -

@@ -88,15 +88,26 @@ def test_list_plans_orders_by_sort_order_then_code() -> None:
 
 def test_plan_serializer_exposes_entitlements() -> None:
     plan = _plan("starter")
-    plan.entitlements = {"seats": 5, "features": ["api_access"]}
+    plan.entitlements = {"features": ["api_access"], "limits": {"seats": 5}}
     plan.save()
 
     response = Client().get("/api/v1/plans/")
 
     assert response.json()["results"][0]["entitlements"] == {
-        "seats": 5,
         "features": ["api_access"],
+        "limits": {"seats": 5},
     }
+
+
+def test_list_plans_sets_cache_control_and_etag() -> None:
+    """api-patterns finding 13: /plans/ is a Reference Data Holder —
+    unauthenticated, long-lived, read by every pricing-page visit."""
+    _plan("starter")
+
+    response = Client().get("/api/v1/plans/")
+
+    assert response["Cache-Control"] == "public, max-age=300"
+    assert response["ETag"]
 
 
 def test_plan_resource_declares_a_real_global_justification() -> None:

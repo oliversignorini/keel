@@ -14,7 +14,7 @@ import type { MeOrganization } from "@/lib/org/types";
 
 import type { PlanPrice, PlanWithPrices, ResolvedEntitlements } from "./types";
 
-const EMPTY: ResolvedEntitlements = { features: [], limits: {} };
+const EMPTY: Required<ResolvedEntitlements> = { features: [], limits: {} };
 
 /**
  * `/api/v1/me/`'s per-organisation `entitlements` blob, narrowed. An
@@ -22,9 +22,14 @@ const EMPTY: ResolvedEntitlements = { features: [], limits: {} };
  * [], "limits": {}}` (billing/entitlements.py `resolve_entitlements`), so
  * a missing or malformed blob is treated as exactly that rather than as
  * an error — an unsubscribed org is a normal state, not a fault.
+ *
+ * `EntitlementsOut`'s own fields are optional (a plan may omit either),
+ * so this always fills both in — the return type is `Required<...>`,
+ * not the bare generated shape, precisely so callers never have to
+ * re-check for `undefined`.
  */
-export function readEntitlements(org: MeOrganization | null): ResolvedEntitlements {
-  const raw = org?.entitlements as Partial<ResolvedEntitlements> | undefined;
+export function readEntitlements(org: MeOrganization | null): Required<ResolvedEntitlements> {
+  const raw = org?.entitlements;
   if (!raw) return EMPTY;
   return {
     features: Array.isArray(raw.features) ? raw.features : [],

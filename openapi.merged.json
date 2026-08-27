@@ -2339,6 +2339,34 @@
         ],
         "type": "object"
       },
+      "EntitlementsOut": {
+        "description": "Replaces the ``dict[str, Any]`` blob (api-patterns finding 15) \u2014\nthe shape ``keel.billing.entitlements.resolve_entitlements`` already\ndocuments and ``keel.billing.models.EntitlementsSpec`` now validates\non ``Plan.save()``. Published here so the generated client gets real\nfields instead of an opaque map it can't type-check a gate against.",
+        "properties": {
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "limits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Limits",
+            "type": "object"
+          }
+        },
+        "title": "EntitlementsOut",
+        "type": "object"
+      },
       "ErrorBodyOut": {
         "properties": {
           "code": {
@@ -3002,9 +3030,7 @@
       "MeOrganizationOut": {
         "properties": {
           "entitlements": {
-            "additionalProperties": true,
-            "title": "Entitlements",
-            "type": "object"
+            "$ref": "#/components/schemas/EntitlementsOut"
           },
           "id": {
             "title": "Id",
@@ -3711,9 +3737,7 @@
             "type": "string"
           },
           "entitlements": {
-            "additionalProperties": true,
-            "title": "Entitlements",
-            "type": "object"
+            "$ref": "#/components/schemas/EntitlementsOut"
           },
           "id": {
             "title": "Id",
@@ -10808,6 +10832,7 @@
     },
     "/api/v1/permissions/": {
       "get": {
+        "description": "A Reference Data Holder (api-patterns finding 13) \u00e2\u20ac\u201d the permission\nregistry only changes on deploy, not per-request.",
         "operationId": "retrievePermissionCodes",
         "parameters": [],
         "responses": {

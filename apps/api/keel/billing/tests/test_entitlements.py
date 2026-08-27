@@ -167,6 +167,20 @@ def test_check_limit_raises_unregistered_resource_for_an_unknown_resource() -> N
         check_limit(org, "some_new_resource")
 
 
+def test_check_limit_raises_unregistered_resource_even_when_absent_from_limits() -> None:
+    """ddia#24: a typo'd resource name must not fail open just because
+    the plan's ``limits`` dict happens not to mention it — that used to
+    be indistinguishable from a deliberately uncapped, *known* resource.
+    No subscription at all is the sharpest case: `entitlements["limits"]`
+    is `{}`, so the old code's `.get(resource) is None` short-circuit
+    returned "unlimited" before ever checking whether the resource is
+    real."""
+    org = _org()
+
+    with pytest.raises(UnregisteredResource):
+        check_limit(org, "some_new_resource")
+
+
 # --- enforce_downgrade_limits ----------------------------------------------
 
 

@@ -5,6 +5,7 @@ from typing import Any, Literal
 from uuid import UUID
 
 from ninja import Schema
+from pydantic import Field
 
 from keel.billing.models import Price
 
@@ -41,11 +42,22 @@ class PriceOut(Schema):
         return str(obj.id)
 
 
+class EntitlementsOut(Schema):
+    """Replaces the ``dict[str, Any]`` blob (api-patterns finding 15) —
+    the shape ``keel.billing.entitlements.resolve_entitlements`` already
+    documents and ``keel.billing.models.EntitlementsSpec`` now validates
+    on ``Plan.save()``. Published here so the generated client gets real
+    fields instead of an opaque map it can't type-check a gate against."""
+
+    features: list[str] = Field(default_factory=list)
+    limits: dict[str, int | None] = Field(default_factory=dict)
+
+
 class PlanOut(Schema):
     id: str
     code: str
     name: str
-    entitlements: dict[str, Any]
+    entitlements: EntitlementsOut
     sort_order: int
     prices: list[PriceOut]
 

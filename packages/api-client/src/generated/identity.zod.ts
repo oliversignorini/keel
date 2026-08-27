@@ -1199,7 +1199,10 @@ export const retrieveMeResponse = zod.object({
   "name": zod.string()
 }),zod.null()]),
   "organizations": zod.array(zod.object({
-  "entitlements": zod.record(zod.string(), zod.unknown()),
+  "entitlements": zod.object({
+  "features": zod.array(zod.string()).optional(),
+  "limits": zod.record(zod.string(), zod.union([zod.number(),zod.null()])).optional()
+}).describe('Replaces the ``dict[str, Any]`` blob (api-patterns finding 15) —\nthe shape ``keel.billing.entitlements.resolve_entitlements`` already\ndocuments and ``keel.billing.models.EntitlementsSpec`` now validates\non ``Plan.save()``. Published here so the generated client gets real\nfields instead of an opaque map it can\'t type-check a gate against.'),
   "id": zod.string(),
   "name": zod.string(),
   "permissions": zod.array(zod.string()),
@@ -2123,6 +2126,8 @@ export const updateWidgetResponse = zod.object({
 
 
 /**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+registry only changes on deploy, not per-request.
  * @summary Permissions Registry
  */
 export const retrievePermissionCodesResponse = zod.object({
@@ -2143,7 +2148,10 @@ export const listPlansResponse = zod.object({
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
   "code": zod.string(),
-  "entitlements": zod.record(zod.string(), zod.unknown()),
+  "entitlements": zod.object({
+  "features": zod.array(zod.string()).optional(),
+  "limits": zod.record(zod.string(), zod.union([zod.number(),zod.null()])).optional()
+}).describe('Replaces the ``dict[str, Any]`` blob (api-patterns finding 15) —\nthe shape ``keel.billing.entitlements.resolve_entitlements`` already\ndocuments and ``keel.billing.models.EntitlementsSpec`` now validates\non ``Plan.save()``. Published here so the generated client gets real\nfields instead of an opaque map it can\'t type-check a gate against.'),
   "id": zod.string(),
   "name": zod.string(),
   "prices": zod.array(zod.object({

@@ -373,6 +373,20 @@ export interface EndSessions {
   sessions: number[];
 }
 
+export type EntitlementsOutLimits = {[key: string]: number | null};
+
+/**
+ * Replaces the ``dict[str, Any]`` blob (api-patterns finding 15) —
+the shape ``keel.billing.entitlements.resolve_entitlements`` already
+documents and ``keel.billing.models.EntitlementsSpec`` now validates
+on ``Plan.save()``. Published here so the generated client gets real
+fields instead of an opaque map it can't type-check a gate against.
+ */
+export interface EntitlementsOut {
+  features?: string[];
+  limits?: EntitlementsOutLimits;
+}
+
 export interface ErrorBodyOut {
   code: string;
   details?: unknown;
@@ -657,12 +671,10 @@ export interface MFATrust {
   trust: boolean;
 }
 
-export type MeOrganizationOutEntitlements = { [key: string]: unknown };
-
 export type MeOrganizationOutRole = string | null;
 
 export interface MeOrganizationOut {
-  entitlements: MeOrganizationOutEntitlements;
+  entitlements: EntitlementsOut;
   id: string;
   name: string;
   permissions: string[];
@@ -863,11 +875,9 @@ export interface PhoneNumbersResponse {
   status: StatusOK;
 }
 
-export type PlanOutEntitlements = { [key: string]: unknown };
-
 export interface PlanOut {
   code: string;
-  entitlements: PlanOutEntitlements;
+  entitlements: EntitlementsOut;
   id: string;
   name: string;
   prices: PriceOut[];
@@ -11293,6 +11303,8 @@ export const useUpdateWidget = <TError = ErrorEnvelope,
     }
     
 /**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+registry only changes on deploy, not per-request.
  * @summary Permissions Registry
  */
 export type retrievePermissionCodesResponse200 = {

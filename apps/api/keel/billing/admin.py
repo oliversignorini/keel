@@ -23,6 +23,7 @@ from keel.billing.models import (
     StripeEvent,
     Subscription,
 )
+from keel.core.exceptions import PaymentRequired
 
 admin.site.register(Plan)
 admin.site.register(Price)
@@ -89,14 +90,18 @@ class CreditBalanceAdmin(admin.ModelAdmin):
         if request.method == "POST":
             form = AdjustmentForm(request.POST)
             if form.is_valid():
-                credits.adjust(
-                    balance_row.organization,
-                    form.cleaned_data["amount"],
-                    reason=form.cleaned_data["reason"],
-                    actor=request.user,
-                )
-                self.message_user(request, "Adjustment recorded.", level=messages.SUCCESS)
-                return redirect(reverse("admin:billing_creditbalance_change", args=[object_id]))
+                try:
+                    credits.adjust(
+                        balance_row.organization,
+                        form.cleaned_data["amount"],
+                        reason=form.cleaned_data["reason"],
+                        actor=request.user,
+                    )
+                except PaymentRequired as exc:
+                    self.message_user(request, exc.message, level=messages.ERROR)
+                else:
+                    self.message_user(request, "Adjustment recorded.", level=messages.SUCCESS)
+                    return redirect(reverse("admin:billing_creditbalance_change", args=[object_id]))
         else:
             form = AdjustmentForm()
 

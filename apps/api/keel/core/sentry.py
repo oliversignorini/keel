@@ -13,11 +13,13 @@ appears in Sentry with the correct release and readable stack" until a
 real DSN exists.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 import sentry_sdk
 from django.conf import settings
 from sentry_sdk.integrations.logging import LoggingIntegration
+
+_LogLevel = Literal["fatal", "critical", "error", "warning", "info", "debug"]
 
 
 def init_sentry(**overrides: Any) -> None:
@@ -55,3 +57,16 @@ def report_exception(exc: BaseException, *, tags: dict[str, str] | None = None) 
         for key, value in (tags or {}).items():
             scope.set_tag(key, value)
         sentry_sdk.capture_exception(exc)
+
+
+def report_message(
+    message: str, *, level: _LogLevel = "warning", tags: dict[str, str] | None = None
+) -> None:
+    """The non-exception counterpart to ``report_exception`` — for a
+    condition worth an alert with no exception to attach (ddia#4: a
+    ``check_credit_balances_task`` drift finding is a fact about state,
+    not a stack trace)."""
+    with sentry_sdk.new_scope() as scope:
+        for key, value in (tags or {}).items():
+            scope.set_tag(key, value)
+        sentry_sdk.capture_message(message, level=level)

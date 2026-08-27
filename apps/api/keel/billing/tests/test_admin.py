@@ -89,6 +89,24 @@ def test_adjust_form_rejects_a_zero_amount():
     assert not CreditLedgerEntry.objects.filter(organization=org).exists()
 
 
+def test_adjust_form_rejects_a_clawback_exceeding_the_balance():
+    """ddia#5/#23: the CHECK(balance >= 0) constraint's readable
+    counterpart at the admin seam — a 500 would be the wrong outcome for
+    an operator typo."""
+    client, _ = _staff_client()
+    org = make_organization()
+    CreditBalance.objects.create(organization=org, balance=5)
+
+    response = client.post(
+        reverse("admin:billing_creditbalance_adjust", args=[org.pk]),
+        data={"amount": "-10", "reason": "chargeback"},
+    )
+
+    assert response.status_code == 200  # re-rendered with an error message, not a 500
+    assert not CreditLedgerEntry.objects.filter(organization=org).exists()
+    assert CreditBalance.objects.get(organization=org).balance == 5
+
+
 def test_credit_ledger_entry_plural_is_grammatical() -> None:
     """docs/plans/phase-8.md 8.8: Django admin's default pluralisation
     (append "s") renders "Credit ledger entrys"."""
