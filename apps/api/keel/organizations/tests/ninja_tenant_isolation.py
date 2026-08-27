@@ -64,7 +64,7 @@ def resource_route_is_wired(resource_cls: type[OrgScopedResource]) -> bool:
     from django.urls import resolve
 
     dummy_path = resource_cls.detail_url_template.format(  # type: ignore[union-attr]
-        org_slug="dummy-org", pk=str(uuid.uuid4())
+        org_slug="dummy-org", id=str(uuid.uuid4())
     )
     try:
         resolve(dummy_path)
@@ -109,7 +109,7 @@ def assert_cross_org_404(resource_cls: type[OrgScopedResource]) -> None:
     )
 
     url = resource_cls.detail_url_template.format(  # type: ignore[union-attr]
-        org_slug=org_b.slug, pk=str(row_in_a.pk)
+        org_slug=org_b.slug, id=str(row_in_a.pk)
     )
     client = Client()
     client.force_login(actor)

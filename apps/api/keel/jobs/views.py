@@ -28,7 +28,7 @@ class JobResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.jobs.tests.factories.job_factory"
     required_permissions = (Perm.JOBS_VIEW,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/jobs/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/jobs/{id}/"
 
 
 router = JobResource.router
@@ -62,19 +62,19 @@ def create_job(request: Any, org_slug: str, payload: JobCreateIn) -> Any:
     return Status(202, job)
 
 
-@router.get("/{org_slug}/jobs/{pk}/", response=JobOut)
-def retrieve_job(request: Any, org_slug: str, pk: str) -> Any:
+@router.get("/{org_slug}/jobs/{id}/", response=JobOut)
+def retrieve_job(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_VIEW,))
-    job = selectors.list_jobs_for_organization(organization).filter(pk=pk).first()
+    job = selectors.list_jobs_for_organization(organization).filter(pk=id).first()
     if job is None:
         raise Http404
     return job
 
 
-@router.post("/{org_slug}/jobs/{pk}/cancel/", response=JobOut)
-def cancel_job(request: Any, org_slug: str, pk: str) -> Any:
+@router.post("/{org_slug}/jobs/{id}/cancel/", response=JobOut)
+def cancel_job(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_CREATE,))
-    job = selectors.list_jobs_for_organization(organization).filter(pk=pk).first()
+    job = selectors.list_jobs_for_organization(organization).filter(pk=id).first()
     if job is None:
         raise Http404
     return services.cancel_job(job=job, actor=request.auth)

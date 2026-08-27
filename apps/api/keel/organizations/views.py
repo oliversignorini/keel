@@ -128,7 +128,7 @@ class MembershipResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.membership_factory"
     required_permissions = (Perm.MEMBERS_VIEW,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/members/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/members/{id}/"
 
 
 class RoleResource(OrgScopedResource):
@@ -136,7 +136,7 @@ class RoleResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.role_factory"
     required_permissions = (Perm.MEMBERS_VIEW,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/roles/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/roles/{id}/"
 
 
 class InvitationResource(OrgScopedResource):
@@ -144,7 +144,7 @@ class InvitationResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.invitation_factory"
     required_permissions = (Perm.MEMBERS_INVITE,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{id}/"
 
 
 @nested_router.get("/{org_slug}/members/", response=Page[MembershipOut])
@@ -154,13 +154,13 @@ def list_members(request: Any, org_slug: str) -> dict:
     return paginate(request, queryset)
 
 
-@nested_router.get("/{org_slug}/members/{pk}/", response=MembershipOut)
-def retrieve_member(request: Any, org_slug: str, pk: str) -> Any:
+@nested_router.get("/{org_slug}/members/{id}/", response=MembershipOut)
+def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     membership = (
         Membership.objects.select_related("user", "role")
         .for_organization(organization)
-        .filter(pk=pk)
+        .filter(pk=id)
         .first()
     )
     if membership is None:
@@ -168,23 +168,27 @@ def retrieve_member(request: Any, org_slug: str, pk: str) -> Any:
     return membership
 
 
-@nested_router.patch("/{org_slug}/members/{pk}/", response=MembershipOut)
+# Same PUT+PATCH parity note as keel.widgets.views.update_widget — DRF's
+# update()/partial_update() were the same code for members too.
+@nested_router.api_operation(
+    ["PUT", "PATCH"], "/{org_slug}/members/{id}/", response=MembershipOut
+)
 def update_member_role(
-    request: Any, org_slug: str, pk: str, payload: MembershipRoleUpdateIn
+    request: Any, org_slug: str, id: str, payload: MembershipRoleUpdateIn
 ) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_CHANGE_ROLE,))
-    membership = Membership.objects.for_organization(organization).filter(pk=pk).first()
+    membership = Membership.objects.for_organization(organization).filter(pk=id).first()
     if membership is None:
         raise Http404
     role = _get_role_or_422(payload.role_id)
     return services.change_member_role(membership=membership, role=role, actor=request.auth)
 
 
-@nested_router.delete("/{org_slug}/members/{pk}/", response={204: None})
-def remove_member(request: Any, org_slug: str, pk: str) -> Any:
+@nested_router.delete("/{org_slug}/members/{id}/", response={204: None})
+def remove_member(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_REMOVE,))
-    membership = Membership.objects.for_organization(organization).filter(pk=pk).first()
+    membership = Membership.objects.for_organization(organization).filter(pk=id).first()
     if membership is None:
         raise Http404
     services.remove_member(membership=membership, actor=request.auth)
@@ -198,10 +202,10 @@ def list_roles(request: Any, org_slug: str) -> dict:
     return paginate(request, queryset)
 
 
-@nested_router.get("/{org_slug}/roles/{pk}/", response=RoleOut)
-def retrieve_role(request: Any, org_slug: str, pk: str) -> Any:
+@nested_router.get("/{org_slug}/roles/{id}/", response=RoleOut)
+def retrieve_role(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
-    role = selectors.list_roles_for_organization(organization).filter(pk=pk).first()
+    role = selectors.list_roles_for_organization(organization).filter(pk=id).first()
     if role is None:
         raise Http404
     return role
@@ -230,13 +234,13 @@ def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) 
     return Status(201, invitation)
 
 
-@nested_router.get("/{org_slug}/invitations/{pk}/", response=InvitationOut)
-def retrieve_invitation(request: Any, org_slug: str, pk: str) -> Any:
+@nested_router.get("/{org_slug}/invitations/{id}/", response=InvitationOut)
+def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
     invitation = (
         Invitation.objects.select_related("role", "invited_by")
         .for_organization(organization)
-        .filter(pk=pk)
+        .filter(pk=id)
         .first()
     )
     if invitation is None:
@@ -244,11 +248,11 @@ def retrieve_invitation(request: Any, org_slug: str, pk: str) -> Any:
     return invitation
 
 
-@nested_router.delete("/{org_slug}/invitations/{pk}/", response={204: None})
-def revoke_invitation(request: Any, org_slug: str, pk: str) -> Any:
+@nested_router.delete("/{org_slug}/invitations/{id}/", response={204: None})
+def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
-    invitation = Invitation.objects.for_organization(organization).filter(pk=pk).first()
+    invitation = Invitation.objects.for_organization(organization).filter(pk=id).first()
     if invitation is None:
         raise Http404
     services.revoke_invitation(invitation=invitation, actor=request.auth)

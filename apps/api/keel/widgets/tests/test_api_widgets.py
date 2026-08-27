@@ -90,6 +90,29 @@ def test_owner_can_create_list_retrieve_update_and_delete_a_widget() -> None:
     assert not Widget.objects.filter(pk=widget_id).exists()
 
 
+def test_put_is_accepted_the_same_as_patch() -> None:
+    """DRF's UpdateModelMixin registered both PUT and PATCH — stage
+    10.D's route-by-route diff caught PUT's absence as a real gap, not
+    just a docs mismatch, so it is tested directly here."""
+    org, owner = _org_with_owner()
+    client = _client_for(owner)
+    response = client.post(
+        f"/api/v1/orgs/{org.slug}/widgets/",
+        {"name": "Sprocket"},
+        content_type="application/json",
+    )
+    widget_id = response.json()["id"]
+
+    response = client.put(
+        f"/api/v1/orgs/{org.slug}/widgets/{widget_id}/",
+        {"status": "archived"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "archived"
+
+
 def test_widgets_view_only_member_cannot_create() -> None:
     org, _owner = _org_with_owner()
     member = _member_with_permissions(org, [Perm.WIDGETS_VIEW])

@@ -31,7 +31,7 @@ class AuditLogResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.audit.tests.factories.audit_log_factory"
     required_permissions = (Perm.AUDIT_VIEW,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/audit/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/audit/{id}/"
 
 
 router = AuditLogResource.router
@@ -48,10 +48,10 @@ def list_audit_logs(request: Any, org_slug: str) -> dict:
     return paginate(request, queryset)
 
 
-@router.get("/{org_slug}/audit/{pk}/", response=AuditLogOut)
-def retrieve_audit_log(request: Any, org_slug: str, pk: str) -> AuditLog:
+@router.get("/{org_slug}/audit/{id}/", response=AuditLogOut)
+def retrieve_audit_log(request: Any, org_slug: str, id: str) -> AuditLog:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
-    row = selectors.list_audit_logs_for_organization(organization).filter(pk=pk).first()
+    row = selectors.list_audit_logs_for_organization(organization).filter(pk=id).first()
     if row is None:
         raise Http404
     return row

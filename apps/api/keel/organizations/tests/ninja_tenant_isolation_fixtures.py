@@ -30,7 +30,7 @@ class WellScopedResource(OrgScopedResource):
     router = keel_router()
     required_permissions = (Perm.MEMBERS_VIEW,)
     test_factory = "keel.organizations.tests.factories.membership_factory"
-    detail_url_template = "/api/v1/__ninja_meta_fixture__/{org_slug}/well/{pk}/"
+    detail_url_template = "/api/v1/__ninja_meta_fixture__/{org_slug}/well/{id}/"
 
 
 class LeakyResource(OrgScopedResource):
@@ -42,22 +42,22 @@ class LeakyResource(OrgScopedResource):
     router = keel_router()
     required_permissions = (Perm.MEMBERS_VIEW,)
     test_factory = "keel.organizations.tests.factories.membership_factory"
-    detail_url_template = "/api/v1/__ninja_meta_fixture__/{org_slug}/leaky/{pk}/"
+    detail_url_template = "/api/v1/__ninja_meta_fixture__/{org_slug}/leaky/{id}/"
 
 
-@WellScopedResource.router.get("/{org_slug}/well/{pk}/")
-def well_scoped_retrieve(request: Any, org_slug: str, pk: str) -> dict:
+@WellScopedResource.router.get("/{org_slug}/well/{id}/")
+def well_scoped_retrieve(request: Any, org_slug: str, id: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, WellScopedResource.required_permissions)
-    membership = Membership.objects.filter(organization=organization, pk=pk).first()
+    membership = Membership.objects.filter(organization=organization, pk=id).first()
     if membership is None:
         raise Http404
     return {"id": str(membership.pk)}
 
 
-@LeakyResource.router.get("/{org_slug}/leaky/{pk}/")
-def leaky_retrieve(request: Any, org_slug: str, pk: str) -> dict:
+@LeakyResource.router.get("/{org_slug}/leaky/{id}/")
+def leaky_retrieve(request: Any, org_slug: str, id: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, LeakyResource.required_permissions)
-    membership = Membership.objects.get(pk=pk)  # BUG: not scoped to `organization`
+    membership = Membership.objects.get(pk=id)  # BUG: not scoped to `organization`
     if membership.organization_id != organization.pk:
         # BUG: should let the row 404 via a scoped lookup, not 403 here.
         raise PermissionDeniedWithReason(code="not_your_organisation")

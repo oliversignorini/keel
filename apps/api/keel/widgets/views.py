@@ -30,14 +30,14 @@ class WidgetResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.widgets.tests.factories.widget_factory"
     required_permissions = (Perm.WIDGETS_VIEW,)
-    detail_url_template = "/api/v1/orgs/{org_slug}/widgets/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/widgets/{id}/"
 
 
 router = WidgetResource.router
 
 
-def _get_widget_or_404(organization: Any, pk: str) -> Widget:
-    widget = selectors.list_widgets(organization).filter(pk=pk).first()
+def _get_widget_or_404(organization: Any, id: str) -> Widget:
+    widget = selectors.list_widgets(organization).filter(pk=id).first()
     if widget is None:
         raise Http404
     return widget
@@ -63,16 +63,21 @@ def create_widget(request: Any, org_slug: str, payload: WidgetIn) -> Status[Widg
     return Status(201, widget)
 
 
-@router.get("/{org_slug}/widgets/{pk}/", response=WidgetOut)
-def retrieve_widget(request: Any, org_slug: str, pk: str) -> Widget:
+@router.get("/{org_slug}/widgets/{id}/", response=WidgetOut)
+def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_VIEW,))
-    return _get_widget_or_404(organization, pk)
+    return _get_widget_or_404(organization, id)
 
 
-@router.patch("/{org_slug}/widgets/{pk}/", response=WidgetOut)
-def update_widget(request: Any, org_slug: str, pk: str, payload: WidgetPatchIn) -> Widget:
+# DRF's UpdateModelMixin registered both PUT and PATCH, routed to the same
+# update()/partial_update() pair — every WidgetPatchIn field is already
+# optional, so the two never behaved differently. One handler for both
+# keeps that surface (stage 10.D's route-by-route diff caught PUT's
+# absence as the one real gap, not just a documentation mismatch).
+@router.api_operation(["PUT", "PATCH"], "/{org_slug}/widgets/{id}/", response=WidgetOut)
+def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
-    widget = _get_widget_or_404(organization, pk)
+    widget = _get_widget_or_404(organization, id)
     fields = payload.dict(exclude_unset=True)
     return services.update_widget(
         widget=widget,
@@ -82,10 +87,10 @@ def update_widget(request: Any, org_slug: str, pk: str, payload: WidgetPatchIn) 
     )
 
 
-@router.delete("/{org_slug}/widgets/{pk}/", response={204: None})
-def destroy_widget(request: Any, org_slug: str, pk: str) -> Status[None]:
+@router.delete("/{org_slug}/widgets/{id}/", response={204: None})
+def destroy_widget(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
-    widget = _get_widget_or_404(organization, pk)
+    widget = _get_widget_or_404(organization, id)
     services.delete_widget(
         widget=widget, actor=request.auth, impersonator=getattr(request, "impersonator", None)
     )
