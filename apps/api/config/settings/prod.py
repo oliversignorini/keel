@@ -1,5 +1,5 @@
 from .base import *  # noqa: F403
-from .base import DATABASES, MIDDLEWARE, env
+from .base import DATABASES, MIDDLEWARE, STORAGES, env
 
 DEBUG = False
 
@@ -53,13 +53,12 @@ DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
 # from the app container rather than adding a CDN/object-storage step for
 # what is, today, only the Django admin's own assets.
 MIDDLEWARE = [*MIDDLEWARE[:1], "whitenoise.middleware.WhiteNoiseMiddleware", *MIDDLEWARE[1:]]
+# Only "staticfiles" changes for prod (WhiteNoise's manifest storage) —
+# "files" (keel.files.storage's seam) and "default" carry over from
+# base.py unchanged. A bare re-assignment here would silently drop
+# "files", since STORAGES is all-or-nothing and dict literals don't merge.
 STORAGES = {
-    # Unchanged from Django's own default — nothing in this codebase uses
-    # django.core.files.storage.default_storage (file uploads go through
-    # keel.files.r2_client to R2/MinIO instead), but STORAGES is an
-    # all-or-nothing setting: defining the dict at all means both keys
-    # must be present, or FileField's default storage silently disappears.
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    **STORAGES,
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },

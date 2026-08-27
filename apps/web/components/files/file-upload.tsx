@@ -23,7 +23,7 @@ const IDLE_STATE: FileUploadState = { phase: "idle", progress: 0, file: null, er
 
 interface FileUploadProps {
   orgSlug: string;
-  /** Fires once the row reaches `complete` — the reconciled row, not
+  /** Fires once the row reaches `available` — the reconciled row, not
    * just the upload's local state, so a caller that stores the file id
    * always has the server's view of it. */
   onComplete?: (file: FileUploadResource) => void;
@@ -31,7 +31,7 @@ interface FileUploadProps {
 
 /**
  * `<FileUpload>` (PRD §5 component inventory; docs/plans/phase-5.md 5.6):
- * presign → direct PUT to R2 with progress → complete → reconcile.
+ * presign → direct PUT to storage with progress → complete → reconcile.
  *
  * "Reconciliation" here means the component never trusts its own
  * in-memory belief that an upload finished — the `complete` call
@@ -49,11 +49,7 @@ export function FileUpload({ orgSlug, onComplete }: FileUploadProps) {
       pendingFileRef.current = selected;
       setState({ phase: "presigning", progress: 0, file: null, error: null });
       try {
-        const { file, upload_url: uploadUrl } = await createPresignedUpload(orgSlug, {
-          filename: selected.name,
-          content_type: selected.type || "application/octet-stream",
-          size: selected.size,
-        });
+        const { file, upload_url: uploadUrl } = await createPresignedUpload(orgSlug, selected);
 
         setState({ phase: "uploading", progress: 0, file, error: null });
         await uploadToPresignedUrl(uploadUrl, selected, (fraction) => {
@@ -100,7 +96,7 @@ export function FileUpload({ orgSlug, onComplete }: FileUploadProps) {
     if (!state.file) return;
     const reconciled = await getFileUpload(orgSlug, state.file.id);
     setState((previous) => ({ ...previous, file: reconciled }));
-    if (reconciled.status === "complete") {
+    if (reconciled.status === "available") {
       onComplete?.(reconciled);
     }
   }, [orgSlug, state.file, onComplete]);
@@ -131,7 +127,7 @@ export function FileUpload({ orgSlug, onComplete }: FileUploadProps) {
 
       {state.phase === "completing" && <div>Finishing…</div>}
 
-      {state.phase === "done" && state.file && <div>Uploaded: {state.file.key}</div>}
+      {state.phase === "done" && state.file && <div>Uploaded: {state.file.filename}</div>}
 
       {state.phase === "error" && (
         <div role="alert">

@@ -1428,12 +1428,45 @@ export const retrieveSubscriptionResponse = zod.object({
 
 
 /**
+ * @summary List Files
+ */
+export const listFilesParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const listFilesQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listFilesResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
+  "results": zod.array(zod.object({
+  "completed_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "content_type": zod.string(),
+  "created_at": zod.string().datetime({}),
+  "failure_reason": zod.string(),
+  "filename": zod.string(),
+  "id": zod.string(),
+  "size": zod.number(),
+  "status": zod.enum(['pending', 'available', 'failed', 'expired', 'deleted'])
+}))
+})
+
+
+/**
  * @summary Create Upload
  */
 export const createUploadParams = zod.object({
   "org_slug": zod.string()
 })
 
+export const createUploadBodyChecksumSha256Min = 64;
+export const createUploadBodyChecksumSha256Max = 64;
+
+
+export const createUploadBodyChecksumSha256RegExp = new RegExp('^[0-9a-fA-F]{64}$');
 export const createUploadBodyContentTypeMax = 255;
 
 export const createUploadBodyFilenameMax = 255;
@@ -1442,6 +1475,7 @@ export const createUploadBodyFilenameMax = 255;
 
 
 export const createUploadBody = zod.object({
+  "checksum_sha256": zod.string().min(createUploadBodyChecksumSha256Min).max(createUploadBodyChecksumSha256Max).regex(createUploadBodyChecksumSha256RegExp),
   "content_type": zod.string().max(createUploadBodyContentTypeMax),
   "filename": zod.string().max(createUploadBodyFilenameMax),
   "size": zod.number().min(1)
@@ -1449,8 +1483,17 @@ export const createUploadBody = zod.object({
 
 
 /**
- * Scoped to ``organization`` in the same lookup as the completion
-view above — the mechanism the cross-tenant test in
+ * @summary Delete File
+ */
+export const deleteFileParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+
+/**
+ * Scoped to ``organization`` in the same lookup as every other
+action above — the mechanism the cross-tenant test in
 ``keel/files/tests/test_uploads.py`` exercises directly.
  * @summary Retrieve Upload
  */
@@ -1460,12 +1503,14 @@ export const retrieveUploadParams = zod.object({
 })
 
 export const retrieveUploadResponse = zod.object({
+  "completed_at": zod.union([zod.string().datetime({}),zod.null()]),
   "content_type": zod.string(),
   "created_at": zod.string().datetime({}),
+  "failure_reason": zod.string(),
+  "filename": zod.string(),
   "id": zod.string(),
-  "key": zod.string(),
   "size": zod.number(),
-  "status": zod.enum(['pending', 'complete'])
+  "status": zod.enum(['pending', 'available', 'failed', 'expired', 'deleted'])
 })
 
 
@@ -1478,12 +1523,53 @@ export const completeUploadParams = zod.object({
 })
 
 export const completeUploadResponse = zod.object({
+  "completed_at": zod.union([zod.string().datetime({}),zod.null()]),
   "content_type": zod.string(),
   "created_at": zod.string().datetime({}),
+  "failure_reason": zod.string(),
+  "filename": zod.string(),
   "id": zod.string(),
-  "key": zod.string(),
   "size": zod.number(),
-  "status": zod.enum(['pending', 'complete'])
+  "status": zod.enum(['pending', 'available', 'failed', 'expired', 'deleted'])
+})
+
+
+/**
+ * Returns a fresh, short-lived download URL rather than embedding
+one in every list/retrieve response — a presigned GET URL is a
+credential in its own right (PRD §4 invariant 7's "unreadable across
+tenants" applies to it too), so it's only minted for the caller who
+just proved, via ``resolve_and_authorize``, that they're allowed to
+read this row.
+ * @summary Get Download Url
+ */
+export const getFileDownloadUrlParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const getFileDownloadUrlResponse = zod.object({
+  "download_url": zod.string()
+})
+
+
+/**
+ * @summary Local Object Download
+ */
+export const localObjectDownloadParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const localObjectDownloadResponse = zod.unknown()
+
+
+/**
+ * @summary Local Object Upload
+ */
+export const localObjectUploadParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
 
