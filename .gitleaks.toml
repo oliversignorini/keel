@@ -25,3 +25,10 @@ paths = [
   '''(^|/)\.env\.bak$''',
   '''(^|/)openapi\.merged\.json$''',
 ]
+# The same illustrative Fernet key from .env.example is reused verbatim in
+# .github/workflows/ci.yml env blocks so CI tests exercise the crypto path.
+# Allowlist the value itself rather than the workflows directory, so any
+# *other* secret landing in a workflow file still fails the scan.
+regexes = [
+  '''O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=''',
+]
