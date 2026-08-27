@@ -8,6 +8,13 @@ from redis import Redis
 from redis.exceptions import RedisError
 
 from keel.core.ninja_api import api as ninja_api
+from keel.widgets.views import router as widgets_router
+
+# Every app's Ninja router mounts on this one shared api instance (stage
+# 10.A/10.D's note in keel/core/ninja_api.py). "/organizations" here, not
+# "/orgs" — the orgs rename is stage 10.C's job, done in one sweep with
+# every other route.
+ninja_api.add_router("/organizations", widgets_router)
 
 
 def healthz(request: HttpRequest) -> JsonResponse:

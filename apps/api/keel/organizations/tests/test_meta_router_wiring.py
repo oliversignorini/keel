@@ -29,9 +29,15 @@ router.
 from typing import Any
 
 from django.conf import settings
+from django.urls import get_resolver
 from django.utils.module_loading import import_string
 
 from keel.core.authz import OrgScopedViewSet, registered_scoped_viewsets
+from keel.core.ninja_authz import OrgScopedResource
+from keel.organizations.tests.ninja_tenant_isolation import (
+    production_scoped_resources,
+    resource_route_is_wired,
+)
 from keel.organizations.tests.tenant_isolation import iter_org_scoped_viewsets
 
 
@@ -74,4 +80,29 @@ def test_every_production_scoped_viewset_is_reachable_by_the_router() -> None:
         "Register every organization_scoped viewset on the router at "
         "settings.KEEL_API_ROUTER — until then, the cross-org 404 "
         "guarantee for these viewsets is never actually checked by CI."
+    )
+
+
+def test_every_production_ninja_resource_is_reachable_by_the_router() -> None:
+    """The Ninja half of the same guarantee (phase-10.md 10.B): as long
+    as both DRF and Ninja exist side by side, an ``OrgScopedResource``
+    that ``__init_subclass__`` recorded (``keel/core/ninja_authz.py``)
+    but that nothing ever mounted on the real URLconf must fail CI, the
+    same way an un-routed ``OrgScopedViewSet`` does above."""
+    _ = get_resolver().url_patterns  # force config.urls (and its routers) to load
+
+    production_resources: list[type[OrgScopedResource]] = production_scoped_resources()
+    unreachable = sorted(
+        (cls for cls in production_resources if not resource_route_is_wired(cls)),
+        key=lambda cls: cls.__qualname__,
+    )
+
+    assert not unreachable, (
+        "The following OrgScopedResource(s) exist but their "
+        "detail_url_template does not resolve against the live URLconf "
+        "(PRD §4 invariant 7): "
+        f"{[f'{cls.__module__}.{cls.__qualname__}' for cls in unreachable]}. "
+        "Mount the resource's router in config/urls.py — until then, the "
+        "cross-org 404 guarantee for these resources is never actually "
+        "checked by CI."
     )
