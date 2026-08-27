@@ -3,14 +3,18 @@ expressed?", and the v1.2 note "Where the type lives, and why it is not in
 this file").
 
 This module holds the *vocabulary* only: ``Decision``, the ``Guard``
-protocol, the registry, ``has_perm``, ``HasOrgPermission``, and the base
-viewsets. It contains no permission code, no role, and nothing that
-answers a question about a user — that is ``organizations/permissions.py``,
-which imports this module, registers real guards against real codes, and
+protocol, the registry, ``has_perm``, and the membership-resolution seam.
+It contains no permission code, no role, and nothing that answers a
+question about a user — that is ``organizations/permissions.py``, which
+imports this module, registers real guards against real codes, and
 re-exports ``has_perm``. If you are about to write the string "org.view"
 in this file, stop: it belongs in Phase 3.
 
-**The membership-resolution seam.** ``OrgScopedViewSet`` must resolve the
+The base class a resource declares against lives in
+``keel/core/ninja_authz.py`` (``GlobalResource`` / ``OrgScopedResource``)
+— it is framework-facing, this file is not.
+
+**The membership-resolution seam.** ``OrgScopedResource`` must resolve the
 organisation named in the URL and confirm the requesting user is a member
 of it, but ``keel/core`` may not import ``keel.organizations`` (that
 import-linter contract is asserted in Phase 0 and must stay green). So
@@ -32,12 +36,7 @@ from typing import Any, Protocol
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import Http404
 from django.utils.module_loading import import_string
-from rest_framework import viewsets
-from rest_framework.permissions import BasePermission
-
-from keel.core.exceptions import PermissionDeniedWithReason
 
 
 @dataclass(frozen=True)
@@ -115,26 +114,6 @@ def has_perm(user: Any, organization: Any, code: str, subject: Any | None = None
     return guard(user, organization, subject=subject)
 
 
-class HasOrgPermission(BasePermission):
-    """Reads ``required_permissions`` off the view, resolves each through
-    ``has_perm``, and raises ``PermissionDeniedWithReason`` — whose
-    envelope ``code`` is ``Decision.reason`` and ``details`` is
-    ``Decision.details`` — on the first denial.
-    """
-
-    def has_permission(self, request: Any, view: Any) -> bool:
-        codes = getattr(view, "required_permissions", None) or []
-        organization = getattr(view, "organization", None)
-        for code in codes:
-            decision = has_perm(request.user, organization, code)
-            if not decision.allowed:
-                raise PermissionDeniedWithReason(
-                    code=decision.reason or "permission_denied",
-                    details=decision.details,
-                )
-        return True
-
-
 def _resolve_organization(request: Any, org_slug: str | None) -> Any:
     resolver_path = getattr(settings, "KEEL_ORGANIZATION_RESOLVER", None)
     if not resolver_path:
@@ -147,103 +126,3 @@ def _resolve_organization(request: Any, org_slug: str | None) -> Any:
         )
     resolver = import_string(resolver_path)
     return resolver(request, org_slug)
-
-
-class GlobalViewSet(viewsets.GenericViewSet):
-    """Base for viewsets over tables that are legitimately global.
-
-    Every subclass must declare ``required_permissions`` and must declare
-    either ``organization_scoped = True`` (use ``OrgScopedViewSet`` instead)
-    or a ``GLOBAL_JUSTIFICATION`` string explaining why the table has no
-    tenant boundary. Both are enforced at import time via
-    ``__init_subclass__`` — PRD §4 invariant 7's tenant-scoping rule must
-    fail the build, not a request.
-    """
-
-    __abstract__ = True
-    organization_scoped = False
-    GLOBAL_JUSTIFICATION: str | None = None
-    required_permissions: tuple[str, ...] | list[str] | None = None
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        if cls.__dict__.get("__abstract__", False):
-            return
-        if not getattr(cls, "required_permissions", None):
-            raise ImproperlyConfigured(f"{cls.__name__} must declare required_permissions.")
-        if not cls.organization_scoped and not getattr(cls, "GLOBAL_JUSTIFICATION", None):
-            raise ImproperlyConfigured(
-                f"{cls.__name__} must declare organization_scoped = True or a "
-                "GLOBAL_JUSTIFICATION string explaining why this table has no "
-                "tenant boundary."
-            )
-        _global_viewset_registry.append(cls)
-
-
-_global_viewset_registry: list[type["GlobalViewSet"]] = []
-
-
-def registered_global_viewsets() -> list[type["GlobalViewSet"]]:
-    """Every well-formed, non-abstract ``GlobalViewSet`` subclass (including
-    every ``OrgScopedViewSet`` subclass, which is one), in definition order.
-
-    Recorded unconditionally by ``__init_subclass__`` — a ``GlobalViewSet``
-    cannot come into existence without landing here, which is what lets the
-    ``GLOBAL_JUSTIFICATION`` print (PRD §4 invariant 7) find an exemption
-    regardless of which router — or no router at all — it is registered on.
-    """
-    return list(_global_viewset_registry)
-
-
-_scoped_viewset_registry: list[type["OrgScopedViewSet"]] = []
-
-
-def registered_scoped_viewsets() -> list[type["OrgScopedViewSet"]]:
-    """Every well-formed, non-abstract ``OrgScopedViewSet`` subclass with
-    ``organization_scoped = True``, in definition order.
-
-    Recorded unconditionally by ``__init_subclass__`` — a scoped viewset
-    cannot come into existence without landing here, which is what lets
-    a CI meta-test notice one that the tenant-isolation walk can't reach
-    (PRD §4 invariant 7: "the exemption list is where leaks hide" applies
-    just as much to a router nobody wired up as to an exemption list).
-    """
-    return list(_scoped_viewset_registry)
-
-
-class OrgScopedViewSet(GlobalViewSet):
-    """Resolves the organisation from the URL, checks membership, and
-    filters the queryset — all before any view code runs (PRD §4,
-    "Tenancy and permissions"). See the module docstring for the
-    membership-resolution seam.
-    """
-
-    __abstract__ = True
-    organization_scoped = True
-    permission_classes = (HasOrgPermission,)
-    organization_url_kwarg = "org_slug"
-    test_factory: str | None = None
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        if cls.__dict__.get("__abstract__", False):
-            return
-        if cls.organization_scoped and not getattr(cls, "test_factory", None):
-            raise ImproperlyConfigured(
-                f"{cls.__name__} declares organization_scoped = True and must "
-                "also declare test_factory, the dotted path to a factory the "
-                "cross-tenant meta-test uses to build rows in two "
-                "organisations (PRD §4 invariant 7)."
-            )
-        if cls.organization_scoped:
-            _scoped_viewset_registry.append(cls)
-
-    def initial(self, request: Any, *args: Any, **kwargs: Any) -> None:
-        organization = _resolve_organization(request, kwargs.get(self.organization_url_kwarg))
-        if organization is None:
-            raise Http404
-        self.organization = organization
-        super().initial(request, *args, **kwargs)
-
-    def get_queryset(self) -> Any:
-        return super().get_queryset().for_organization(self.organization)

@@ -1,5 +1,5 @@
-"""Ninja exception handlers producing the same error envelope
-``keel.core.exceptions.exception_handler`` builds for DRF views (PRD §7):
+"""Ninja exception handlers producing the error envelope PRD §7
+specifies:
 
     { "error": { "code": ..., "message": ..., "details": [...] } }
 
@@ -20,8 +20,8 @@ def _validation_details(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Ninja's ``ValidationError.errors`` is a list of pydantic-derived
     dicts, each with a ``loc`` tuple whose first element names the
     parameter source (``body`` / ``query`` / ``path`` / ...) and the rest
-    the field path. Reshape to the same ``{field, message}`` list
-    ``keel.core.exceptions._validation_details`` produces for DRF."""
+    the field path. Reshape to the flat ``{field, message}`` list PRD §7's
+    envelope specifies."""
     details = []
     for error in errors:
         loc = error.get("loc", ())

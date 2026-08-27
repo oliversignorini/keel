@@ -21,7 +21,7 @@ from django.db import connection, models
 from django.test import RequestFactory
 from django.test.utils import isolate_apps
 
-from keel.core.ninja_pagination import CursorPaginator
+from keel.core.ninja_pagination import CursorPaginator, InvalidCursor, _positive_int
 
 
 def _paginate_all(paginator_cls, queryset, page_size):
@@ -112,3 +112,293 @@ def test_ninja_cursor_pagination_response_envelope_shape() -> None:
     finally:
         with connection.schema_editor() as editor:
             editor.delete_model(EnvelopeRow)
+
+
+# --- The rest of the ported surface --------------------------------------
+#
+# The two tests above prove the guarantee that matters (no skipped or
+# repeated row across a tie). These cover the branches that guarantee
+# depends on but that a forward-only walk over a single tied value never
+# reaches: backward traversal, the position filter for a *mixed* ordering,
+# the client-supplied `limit`, and the malformed-cursor path.
+
+
+def _cursor_of(link):
+    return parse_qs(urlparse(link).query)["cursor"][0]
+
+
+def _page(paginator_cls, queryset, page_size, query=None):
+    """One page: returns ``(ids, envelope)``."""
+    paginator = paginator_cls()
+    paginator.page_size = page_size
+    request = RequestFactory().get("/fake/things/", query or {})
+    rows = paginator.paginate_queryset(queryset, request)
+    ids = [row.id for row in rows]
+    return ids, paginator.get_paginated_response(ids)
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_walking_forward_then_backward_returns_the_same_rows() -> None:
+    """Mixed sort values, so the cursor actually carries a ``position``
+    and the ``__gt`` / ``__lt`` filter runs — then the previous-links are
+    walked back to the start, which is the only path through the
+    reverse-ordering branch."""
+
+    class MixedRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"MixedRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(MixedRow)
+    try:
+        for rank in range(12):
+            # Two rows per rank: enough ties to need the within-tie
+            # offset, enough distinct values to need the position filter.
+            MixedRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+            MixedRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+
+        class MixedPaginator(CursorPaginator):
+            ordering = ("rank", "id")
+
+        queryset = MixedRow.objects.all()  # type: ignore[attr-defined]
+
+        forward_pages = []
+        query: dict = {}
+        while True:
+            ids, envelope = _page(MixedPaginator, queryset, 5, query)
+            forward_pages.append(ids)
+            if not envelope["next"]:
+                break
+            query = {"cursor": _cursor_of(envelope["next"])}
+
+        flat = [row_id for page in forward_pages for row_id in page]
+        assert len(flat) == 24
+        assert len(set(flat)) == 24
+
+        # Walk back from the last page. Every previous-link must hand back
+        # rows already seen, in the same order, never a fresh row.
+        backward_pages = []
+        _, envelope = _page(MixedPaginator, queryset, 5, query)
+        while envelope["previous"]:
+            ids, envelope = _page(
+                MixedPaginator, queryset, 5, {"cursor": _cursor_of(envelope["previous"])}
+            )
+            backward_pages.append(ids)
+
+        # backward_pages come back last-page-first; re-reverse them and
+        # the result must line up with the forward walk exactly.
+        walked_back = [row_id for page in reversed(backward_pages) for row_id in page]
+        assert set(walked_back) <= set(flat)
+        assert walked_back == sorted(walked_back, key=flat.index)
+        assert flat[0] in walked_back, "walking back never reached the first page"
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(MixedRow)
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_limit_query_param_overrides_the_default_page_size() -> None:
+    class LimitRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"LimitRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(LimitRow)
+    try:
+        for rank in range(10):
+            LimitRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+
+        class LimitPaginator(CursorPaginator):
+            ordering = ("rank", "id")
+
+        queryset = LimitRow.objects.all()  # type: ignore[attr-defined]
+
+        ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "3"})
+        assert len(ids) == 3
+
+        # A junk or non-positive limit falls back to the page size rather
+        # than 400-ing — the parameter is a hint, not part of the contract.
+        ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "not-a-number"})
+        assert len(ids) == 5
+        ids, _ = _page(LimitPaginator, queryset, 5, {"limit": "0"})
+        assert len(ids) == 5
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(LimitRow)
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_a_single_string_ordering_is_accepted() -> None:
+    """``ordering`` is normally a tuple, but a lone string is the shape a
+    caller most naturally reaches for and is normalised rather than
+    silently iterated character by character."""
+
+    class StringOrderRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"StringOrderRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(StringOrderRow)
+    try:
+        for rank in range(3):
+            StringOrderRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+
+        class StringOrderPaginator(CursorPaginator):
+            ordering = "rank"  # type: ignore[assignment]
+
+        queryset = StringOrderRow.objects.all()  # type: ignore[attr-defined]
+        ids, _ = _page(StringOrderPaginator, queryset, 5)
+
+        assert len(ids) == 3
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(StringOrderRow)
+
+
+def test_a_malformed_cursor_is_422_invalid_cursor() -> None:
+    """A tampered or truncated cursor is the client's error, not a 500 —
+    PRD §7's 422 row (``keel.core.exceptions.UnprocessableEntity``)."""
+    paginator = CursorPaginator()
+    request = RequestFactory().get("/fake/things/", {"cursor": "bz1ub3QtYS1udW1iZXI="})
+
+    with pytest.raises(InvalidCursor) as excinfo:
+        paginator._decode_cursor(request)
+
+    assert excinfo.value.status_code == 422
+    assert excinfo.value.code == "invalid_cursor"
+
+
+def test_position_is_read_from_a_dict_row_as_well_as_a_model_instance() -> None:
+    """``paginate()`` is always handed ORM instances, but the ported
+    algorithm supports ``.values()`` rows too and the branch would
+    otherwise rot unnoticed."""
+    paginator = CursorPaginator()
+    paginator.ordering = ("-created_at", "id")
+
+    assert paginator._position_from_instance({"created_at": "2026-01-01"}) == "2026-01-01"
+
+
+def test_a_negative_page_size_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        _positive_int("-1")
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_walking_backward_through_a_fully_tied_run() -> None:
+    """The tie-safety guarantee has to hold in both directions: the
+    within-tie offset is carried on a reverse cursor too, and a backward
+    walk over one long run of equal values is where that bookkeeping is
+    easiest to get wrong."""
+
+    class TiedBackRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"TiedBackRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(TiedBackRow)
+    try:
+        for _ in range(30):
+            TiedBackRow.objects.create(rank=1)  # type: ignore[attr-defined]
+
+        class TiedBackPaginator(CursorPaginator):
+            ordering = ("rank", "id")
+
+        queryset = TiedBackRow.objects.all()  # type: ignore[attr-defined]
+
+        forward: list[list[int]] = []
+        query: dict = {}
+        while True:
+            ids, envelope = _page(TiedBackPaginator, queryset, 4, query)
+            forward.append(ids)
+            if not envelope["next"]:
+                break
+            query = {"cursor": _cursor_of(envelope["next"])}
+
+        backward: list[list[int]] = []
+        _, envelope = _page(TiedBackPaginator, queryset, 4, query)
+        while envelope["previous"]:
+            ids, envelope = _page(
+                TiedBackPaginator, queryset, 4, {"cursor": _cursor_of(envelope["previous"])}
+            )
+            backward.append(ids)
+
+        flat_forward = [row_id for page in forward for row_id in page]
+        flat_backward = [row_id for page in reversed(backward) for row_id in page]
+
+        assert len(flat_forward) == 30
+        assert len(set(flat_backward)) == len(flat_backward), "walking back repeated a row"
+        assert flat_backward == sorted(flat_backward, key=flat_forward.index)
+        assert flat_forward[0] in flat_backward, "walking back never reached the first row"
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(TiedBackRow)
+
+
+@pytest.mark.django_db(transaction=True)
+@isolate_apps("keel.core")
+def test_a_cursor_whose_rows_have_all_been_deleted_still_answers() -> None:
+    """A cursor is a bookmark into data that can change underneath it.
+    Every row vanishing between two requests must produce an empty page
+    with usable links, not a crash — in both directions."""
+
+    class VanishingRow(models.Model):
+        rank = models.IntegerField()
+
+        class Meta:
+            app_label = "core"
+
+        def __str__(self) -> str:
+            return f"VanishingRow(rank={self.rank})"
+
+    with connection.schema_editor() as editor:
+        editor.create_model(VanishingRow)
+    try:
+        for rank in range(9):
+            VanishingRow.objects.create(rank=rank)  # type: ignore[attr-defined]
+
+        class VanishingPaginator(CursorPaginator):
+            ordering = ("rank", "id")
+
+        queryset = VanishingRow.objects.all()  # type: ignore[attr-defined]
+
+        _, first = _page(VanishingPaginator, queryset, 3)
+        forward_cursor = _cursor_of(first["next"])
+        _, second = _page(VanishingPaginator, queryset, 3, {"cursor": forward_cursor})
+        reverse_cursor = _cursor_of(second["previous"])
+
+        VanishingRow.objects.all().delete()  # type: ignore[attr-defined]
+
+        ids, envelope = _page(VanishingPaginator, queryset, 3, {"cursor": forward_cursor})
+        assert ids == []
+        assert envelope["previous"] is not None
+
+        ids, envelope = _page(VanishingPaginator, queryset, 3, {"cursor": reverse_cursor})
+        assert ids == []
+        assert envelope["next"] is not None
+    finally:
+        with connection.schema_editor() as editor:
+            editor.delete_model(VanishingRow)

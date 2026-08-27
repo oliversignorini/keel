@@ -1,12 +1,11 @@
 """Rate limiting for Ninja routes (PRD §3 NFR "Security": "Rate limiting
 ... on the API generally"; docs/plans/phase-8.md 8.6).
 
-Ported from ``rest_framework.throttling.SimpleRateThrottle`` /
+Ported from Django REST Framework's ``SimpleRateThrottle`` /
 ``AnonRateThrottle`` / ``UserRateThrottle`` — same cache-backed sliding
 window over Django's cache (Redis in production), same
 ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE`` settings, same 429 +
-``Retry-After`` behaviour — with no dependency on ``rest_framework``, so it
-survives DRF's removal in stage 10.E.
+``Retry-After`` behaviour — with no dependency on that framework.
 """
 
 import time

@@ -1,19 +1,17 @@
 """Cursor pagination for Ninja routes (PRD §7 conventions): ``{ results,
 next, previous }``.
 
-Ported from ``rest_framework.pagination.CursorPagination`` line for line,
-not reimplemented from scratch — see ``keel/core/pagination.py``'s
-docstring (kept for the DRF views that still exist during the migration)
-for why a hand-rolled "cursor = last id seen" approach is wrong: the
-within-tie offset encoded alongside the ordering value is what lets a page
-boundary land inside a run of equal sort values without skipping or
-repeating rows. Django Ninja ships no cursor paginator at all, so this
-exists to carry that guarantee over unchanged, verified by
+Ported line for line from Django REST Framework's ``CursorPagination``
+rather than reimplemented from scratch, because a hand-rolled
+"cursor = last id seen" approach is subtly wrong: the within-tie offset
+encoded alongside the ordering value is what lets a page boundary land
+inside a run of equal sort values without skipping or repeating rows.
+Django Ninja ships no cursor paginator at all, so this exists to carry
+that guarantee over unchanged, verified by
 ``keel/core/tests/test_ninja_pagination.py``'s ≥60-tied-row test.
 
-Operates on a plain Django ``HttpRequest`` and a queryset — no DRF types
-involved — so it has no dependency on ``rest_framework`` and survives its
-removal in stage 10.E.
+Operates on a plain Django ``HttpRequest`` and a queryset — no framework
+types beyond Django's own.
 """
 
 from base64 import b64decode, b64encode
@@ -64,14 +62,6 @@ def _replace_query_param(url: str, key: str, val: Any) -> str:
     scheme, netloc, path, query, fragment = parse.urlsplit(url)
     query_dict = parse.parse_qs(query, keep_blank_values=True)
     query_dict[key] = [str(val)]
-    query = parse.urlencode(sorted(query_dict.items()), doseq=True)
-    return parse.urlunsplit((scheme, netloc, path, query, fragment))
-
-
-def _remove_query_param(url: str, key: str) -> str:
-    scheme, netloc, path, query, fragment = parse.urlsplit(url)
-    query_dict = parse.parse_qs(query, keep_blank_values=True)
-    query_dict.pop(key, None)
     query = parse.urlencode(sorted(query_dict.items()), doseq=True)
     return parse.urlunsplit((scheme, netloc, path, query, fragment))
 

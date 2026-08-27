@@ -11,8 +11,6 @@ dependencies = [
     "django-cors-headers>=4.9.0",
     "django-environ>=0.14.0",
     "django-ninja>=1.6.3,<2",
-    "djangorestframework>=3.18.0",
-    "drf-spectacular>=0.30.0",
     "posthog>=3.7.4",
     "psycopg[binary]>=3.3.4",
     "redis>=8.1.0",
@@ -63,7 +61,7 @@ module = ["tests.*", "keel.*.tests.*"]
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "environ.*", "rest_framework.*", "allauth.*", "boto3.*", "botocore.*"]
+module = ["celery.*", "environ.*", "allauth.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]
@@ -90,13 +88,13 @@ django_settings_module = "config.settings.test"
 # never calls it.
 [tool.keel.coverage]
 "keel/core/ids.py" = 100
-"keel/core/authentication.py" = 100
+"keel/core/ninja_auth.py" = 100
 "keel/core/checks.py" = 100
 "keel/core/models.py" = 100
 "keel/core/exceptions.py" = 100
 "keel/core/authz.py" = 100
 "keel/core/audit.py" = 100
-"keel/core/pagination.py" = 100
+"keel/core/ninja_pagination.py" = 100
 "keel/core/tasks.py" = 100
 "keel/core/crypto.py" = 100
 "keel/core/logging.py" = 100

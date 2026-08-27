@@ -3,7 +3,6 @@ from django.contrib import admin
 from django.db import connections
 from django.http import HttpRequest, JsonResponse
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView
 from redis import Redis
 from redis.exceptions import RedisError
 
@@ -71,7 +70,9 @@ urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("readyz/", readyz, name="readyz"),
     path("admin/", admin.site.urls),
-    path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
+    # Ninja serves the OpenAPI document itself at /api/v1/openapi.json —
+    # there is no separate schema view to mount (drf-spectacular's
+    # /api/v1/schema/ is gone with DRF).
     path("api/v1/", ninja_api.urls),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8

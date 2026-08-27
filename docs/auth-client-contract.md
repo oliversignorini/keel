@@ -186,7 +186,7 @@ when MFA is enabled.
 
 ## Merged OpenAPI spec
 
-`/api/v1/schema/` (drf-spectacular) and `/_allauth/openapi.json` (allauth)
+`/api/v1/openapi.json` (Django Ninja) and `/_allauth/openapi.json` (allauth)
 are merged deterministically by `scripts/merge_openapi.py` (A.3) into
 `openapi.merged.json` at the repo root, which `packages/api-client`'s
 `orval` config points at. Regenerate the client after any settings change
