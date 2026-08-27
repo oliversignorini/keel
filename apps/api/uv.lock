@@ -1070,7 +1070,7 @@ dev = [
     { name = "django-stubs", specifier = ">=6.1.0" },
     { name = "factory-boy", specifier = ">=3.3.3" },
     { name = "import-linter", specifier = ">=2.13" },
-    { name = "moto", extras = ["s3"], specifier = ">=5.0.0" },
+    { name = "moto", extras = ["s3"], specifier = ">=5.2.3" },
     { name = "mypy", specifier = ">=2.3.1" },
     { name = "pip-audit", specifier = ">=2.7.0" },
     { name = "pytest", specifier = ">=9.1.1" },
