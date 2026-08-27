@@ -21,7 +21,6 @@ route is wired, not merely declared (PRD §4 invariant 7's "the exemption
 list is where leaks hide" applies exactly as much to an unmounted router).
 """
 
-from collections.abc import Sequence
 from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured
