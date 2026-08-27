@@ -57,7 +57,7 @@ packages/
   emails/       react-email templates, rendered to HTML at build
   ui/           theme.css token contract + shared components
 infra/          compose files, Caddyfile, railway.json
-docs/           architecture, deployment, dev setup, and the phase plans
+docs/           architecture.md, auth-flow.md, diagrams/, deployment, dev setup, and the phase plans
 scripts/        coverage gate, permission lint, OpenAPI merge
 ```
 
@@ -67,7 +67,7 @@ Every Django app has the same shape: `models.py` `services.py` `selectors.py` `p
 
 ## The invariants worth knowing before you change anything
 
-The full seven are in `docs/architecture.md` and §4 of the PRD. Four of them are enforced by tests that will fail on you rather than by convention:
+The full seven are in `docs/architecture.md` and §4 of the PRD, each with the file that enforces it — `docs/auth-flow.md` has the request-level picture for the auth-related ones. Four of them are enforced by tests that will fail on you rather than by convention:
 
 **Authorization lives in one file.** `organizations/permissions.py` holds every permission code and guard. `has_perm` returns a `Decision`, not a bool, so a denial carries a machine-readable reason into the 403 body. A CI meta-test walks the registry and fails if any guard lacks both an allow and a deny test — and the deny test must assert the _reason_, because a guard that denies for the wrong reason passes a boolean test and fails a user.
 
