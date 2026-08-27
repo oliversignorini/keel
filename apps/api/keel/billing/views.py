@@ -185,9 +185,15 @@ def stripe_webhook(request: HttpRequest) -> HttpResponse:
         id=event["id"],
         defaults={"type": event["type"], "payload": event.to_dict()},
     )
-    if created:
+    if created or stripe_event.processed_at is None:
+        # Re-enqueue on every unprocessed replay, not just on first sight
+        # (ddia#7): if the row committed but the first .delay() never
+        # reached the broker, `created` is False forever on redelivery and
+        # the event would otherwise sit unprocessed with no way to
+        # recover. Safe because process_stripe_event is a no-op on an
+        # event it has already processed.
         tasks.dispatch_stripe_event.delay(str(stripe_event.pk))
-    # Already recorded (a replay) or freshly created: either way this is a
-    # 200 — idempotent no-op for a replay (PRD §6, "Already processed →
-    # 200 immediately").
+    # Already processed, freshly created, or re-enqueued above: either way
+    # this is a 200 — idempotent no-op for a replay (PRD §6, "Already
+    # processed → 200 immediately").
     return HttpResponse(status=200)

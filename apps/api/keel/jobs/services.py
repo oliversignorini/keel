@@ -13,13 +13,12 @@ from django.db import transaction
 from django.utils import timezone
 
 from keel.billing import credits
-from keel.billing.models import CreditLedgerEntry
 from keel.core.audit import audited
 from keel.core.exceptions import UnprocessableEntity
 from keel.jobs.models import Job
 from keel.jobs.pubsub import publish_job_event
 from keel.jobs.registry import UnknownJobType, registry
-from keel.jobs.runner import run_job_task
+from keel.jobs.runner import hold_already_settled, locked_hold_entry, run_job_task
 
 
 @audited("job.created")
@@ -70,22 +69,25 @@ def cancel_job(*, job: Job, actor: Any) -> Job:
     no schema-level "cancelled" status to interrupt into — ``Job``'s
     columns are fixed at the Phase 1 baseline) but stops before the
     next one — see the resumption guard at the top of
-    ``keel.jobs.runner.run_job``'s per-step loop."""
-    if job.status in (Job.STATUS_SUCCEEDED, Job.STATUS_PARTIAL, Job.STATUS_FAILED):
-        return job
+    ``keel.jobs.runner.run_job``'s per-step loop.
 
+    Locks the ``Job`` row and re-checks terminal status inside the
+    transaction (ddia#2): the caller's in-memory ``job`` may be stale, and
+    without this lock two concurrent cancels of the same job — or a
+    cancel racing the runner's own settlement — can both pass the
+    terminal-status check and both refund the hold."""
     with transaction.atomic():
+        job = Job.objects.select_for_update().select_related("organization").get(pk=job.pk)
+        if job.status in (Job.STATUS_SUCCEEDED, Job.STATUS_PARTIAL, Job.STATUS_FAILED):
+            return job
+
         job.status = Job.STATUS_FAILED
         job.error = "cancelled"
         job.finished_at = timezone.now()
         job.save(update_fields=["status", "error", "finished_at"])
         if credits.credits_enabled():
-            hold_entry = (
-                CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_HOLD)
-                .order_by("-created_at")
-                .first()
-            )
-            if hold_entry is not None:
+            hold_entry = locked_hold_entry(job)
+            if hold_entry is not None and not hold_already_settled(job):
                 credits.refund(job.organization, hold_entry, actor=actor)
 
     publish_job_event(job)

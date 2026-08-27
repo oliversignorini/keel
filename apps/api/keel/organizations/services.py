@@ -153,8 +153,21 @@ def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
     entitlement returns 402 with upgrade context"). The seat counter only
     counts ``STATUS_ACTIVE`` memberships, so both a brand-new membership
     and reactivating a suspended one genuinely add a seat and are checked;
-    re-accepting an already-active membership is a pure no-op and isn't."""
+    re-accepting an already-active membership is a pure no-op and isn't.
+
+    Re-checks the invitation's validity inside this transaction (ddia#22)
+    rather than trusting the view's pre-transaction check: an accept
+    racing a revoke, or two accepts of the same token, must not both
+    succeed just because both read "still valid" before either wrote."""
     with transaction.atomic():
+        invitation = Invitation.objects.select_for_update().get(pk=invitation.pk)
+        if (
+            invitation.revoked_at is not None
+            or invitation.accepted_at is not None
+            or invitation.expires_at <= timezone.now()
+        ):
+            raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
+
         existing = Membership.objects.filter(
             organization=invitation.organization, user=user
         ).first()
@@ -189,14 +202,23 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
     """The last Owner cannot be demoted (PRD §8 Phase 3 acceptance). Keys
     off ``Perm.ORG_TRANSFER`` — the code only the Owner preset holds — the
     same source of truth ``permissions.is_last_active_owner`` uses for the
-    remove-guard, never off a role name."""
-    if is_last_active_owner(membership) and Perm.ORG_TRANSFER not in role.permissions:
-        raise Conflict(
-            code="cannot_demote_last_owner",
-            message="The organisation's last owner cannot be demoted.",
-            details={"membership_id": str(membership.pk)},
-        )
+    remove-guard, never off a role name.
+
+    Locks the ``Organization`` row before evaluating the last-owner check
+    (ddia#22): the read (``is_last_active_owner``) and the write (this
+    role change) are otherwise not materialised against each other, so
+    two concurrent demotions of the organisation's last two owners could
+    both observe "another owner exists" and both proceed, leaving zero
+    owners with no in-app path back."""
     with transaction.atomic():
+        Organization.objects.select_for_update().get(pk=membership.organization_id)
+        membership.refresh_from_db()
+        if is_last_active_owner(membership) and Perm.ORG_TRANSFER not in role.permissions:
+            raise Conflict(
+                code="cannot_demote_last_owner",
+                message="The organisation's last owner cannot be demoted.",
+                details={"membership_id": str(membership.pk)},
+            )
         membership.role = role
         membership.save(update_fields=["role"])
     return membership
@@ -231,17 +253,25 @@ def remove_member(*, membership: Membership, actor: Any) -> None:
     subject rather than reimplementing the last-owner check — the
     guard, not this function, is authorization's source of truth.
 
+    Locks the ``Organization`` row before the guard runs (ddia#22): the
+    guard's last-owner read and this function's delete are otherwise
+    unserialised, so two concurrent removals of the organisation's last
+    two owners could both pass the check and both proceed. The lock,
+    taken first, makes the second call's guard evaluation wait for the
+    first's delete to commit and see the up-to-date membership set.
+
     Seat sync fires on commit, behind ``BILLING_SEAT_PRICING`` — the
     other half of docs/plans/phase-4.md B.5 alongside
     ``accept_invitation``'s ("seat count syncs to Stripe ... on
     membership create and remove")."""
-    decision = has_perm(actor, membership.organization, Perm.MEMBERS_REMOVE, subject=membership)
-    if not decision.allowed:
-        raise PermissionDeniedWithReason(
-            code=decision.reason or "permission_denied", details=decision.details
-        )
     organization_id = membership.organization_id
     with transaction.atomic():
+        Organization.objects.select_for_update().get(pk=organization_id)
+        decision = has_perm(actor, membership.organization, Perm.MEMBERS_REMOVE, subject=membership)
+        if not decision.allowed:
+            raise PermissionDeniedWithReason(
+                code=decision.reason or "permission_denied", details=decision.details
+            )
         membership.delete()
         if _billing_seat_pricing_enabled():
             transaction.on_commit(lambda: _sync_seats(organization_id))

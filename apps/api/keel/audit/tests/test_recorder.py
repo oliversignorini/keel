@@ -36,23 +36,25 @@ def test_audited_service_writes_exactly_one_row_on_commit_with_actor(
     assert row.organization_id == org.pk
 
 
-def test_row_is_not_written_before_commit() -> None:
-    """``update_organization`` opens and closes its own ``atomic()``
-    block before returning (PRD §4 invariant 3), so proving "not before
-    commit" needs an *outer* atomic block wrapping the whole call — same
-    shape as ``keel.core.tests.test_audit``'s
-    ``test_audited_does_not_record_before_commit`` — rather than
-    ``django_capture_on_commit_callbacks``: with no surrounding atomic,
-    ``transaction.on_commit()`` runs its callback immediately once the
-    service's own block closes, which the capture fixture never sees."""
+def test_audit_row_rolls_back_with_the_effect_it_records() -> None:
+    """ddia#17: the audit write is inline, inside the same transaction as
+    the effect it describes — not a dual write via ``on_commit()``. If
+    the surrounding transaction rolls back, the audit row must roll back
+    with it; there is no window where the effect is durable and the
+    audit row is silently lost, or vice versa."""
     org = _org()
     actor = User.objects.create_user(email="actor2@example.com", password="s3cret-pass")
 
-    with transaction.atomic():
-        services.update_organization(organization=org, actor=actor, name="Not Yet")
-        assert not AuditLog.objects.filter(action="organization.updated").exists()
+    class _Boom(Exception):
+        pass
 
-    assert AuditLog.objects.filter(action="organization.updated").exists()
+    with pytest.raises(_Boom), transaction.atomic():
+        services.update_organization(organization=org, actor=actor, name="Not Committed")
+        raise _Boom()
+
+    assert not AuditLog.objects.filter(action="organization.updated").exists()
+    org.refresh_from_db()
+    assert org.name != "Not Committed"
 
 
 def test_audited_service_records_the_impersonator(django_capture_on_commit_callbacks) -> None:
