@@ -3,9 +3,8 @@
 ``CreditBalanceView`` resolve ``org_slug`` and act on *the* subscription
 for that organisation directly via ``resolve_and_authorize`` — there is
 no separate addressable row id in the URL for a cross-org leak to hide
-behind (the same reasoning ``keel.organizations.viewsets.
-OrganizationDetailView`` documents), so none of these is an
-``OrgScopedResource``.
+behind (the same reasoning ``keel.organizations.views.organization_detail``
+documents), so none of these is an ``OrgScopedResource``.
 
 ``GET /api/v1/plans/`` (PRD §7's "three allowed changes", phase-10.md):
 now cursor-paginated like every other collection, ordered

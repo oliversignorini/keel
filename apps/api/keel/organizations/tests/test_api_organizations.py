@@ -6,7 +6,7 @@ acceptance): organisations, members, roles, invitations, /me,
 from datetime import timedelta
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.accounts.models import User
 from keel.organizations import services
@@ -29,7 +29,7 @@ def _user(prefix: str = "user") -> User:
 
 def _client_for(user: User) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_login(user)
     return client
 
 
@@ -45,13 +45,17 @@ def test_create_and_list_organizations() -> None:
     creator = _user()
     client = _client_for(creator)
 
-    response = client.post("/api/v1/organizations/", {"name": "Acme", "slug": "acme-co"})
-    assert response.status_code == 201, response.data
-    assert response.data["slug"] == "acme-co"
+    response = client.post(
+        "/api/v1/organizations/",
+        {"name": "Acme", "slug": "acme-co"},
+        content_type="application/json",
+    )
+    assert response.status_code == 201, response.json()
+    assert response.json()["slug"] == "acme-co"
 
     response = client.get("/api/v1/organizations/")
     assert response.status_code == 200
-    slugs = [row["slug"] for row in response.data["results"]]
+    slugs = [row["slug"] for row in response.json()["results"]]
     assert "acme-co" in slugs
 
 
@@ -79,7 +83,7 @@ def test_member_view_403_denial_carries_reason_as_code() -> None:
     response = client.get(f"/api/v1/organizations/{org.slug}/members/")
 
     assert response.status_code == 403
-    assert response.data["error"]["code"] == "insufficient_role"
+    assert response.json()["error"]["code"] == "insufficient_role"
 
 
 def test_last_owner_cannot_be_removed_via_api() -> None:
@@ -90,7 +94,7 @@ def test_last_owner_cannot_be_removed_via_api() -> None:
     response = client.delete(f"/api/v1/organizations/{org.slug}/members/{owner_membership.pk}/")
 
     assert response.status_code == 403
-    assert response.data["error"]["code"] == "cannot_remove_last_owner"
+    assert response.json()["error"]["code"] == "cannot_remove_last_owner"
     assert Membership.objects.filter(pk=owner_membership.pk).exists()
 
 
@@ -103,10 +107,11 @@ def test_last_owner_cannot_be_demoted_via_api() -> None:
     response = client.patch(
         f"/api/v1/organizations/{org.slug}/members/{owner_membership.pk}/",
         {"role_id": str(member_role.pk)},
+        content_type="application/json",
     )
 
     assert response.status_code == 409
-    assert response.data["error"]["code"] == "cannot_demote_last_owner"
+    assert response.json()["error"]["code"] == "cannot_demote_last_owner"
 
 
 def test_invite_list_and_role_endpoints_return_expected_shapes() -> None:
@@ -117,13 +122,14 @@ def test_invite_list_and_role_endpoints_return_expected_shapes() -> None:
     invite_response = client.post(
         f"/api/v1/organizations/{org.slug}/invitations/",
         {"email": "invitee@example.com", "role_id": str(member_role.pk)},
+        content_type="application/json",
     )
-    assert invite_response.status_code == 201, invite_response.data
-    assert invite_response.data["status"] == "pending"
+    assert invite_response.status_code == 201, invite_response.json()
+    assert invite_response.json()["status"] == "pending"
 
     roles_response = client.get(f"/api/v1/organizations/{org.slug}/roles/")
     assert roles_response.status_code == 200
-    role_names = {row["name"] for row in roles_response.data["results"]}
+    role_names = {row["name"] for row in roles_response.json()["results"]}
     assert {PRESET_OWNER, PRESET_ADMIN, PRESET_MEMBER} <= role_names
 
 
@@ -133,7 +139,7 @@ def test_permissions_registry_lists_registered_codes() -> None:
     response = client.get("/api/v1/permissions/")
 
     assert response.status_code == 200
-    assert Perm.MEMBERS_VIEW in response.data["codes"]
+    assert Perm.MEMBERS_VIEW in response.json()["codes"]
 
 
 def test_me_returns_organizations_role_and_permissions() -> None:
@@ -143,8 +149,8 @@ def test_me_returns_organizations_role_and_permissions() -> None:
     response = client.get("/api/v1/me/")
 
     assert response.status_code == 200
-    assert response.data["user"]["email"] == creator.email
-    org_row = next(row for row in response.data["organizations"] if row["slug"] == org.slug)
+    assert response.json()["user"]["email"] == creator.email
+    org_row = next(row for row in response.json()["organizations"] if row["slug"] == org.slug)
     assert org_row["role"] == PRESET_OWNER
     assert Perm.ORG_TRANSFER in org_row["permissions"]
     assert org_row["entitlements"] == {"features": [], "limits": {}}
@@ -179,7 +185,7 @@ def test_me_resolves_entitlements_from_the_current_plan() -> None:
 
     response = client.get("/api/v1/me/")
 
-    org_row = next(row for row in response.data["organizations"] if row["slug"] == org.slug)
+    org_row = next(row for row in response.json()["organizations"] if row["slug"] == org.slug)
     assert org_row["entitlements"] == {"features": ["api_access"], "limits": {"seats": 10}}
 
 
@@ -202,8 +208,8 @@ def test_invite_wrong_email_is_rejected_without_disclosing_the_invitee() -> None
     response = client.post(f"/api/v1/invite/{invitation.token}/")
 
     assert response.status_code == 409
-    assert response.data["error"]["code"] == "invalid_or_expired"
-    assert "actual-invitee" not in str(response.data)
+    assert response.json()["error"]["code"] == "invalid_or_expired"
+    assert "actual-invitee" not in str(response.json())
 
 
 def test_expired_and_revoked_invitations_are_indistinguishable() -> None:
@@ -224,8 +230,8 @@ def test_expired_and_revoked_invitations_are_indistinguishable() -> None:
 
     assert expired_response.status_code == revoked_response.status_code == 409
     assert (
-        expired_response.data["error"]["code"]
-        == revoked_response.data["error"]["code"]
+        expired_response.json()["error"]["code"]
+        == revoked_response.json()["error"]["code"]
         == "invalid_or_expired"
     )
 
@@ -237,8 +243,8 @@ def test_invite_get_before_signup_flags_signup_required() -> None:
     response = APIClient().get(f"/api/v1/invite/{invitation.token}/")
 
     assert response.status_code == 200
-    assert response.data["requires_signup"] is True
-    assert response.data["email"] == invitation.email
+    assert response.json()["requires_signup"] is True
+    assert response.json()["email"] == invitation.email
 
 
 def test_invite_accept_signed_in_matching_email() -> None:
