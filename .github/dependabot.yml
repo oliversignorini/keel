@@ -1,0 +1,50 @@
+version: 2
+updates:
+  # apps/api — uv.lock and pyproject.toml
+  - package-ecosystem: "uv"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+    groups:
+      python-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # pnpm workspace root — apps/web, packages/*
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      js-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # this repo's own workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # infra/compose.dev.yml, infra/compose.prod.yml image tags.
+  # "docker-compose", not "docker" — there is no Dockerfile in this repo yet
+  # (infra/compose.prod.yml's `build:` stanzas reference one that doesn't
+  # exist; see that file's header comment), so the "docker" ecosystem has
+  # nothing to scan. docker-compose.yml files are handled by their own
+  # ecosystem.
+  - package-ecosystem: "docker-compose"
+    directory: "/infra"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
