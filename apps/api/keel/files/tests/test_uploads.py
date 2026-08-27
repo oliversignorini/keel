@@ -10,8 +10,8 @@ import boto3
 import pytest
 import requests
 from django.conf import settings
+from django.test import Client as APIClient
 from moto import mock_aws
-from rest_framework.test import APIClient
 
 from keel.accounts.models import User
 from keel.files.models import FileUpload
@@ -51,7 +51,7 @@ def _add_member(org: Organization) -> User:
 
 def _client_for(user: User) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_login(user)
     return client
 
 
@@ -74,7 +74,7 @@ def test_full_flow_presign_then_direct_upload_then_complete() -> None:
     create_response = client.post(
         f"/api/v1/organizations/{org.slug}/files/",
         {"filename": "report.pdf", "content_type": "application/pdf", "size": 1234},
-        format="json",
+        content_type="application/json",
     )
     assert create_response.status_code == 201
     body = create_response.json()
@@ -105,7 +105,7 @@ def test_complete_before_the_object_actually_exists_is_rejected() -> None:
     create_response = client.post(
         f"/api/v1/organizations/{org.slug}/files/",
         {"filename": "report.pdf", "content_type": "application/pdf", "size": 1234},
-        format="json",
+        content_type="application/json",
     )
     file_id = create_response.json()["file"]["id"]
 
@@ -127,7 +127,7 @@ def test_a_file_is_unreadable_from_a_different_organization() -> None:
     create_response = _client_for(owner_a).post(
         f"/api/v1/organizations/{org_a.slug}/files/",
         {"filename": "secret.pdf", "content_type": "application/pdf", "size": 1},
-        format="json",
+        content_type="application/json",
     )
     file_id = create_response.json()["file"]["id"]
 
@@ -159,7 +159,7 @@ def test_a_suspended_member_cannot_create_an_upload() -> None:
     response = _client_for(member).post(
         f"/api/v1/organizations/{org.slug}/files/",
         {"filename": "x.pdf", "content_type": "application/pdf", "size": 1},
-        format="json",
+        content_type="application/json",
     )
 
     assert response.status_code == 404
