@@ -179,6 +179,19 @@ CELERY_BROKER_URL = env(
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_DEFAULT_QUEUE = "default"
 
+# At-least-once delivery, to match code that is written for it (ddia#13):
+# Celery's default is ack-before-execute, so a worker killed mid-job
+# (deploy, OOM, spot reclaim) loses the message outright and run_job's
+# resumability never gets a chance to fire. task_reject_on_worker_lost
+# requeues a message whose worker died instead of leaving it stuck
+# unacked; visibility_timeout bounds how long a Redis-broker message stays
+# invisible before being redelivered, set comfortably above the longest
+# job this template's demo job types run (a real project should raise
+# this to its own max job duration).
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 60 * 60 * 6}
+
 # Tier 2 jobs (PRD §5.5.4, §5.5.5) — the per-organisation concurrency
 # limit enforced by keel/jobs/concurrency.py's Redis semaphore, and the
 # Redis connection pub/sub publication and the SSE endpoint both use.
@@ -216,11 +229,15 @@ CELERY_BEAT_SCHEDULE = {
         "task": "keel.jobs.tasks.cleanup_expired_sessions_task",
         "schedule": crontab(hour=1, minute=0),  # daily
     },
-    # Hardening-slice addition (ddia#7) — see keel/billing/tasks.py for why
-    # this sweep exists.
+    # Hardening-slice additions (ddia#7, ddia#13) — see keel/billing/tasks.py
+    # and keel/jobs/runner.py for why each sweep exists.
     "sweep-unprocessed-stripe-events": {
         "task": "keel.billing.tasks.sweep_unprocessed_stripe_events",
         "schedule": crontab(minute="*/5"),
+    },
+    "sweep-stuck-jobs": {
+        "task": "keel.jobs.runner.sweep_stuck_jobs_task",
+        "schedule": crontab(minute="*/15"),
     },
 }
 

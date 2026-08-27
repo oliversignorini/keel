@@ -4,7 +4,10 @@ function twice (or races cancel against completion) and asserts the
 ledger and job state are identical to a single call, with no broker and
 no real concurrency required."""
 
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 
 from keel.billing import credits
 from keel.billing.models import CreditLedgerEntry
@@ -12,7 +15,7 @@ from keel.billing.tests.factories import make_organization, make_user
 from keel.jobs import services
 from keel.jobs.models import Job
 from keel.jobs.registry import JobStepSpec, JobTypeSpec, registry
-from keel.jobs.runner import _settle_credits, run_job
+from keel.jobs.runner import _settle_credits, run_job, sweep_stuck_jobs
 
 pytestmark = pytest.mark.django_db
 
@@ -194,4 +197,76 @@ def test_run_job_skips_settlement_when_the_hold_is_already_settled(settings) -> 
     assert credits.get_balance(org) == balance_after_first
     assert (
         CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_RELEASE).count() == 1
+    )
+
+
+def test_sweep_stuck_jobs_fails_and_refunds_a_job_stuck_past_the_threshold(settings) -> None:
+    settings.BILLING_CREDITS = True
+    org = make_organization()
+    user = make_user()
+    credits.grant(org, 100)
+    job = Job.objects.create(
+        organization=org,
+        type="t.stuck",
+        requested_by=user,
+        status=Job.STATUS_RUNNING,
+        started_at=timezone.now() - timedelta(minutes=120),
+    )
+    credits.hold(org, 10, job=job, actor=user)
+
+    swept = sweep_stuck_jobs(threshold_minutes=60)
+
+    assert swept == 1
+    job.refresh_from_db()
+    assert job.status == Job.STATUS_FAILED
+    assert job.error == "stuck"
+    assert credits.get_balance(org) == 100
+    assert (
+        CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_REFUND).count() == 1
+    )
+
+
+def test_sweep_stuck_jobs_leaves_jobs_within_the_threshold_alone(settings) -> None:
+    settings.BILLING_CREDITS = True
+    org = make_organization()
+    user = make_user()
+    credits.grant(org, 100)
+    job = Job.objects.create(
+        organization=org,
+        type="t.not-stuck-yet",
+        requested_by=user,
+        status=Job.STATUS_RUNNING,
+        started_at=timezone.now(),
+    )
+    credits.hold(org, 10, job=job, actor=user)
+
+    swept = sweep_stuck_jobs(threshold_minutes=60)
+
+    assert swept == 0
+    job.refresh_from_db()
+    assert job.status == Job.STATUS_RUNNING
+
+
+def test_sweep_stuck_jobs_called_twice_refunds_exactly_once(settings) -> None:
+    settings.BILLING_CREDITS = True
+    org = make_organization()
+    user = make_user()
+    credits.grant(org, 100)
+    job = Job.objects.create(
+        organization=org,
+        type="t.stuck-twice",
+        requested_by=user,
+        status=Job.STATUS_RUNNING,
+        started_at=timezone.now() - timedelta(minutes=120),
+    )
+    credits.hold(org, 10, job=job, actor=user)
+
+    first_swept = sweep_stuck_jobs(threshold_minutes=60)
+    second_swept = sweep_stuck_jobs(threshold_minutes=60)
+
+    assert first_swept == 1
+    assert second_swept == 0  # already FAILED, no longer matches the RUNNING filter
+    assert credits.get_balance(org) == 100
+    assert (
+        CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_REFUND).count() == 1
     )

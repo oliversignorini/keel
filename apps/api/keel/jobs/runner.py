@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 import random
 import traceback as traceback_module
+from datetime import timedelta
 from typing import Any
 
 from celery import shared_task
@@ -43,6 +44,7 @@ MAX_RETRIES = 5
 BASE_BACKOFF_SECONDS = 5
 JITTER_FRACTION = 0.25
 CONCURRENCY_RETRY_SECONDS = 5
+STUCK_JOB_THRESHOLD_MINUTES = 60
 
 
 def _backoff_seconds(retries: int) -> float:
@@ -224,3 +226,41 @@ def run_job_task(self: Any, job_id: Any) -> None:
         raise self.retry(exc=exc, countdown=_backoff_seconds(self.request.retries)) from exc
     finally:
         limiter.release(job.organization_id, job.id)
+
+
+def sweep_stuck_jobs(*, threshold_minutes: int = STUCK_JOB_THRESHOLD_MINUTES) -> int:
+    """Beat sweeper (ddia#13): ``task_acks_late`` means a worker killed
+    mid-job re-delivers the message and ``run_job`` resumes correctly —
+    but a worker that hangs, or is killed *after* the broker's ack, never
+    gets a re-delivery, and the ``Job`` row is then stuck in ``running``
+    forever holding its credit hold. Fails any job whose ``started_at``
+    is older than ``threshold_minutes`` and refunds its hold; a job that
+    settles or resumes normally in the meantime is skipped by the same
+    guarded update ``run_job`` itself uses."""
+    cutoff = timezone.now() - timedelta(minutes=threshold_minutes)
+    stuck_ids = list(
+        Job.objects.filter(status=Job.STATUS_RUNNING, started_at__lt=cutoff).values_list(
+            "pk", flat=True
+        )
+    )
+    swept = 0
+    for job_id in stuck_ids:
+        updated = Job.objects.filter(pk=job_id, status=Job.STATUS_RUNNING).update(
+            status=Job.STATUS_FAILED, error="stuck", finished_at=timezone.now()
+        )
+        if not updated:
+            continue
+        job = Job.objects.select_related("organization").get(pk=job_id)
+        if credits.credits_enabled():
+            with transaction.atomic():
+                hold_entry = locked_hold_entry(job)
+                if hold_entry is not None and not hold_already_settled(job):
+                    credits.refund(job.organization, hold_entry, actor=job.requested_by)
+        publish_job_event(job)
+        swept += 1
+    return swept
+
+
+@shared_task(name="keel.jobs.runner.sweep_stuck_jobs_task")
+def sweep_stuck_jobs_task() -> int:
+    return sweep_stuck_jobs()
