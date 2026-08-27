@@ -8,7 +8,6 @@ from typing import Any
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
-from keel.audit.viewsets import AuditLogViewSet
 from keel.jobs import urls as jobs_urls
 from keel.organizations import viewsets
 
@@ -16,7 +15,6 @@ nested_router = SimpleRouter(trailing_slash=True)
 nested_router.register("members", viewsets.MembershipViewSet, basename="membership")
 nested_router.register("roles", viewsets.RoleViewSet, basename="role")
 nested_router.register("invitations", viewsets.InvitationViewSet, basename="invitation")
-nested_router.register("audit", AuditLogViewSet, basename="audit-log")
 
 
 class _CombinedRegistry:

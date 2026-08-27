@@ -2,7 +2,7 @@
 phase-8.md 8.2)."""
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client
 
 from keel.accounts.models import User
 from keel.audit.models import AuditLog
@@ -22,9 +22,9 @@ def _user(prefix: str = "user") -> User:
     )
 
 
-def _client_for(user: User) -> APIClient:
-    client = APIClient()
-    client.force_authenticate(user=user)
+def _client_for(user: User) -> Client:
+    client = Client()
+    client.force_login(user)
     return client
 
 

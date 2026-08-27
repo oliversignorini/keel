@@ -7,6 +7,8 @@ from drf_spectacular.views import SpectacularAPIView
 from redis import Redis
 from redis.exceptions import RedisError
 
+from keel.audit.views import impersonation_router as audit_impersonation_router
+from keel.audit.views import router as audit_router
 from keel.core.ninja_api import api as ninja_api
 from keel.widgets.views import router as widgets_router
 
@@ -15,6 +17,8 @@ from keel.widgets.views import router as widgets_router
 # "/orgs" — the orgs rename is stage 10.C's job, done in one sweep with
 # every other route.
 ninja_api.add_router("/organizations", widgets_router)
+ninja_api.add_router("/organizations", audit_router)
+ninja_api.add_router("", audit_impersonation_router)
 
 
 def healthz(request: HttpRequest) -> JsonResponse:
@@ -54,7 +58,6 @@ urlpatterns = [
     path("api/v1/", include("keel.billing.urls")),
     path("api/v1/", include("keel.files.urls")),
     path("api/v1/", include("keel.jobs.urls")),
-    path("api/v1/", include("keel.audit.urls")),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8
     # Phase 2 A.1; allauth headless installation docs).

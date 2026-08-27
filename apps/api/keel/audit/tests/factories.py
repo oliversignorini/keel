@@ -1,4 +1,4 @@
-"""Row builder for ``AuditLogViewSet.test_factory`` (PRD §4 invariant 7 —
+"""Row builder for ``AuditLogResource.test_factory`` (PRD §4 invariant 7 —
 the cross-org meta-test walk)."""
 
 from django.utils.crypto import get_random_string

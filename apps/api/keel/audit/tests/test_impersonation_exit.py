@@ -2,7 +2,7 @@
 docs/plans/phase-8.md 8.3)."""
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.accounts.models import User
 from keel.audit.models import AuditLog
