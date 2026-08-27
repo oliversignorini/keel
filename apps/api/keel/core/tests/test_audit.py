@@ -60,7 +60,7 @@ def test_audited_returns_the_wrapped_functions_result() -> None:
 
 
 @pytest.mark.django_db(transaction=True)
-def test_audited_records_on_commit_with_actor_target_impersonator_metadata() -> None:
+def test_audited_records_with_actor_target_impersonator_metadata() -> None:
     recorded: list[AuditRecord] = []
 
     @audited("fixture.record_full")
@@ -86,10 +86,15 @@ def test_audited_records_on_commit_with_actor_target_impersonator_metadata() -> 
 
 
 @pytest.mark.django_db(transaction=True)
-def test_audited_does_not_record_before_commit() -> None:
+def test_audited_records_inline_not_deferred_to_commit() -> None:
+    """ddia#17: the recorder runs inline, inside the same transaction as
+    the effect it records, rather than via ``transaction.on_commit()``.
+    AuditLog lives in the same Postgres as everything it describes, so a
+    dual write across a commit boundary buys nothing but a window where
+    the effect is durable and the audit row is silently lost."""
     recorded: list[AuditRecord] = []
 
-    @audited("fixture.not_yet_committed")
+    @audited("fixture.recorded_inline")
     def do_the_thing(*, actor=None):
         return None
 
@@ -99,6 +104,6 @@ def test_audited_does_not_record_before_commit() -> None:
     try:
         with transaction.atomic():
             do_the_thing(actor="user-1")
-            assert recorded == []  # not recorded until the transaction commits
+            assert len(recorded) == 1  # recorded inline, before the transaction commits
     finally:
         audit_module.set_recorder(audit_module._default_recorder)

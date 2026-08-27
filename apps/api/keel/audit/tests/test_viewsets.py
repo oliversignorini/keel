@@ -30,6 +30,11 @@ def _client_for(user: User) -> Client:
 
 def test_owner_can_list_the_organizations_audit_log() -> None:
     owner = _user("owner")
+    # create_organization is itself @audited and, since ddia#17, records
+    # inline rather than via a deferred on_commit callback that this
+    # test's transactional wrapping would otherwise have silently
+    # swallowed — so its own "organization.created" row is real and
+    # expected here, alongside the two rows created directly below.
     org = services.create_organization(name="Acme", slug="acme", created_by=owner)
     AuditLog.objects.create(organization=org, actor=owner, action="widget.created")
     AuditLog.objects.create(organization=org, actor=owner, action="widget.deleted")
@@ -39,8 +44,12 @@ def test_owner_can_list_the_organizations_audit_log() -> None:
     assert response.status_code == 200
     body = response.json()
     assert "results" in body and "next" in body and "previous" in body
-    assert len(body["results"]) == 2
-    assert {row["action"] for row in body["results"]} == {"widget.created", "widget.deleted"}
+    assert len(body["results"]) == 3
+    assert {row["action"] for row in body["results"]} == {
+        "widget.created",
+        "widget.deleted",
+        "organization.created",
+    }
 
 
 def test_a_member_without_audit_view_is_denied() -> None:
@@ -69,4 +78,11 @@ def test_rows_from_another_organization_are_not_visible() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["results"]) == 1
+    # org_a's own "organization.created" row (ddia#17 — recorded inline
+    # now, see the sibling test above) plus the "widget.created" row
+    # created directly — org_b's rows must not appear in either count.
+    assert len(body["results"]) == 2
+    assert {row["action"] for row in body["results"]} == {
+        "widget.created",
+        "organization.created",
+    }

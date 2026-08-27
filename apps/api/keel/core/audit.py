@@ -1,11 +1,13 @@
 """Audit decorators (PRD v1.2, Phase 8, "The service registry, specified").
 
 ``@audited(action)`` marks a mutating service function so its call is
-recorded — on commit, never inline, matching the transaction discipline
-in PRD §4 invariant 3 — and registers the function in a module-level
-registry. ``@not_audited(reason)`` is the explicit escape hatch for a
-mutating function that deliberately isn't recorded, registered with its
-reason so the choice is visible rather than silent.
+recorded inline, immediately after it returns (ddia#17) — not deferred
+to ``transaction.on_commit()``, so the record shares whatever
+transaction the effect it describes is already in — and registers the
+function in a module-level registry. ``@not_audited(reason)`` is the
+explicit escape hatch for a mutating function that deliberately isn't
+recorded, registered with its reason so the choice is visible rather
+than silent.
 
 There are no services to decorate yet in Phase 1 — ``keel.audit.AuditLog``
 gets its table in the baseline migration (task 1.10), but nothing writes
@@ -24,8 +26,6 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Any, TypeVar
 
-from django.db import transaction
-
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -43,6 +43,20 @@ def _default_recorder(record: AuditRecord) -> None:
 
 
 _recorder: Callable[[AuditRecord], None] = _default_recorder
+
+
+def _default_target(result: Any) -> Any:
+    """When a decorated service doesn't pass ``target=`` explicitly, its
+    own return value stands in — but a function returning ``(row, extra)``
+    (e.g. ``create_presigned_upload`` returning the row plus a presigned
+    URL) means ``result`` is a tuple with no ``.pk``, and the recorder
+    falls back to ``str(result)`` — which, for a tuple holding a
+    signed URL, can exceed ``AuditLog.target_id``'s column width. The
+    first element of a tuple return is the actual row in every case in
+    this codebase, so unwrap it."""
+    if isinstance(result, tuple) and result:
+        return result[0]
+    return result
 
 
 def set_recorder(fn: Callable[[AuditRecord], None]) -> None:
@@ -90,15 +104,37 @@ def audited(action: str) -> Callable[[F], F]:
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # Inline, right after the effect, not deferred to
+            # transaction.on_commit() (ddia#17). AuditLog lives in the
+            # same Postgres as everything it describes, so a dual write
+            # across a commit boundary buys nothing but a window where
+            # the business effect is durable and the audit row is gone
+            # (process dies between COMMIT and the callback, or the
+            # callback's own INSERT fails). on_commit stays the right
+            # tool for genuinely external effects (Stripe calls).
+            #
+            # Deliberately not wrapped in its own transaction.atomic()
+            # here: some audited services (e.g.
+            # keel.billing.services.create_checkout_session) call Stripe
+            # with no surrounding transaction at all, by design (PRD §4
+            # invariant 3, "no Stripe call happens inside an open
+            # transaction") — a decorator-level atomic would force one.
+            # Calling the recorder directly, with no atomic of its own,
+            # means: if the caller already has a transaction open (a
+            # service calling another audited service, a future
+            # ATOMIC_REQUESTS setup), this write joins it and rolls back
+            # with everything else; if not, it commits immediately after
+            # the effect, same as this codebase's services already do
+            # for their own writes.
             result = func(*args, **kwargs)
             record = AuditRecord(
                 action=action,
                 actor=kwargs.get("actor"),
                 impersonator=kwargs.get("impersonator"),
-                target=kwargs.get("target", result),
+                target=kwargs.get("target", _default_target(result)),
                 metadata=kwargs.get("metadata"),
             )
-            transaction.on_commit(lambda: _recorder(record))
+            _recorder(record)
             return result
 
         return wrapper  # type: ignore[return-value]
