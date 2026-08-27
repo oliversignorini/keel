@@ -13,6 +13,7 @@ import first, same as ``ninja_tenant_isolation.py``'s registry walk) and
 fails on the first one that isn't using a sanctioned auth value.
 """
 
+from ninja import Router
 from ninja.constants import NOT_SET
 
 from keel.core.ninja_auth import optional_session_auth, session_auth
@@ -20,7 +21,7 @@ from keel.core.ninja_auth import optional_session_auth, session_auth
 _SANCTIONED_AUTH = (session_auth, optional_session_auth, None)
 
 
-def _mounted_routers() -> list[tuple[str, object]]:
+def _mounted_routers() -> list[tuple[str, Router]]:
     # Force the URLconf to load (and with it, every app's ninja_api.add_router
     # call) without keel.core importing keel.organizations et al. directly —
     # keel.core must not import keel.organizations (import-linter contract,

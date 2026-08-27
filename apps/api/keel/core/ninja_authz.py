@@ -184,7 +184,7 @@ class _KeelRouter(Router):
 
     def api_operation(
         self,
-        methods: Sequence[str],
+        methods: list[str],
         path: str,
         *,
         response: Any = NOT_SET,
