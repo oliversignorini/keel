@@ -1,0 +1,27 @@
+# gitleaks config (docs/plans/phase-9.md 9.C). Extends the default
+# ruleset rather than replacing it — Keel has no rules of its own to add,
+# only one known false positive to allowlist.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented dev-only placeholders, not real secrets"
+# .env.example's KEEL_ENCRYPTION_KEY is a Fernet key generated purely as
+# an illustration of the expected shape (see the comment above it in that
+# file) and is committed on purpose — nothing rotates it because nothing
+# real was ever encrypted with it. It also appears in the history of the
+# already-removed .env.bak (7fd5a99, "Untrack .env.bak..."), which is
+# itself dev-only placeholders per that commit's own message. Path-based
+# rather than a secret-specific regex, so a future placeholder added to
+# either file does not need a matching new allowlist entry.
+#
+# openapi.merged.json is scripts/merge_openapi.py's committed output
+# (the `contracts` CI job fails if it drifts). Its example access_token /
+# session_token values come straight from django-allauth's own headless
+# OpenAPI spec as illustrative response bodies, not credentials for
+# anything that exists.
+paths = [
+  '''(^|/)\.env\.example$''',
+  '''(^|/)\.env\.bak$''',
+  '''(^|/)openapi\.merged\.json$''',
+]

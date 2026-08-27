@@ -1,0 +1,90 @@
+name: Security
+
+on:
+  push:
+  schedule:
+    # An advisory published on any other day of the week shouldn't have
+    # to wait for someone to push before Keel notices it
+    # (docs/plans/phase-9.md 9.C).
+    - cron: "0 6 * * 1"
+
+env:
+  PNPM_VERSION: "9.5.0"
+  NODE_VERSION: "22"
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: pip-audit
+        working-directory: apps/api
+        run: uv run pip-audit
+        # Audits the environment `uv sync --frozen` just built from
+        # uv.lock — pip-audit has no native uv.lock reader, so this is
+        # the standard workaround (a synced venv audit is equivalent to
+        # a lockfile audit, since --frozen refuses to deviate from the
+        # lock). Verified clean locally against this lockfile.
+
+  pnpm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit
+        continue-on-error: true
+        run: pnpm audit --prod
+        # Non-blocking (TODO Phase 16 — Production hardening): 9
+        # advisories on this workspace today (rollup, sharp, postcss x3,
+        # prismjs, uuid, @opentelemetry/core), all transitive — see the
+        # report for the full list with severities. None has a same-major
+        # patched version available without a breaking upstream bump,
+        # which is exactly the "not a one-line config fix" case
+        # docs/plans/phase-9.md 9.C allows landing non-blocking for.
+        # Dependabot (9.A) picks up the patched versions as they land.
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, not just the tip (docs/plans/phase-9.md 9.C) —
+          # this repo has already had a stray .env.bak committed and
+          # removed (7fd5a99), and a scan of only HEAD would never see it.
+          fetch-depth: 0
+
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
+            detect --source=/repo --log-opts="--all" --config=/repo/.gitleaks.toml --redact -v
+        # --log-opts="--all" scans every ref's history, not only the
+        # current branch's. .gitleaks.toml allowlists the two known
+        # false positives (the dev-only Fernet key in .env.example / the
+        # removed .env.bak, and openapi.merged.json's allauth example
+        # tokens) — verified clean locally against a full clone of this
+        # repo's history (110 commits) with that config.
