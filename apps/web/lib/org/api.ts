@@ -113,11 +113,7 @@ export async function updateMemberRole(
   membershipId: string,
   body: MembershipRoleUpdateBody,
 ): Promise<MembershipOut> {
-  const result = await generatedUpdateMemberRole(
-    slug,
-    membershipId,
-    body as never,
-  );
+  const result = await generatedUpdateMemberRole(slug, membershipId, body as never);
   return result.data;
 }
 
