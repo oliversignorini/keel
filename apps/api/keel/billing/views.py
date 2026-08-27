@@ -64,8 +64,8 @@ class PlanResource(GlobalResource):
     )
 
 
-@plans_router.get("/plans/", response=Page[PlanOut])
-def list_plans(request: HttpRequest) -> dict:
+@plans_router.get("/plans/", response=Page[PlanOut], operation_id="listPlans")
+def list_plans(request: HttpRequest, cursor: str | None = None, limit: int | None = None) -> dict:
     active_prices = Prefetch(
         "prices",
         queryset=Price.objects.filter(is_active=True).order_by("interval"),
@@ -91,7 +91,7 @@ def _frontend_base() -> str:
     return base.rstrip("/")
 
 
-@router.post("/{org_slug}/billing/checkout/")
+@router.post("/{org_slug}/billing/checkout/", operation_id="createCheckoutSession")
 def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
     price = Price.objects.filter(pk=str(payload.price_id), is_active=True).first()
@@ -108,7 +108,7 @@ def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) ->
     return {"url": url}
 
 
-@router.post("/{org_slug}/billing/portal/")
+@router.post("/{org_slug}/billing/portal/", operation_id="createBillingPortalSession")
 def create_billing_portal_session(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
     url = services.create_portal_session(
@@ -120,7 +120,7 @@ def create_billing_portal_session(request: Any, org_slug: str) -> dict:
     return {"url": url}
 
 
-@router.get("/{org_slug}/billing/subscription/")
+@router.get("/{org_slug}/billing/subscription/", operation_id="getSubscription")
 def get_subscription(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
     subscription = Subscription.objects.filter(organization=organization).first()
@@ -129,7 +129,7 @@ def get_subscription(request: Any, org_slug: str) -> dict:
     return {"subscription": SubscriptionOut.from_orm(subscription).dict()}
 
 
-@router.get("/{org_slug}/billing/credits/")
+@router.get("/{org_slug}/billing/credits/", operation_id="getCreditBalance")
 def get_credit_balance(request: Any, org_slug: str) -> dict:
     """Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
     a **404**, not a zero balance — see the DRF-era docstring this
@@ -149,7 +149,7 @@ def get_credit_balance(request: Any, org_slug: str) -> dict:
 webhook_router = Router(auth=None)
 
 
-@webhook_router.post("/stripe/webhook/")
+@webhook_router.post("/stripe/webhook/", operation_id="stripeWebhook")
 def stripe_webhook(request: HttpRequest) -> HttpResponse:
     """PRD §6 "Stripe webhook": acknowledge in under 200ms, work happens
     async. The only synchronous work below a signature check is one

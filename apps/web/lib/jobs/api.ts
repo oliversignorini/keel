@@ -4,12 +4,14 @@
  */
 
 import {
-  organizationsJobsCancelCreate,
-  organizationsJobsCreate,
-  organizationsJobsList,
-  organizationsJobsRetrieve,
-  type Job,
+  cancelJob as generatedCancelJob,
+  createJob as generatedCreateJob,
+  listJobs as generatedListJobs,
+  retrieveJob,
+  type JobOut,
 } from "@keel/api-client";
+
+export type Job = JobOut;
 
 /**
  * The dedicated ASGI service's origin (PRD §4 system architecture; §5.5.5
@@ -24,7 +26,7 @@ export const API_STREAM_URL = process.env.NEXT_PUBLIC_API_STREAM_URL ?? "http://
 /** Requires `jobs.view`. Cursor-paginated; `useJobStream` reads every
  * page's worth the tray needs to reconcile with on mount/reload. */
 export async function listJobs(orgSlug: string): Promise<Job[]> {
-  const result = await organizationsJobsList(orgSlug);
+  const result = await generatedListJobs(orgSlug);
   return result.data.results;
 }
 
@@ -36,7 +38,7 @@ export async function createJob(
   body: { type: string; params?: Record<string, unknown> },
   idempotencyKey?: string,
 ): Promise<Job> {
-  const result = await organizationsJobsCreate(orgSlug, body as Job, {
+  const result = await generatedCreateJob(orgSlug, body as never, {
     headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
   });
   return result.data;
@@ -45,18 +47,18 @@ export async function createJob(
 /** Requires `jobs.view`. The polling-fallback primitive `useJobStream`
  * calls on an interval once the SSE connection has dropped. */
 export async function getJob(orgSlug: string, jobId: string): Promise<Job> {
-  const result = await organizationsJobsRetrieve(orgSlug, jobId);
+  const result = await retrieveJob(orgSlug, jobId);
   return result.data;
 }
 
 /** Requires `jobs.create`. */
 export async function cancelJob(orgSlug: string, jobId: string): Promise<Job> {
-  const result = await organizationsJobsCancelCreate(orgSlug, jobId, {} as Job);
+  const result = await generatedCancelJob(orgSlug, jobId, {});
   return result.data;
 }
 
 /** `GET .../jobs/stream/` — SSE, served only by the stream service
  * (`config/urls_stream.py`), never by `API_BASE_URL`'s sync process. */
 export function jobStreamUrl(orgSlug: string): string {
-  return `${API_STREAM_URL}/api/v1/organizations/${orgSlug}/jobs/stream/`;
+  return `${API_STREAM_URL}/api/v1/orgs/${orgSlug}/jobs/stream/`;
 }

@@ -21,7 +21,7 @@ from keel.organizations.permissions import Perm
 router = keel_router(tags=["files"])
 
 
-@router.post("/{org_slug}/files/", response={201: dict})
+@router.post("/{org_slug}/files/", response={201: dict}, operation_id="createUpload")
 def create_upload(request: Any, org_slug: str, payload: PresignedUploadRequest) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
     file_upload, upload_url = services.create_presigned_upload(
@@ -36,7 +36,9 @@ def create_upload(request: Any, org_slug: str, payload: PresignedUploadRequest) 
     )
 
 
-@router.post("/{org_slug}/files/{file_id}/complete/", response=FileUploadOut)
+@router.post(
+    "/{org_slug}/files/{file_id}/complete/", response=FileUploadOut, operation_id="completeUpload"
+)
 def complete_upload(request: Any, org_slug: str, file_id: str) -> FileUpload:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
     file_upload = FileUpload.objects.filter(pk=file_id, organization=organization).first()
@@ -46,7 +48,9 @@ def complete_upload(request: Any, org_slug: str, file_id: str) -> FileUpload:
     return file_upload
 
 
-@router.get("/{org_slug}/files/{file_id}/", response=FileUploadOut)
+@router.get(
+    "/{org_slug}/files/{file_id}/", response=FileUploadOut, operation_id="retrieveUpload"
+)
 def retrieve_upload(request: Any, org_slug: str, file_id: str) -> FileUpload:
     """Scoped to ``organization`` in the same lookup as the completion
     view above — the mechanism the cross-tenant test in

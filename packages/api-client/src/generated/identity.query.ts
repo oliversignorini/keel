@@ -1458,7 +1458,48 @@ export type PasswordResetKeyParameter = string;
  */
 export type SessionTokenParameter = string;
 
-export type KeelFilesViewsCreateUpload201 = { [key: string]: unknown };
+export type ListOrganizationsParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListAuditLogsParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type CreateUpload201 = { [key: string]: unknown };
+
+export type ListInvitationsParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListJobsParams = {
+status?: string | null;
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListMembersParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListRolesParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListWidgetsParams = {
+cursor?: string | null;
+limit?: number | null;
+};
+
+export type ListPlansParams = {
+cursor?: string | null;
+limit?: number | null;
+};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -4811,19 +4852,19 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
 /**
  * @summary Impersonation Exit
  */
-export type keelAuditViewsImpersonationExitResponse204 = {
+export type impersonationExitResponse204 = {
   data: void
   status: 204
 }
     
-export type keelAuditViewsImpersonationExitResponseSuccess = (keelAuditViewsImpersonationExitResponse204) & {
+export type impersonationExitResponseSuccess = (impersonationExitResponse204) & {
   headers: Headers;
 };
 ;
 
-export type keelAuditViewsImpersonationExitResponse = (keelAuditViewsImpersonationExitResponseSuccess)
+export type impersonationExitResponse = (impersonationExitResponseSuccess)
 
-export const getKeelAuditViewsImpersonationExitUrl = () => {
+export const getImpersonationExitUrl = () => {
 
 
   
@@ -4831,9 +4872,9 @@ export const getKeelAuditViewsImpersonationExitUrl = () => {
   return `/api/v1/impersonation/exit/`
 }
 
-export const keelAuditViewsImpersonationExit = async ( options?: RequestInit): Promise<keelAuditViewsImpersonationExitResponse> => {
+export const impersonationExit = async ( options?: RequestInit): Promise<impersonationExitResponse> => {
   
-  return identityFetch<keelAuditViewsImpersonationExitResponse>(getKeelAuditViewsImpersonationExitUrl(),
+  return identityFetch<impersonationExitResponse>(getImpersonationExitUrl(),
   {      
     ...options,
     method: 'POST'
@@ -4845,11 +4886,11 @@ export const keelAuditViewsImpersonationExit = async ( options?: RequestInit): P
 
 
 
-export const getKeelAuditViewsImpersonationExitMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>, TError,void, TContext> => {
+export const getImpersonationExitMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext> => {
 
-const mutationKey = ['keelAuditViewsImpersonationExit'];
+const mutationKey = ['impersonationExit'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -4859,10 +4900,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof impersonationExit>>, void> = () => {
           
 
-          return  keelAuditViewsImpersonationExit(requestOptions)
+          return  impersonationExit(requestOptions)
         }
 
         
@@ -4870,23 +4911,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelAuditViewsImpersonationExitMutationResult = NonNullable<Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>>
+    export type ImpersonationExitMutationResult = NonNullable<Awaited<ReturnType<typeof impersonationExit>>>
     
-    export type KeelAuditViewsImpersonationExitMutationError = unknown
+    export type ImpersonationExitMutationError = unknown
 
     /**
  * @summary Impersonation Exit
  */
-export const useKeelAuditViewsImpersonationExit = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useImpersonationExit = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonationExit>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelAuditViewsImpersonationExit>>,
+        Awaited<ReturnType<typeof impersonationExit>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getKeelAuditViewsImpersonationExitMutationOptions(options);
+      const mutationOptions = getImpersonationExitMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -4894,19 +4935,19 @@ export const useKeelAuditViewsImpersonationExit = <TError = unknown,
 /**
  * @summary Invite Detail
  */
-export type keelOrganizationsViewsInviteDetailResponse200 = {
+export type inviteDetailResponse200 = {
   data: void
   status: 200
 }
     
-export type keelOrganizationsViewsInviteDetailResponseSuccess = (keelOrganizationsViewsInviteDetailResponse200) & {
+export type inviteDetailResponseSuccess = (inviteDetailResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsInviteDetailResponse = (keelOrganizationsViewsInviteDetailResponseSuccess)
+export type inviteDetailResponse = (inviteDetailResponseSuccess)
 
-export const getKeelOrganizationsViewsInviteDetailUrl = (token: string,) => {
+export const getInviteDetailUrl = (token: string,) => {
 
 
   
@@ -4914,9 +4955,9 @@ export const getKeelOrganizationsViewsInviteDetailUrl = (token: string,) => {
   return `/api/v1/invite/${token}/`
 }
 
-export const keelOrganizationsViewsInviteDetail = async (token: string, options?: RequestInit): Promise<keelOrganizationsViewsInviteDetailResponse> => {
+export const inviteDetail = async (token: string, options?: RequestInit): Promise<inviteDetailResponse> => {
   
-  return identityFetch<keelOrganizationsViewsInviteDetailResponse>(getKeelOrganizationsViewsInviteDetailUrl(token),
+  return identityFetch<inviteDetailResponse>(getInviteDetailUrl(token),
   {      
     ...options,
     method: 'GET'
@@ -4929,69 +4970,69 @@ export const keelOrganizationsViewsInviteDetail = async (token: string, options?
 
 
 
-export const getKeelOrganizationsViewsInviteDetailQueryKey = (token?: string,) => {
+export const getInviteDetailQueryKey = (token?: string,) => {
     return [
     `/api/v1/invite/${token}/`
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsInviteDetailQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError = unknown>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getInviteDetailQueryOptions = <TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsInviteDetailQueryKey(token);
+  const queryKey =  queryOptions?.queryKey ?? getInviteDetailQueryKey(token);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>> = ({ signal }) => keelOrganizationsViewsInviteDetail(token, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof inviteDetail>>> = ({ signal }) => inviteDetail(token, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsInviteDetailQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>>
-export type KeelOrganizationsViewsInviteDetailQueryError = unknown
+export type InviteDetailQueryResult = NonNullable<Awaited<ReturnType<typeof inviteDetail>>>
+export type InviteDetailQueryError = unknown
 
 
-export function useKeelOrganizationsViewsInviteDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError = unknown>(
- token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData>> & Pick<
+export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>,
+          Awaited<ReturnType<typeof inviteDetail>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>
+          Awaited<ReturnType<typeof inviteDetail>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsInviteDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData>> & Pick<
+export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>,
+          Awaited<ReturnType<typeof inviteDetail>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>
+          Awaited<ReturnType<typeof inviteDetail>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsInviteDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Invite Detail
  */
 
-export function useKeelOrganizationsViewsInviteDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError = unknown>(
- token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useInviteDetail<TData = Awaited<ReturnType<typeof inviteDetail>>, TError = unknown>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inviteDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsInviteDetailQueryOptions(token,options)
+  const queryOptions = getInviteDetailQueryOptions(token,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5007,19 +5048,19 @@ export function useKeelOrganizationsViewsInviteDetail<TData = Awaited<ReturnType
 /**
  * @summary Invite Accept
  */
-export type keelOrganizationsViewsInviteAcceptResponse200 = {
+export type inviteAcceptResponse200 = {
   data: MembershipOut
   status: 200
 }
     
-export type keelOrganizationsViewsInviteAcceptResponseSuccess = (keelOrganizationsViewsInviteAcceptResponse200) & {
+export type inviteAcceptResponseSuccess = (inviteAcceptResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsInviteAcceptResponse = (keelOrganizationsViewsInviteAcceptResponseSuccess)
+export type inviteAcceptResponse = (inviteAcceptResponseSuccess)
 
-export const getKeelOrganizationsViewsInviteAcceptUrl = (token: string,) => {
+export const getInviteAcceptUrl = (token: string,) => {
 
 
   
@@ -5027,9 +5068,9 @@ export const getKeelOrganizationsViewsInviteAcceptUrl = (token: string,) => {
   return `/api/v1/invite/${token}/`
 }
 
-export const keelOrganizationsViewsInviteAccept = async (token: string, options?: RequestInit): Promise<keelOrganizationsViewsInviteAcceptResponse> => {
+export const inviteAccept = async (token: string, options?: RequestInit): Promise<inviteAcceptResponse> => {
   
-  return identityFetch<keelOrganizationsViewsInviteAcceptResponse>(getKeelOrganizationsViewsInviteAcceptUrl(token),
+  return identityFetch<inviteAcceptResponse>(getInviteAcceptUrl(token),
   {      
     ...options,
     method: 'POST'
@@ -5041,11 +5082,11 @@ export const keelOrganizationsViewsInviteAccept = async (token: string, options?
 
 
 
-export const getKeelOrganizationsViewsInviteAcceptMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>, TError,{token: string}, TContext> => {
+export const getInviteAcceptMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsInviteAccept'];
+const mutationKey = ['inviteAccept'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5055,10 +5096,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>, {token: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteAccept>>, {token: string}> = (props) => {
           const {token} = props ?? {};
 
-          return  keelOrganizationsViewsInviteAccept(token,requestOptions)
+          return  inviteAccept(token,requestOptions)
         }
 
         
@@ -5066,23 +5107,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsInviteAcceptMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>>
+    export type InviteAcceptMutationResult = NonNullable<Awaited<ReturnType<typeof inviteAccept>>>
     
-    export type KeelOrganizationsViewsInviteAcceptMutationError = unknown
+    export type InviteAcceptMutationError = unknown
 
     /**
  * @summary Invite Accept
  */
-export const useKeelOrganizationsViewsInviteAccept = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useInviteAccept = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteAccept>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsInviteAccept>>,
+        Awaited<ReturnType<typeof inviteAccept>>,
         TError,
         {token: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsInviteAcceptMutationOptions(options);
+      const mutationOptions = getInviteAcceptMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -5090,19 +5131,19 @@ export const useKeelOrganizationsViewsInviteAccept = <TError = unknown,
 /**
  * @summary Me
  */
-export type keelOrganizationsViewsMeResponse200 = {
+export type meResponse200 = {
   data: void
   status: 200
 }
     
-export type keelOrganizationsViewsMeResponseSuccess = (keelOrganizationsViewsMeResponse200) & {
+export type meResponseSuccess = (meResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsMeResponse = (keelOrganizationsViewsMeResponseSuccess)
+export type meResponse = (meResponseSuccess)
 
-export const getKeelOrganizationsViewsMeUrl = () => {
+export const getMeUrl = () => {
 
 
   
@@ -5110,9 +5151,9 @@ export const getKeelOrganizationsViewsMeUrl = () => {
   return `/api/v1/me/`
 }
 
-export const keelOrganizationsViewsMe = async ( options?: RequestInit): Promise<keelOrganizationsViewsMeResponse> => {
+export const me = async ( options?: RequestInit): Promise<meResponse> => {
   
-  return identityFetch<keelOrganizationsViewsMeResponse>(getKeelOrganizationsViewsMeUrl(),
+  return identityFetch<meResponse>(getMeUrl(),
   {      
     ...options,
     method: 'GET'
@@ -5125,69 +5166,69 @@ export const keelOrganizationsViewsMe = async ( options?: RequestInit): Promise<
 
 
 
-export const getKeelOrganizationsViewsMeQueryKey = () => {
+export const getMeQueryKey = () => {
     return [
     `/api/v1/me/`
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsMeQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getMeQueryOptions = <TData = Awaited<ReturnType<typeof me>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsMeQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getMeQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>> = ({ signal }) => keelOrganizationsViewsMe({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = ({ signal }) => me({ signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsMeQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>>
-export type KeelOrganizationsViewsMeQueryError = unknown
+export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>
+export type MeQueryError = unknown
 
 
-export function useKeelOrganizationsViewsMe<TData = Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData>> & Pick<
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsMe>>,
+          Awaited<ReturnType<typeof me>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsMe>>
+          Awaited<ReturnType<typeof me>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsMe<TData = Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData>> & Pick<
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsMe>>,
+          Awaited<ReturnType<typeof me>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsMe>>
+          Awaited<ReturnType<typeof me>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsMe<TData = Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Me
  */
 
-export function useKeelOrganizationsViewsMe<TData = Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsMeQueryOptions(options)
+  const queryOptions = getMeQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5203,29 +5244,36 @@ export function useKeelOrganizationsViewsMe<TData = Awaited<ReturnType<typeof ke
 /**
  * @summary List Organizations
  */
-export type keelOrganizationsViewsListOrganizationsResponse200 = {
+export type listOrganizationsResponse200 = {
   data: PageOrganizationOut
   status: 200
 }
     
-export type keelOrganizationsViewsListOrganizationsResponseSuccess = (keelOrganizationsViewsListOrganizationsResponse200) & {
+export type listOrganizationsResponseSuccess = (listOrganizationsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsListOrganizationsResponse = (keelOrganizationsViewsListOrganizationsResponseSuccess)
+export type listOrganizationsResponse = (listOrganizationsResponseSuccess)
 
-export const getKeelOrganizationsViewsListOrganizationsUrl = () => {
+export const getListOrganizationsUrl = (params?: ListOrganizationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/?${stringifiedParams}` : `/api/v1/orgs/`
 }
 
-export const keelOrganizationsViewsListOrganizations = async ( options?: RequestInit): Promise<keelOrganizationsViewsListOrganizationsResponse> => {
+export const listOrganizations = async (params?: ListOrganizationsParams, options?: RequestInit): Promise<listOrganizationsResponse> => {
   
-  return identityFetch<keelOrganizationsViewsListOrganizationsResponse>(getKeelOrganizationsViewsListOrganizationsUrl(),
+  return identityFetch<listOrganizationsResponse>(getListOrganizationsUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -5238,69 +5286,69 @@ export const keelOrganizationsViewsListOrganizations = async ( options?: Request
 
 
 
-export const getKeelOrganizationsViewsListOrganizationsQueryKey = () => {
+export const getListOrganizationsQueryKey = (params?: ListOrganizationsParams,) => {
     return [
-    `/api/v1/orgs/`
+    `/api/v1/orgs/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsListOrganizationsQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListOrganizationsQueryOptions = <TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsListOrganizationsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListOrganizationsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>> = ({ signal }) => keelOrganizationsViewsListOrganizations({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOrganizations>>> = ({ signal }) => listOrganizations(params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsListOrganizationsQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>>
-export type KeelOrganizationsViewsListOrganizationsQueryError = unknown
+export type ListOrganizationsQueryResult = NonNullable<Awaited<ReturnType<typeof listOrganizations>>>
+export type ListOrganizationsQueryError = unknown
 
 
-export function useKeelOrganizationsViewsListOrganizations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData>> & Pick<
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+ params: undefined |  ListOrganizationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>,
+          Awaited<ReturnType<typeof listOrganizations>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>
+          Awaited<ReturnType<typeof listOrganizations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListOrganizations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData>> & Pick<
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+ params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>,
+          Awaited<ReturnType<typeof listOrganizations>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>
+          Awaited<ReturnType<typeof listOrganizations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListOrganizations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+ params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Organizations
  */
 
-export function useKeelOrganizationsViewsListOrganizations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = unknown>(
+ params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsListOrganizationsQueryOptions(options)
+  const queryOptions = getListOrganizationsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5316,19 +5364,19 @@ export function useKeelOrganizationsViewsListOrganizations<TData = Awaited<Retur
 /**
  * @summary Create Organization
  */
-export type keelOrganizationsViewsCreateOrganizationResponse201 = {
+export type createOrganizationResponse201 = {
   data: OrganizationOut
   status: 201
 }
     
-export type keelOrganizationsViewsCreateOrganizationResponseSuccess = (keelOrganizationsViewsCreateOrganizationResponse201) & {
+export type createOrganizationResponseSuccess = (createOrganizationResponse201) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsCreateOrganizationResponse = (keelOrganizationsViewsCreateOrganizationResponseSuccess)
+export type createOrganizationResponse = (createOrganizationResponseSuccess)
 
-export const getKeelOrganizationsViewsCreateOrganizationUrl = () => {
+export const getCreateOrganizationUrl = () => {
 
 
   
@@ -5336,9 +5384,9 @@ export const getKeelOrganizationsViewsCreateOrganizationUrl = () => {
   return `/api/v1/orgs/`
 }
 
-export const keelOrganizationsViewsCreateOrganization = async (organizationCreateIn: OrganizationCreateIn, options?: RequestInit): Promise<keelOrganizationsViewsCreateOrganizationResponse> => {
+export const createOrganization = async (organizationCreateIn: OrganizationCreateIn, options?: RequestInit): Promise<createOrganizationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsCreateOrganizationResponse>(getKeelOrganizationsViewsCreateOrganizationUrl(),
+  return identityFetch<createOrganizationResponse>(getCreateOrganizationUrl(),
   {      
     ...options,
     method: 'POST',
@@ -5351,11 +5399,11 @@ export const keelOrganizationsViewsCreateOrganization = async (organizationCreat
 
 
 
-export const getKeelOrganizationsViewsCreateOrganizationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>, TError,{data: OrganizationCreateIn}, TContext> => {
+export const getCreateOrganizationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsCreateOrganization'];
+const mutationKey = ['createOrganization'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5365,10 +5413,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>, {data: OrganizationCreateIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrganization>>, {data: OrganizationCreateIn}> = (props) => {
           const {data} = props ?? {};
 
-          return  keelOrganizationsViewsCreateOrganization(data,requestOptions)
+          return  createOrganization(data,requestOptions)
         }
 
         
@@ -5376,23 +5424,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsCreateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>>
-    export type KeelOrganizationsViewsCreateOrganizationMutationBody = OrganizationCreateIn
-    export type KeelOrganizationsViewsCreateOrganizationMutationError = unknown
+    export type CreateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof createOrganization>>>
+    export type CreateOrganizationMutationBody = OrganizationCreateIn
+    export type CreateOrganizationMutationError = unknown
 
     /**
  * @summary Create Organization
  */
-export const useKeelOrganizationsViewsCreateOrganization = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateOrganization = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,{data: OrganizationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsCreateOrganization>>,
+        Awaited<ReturnType<typeof createOrganization>>,
         TError,
         {data: OrganizationCreateIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsCreateOrganizationMutationOptions(options);
+      const mutationOptions = getCreateOrganizationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -5400,19 +5448,19 @@ export const useKeelOrganizationsViewsCreateOrganization = <TError = unknown,
 /**
  * @summary Organization Delete
  */
-export type keelOrganizationsViewsOrganizationDeleteResponse204 = {
+export type deleteOrganizationResponse204 = {
   data: void
   status: 204
 }
     
-export type keelOrganizationsViewsOrganizationDeleteResponseSuccess = (keelOrganizationsViewsOrganizationDeleteResponse204) & {
+export type deleteOrganizationResponseSuccess = (deleteOrganizationResponse204) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsOrganizationDeleteResponse = (keelOrganizationsViewsOrganizationDeleteResponseSuccess)
+export type deleteOrganizationResponse = (deleteOrganizationResponseSuccess)
 
-export const getKeelOrganizationsViewsOrganizationDeleteUrl = (orgSlug: string,) => {
+export const getDeleteOrganizationUrl = (orgSlug: string,) => {
 
 
   
@@ -5420,9 +5468,9 @@ export const getKeelOrganizationsViewsOrganizationDeleteUrl = (orgSlug: string,)
   return `/api/v1/orgs/${orgSlug}/`
 }
 
-export const keelOrganizationsViewsOrganizationDelete = async (orgSlug: string, options?: RequestInit): Promise<keelOrganizationsViewsOrganizationDeleteResponse> => {
+export const deleteOrganization = async (orgSlug: string, options?: RequestInit): Promise<deleteOrganizationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsOrganizationDeleteResponse>(getKeelOrganizationsViewsOrganizationDeleteUrl(orgSlug),
+  return identityFetch<deleteOrganizationResponse>(getDeleteOrganizationUrl(orgSlug),
   {      
     ...options,
     method: 'DELETE'
@@ -5434,11 +5482,11 @@ export const keelOrganizationsViewsOrganizationDelete = async (orgSlug: string, 
 
 
 
-export const getKeelOrganizationsViewsOrganizationDeleteMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>, TError,{orgSlug: string}, TContext> => {
+export const getDeleteOrganizationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsOrganizationDelete'];
+const mutationKey = ['deleteOrganization'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5448,10 +5496,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>, {orgSlug: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganization>>, {orgSlug: string}> = (props) => {
           const {orgSlug} = props ?? {};
 
-          return  keelOrganizationsViewsOrganizationDelete(orgSlug,requestOptions)
+          return  deleteOrganization(orgSlug,requestOptions)
         }
 
         
@@ -5459,23 +5507,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsOrganizationDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>>
+    export type DeleteOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOrganization>>>
     
-    export type KeelOrganizationsViewsOrganizationDeleteMutationError = unknown
+    export type DeleteOrganizationMutationError = unknown
 
     /**
  * @summary Organization Delete
  */
-export const useKeelOrganizationsViewsOrganizationDelete = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useDeleteOrganization = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDelete>>,
+        Awaited<ReturnType<typeof deleteOrganization>>,
         TError,
         {orgSlug: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsOrganizationDeleteMutationOptions(options);
+      const mutationOptions = getDeleteOrganizationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -5483,19 +5531,19 @@ export const useKeelOrganizationsViewsOrganizationDelete = <TError = unknown,
 /**
  * @summary Organization Detail
  */
-export type keelOrganizationsViewsOrganizationDetailResponse200 = {
+export type retrieveOrganizationResponse200 = {
   data: OrganizationOut
   status: 200
 }
     
-export type keelOrganizationsViewsOrganizationDetailResponseSuccess = (keelOrganizationsViewsOrganizationDetailResponse200) & {
+export type retrieveOrganizationResponseSuccess = (retrieveOrganizationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsOrganizationDetailResponse = (keelOrganizationsViewsOrganizationDetailResponseSuccess)
+export type retrieveOrganizationResponse = (retrieveOrganizationResponseSuccess)
 
-export const getKeelOrganizationsViewsOrganizationDetailUrl = (orgSlug: string,) => {
+export const getRetrieveOrganizationUrl = (orgSlug: string,) => {
 
 
   
@@ -5503,9 +5551,9 @@ export const getKeelOrganizationsViewsOrganizationDetailUrl = (orgSlug: string,)
   return `/api/v1/orgs/${orgSlug}/`
 }
 
-export const keelOrganizationsViewsOrganizationDetail = async (orgSlug: string, options?: RequestInit): Promise<keelOrganizationsViewsOrganizationDetailResponse> => {
+export const retrieveOrganization = async (orgSlug: string, options?: RequestInit): Promise<retrieveOrganizationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsOrganizationDetailResponse>(getKeelOrganizationsViewsOrganizationDetailUrl(orgSlug),
+  return identityFetch<retrieveOrganizationResponse>(getRetrieveOrganizationUrl(orgSlug),
   {      
     ...options,
     method: 'GET'
@@ -5518,69 +5566,69 @@ export const keelOrganizationsViewsOrganizationDetail = async (orgSlug: string, 
 
 
 
-export const getKeelOrganizationsViewsOrganizationDetailQueryKey = (orgSlug?: string,) => {
+export const getRetrieveOrganizationQueryKey = (orgSlug?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/`
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsOrganizationDetailQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveOrganizationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsOrganizationDetailQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveOrganizationQueryKey(orgSlug);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>> = ({ signal }) => keelOrganizationsViewsOrganizationDetail(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveOrganization>>> = ({ signal }) => retrieveOrganization(orgSlug, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsOrganizationDetailQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>>
-export type KeelOrganizationsViewsOrganizationDetailQueryError = unknown
+export type RetrieveOrganizationQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveOrganization>>>
+export type RetrieveOrganizationQueryError = unknown
 
 
-export function useKeelOrganizationsViewsOrganizationDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData>> & Pick<
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>,
+          Awaited<ReturnType<typeof retrieveOrganization>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>
+          Awaited<ReturnType<typeof retrieveOrganization>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsOrganizationDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData>> & Pick<
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>,
+          Awaited<ReturnType<typeof retrieveOrganization>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>
+          Awaited<ReturnType<typeof retrieveOrganization>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsOrganizationDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Organization Detail
  */
 
-export function useKeelOrganizationsViewsOrganizationDetail<TData = Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationDetail>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsOrganizationDetailQueryOptions(orgSlug,options)
+  const queryOptions = getRetrieveOrganizationQueryOptions(orgSlug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5596,19 +5644,19 @@ export function useKeelOrganizationsViewsOrganizationDetail<TData = Awaited<Retu
 /**
  * @summary Organization Update
  */
-export type keelOrganizationsViewsOrganizationUpdateResponse200 = {
+export type updateOrganizationResponse200 = {
   data: OrganizationOut
   status: 200
 }
     
-export type keelOrganizationsViewsOrganizationUpdateResponseSuccess = (keelOrganizationsViewsOrganizationUpdateResponse200) & {
+export type updateOrganizationResponseSuccess = (updateOrganizationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsOrganizationUpdateResponse = (keelOrganizationsViewsOrganizationUpdateResponseSuccess)
+export type updateOrganizationResponse = (updateOrganizationResponseSuccess)
 
-export const getKeelOrganizationsViewsOrganizationUpdateUrl = (orgSlug: string,) => {
+export const getUpdateOrganizationUrl = (orgSlug: string,) => {
 
 
   
@@ -5616,10 +5664,10 @@ export const getKeelOrganizationsViewsOrganizationUpdateUrl = (orgSlug: string,)
   return `/api/v1/orgs/${orgSlug}/`
 }
 
-export const keelOrganizationsViewsOrganizationUpdate = async (orgSlug: string,
-    organizationUpdateIn: OrganizationUpdateIn, options?: RequestInit): Promise<keelOrganizationsViewsOrganizationUpdateResponse> => {
+export const updateOrganization = async (orgSlug: string,
+    organizationUpdateIn: OrganizationUpdateIn, options?: RequestInit): Promise<updateOrganizationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsOrganizationUpdateResponse>(getKeelOrganizationsViewsOrganizationUpdateUrl(orgSlug),
+  return identityFetch<updateOrganizationResponse>(getUpdateOrganizationUrl(orgSlug),
   {      
     ...options,
     method: 'PATCH',
@@ -5632,11 +5680,11 @@ export const keelOrganizationsViewsOrganizationUpdate = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsOrganizationUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext> => {
+export const getUpdateOrganizationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsOrganizationUpdate'];
+const mutationKey = ['updateOrganization'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5646,10 +5694,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>, {orgSlug: string;data: OrganizationUpdateIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrganization>>, {orgSlug: string;data: OrganizationUpdateIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelOrganizationsViewsOrganizationUpdate(orgSlug,data,requestOptions)
+          return  updateOrganization(orgSlug,data,requestOptions)
         }
 
         
@@ -5657,23 +5705,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsOrganizationUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>>
-    export type KeelOrganizationsViewsOrganizationUpdateMutationBody = OrganizationUpdateIn
-    export type KeelOrganizationsViewsOrganizationUpdateMutationError = unknown
+    export type UpdateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrganization>>>
+    export type UpdateOrganizationMutationBody = OrganizationUpdateIn
+    export type UpdateOrganizationMutationError = unknown
 
     /**
  * @summary Organization Update
  */
-export const useKeelOrganizationsViewsOrganizationUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useUpdateOrganization = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{orgSlug: string;data: OrganizationUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationUpdate>>,
+        Awaited<ReturnType<typeof updateOrganization>>,
         TError,
         {orgSlug: string;data: OrganizationUpdateIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsOrganizationUpdateMutationOptions(options);
+      const mutationOptions = getUpdateOrganizationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -5681,29 +5729,38 @@ export const useKeelOrganizationsViewsOrganizationUpdate = <TError = unknown,
 /**
  * @summary List Audit Logs
  */
-export type keelAuditViewsListAuditLogsResponse200 = {
+export type listAuditLogsResponse200 = {
   data: PageAuditLogOut
   status: 200
 }
     
-export type keelAuditViewsListAuditLogsResponseSuccess = (keelAuditViewsListAuditLogsResponse200) & {
+export type listAuditLogsResponseSuccess = (listAuditLogsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelAuditViewsListAuditLogsResponse = (keelAuditViewsListAuditLogsResponseSuccess)
+export type listAuditLogsResponse = (listAuditLogsResponseSuccess)
 
-export const getKeelAuditViewsListAuditLogsUrl = (orgSlug: string,) => {
+export const getListAuditLogsUrl = (orgSlug: string,
+    params?: ListAuditLogsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/audit/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/audit/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/audit/`
 }
 
-export const keelAuditViewsListAuditLogs = async (orgSlug: string, options?: RequestInit): Promise<keelAuditViewsListAuditLogsResponse> => {
+export const listAuditLogs = async (orgSlug: string,
+    params?: ListAuditLogsParams, options?: RequestInit): Promise<listAuditLogsResponse> => {
   
-  return identityFetch<keelAuditViewsListAuditLogsResponse>(getKeelAuditViewsListAuditLogsUrl(orgSlug),
+  return identityFetch<listAuditLogsResponse>(getListAuditLogsUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -5716,69 +5773,75 @@ export const keelAuditViewsListAuditLogs = async (orgSlug: string, options?: Req
 
 
 
-export const getKeelAuditViewsListAuditLogsQueryKey = (orgSlug?: string,) => {
+export const getListAuditLogsQueryKey = (orgSlug?: string,
+    params?: ListAuditLogsParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/audit/`
+    `/api/v1/orgs/${orgSlug}/audit/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelAuditViewsListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(orgSlug: string,
+    params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelAuditViewsListAuditLogsQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListAuditLogsQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>> = ({ signal }) => keelAuditViewsListAuditLogs(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLogs>>> = ({ signal }) => listAuditLogs(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelAuditViewsListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>>
-export type KeelAuditViewsListAuditLogsQueryError = unknown
+export type ListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditLogs>>>
+export type ListAuditLogsQueryError = unknown
 
 
-export function useKeelAuditViewsListAuditLogs<TData = Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData>> & Pick<
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListAuditLogsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>,
+          Awaited<ReturnType<typeof listAuditLogs>>,
           TError,
-          Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>
+          Awaited<ReturnType<typeof listAuditLogs>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelAuditViewsListAuditLogs<TData = Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData>> & Pick<
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>,
+          Awaited<ReturnType<typeof listAuditLogs>>,
           TError,
-          Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>
+          Awaited<ReturnType<typeof listAuditLogs>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelAuditViewsListAuditLogs<TData = Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Audit Logs
  */
 
-export function useKeelAuditViewsListAuditLogs<TData = Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsListAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelAuditViewsListAuditLogsQueryOptions(orgSlug,options)
+  const queryOptions = getListAuditLogsQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5794,19 +5857,19 @@ export function useKeelAuditViewsListAuditLogs<TData = Awaited<ReturnType<typeof
 /**
  * @summary Retrieve Audit Log
  */
-export type keelAuditViewsRetrieveAuditLogResponse200 = {
+export type retrieveAuditLogResponse200 = {
   data: AuditLogOut
   status: 200
 }
     
-export type keelAuditViewsRetrieveAuditLogResponseSuccess = (keelAuditViewsRetrieveAuditLogResponse200) & {
+export type retrieveAuditLogResponseSuccess = (retrieveAuditLogResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelAuditViewsRetrieveAuditLogResponse = (keelAuditViewsRetrieveAuditLogResponseSuccess)
+export type retrieveAuditLogResponse = (retrieveAuditLogResponseSuccess)
 
-export const getKeelAuditViewsRetrieveAuditLogUrl = (orgSlug: string,
+export const getRetrieveAuditLogUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -5815,10 +5878,10 @@ export const getKeelAuditViewsRetrieveAuditLogUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/audit/${id}/`
 }
 
-export const keelAuditViewsRetrieveAuditLog = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelAuditViewsRetrieveAuditLogResponse> => {
+export const retrieveAuditLog = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveAuditLogResponse> => {
   
-  return identityFetch<keelAuditViewsRetrieveAuditLogResponse>(getKeelAuditViewsRetrieveAuditLogUrl(orgSlug,id),
+  return identityFetch<retrieveAuditLogResponse>(getRetrieveAuditLogUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -5831,7 +5894,7 @@ export const keelAuditViewsRetrieveAuditLog = async (orgSlug: string,
 
 
 
-export const getKeelAuditViewsRetrieveAuditLogQueryKey = (orgSlug?: string,
+export const getRetrieveAuditLogQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/audit/${id}/`
@@ -5839,67 +5902,67 @@ export const getKeelAuditViewsRetrieveAuditLogQueryKey = (orgSlug?: string,
     }
 
     
-export const getKeelAuditViewsRetrieveAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelAuditViewsRetrieveAuditLogQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveAuditLogQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>> = ({ signal }) => keelAuditViewsRetrieveAuditLog(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveAuditLog>>> = ({ signal }) => retrieveAuditLog(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelAuditViewsRetrieveAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>>
-export type KeelAuditViewsRetrieveAuditLogQueryError = unknown
+export type RetrieveAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveAuditLog>>>
+export type RetrieveAuditLogQueryError = unknown
 
 
-export function useKeelAuditViewsRetrieveAuditLog<TData = Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>,
+          Awaited<ReturnType<typeof retrieveAuditLog>>,
           TError,
-          Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>
+          Awaited<ReturnType<typeof retrieveAuditLog>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelAuditViewsRetrieveAuditLog<TData = Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>,
+          Awaited<ReturnType<typeof retrieveAuditLog>>,
           TError,
-          Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>
+          Awaited<ReturnType<typeof retrieveAuditLog>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelAuditViewsRetrieveAuditLog<TData = Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Audit Log
  */
 
-export function useKeelAuditViewsRetrieveAuditLog<TData = Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError = unknown>(
+export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelAuditViewsRetrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelAuditViewsRetrieveAuditLogQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveAuditLogQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -5915,19 +5978,19 @@ export function useKeelAuditViewsRetrieveAuditLog<TData = Awaited<ReturnType<typ
 /**
  * @summary Create Checkout Session
  */
-export type keelBillingViewsCreateCheckoutSessionResponse200 = {
+export type createCheckoutSessionResponse200 = {
   data: void
   status: 200
 }
     
-export type keelBillingViewsCreateCheckoutSessionResponseSuccess = (keelBillingViewsCreateCheckoutSessionResponse200) & {
+export type createCheckoutSessionResponseSuccess = (createCheckoutSessionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsCreateCheckoutSessionResponse = (keelBillingViewsCreateCheckoutSessionResponseSuccess)
+export type createCheckoutSessionResponse = (createCheckoutSessionResponseSuccess)
 
-export const getKeelBillingViewsCreateCheckoutSessionUrl = (orgSlug: string,) => {
+export const getCreateCheckoutSessionUrl = (orgSlug: string,) => {
 
 
   
@@ -5935,10 +5998,10 @@ export const getKeelBillingViewsCreateCheckoutSessionUrl = (orgSlug: string,) =>
   return `/api/v1/orgs/${orgSlug}/billing/checkout/`
 }
 
-export const keelBillingViewsCreateCheckoutSession = async (orgSlug: string,
-    checkoutIn: CheckoutIn, options?: RequestInit): Promise<keelBillingViewsCreateCheckoutSessionResponse> => {
+export const createCheckoutSession = async (orgSlug: string,
+    checkoutIn: CheckoutIn, options?: RequestInit): Promise<createCheckoutSessionResponse> => {
   
-  return identityFetch<keelBillingViewsCreateCheckoutSessionResponse>(getKeelBillingViewsCreateCheckoutSessionUrl(orgSlug),
+  return identityFetch<createCheckoutSessionResponse>(getCreateCheckoutSessionUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -5951,11 +6014,11 @@ export const keelBillingViewsCreateCheckoutSession = async (orgSlug: string,
 
 
 
-export const getKeelBillingViewsCreateCheckoutSessionMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext> => {
+export const getCreateCheckoutSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext> => {
 
-const mutationKey = ['keelBillingViewsCreateCheckoutSession'];
+const mutationKey = ['createCheckoutSession'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5965,10 +6028,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>, {orgSlug: string;data: CheckoutIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCheckoutSession>>, {orgSlug: string;data: CheckoutIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelBillingViewsCreateCheckoutSession(orgSlug,data,requestOptions)
+          return  createCheckoutSession(orgSlug,data,requestOptions)
         }
 
         
@@ -5976,23 +6039,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelBillingViewsCreateCheckoutSessionMutationResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>>
-    export type KeelBillingViewsCreateCheckoutSessionMutationBody = CheckoutIn
-    export type KeelBillingViewsCreateCheckoutSessionMutationError = unknown
+    export type CreateCheckoutSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createCheckoutSession>>>
+    export type CreateCheckoutSessionMutationBody = CheckoutIn
+    export type CreateCheckoutSessionMutationError = unknown
 
     /**
  * @summary Create Checkout Session
  */
-export const useKeelBillingViewsCreateCheckoutSession = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateCheckoutSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,{orgSlug: string;data: CheckoutIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelBillingViewsCreateCheckoutSession>>,
+        Awaited<ReturnType<typeof createCheckoutSession>>,
         TError,
         {orgSlug: string;data: CheckoutIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelBillingViewsCreateCheckoutSessionMutationOptions(options);
+      const mutationOptions = getCreateCheckoutSessionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6003,19 +6066,19 @@ a **404**, not a zero balance — see the DRF-era docstring this
 replaces for the full reasoning; unchanged here.
  * @summary Get Credit Balance
  */
-export type keelBillingViewsGetCreditBalanceResponse200 = {
+export type getCreditBalanceResponse200 = {
   data: void
   status: 200
 }
     
-export type keelBillingViewsGetCreditBalanceResponseSuccess = (keelBillingViewsGetCreditBalanceResponse200) & {
+export type getCreditBalanceResponseSuccess = (getCreditBalanceResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsGetCreditBalanceResponse = (keelBillingViewsGetCreditBalanceResponseSuccess)
+export type getCreditBalanceResponse = (getCreditBalanceResponseSuccess)
 
-export const getKeelBillingViewsGetCreditBalanceUrl = (orgSlug: string,) => {
+export const getGetCreditBalanceUrl = (orgSlug: string,) => {
 
 
   
@@ -6023,9 +6086,9 @@ export const getKeelBillingViewsGetCreditBalanceUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/billing/credits/`
 }
 
-export const keelBillingViewsGetCreditBalance = async (orgSlug: string, options?: RequestInit): Promise<keelBillingViewsGetCreditBalanceResponse> => {
+export const getCreditBalance = async (orgSlug: string, options?: RequestInit): Promise<getCreditBalanceResponse> => {
   
-  return identityFetch<keelBillingViewsGetCreditBalanceResponse>(getKeelBillingViewsGetCreditBalanceUrl(orgSlug),
+  return identityFetch<getCreditBalanceResponse>(getGetCreditBalanceUrl(orgSlug),
   {      
     ...options,
     method: 'GET'
@@ -6038,69 +6101,69 @@ export const keelBillingViewsGetCreditBalance = async (orgSlug: string, options?
 
 
 
-export const getKeelBillingViewsGetCreditBalanceQueryKey = (orgSlug?: string,) => {
+export const getGetCreditBalanceQueryKey = (orgSlug?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/billing/credits/`
     ] as const;
     }
 
     
-export const getKeelBillingViewsGetCreditBalanceQueryOptions = <TData = Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getGetCreditBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelBillingViewsGetCreditBalanceQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getGetCreditBalanceQueryKey(orgSlug);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>> = ({ signal }) => keelBillingViewsGetCreditBalance(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCreditBalance>>> = ({ signal }) => getCreditBalance(orgSlug, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelBillingViewsGetCreditBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>>
-export type KeelBillingViewsGetCreditBalanceQueryError = unknown
+export type GetCreditBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getCreditBalance>>>
+export type GetCreditBalanceQueryError = unknown
 
 
-export function useKeelBillingViewsGetCreditBalance<TData = Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData>> & Pick<
+export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>,
+          Awaited<ReturnType<typeof getCreditBalance>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>
+          Awaited<ReturnType<typeof getCreditBalance>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsGetCreditBalance<TData = Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData>> & Pick<
+export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>,
+          Awaited<ReturnType<typeof getCreditBalance>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>
+          Awaited<ReturnType<typeof getCreditBalance>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsGetCreditBalance<TData = Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Get Credit Balance
  */
 
-export function useKeelBillingViewsGetCreditBalance<TData = Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useGetCreditBalance<TData = Awaited<ReturnType<typeof getCreditBalance>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelBillingViewsGetCreditBalanceQueryOptions(orgSlug,options)
+  const queryOptions = getGetCreditBalanceQueryOptions(orgSlug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6116,19 +6179,19 @@ export function useKeelBillingViewsGetCreditBalance<TData = Awaited<ReturnType<t
 /**
  * @summary Create Billing Portal Session
  */
-export type keelBillingViewsCreateBillingPortalSessionResponse200 = {
+export type createBillingPortalSessionResponse200 = {
   data: void
   status: 200
 }
     
-export type keelBillingViewsCreateBillingPortalSessionResponseSuccess = (keelBillingViewsCreateBillingPortalSessionResponse200) & {
+export type createBillingPortalSessionResponseSuccess = (createBillingPortalSessionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsCreateBillingPortalSessionResponse = (keelBillingViewsCreateBillingPortalSessionResponseSuccess)
+export type createBillingPortalSessionResponse = (createBillingPortalSessionResponseSuccess)
 
-export const getKeelBillingViewsCreateBillingPortalSessionUrl = (orgSlug: string,) => {
+export const getCreateBillingPortalSessionUrl = (orgSlug: string,) => {
 
 
   
@@ -6136,9 +6199,9 @@ export const getKeelBillingViewsCreateBillingPortalSessionUrl = (orgSlug: string
   return `/api/v1/orgs/${orgSlug}/billing/portal/`
 }
 
-export const keelBillingViewsCreateBillingPortalSession = async (orgSlug: string, options?: RequestInit): Promise<keelBillingViewsCreateBillingPortalSessionResponse> => {
+export const createBillingPortalSession = async (orgSlug: string, options?: RequestInit): Promise<createBillingPortalSessionResponse> => {
   
-  return identityFetch<keelBillingViewsCreateBillingPortalSessionResponse>(getKeelBillingViewsCreateBillingPortalSessionUrl(orgSlug),
+  return identityFetch<createBillingPortalSessionResponse>(getCreateBillingPortalSessionUrl(orgSlug),
   {      
     ...options,
     method: 'POST'
@@ -6150,11 +6213,11 @@ export const keelBillingViewsCreateBillingPortalSession = async (orgSlug: string
 
 
 
-export const getKeelBillingViewsCreateBillingPortalSessionMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>, TError,{orgSlug: string}, TContext> => {
+export const getCreateBillingPortalSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext> => {
 
-const mutationKey = ['keelBillingViewsCreateBillingPortalSession'];
+const mutationKey = ['createBillingPortalSession'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6164,10 +6227,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>, {orgSlug: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBillingPortalSession>>, {orgSlug: string}> = (props) => {
           const {orgSlug} = props ?? {};
 
-          return  keelBillingViewsCreateBillingPortalSession(orgSlug,requestOptions)
+          return  createBillingPortalSession(orgSlug,requestOptions)
         }
 
         
@@ -6175,23 +6238,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelBillingViewsCreateBillingPortalSessionMutationResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>>
+    export type CreateBillingPortalSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createBillingPortalSession>>>
     
-    export type KeelBillingViewsCreateBillingPortalSessionMutationError = unknown
+    export type CreateBillingPortalSessionMutationError = unknown
 
     /**
  * @summary Create Billing Portal Session
  */
-export const useKeelBillingViewsCreateBillingPortalSession = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateBillingPortalSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,{orgSlug: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelBillingViewsCreateBillingPortalSession>>,
+        Awaited<ReturnType<typeof createBillingPortalSession>>,
         TError,
         {orgSlug: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelBillingViewsCreateBillingPortalSessionMutationOptions(options);
+      const mutationOptions = getCreateBillingPortalSessionMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6199,19 +6262,19 @@ export const useKeelBillingViewsCreateBillingPortalSession = <TError = unknown,
 /**
  * @summary Get Subscription
  */
-export type keelBillingViewsGetSubscriptionResponse200 = {
+export type getSubscriptionResponse200 = {
   data: void
   status: 200
 }
     
-export type keelBillingViewsGetSubscriptionResponseSuccess = (keelBillingViewsGetSubscriptionResponse200) & {
+export type getSubscriptionResponseSuccess = (getSubscriptionResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsGetSubscriptionResponse = (keelBillingViewsGetSubscriptionResponseSuccess)
+export type getSubscriptionResponse = (getSubscriptionResponseSuccess)
 
-export const getKeelBillingViewsGetSubscriptionUrl = (orgSlug: string,) => {
+export const getGetSubscriptionUrl = (orgSlug: string,) => {
 
 
   
@@ -6219,9 +6282,9 @@ export const getKeelBillingViewsGetSubscriptionUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/billing/subscription/`
 }
 
-export const keelBillingViewsGetSubscription = async (orgSlug: string, options?: RequestInit): Promise<keelBillingViewsGetSubscriptionResponse> => {
+export const getSubscription = async (orgSlug: string, options?: RequestInit): Promise<getSubscriptionResponse> => {
   
-  return identityFetch<keelBillingViewsGetSubscriptionResponse>(getKeelBillingViewsGetSubscriptionUrl(orgSlug),
+  return identityFetch<getSubscriptionResponse>(getGetSubscriptionUrl(orgSlug),
   {      
     ...options,
     method: 'GET'
@@ -6234,69 +6297,69 @@ export const keelBillingViewsGetSubscription = async (orgSlug: string, options?:
 
 
 
-export const getKeelBillingViewsGetSubscriptionQueryKey = (orgSlug?: string,) => {
+export const getGetSubscriptionQueryKey = (orgSlug?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/billing/subscription/`
     ] as const;
     }
 
     
-export const getKeelBillingViewsGetSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getGetSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelBillingViewsGetSubscriptionQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getGetSubscriptionQueryKey(orgSlug);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>> = ({ signal }) => keelBillingViewsGetSubscription(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscription>>> = ({ signal }) => getSubscription(orgSlug, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelBillingViewsGetSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>>
-export type KeelBillingViewsGetSubscriptionQueryError = unknown
+export type GetSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscription>>>
+export type GetSubscriptionQueryError = unknown
 
 
-export function useKeelBillingViewsGetSubscription<TData = Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData>> & Pick<
+export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>,
+          Awaited<ReturnType<typeof getSubscription>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>
+          Awaited<ReturnType<typeof getSubscription>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsGetSubscription<TData = Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData>> & Pick<
+export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>,
+          Awaited<ReturnType<typeof getSubscription>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>
+          Awaited<ReturnType<typeof getSubscription>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsGetSubscription<TData = Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Get Subscription
  */
 
-export function useKeelBillingViewsGetSubscription<TData = Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useGetSubscription<TData = Awaited<ReturnType<typeof getSubscription>>, TError = unknown>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelBillingViewsGetSubscriptionQueryOptions(orgSlug,options)
+  const queryOptions = getGetSubscriptionQueryOptions(orgSlug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6312,19 +6375,19 @@ export function useKeelBillingViewsGetSubscription<TData = Awaited<ReturnType<ty
 /**
  * @summary Create Upload
  */
-export type keelFilesViewsCreateUploadResponse201 = {
-  data: KeelFilesViewsCreateUpload201
+export type createUploadResponse201 = {
+  data: CreateUpload201
   status: 201
 }
     
-export type keelFilesViewsCreateUploadResponseSuccess = (keelFilesViewsCreateUploadResponse201) & {
+export type createUploadResponseSuccess = (createUploadResponse201) & {
   headers: Headers;
 };
 ;
 
-export type keelFilesViewsCreateUploadResponse = (keelFilesViewsCreateUploadResponseSuccess)
+export type createUploadResponse = (createUploadResponseSuccess)
 
-export const getKeelFilesViewsCreateUploadUrl = (orgSlug: string,) => {
+export const getCreateUploadUrl = (orgSlug: string,) => {
 
 
   
@@ -6332,10 +6395,10 @@ export const getKeelFilesViewsCreateUploadUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/files/`
 }
 
-export const keelFilesViewsCreateUpload = async (orgSlug: string,
-    presignedUploadRequest: PresignedUploadRequest, options?: RequestInit): Promise<keelFilesViewsCreateUploadResponse> => {
+export const createUpload = async (orgSlug: string,
+    presignedUploadRequest: PresignedUploadRequest, options?: RequestInit): Promise<createUploadResponse> => {
   
-  return identityFetch<keelFilesViewsCreateUploadResponse>(getKeelFilesViewsCreateUploadUrl(orgSlug),
+  return identityFetch<createUploadResponse>(getCreateUploadUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -6348,11 +6411,11 @@ export const keelFilesViewsCreateUpload = async (orgSlug: string,
 
 
 
-export const getKeelFilesViewsCreateUploadMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext> => {
+export const getCreateUploadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext> => {
 
-const mutationKey = ['keelFilesViewsCreateUpload'];
+const mutationKey = ['createUpload'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6362,10 +6425,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>, {orgSlug: string;data: PresignedUploadRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUpload>>, {orgSlug: string;data: PresignedUploadRequest}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelFilesViewsCreateUpload(orgSlug,data,requestOptions)
+          return  createUpload(orgSlug,data,requestOptions)
         }
 
         
@@ -6373,23 +6436,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelFilesViewsCreateUploadMutationResult = NonNullable<Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>>
-    export type KeelFilesViewsCreateUploadMutationBody = PresignedUploadRequest
-    export type KeelFilesViewsCreateUploadMutationError = unknown
+    export type CreateUploadMutationResult = NonNullable<Awaited<ReturnType<typeof createUpload>>>
+    export type CreateUploadMutationBody = PresignedUploadRequest
+    export type CreateUploadMutationError = unknown
 
     /**
  * @summary Create Upload
  */
-export const useKeelFilesViewsCreateUpload = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateUpload = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,{orgSlug: string;data: PresignedUploadRequest}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelFilesViewsCreateUpload>>,
+        Awaited<ReturnType<typeof createUpload>>,
         TError,
         {orgSlug: string;data: PresignedUploadRequest},
         TContext
       > => {
 
-      const mutationOptions = getKeelFilesViewsCreateUploadMutationOptions(options);
+      const mutationOptions = getCreateUploadMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6400,19 +6463,19 @@ view above — the mechanism the cross-tenant test in
 ``keel/files/tests/test_uploads.py`` exercises directly.
  * @summary Retrieve Upload
  */
-export type keelFilesViewsRetrieveUploadResponse200 = {
+export type retrieveUploadResponse200 = {
   data: FileUploadOut
   status: 200
 }
     
-export type keelFilesViewsRetrieveUploadResponseSuccess = (keelFilesViewsRetrieveUploadResponse200) & {
+export type retrieveUploadResponseSuccess = (retrieveUploadResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelFilesViewsRetrieveUploadResponse = (keelFilesViewsRetrieveUploadResponseSuccess)
+export type retrieveUploadResponse = (retrieveUploadResponseSuccess)
 
-export const getKeelFilesViewsRetrieveUploadUrl = (orgSlug: string,
+export const getRetrieveUploadUrl = (orgSlug: string,
     fileId: string,) => {
 
 
@@ -6421,10 +6484,10 @@ export const getKeelFilesViewsRetrieveUploadUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/files/${fileId}/`
 }
 
-export const keelFilesViewsRetrieveUpload = async (orgSlug: string,
-    fileId: string, options?: RequestInit): Promise<keelFilesViewsRetrieveUploadResponse> => {
+export const retrieveUpload = async (orgSlug: string,
+    fileId: string, options?: RequestInit): Promise<retrieveUploadResponse> => {
   
-  return identityFetch<keelFilesViewsRetrieveUploadResponse>(getKeelFilesViewsRetrieveUploadUrl(orgSlug,fileId),
+  return identityFetch<retrieveUploadResponse>(getRetrieveUploadUrl(orgSlug,fileId),
   {      
     ...options,
     method: 'GET'
@@ -6437,7 +6500,7 @@ export const keelFilesViewsRetrieveUpload = async (orgSlug: string,
 
 
 
-export const getKeelFilesViewsRetrieveUploadQueryKey = (orgSlug?: string,
+export const getRetrieveUploadQueryKey = (orgSlug?: string,
     fileId?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/files/${fileId}/`
@@ -6445,67 +6508,67 @@ export const getKeelFilesViewsRetrieveUploadQueryKey = (orgSlug?: string,
     }
 
     
-export const getKeelFilesViewsRetrieveUploadQueryOptions = <TData = Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError = unknown>(orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveUploadQueryOptions = <TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(orgSlug: string,
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelFilesViewsRetrieveUploadQueryKey(orgSlug,fileId);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveUploadQueryKey(orgSlug,fileId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>> = ({ signal }) => keelFilesViewsRetrieveUpload(orgSlug,fileId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveUpload>>> = ({ signal }) => retrieveUpload(orgSlug,fileId, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && fileId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && fileId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelFilesViewsRetrieveUploadQueryResult = NonNullable<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>>
-export type KeelFilesViewsRetrieveUploadQueryError = unknown
+export type RetrieveUploadQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveUpload>>>
+export type RetrieveUploadQueryError = unknown
 
 
-export function useKeelFilesViewsRetrieveUpload<TData = Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
  orgSlug: string,
-    fileId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData>> & Pick<
+    fileId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>,
+          Awaited<ReturnType<typeof retrieveUpload>>,
           TError,
-          Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>
+          Awaited<ReturnType<typeof retrieveUpload>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelFilesViewsRetrieveUpload<TData = Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData>> & Pick<
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>,
+          Awaited<ReturnType<typeof retrieveUpload>>,
           TError,
-          Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>
+          Awaited<ReturnType<typeof retrieveUpload>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelFilesViewsRetrieveUpload<TData = Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Upload
  */
 
-export function useKeelFilesViewsRetrieveUpload<TData = Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError = unknown>(
+export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = unknown>(
  orgSlug: string,
-    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelFilesViewsRetrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    fileId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelFilesViewsRetrieveUploadQueryOptions(orgSlug,fileId,options)
+  const queryOptions = getRetrieveUploadQueryOptions(orgSlug,fileId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6521,19 +6584,19 @@ export function useKeelFilesViewsRetrieveUpload<TData = Awaited<ReturnType<typeo
 /**
  * @summary Complete Upload
  */
-export type keelFilesViewsCompleteUploadResponse200 = {
+export type completeUploadResponse200 = {
   data: FileUploadOut
   status: 200
 }
     
-export type keelFilesViewsCompleteUploadResponseSuccess = (keelFilesViewsCompleteUploadResponse200) & {
+export type completeUploadResponseSuccess = (completeUploadResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelFilesViewsCompleteUploadResponse = (keelFilesViewsCompleteUploadResponseSuccess)
+export type completeUploadResponse = (completeUploadResponseSuccess)
 
-export const getKeelFilesViewsCompleteUploadUrl = (orgSlug: string,
+export const getCompleteUploadUrl = (orgSlug: string,
     fileId: string,) => {
 
 
@@ -6542,10 +6605,10 @@ export const getKeelFilesViewsCompleteUploadUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/files/${fileId}/complete/`
 }
 
-export const keelFilesViewsCompleteUpload = async (orgSlug: string,
-    fileId: string, options?: RequestInit): Promise<keelFilesViewsCompleteUploadResponse> => {
+export const completeUpload = async (orgSlug: string,
+    fileId: string, options?: RequestInit): Promise<completeUploadResponse> => {
   
-  return identityFetch<keelFilesViewsCompleteUploadResponse>(getKeelFilesViewsCompleteUploadUrl(orgSlug,fileId),
+  return identityFetch<completeUploadResponse>(getCompleteUploadUrl(orgSlug,fileId),
   {      
     ...options,
     method: 'POST'
@@ -6557,11 +6620,11 @@ export const keelFilesViewsCompleteUpload = async (orgSlug: string,
 
 
 
-export const getKeelFilesViewsCompleteUploadMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>, TError,{orgSlug: string;fileId: string}, TContext> => {
+export const getCompleteUploadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext> => {
 
-const mutationKey = ['keelFilesViewsCompleteUpload'];
+const mutationKey = ['completeUpload'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6571,10 +6634,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>, {orgSlug: string;fileId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeUpload>>, {orgSlug: string;fileId: string}> = (props) => {
           const {orgSlug,fileId} = props ?? {};
 
-          return  keelFilesViewsCompleteUpload(orgSlug,fileId,requestOptions)
+          return  completeUpload(orgSlug,fileId,requestOptions)
         }
 
         
@@ -6582,23 +6645,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelFilesViewsCompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>>
+    export type CompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeUpload>>>
     
-    export type KeelFilesViewsCompleteUploadMutationError = unknown
+    export type CompleteUploadMutationError = unknown
 
     /**
  * @summary Complete Upload
  */
-export const useKeelFilesViewsCompleteUpload = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCompleteUpload = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,{orgSlug: string;fileId: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelFilesViewsCompleteUpload>>,
+        Awaited<ReturnType<typeof completeUpload>>,
         TError,
         {orgSlug: string;fileId: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelFilesViewsCompleteUploadMutationOptions(options);
+      const mutationOptions = getCompleteUploadMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6606,29 +6669,38 @@ export const useKeelFilesViewsCompleteUpload = <TError = unknown,
 /**
  * @summary List Invitations
  */
-export type keelOrganizationsViewsListInvitationsResponse200 = {
+export type listInvitationsResponse200 = {
   data: PageInvitationOut
   status: 200
 }
     
-export type keelOrganizationsViewsListInvitationsResponseSuccess = (keelOrganizationsViewsListInvitationsResponse200) & {
+export type listInvitationsResponseSuccess = (listInvitationsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsListInvitationsResponse = (keelOrganizationsViewsListInvitationsResponseSuccess)
+export type listInvitationsResponse = (listInvitationsResponseSuccess)
 
-export const getKeelOrganizationsViewsListInvitationsUrl = (orgSlug: string,) => {
+export const getListInvitationsUrl = (orgSlug: string,
+    params?: ListInvitationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/invitations/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/invitations/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/invitations/`
 }
 
-export const keelOrganizationsViewsListInvitations = async (orgSlug: string, options?: RequestInit): Promise<keelOrganizationsViewsListInvitationsResponse> => {
+export const listInvitations = async (orgSlug: string,
+    params?: ListInvitationsParams, options?: RequestInit): Promise<listInvitationsResponse> => {
   
-  return identityFetch<keelOrganizationsViewsListInvitationsResponse>(getKeelOrganizationsViewsListInvitationsUrl(orgSlug),
+  return identityFetch<listInvitationsResponse>(getListInvitationsUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -6641,69 +6713,75 @@ export const keelOrganizationsViewsListInvitations = async (orgSlug: string, opt
 
 
 
-export const getKeelOrganizationsViewsListInvitationsQueryKey = (orgSlug?: string,) => {
+export const getListInvitationsQueryKey = (orgSlug?: string,
+    params?: ListInvitationsParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/invitations/`
+    `/api/v1/orgs/${orgSlug}/invitations/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(orgSlug: string,
+    params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsListInvitationsQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListInvitationsQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>> = ({ signal }) => keelOrganizationsViewsListInvitations(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listInvitations>>> = ({ signal }) => listInvitations(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsListInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>>
-export type KeelOrganizationsViewsListInvitationsQueryError = unknown
+export type ListInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof listInvitations>>>
+export type ListInvitationsQueryError = unknown
 
 
-export function useKeelOrganizationsViewsListInvitations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData>> & Pick<
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListInvitationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>,
+          Awaited<ReturnType<typeof listInvitations>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>
+          Awaited<ReturnType<typeof listInvitations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListInvitations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData>> & Pick<
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>,
+          Awaited<ReturnType<typeof listInvitations>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>
+          Awaited<ReturnType<typeof listInvitations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListInvitations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Invitations
  */
 
-export function useKeelOrganizationsViewsListInvitations<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsListInvitationsQueryOptions(orgSlug,options)
+  const queryOptions = getListInvitationsQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -6719,19 +6797,19 @@ export function useKeelOrganizationsViewsListInvitations<TData = Awaited<ReturnT
 /**
  * @summary Create Invitation
  */
-export type keelOrganizationsViewsCreateInvitationResponse201 = {
+export type createInvitationResponse201 = {
   data: InvitationOut
   status: 201
 }
     
-export type keelOrganizationsViewsCreateInvitationResponseSuccess = (keelOrganizationsViewsCreateInvitationResponse201) & {
+export type createInvitationResponseSuccess = (createInvitationResponse201) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsCreateInvitationResponse = (keelOrganizationsViewsCreateInvitationResponseSuccess)
+export type createInvitationResponse = (createInvitationResponseSuccess)
 
-export const getKeelOrganizationsViewsCreateInvitationUrl = (orgSlug: string,) => {
+export const getCreateInvitationUrl = (orgSlug: string,) => {
 
 
   
@@ -6739,10 +6817,10 @@ export const getKeelOrganizationsViewsCreateInvitationUrl = (orgSlug: string,) =
   return `/api/v1/orgs/${orgSlug}/invitations/`
 }
 
-export const keelOrganizationsViewsCreateInvitation = async (orgSlug: string,
-    invitationCreateIn: InvitationCreateIn, options?: RequestInit): Promise<keelOrganizationsViewsCreateInvitationResponse> => {
+export const createInvitation = async (orgSlug: string,
+    invitationCreateIn: InvitationCreateIn, options?: RequestInit): Promise<createInvitationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsCreateInvitationResponse>(getKeelOrganizationsViewsCreateInvitationUrl(orgSlug),
+  return identityFetch<createInvitationResponse>(getCreateInvitationUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -6755,11 +6833,11 @@ export const keelOrganizationsViewsCreateInvitation = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsCreateInvitationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext> => {
+export const getCreateInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsCreateInvitation'];
+const mutationKey = ['createInvitation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6769,10 +6847,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>, {orgSlug: string;data: InvitationCreateIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createInvitation>>, {orgSlug: string;data: InvitationCreateIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelOrganizationsViewsCreateInvitation(orgSlug,data,requestOptions)
+          return  createInvitation(orgSlug,data,requestOptions)
         }
 
         
@@ -6780,23 +6858,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsCreateInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>>
-    export type KeelOrganizationsViewsCreateInvitationMutationBody = InvitationCreateIn
-    export type KeelOrganizationsViewsCreateInvitationMutationError = unknown
+    export type CreateInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof createInvitation>>>
+    export type CreateInvitationMutationBody = InvitationCreateIn
+    export type CreateInvitationMutationError = unknown
 
     /**
  * @summary Create Invitation
  */
-export const useKeelOrganizationsViewsCreateInvitation = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,{orgSlug: string;data: InvitationCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsCreateInvitation>>,
+        Awaited<ReturnType<typeof createInvitation>>,
         TError,
         {orgSlug: string;data: InvitationCreateIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsCreateInvitationMutationOptions(options);
+      const mutationOptions = getCreateInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6804,19 +6882,19 @@ export const useKeelOrganizationsViewsCreateInvitation = <TError = unknown,
 /**
  * @summary Revoke Invitation
  */
-export type keelOrganizationsViewsRevokeInvitationResponse204 = {
+export type revokeInvitationResponse204 = {
   data: void
   status: 204
 }
     
-export type keelOrganizationsViewsRevokeInvitationResponseSuccess = (keelOrganizationsViewsRevokeInvitationResponse204) & {
+export type revokeInvitationResponseSuccess = (revokeInvitationResponse204) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsRevokeInvitationResponse = (keelOrganizationsViewsRevokeInvitationResponseSuccess)
+export type revokeInvitationResponse = (revokeInvitationResponseSuccess)
 
-export const getKeelOrganizationsViewsRevokeInvitationUrl = (orgSlug: string,
+export const getRevokeInvitationUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -6825,10 +6903,10 @@ export const getKeelOrganizationsViewsRevokeInvitationUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/invitations/${id}/`
 }
 
-export const keelOrganizationsViewsRevokeInvitation = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelOrganizationsViewsRevokeInvitationResponse> => {
+export const revokeInvitation = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<revokeInvitationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsRevokeInvitationResponse>(getKeelOrganizationsViewsRevokeInvitationUrl(orgSlug,id),
+  return identityFetch<revokeInvitationResponse>(getRevokeInvitationUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -6840,11 +6918,11 @@ export const keelOrganizationsViewsRevokeInvitation = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsRevokeInvitationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getRevokeInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsRevokeInvitation'];
+const mutationKey = ['revokeInvitation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -6854,10 +6932,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeInvitation>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  keelOrganizationsViewsRevokeInvitation(orgSlug,id,requestOptions)
+          return  revokeInvitation(orgSlug,id,requestOptions)
         }
 
         
@@ -6865,23 +6943,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsRevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>>
+    export type RevokeInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeInvitation>>>
     
-    export type KeelOrganizationsViewsRevokeInvitationMutationError = unknown
+    export type RevokeInvitationMutationError = unknown
 
     /**
  * @summary Revoke Invitation
  */
-export const useKeelOrganizationsViewsRevokeInvitation = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useRevokeInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeInvitation>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsRevokeInvitation>>,
+        Awaited<ReturnType<typeof revokeInvitation>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsRevokeInvitationMutationOptions(options);
+      const mutationOptions = getRevokeInvitationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6889,19 +6967,19 @@ export const useKeelOrganizationsViewsRevokeInvitation = <TError = unknown,
 /**
  * @summary Retrieve Invitation
  */
-export type keelOrganizationsViewsRetrieveInvitationResponse200 = {
+export type retrieveInvitationResponse200 = {
   data: InvitationOut
   status: 200
 }
     
-export type keelOrganizationsViewsRetrieveInvitationResponseSuccess = (keelOrganizationsViewsRetrieveInvitationResponse200) & {
+export type retrieveInvitationResponseSuccess = (retrieveInvitationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsRetrieveInvitationResponse = (keelOrganizationsViewsRetrieveInvitationResponseSuccess)
+export type retrieveInvitationResponse = (retrieveInvitationResponseSuccess)
 
-export const getKeelOrganizationsViewsRetrieveInvitationUrl = (orgSlug: string,
+export const getRetrieveInvitationUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -6910,10 +6988,10 @@ export const getKeelOrganizationsViewsRetrieveInvitationUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/invitations/${id}/`
 }
 
-export const keelOrganizationsViewsRetrieveInvitation = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelOrganizationsViewsRetrieveInvitationResponse> => {
+export const retrieveInvitation = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveInvitationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsRetrieveInvitationResponse>(getKeelOrganizationsViewsRetrieveInvitationUrl(orgSlug,id),
+  return identityFetch<retrieveInvitationResponse>(getRetrieveInvitationUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -6926,7 +7004,7 @@ export const keelOrganizationsViewsRetrieveInvitation = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsRetrieveInvitationQueryKey = (orgSlug?: string,
+export const getRetrieveInvitationQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/invitations/${id}/`
@@ -6934,67 +7012,67 @@ export const getKeelOrganizationsViewsRetrieveInvitationQueryKey = (orgSlug?: st
     }
 
     
-export const getKeelOrganizationsViewsRetrieveInvitationQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveInvitationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsRetrieveInvitationQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveInvitationQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>> = ({ signal }) => keelOrganizationsViewsRetrieveInvitation(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveInvitation>>> = ({ signal }) => retrieveInvitation(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsRetrieveInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>>
-export type KeelOrganizationsViewsRetrieveInvitationQueryError = unknown
+export type RetrieveInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveInvitation>>>
+export type RetrieveInvitationQueryError = unknown
 
 
-export function useKeelOrganizationsViewsRetrieveInvitation<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>,
+          Awaited<ReturnType<typeof retrieveInvitation>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>
+          Awaited<ReturnType<typeof retrieveInvitation>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveInvitation<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>,
+          Awaited<ReturnType<typeof retrieveInvitation>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>
+          Awaited<ReturnType<typeof retrieveInvitation>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveInvitation<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Invitation
  */
 
-export function useKeelOrganizationsViewsRetrieveInvitation<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError = unknown>(
+export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsRetrieveInvitationQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveInvitationQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7010,29 +7088,38 @@ export function useKeelOrganizationsViewsRetrieveInvitation<TData = Awaited<Retu
 /**
  * @summary List Jobs
  */
-export type keelJobsViewsListJobsResponse200 = {
+export type listJobsResponse200 = {
   data: PageJobOut
   status: 200
 }
     
-export type keelJobsViewsListJobsResponseSuccess = (keelJobsViewsListJobsResponse200) & {
+export type listJobsResponseSuccess = (listJobsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelJobsViewsListJobsResponse = (keelJobsViewsListJobsResponseSuccess)
+export type listJobsResponse = (listJobsResponseSuccess)
 
-export const getKeelJobsViewsListJobsUrl = (orgSlug: string,) => {
+export const getListJobsUrl = (orgSlug: string,
+    params?: ListJobsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/jobs/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/jobs/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/jobs/`
 }
 
-export const keelJobsViewsListJobs = async (orgSlug: string, options?: RequestInit): Promise<keelJobsViewsListJobsResponse> => {
+export const listJobs = async (orgSlug: string,
+    params?: ListJobsParams, options?: RequestInit): Promise<listJobsResponse> => {
   
-  return identityFetch<keelJobsViewsListJobsResponse>(getKeelJobsViewsListJobsUrl(orgSlug),
+  return identityFetch<listJobsResponse>(getListJobsUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -7045,69 +7132,75 @@ export const keelJobsViewsListJobs = async (orgSlug: string, options?: RequestIn
 
 
 
-export const getKeelJobsViewsListJobsQueryKey = (orgSlug?: string,) => {
+export const getListJobsQueryKey = (orgSlug?: string,
+    params?: ListJobsParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/jobs/`
+    `/api/v1/orgs/${orgSlug}/jobs/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelJobsViewsListJobsQueryOptions = <TData = Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListJobsQueryOptions = <TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(orgSlug: string,
+    params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelJobsViewsListJobsQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListJobsQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelJobsViewsListJobs>>> = ({ signal }) => keelJobsViewsListJobs(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJobs>>> = ({ signal }) => listJobs(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelJobsViewsListJobsQueryResult = NonNullable<Awaited<ReturnType<typeof keelJobsViewsListJobs>>>
-export type KeelJobsViewsListJobsQueryError = unknown
+export type ListJobsQueryResult = NonNullable<Awaited<ReturnType<typeof listJobs>>>
+export type ListJobsQueryError = unknown
 
 
-export function useKeelJobsViewsListJobs<TData = Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData>> & Pick<
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListJobsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelJobsViewsListJobs>>,
+          Awaited<ReturnType<typeof listJobs>>,
           TError,
-          Awaited<ReturnType<typeof keelJobsViewsListJobs>>
+          Awaited<ReturnType<typeof listJobs>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelJobsViewsListJobs<TData = Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData>> & Pick<
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelJobsViewsListJobs>>,
+          Awaited<ReturnType<typeof listJobs>>,
           TError,
-          Awaited<ReturnType<typeof keelJobsViewsListJobs>>
+          Awaited<ReturnType<typeof listJobs>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelJobsViewsListJobs<TData = Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Jobs
  */
 
-export function useKeelJobsViewsListJobs<TData = Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsListJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelJobsViewsListJobsQueryOptions(orgSlug,options)
+  const queryOptions = getListJobsQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7123,19 +7216,19 @@ export function useKeelJobsViewsListJobs<TData = Awaited<ReturnType<typeof keelJ
 /**
  * @summary Create Job
  */
-export type keelJobsViewsCreateJobResponse202 = {
+export type createJobResponse202 = {
   data: JobOut
   status: 202
 }
     
-export type keelJobsViewsCreateJobResponseSuccess = (keelJobsViewsCreateJobResponse202) & {
+export type createJobResponseSuccess = (createJobResponse202) & {
   headers: Headers;
 };
 ;
 
-export type keelJobsViewsCreateJobResponse = (keelJobsViewsCreateJobResponseSuccess)
+export type createJobResponse = (createJobResponseSuccess)
 
-export const getKeelJobsViewsCreateJobUrl = (orgSlug: string,) => {
+export const getCreateJobUrl = (orgSlug: string,) => {
 
 
   
@@ -7143,10 +7236,10 @@ export const getKeelJobsViewsCreateJobUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/jobs/`
 }
 
-export const keelJobsViewsCreateJob = async (orgSlug: string,
-    jobCreateIn: JobCreateIn, options?: RequestInit): Promise<keelJobsViewsCreateJobResponse> => {
+export const createJob = async (orgSlug: string,
+    jobCreateIn: JobCreateIn, options?: RequestInit): Promise<createJobResponse> => {
   
-  return identityFetch<keelJobsViewsCreateJobResponse>(getKeelJobsViewsCreateJobUrl(orgSlug),
+  return identityFetch<createJobResponse>(getCreateJobUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -7159,11 +7252,11 @@ export const keelJobsViewsCreateJob = async (orgSlug: string,
 
 
 
-export const getKeelJobsViewsCreateJobMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCreateJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCreateJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext> => {
+export const getCreateJobMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext> => {
 
-const mutationKey = ['keelJobsViewsCreateJob'];
+const mutationKey = ['createJob'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -7173,10 +7266,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelJobsViewsCreateJob>>, {orgSlug: string;data: JobCreateIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJob>>, {orgSlug: string;data: JobCreateIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelJobsViewsCreateJob(orgSlug,data,requestOptions)
+          return  createJob(orgSlug,data,requestOptions)
         }
 
         
@@ -7184,23 +7277,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelJobsViewsCreateJobMutationResult = NonNullable<Awaited<ReturnType<typeof keelJobsViewsCreateJob>>>
-    export type KeelJobsViewsCreateJobMutationBody = JobCreateIn
-    export type KeelJobsViewsCreateJobMutationError = unknown
+    export type CreateJobMutationResult = NonNullable<Awaited<ReturnType<typeof createJob>>>
+    export type CreateJobMutationBody = JobCreateIn
+    export type CreateJobMutationError = unknown
 
     /**
  * @summary Create Job
  */
-export const useKeelJobsViewsCreateJob = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCreateJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateJob = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{orgSlug: string;data: JobCreateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelJobsViewsCreateJob>>,
+        Awaited<ReturnType<typeof createJob>>,
         TError,
         {orgSlug: string;data: JobCreateIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelJobsViewsCreateJobMutationOptions(options);
+      const mutationOptions = getCreateJobMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -7208,19 +7301,19 @@ export const useKeelJobsViewsCreateJob = <TError = unknown,
 /**
  * @summary Retrieve Job
  */
-export type keelJobsViewsRetrieveJobResponse200 = {
+export type retrieveJobResponse200 = {
   data: JobOut
   status: 200
 }
     
-export type keelJobsViewsRetrieveJobResponseSuccess = (keelJobsViewsRetrieveJobResponse200) & {
+export type retrieveJobResponseSuccess = (retrieveJobResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelJobsViewsRetrieveJobResponse = (keelJobsViewsRetrieveJobResponseSuccess)
+export type retrieveJobResponse = (retrieveJobResponseSuccess)
 
-export const getKeelJobsViewsRetrieveJobUrl = (orgSlug: string,
+export const getRetrieveJobUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7229,10 +7322,10 @@ export const getKeelJobsViewsRetrieveJobUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/jobs/${id}/`
 }
 
-export const keelJobsViewsRetrieveJob = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelJobsViewsRetrieveJobResponse> => {
+export const retrieveJob = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveJobResponse> => {
   
-  return identityFetch<keelJobsViewsRetrieveJobResponse>(getKeelJobsViewsRetrieveJobUrl(orgSlug,id),
+  return identityFetch<retrieveJobResponse>(getRetrieveJobUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -7245,7 +7338,7 @@ export const keelJobsViewsRetrieveJob = async (orgSlug: string,
 
 
 
-export const getKeelJobsViewsRetrieveJobQueryKey = (orgSlug?: string,
+export const getRetrieveJobQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/jobs/${id}/`
@@ -7253,67 +7346,67 @@ export const getKeelJobsViewsRetrieveJobQueryKey = (orgSlug?: string,
     }
 
     
-export const getKeelJobsViewsRetrieveJobQueryOptions = <TData = Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveJobQueryOptions = <TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelJobsViewsRetrieveJobQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveJobQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>> = ({ signal }) => keelJobsViewsRetrieveJob(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveJob>>> = ({ signal }) => retrieveJob(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelJobsViewsRetrieveJobQueryResult = NonNullable<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>>
-export type KeelJobsViewsRetrieveJobQueryError = unknown
+export type RetrieveJobQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveJob>>>
+export type RetrieveJobQueryError = unknown
 
 
-export function useKeelJobsViewsRetrieveJob<TData = Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>,
+          Awaited<ReturnType<typeof retrieveJob>>,
           TError,
-          Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>
+          Awaited<ReturnType<typeof retrieveJob>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelJobsViewsRetrieveJob<TData = Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>,
+          Awaited<ReturnType<typeof retrieveJob>>,
           TError,
-          Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>
+          Awaited<ReturnType<typeof retrieveJob>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelJobsViewsRetrieveJob<TData = Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Job
  */
 
-export function useKeelJobsViewsRetrieveJob<TData = Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError = unknown>(
+export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelJobsViewsRetrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelJobsViewsRetrieveJobQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveJobQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7329,19 +7422,19 @@ export function useKeelJobsViewsRetrieveJob<TData = Awaited<ReturnType<typeof ke
 /**
  * @summary Cancel Job
  */
-export type keelJobsViewsCancelJobResponse200 = {
+export type cancelJobResponse200 = {
   data: JobOut
   status: 200
 }
     
-export type keelJobsViewsCancelJobResponseSuccess = (keelJobsViewsCancelJobResponse200) & {
+export type cancelJobResponseSuccess = (cancelJobResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelJobsViewsCancelJobResponse = (keelJobsViewsCancelJobResponseSuccess)
+export type cancelJobResponse = (cancelJobResponseSuccess)
 
-export const getKeelJobsViewsCancelJobUrl = (orgSlug: string,
+export const getCancelJobUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7350,10 +7443,10 @@ export const getKeelJobsViewsCancelJobUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/jobs/${id}/cancel/`
 }
 
-export const keelJobsViewsCancelJob = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelJobsViewsCancelJobResponse> => {
+export const cancelJob = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<cancelJobResponse> => {
   
-  return identityFetch<keelJobsViewsCancelJobResponse>(getKeelJobsViewsCancelJobUrl(orgSlug,id),
+  return identityFetch<cancelJobResponse>(getCancelJobUrl(orgSlug,id),
   {      
     ...options,
     method: 'POST'
@@ -7365,11 +7458,11 @@ export const keelJobsViewsCancelJob = async (orgSlug: string,
 
 
 
-export const getKeelJobsViewsCancelJobMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCancelJob>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getCancelJobMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['keelJobsViewsCancelJob'];
+const mutationKey = ['cancelJob'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -7379,10 +7472,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelJobsViewsCancelJob>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelJob>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  keelJobsViewsCancelJob(orgSlug,id,requestOptions)
+          return  cancelJob(orgSlug,id,requestOptions)
         }
 
         
@@ -7390,23 +7483,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelJobsViewsCancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof keelJobsViewsCancelJob>>>
+    export type CancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof cancelJob>>>
     
-    export type KeelJobsViewsCancelJobMutationError = unknown
+    export type CancelJobMutationError = unknown
 
     /**
  * @summary Cancel Job
  */
-export const useKeelJobsViewsCancelJob = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelJobsViewsCancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCancelJob = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelJobsViewsCancelJob>>,
+        Awaited<ReturnType<typeof cancelJob>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelJobsViewsCancelJobMutationOptions(options);
+      const mutationOptions = getCancelJobMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -7414,29 +7507,38 @@ export const useKeelJobsViewsCancelJob = <TError = unknown,
 /**
  * @summary List Members
  */
-export type keelOrganizationsViewsListMembersResponse200 = {
+export type listMembersResponse200 = {
   data: PageMembershipOut
   status: 200
 }
     
-export type keelOrganizationsViewsListMembersResponseSuccess = (keelOrganizationsViewsListMembersResponse200) & {
+export type listMembersResponseSuccess = (listMembersResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsListMembersResponse = (keelOrganizationsViewsListMembersResponseSuccess)
+export type listMembersResponse = (listMembersResponseSuccess)
 
-export const getKeelOrganizationsViewsListMembersUrl = (orgSlug: string,) => {
+export const getListMembersUrl = (orgSlug: string,
+    params?: ListMembersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/members/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/members/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/members/`
 }
 
-export const keelOrganizationsViewsListMembers = async (orgSlug: string, options?: RequestInit): Promise<keelOrganizationsViewsListMembersResponse> => {
+export const listMembers = async (orgSlug: string,
+    params?: ListMembersParams, options?: RequestInit): Promise<listMembersResponse> => {
   
-  return identityFetch<keelOrganizationsViewsListMembersResponse>(getKeelOrganizationsViewsListMembersUrl(orgSlug),
+  return identityFetch<listMembersResponse>(getListMembersUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -7449,69 +7551,75 @@ export const keelOrganizationsViewsListMembers = async (orgSlug: string, options
 
 
 
-export const getKeelOrganizationsViewsListMembersQueryKey = (orgSlug?: string,) => {
+export const getListMembersQueryKey = (orgSlug?: string,
+    params?: ListMembersParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/members/`
+    `/api/v1/orgs/${orgSlug}/members/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsListMembersQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListMembersQueryOptions = <TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(orgSlug: string,
+    params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsListMembersQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListMembersQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>> = ({ signal }) => keelOrganizationsViewsListMembers(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMembers>>> = ({ signal }) => listMembers(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsListMembersQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>>
-export type KeelOrganizationsViewsListMembersQueryError = unknown
+export type ListMembersQueryResult = NonNullable<Awaited<ReturnType<typeof listMembers>>>
+export type ListMembersQueryError = unknown
 
 
-export function useKeelOrganizationsViewsListMembers<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData>> & Pick<
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>,
+          Awaited<ReturnType<typeof listMembers>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>
+          Awaited<ReturnType<typeof listMembers>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListMembers<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData>> & Pick<
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>,
+          Awaited<ReturnType<typeof listMembers>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>
+          Awaited<ReturnType<typeof listMembers>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListMembers<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Members
  */
 
-export function useKeelOrganizationsViewsListMembers<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsListMembersQueryOptions(orgSlug,options)
+  const queryOptions = getListMembersQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7527,19 +7635,19 @@ export function useKeelOrganizationsViewsListMembers<TData = Awaited<ReturnType<
 /**
  * @summary Remove Member
  */
-export type keelOrganizationsViewsRemoveMemberResponse204 = {
+export type removeMemberResponse204 = {
   data: void
   status: 204
 }
     
-export type keelOrganizationsViewsRemoveMemberResponseSuccess = (keelOrganizationsViewsRemoveMemberResponse204) & {
+export type removeMemberResponseSuccess = (removeMemberResponse204) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsRemoveMemberResponse = (keelOrganizationsViewsRemoveMemberResponseSuccess)
+export type removeMemberResponse = (removeMemberResponseSuccess)
 
-export const getKeelOrganizationsViewsRemoveMemberUrl = (orgSlug: string,
+export const getRemoveMemberUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7548,10 +7656,10 @@ export const getKeelOrganizationsViewsRemoveMemberUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
-export const keelOrganizationsViewsRemoveMember = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelOrganizationsViewsRemoveMemberResponse> => {
+export const removeMember = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<removeMemberResponse> => {
   
-  return identityFetch<keelOrganizationsViewsRemoveMemberResponse>(getKeelOrganizationsViewsRemoveMemberUrl(orgSlug,id),
+  return identityFetch<removeMemberResponse>(getRemoveMemberUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -7563,11 +7671,11 @@ export const keelOrganizationsViewsRemoveMember = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsRemoveMemberMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getRemoveMemberMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsRemoveMember'];
+const mutationKey = ['removeMember'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -7577,10 +7685,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeMember>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  keelOrganizationsViewsRemoveMember(orgSlug,id,requestOptions)
+          return  removeMember(orgSlug,id,requestOptions)
         }
 
         
@@ -7588,23 +7696,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsRemoveMemberMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>>
+    export type RemoveMemberMutationResult = NonNullable<Awaited<ReturnType<typeof removeMember>>>
     
-    export type KeelOrganizationsViewsRemoveMemberMutationError = unknown
+    export type RemoveMemberMutationError = unknown
 
     /**
  * @summary Remove Member
  */
-export const useKeelOrganizationsViewsRemoveMember = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useRemoveMember = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMember>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsRemoveMember>>,
+        Awaited<ReturnType<typeof removeMember>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsRemoveMemberMutationOptions(options);
+      const mutationOptions = getRemoveMemberMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -7612,19 +7720,19 @@ export const useKeelOrganizationsViewsRemoveMember = <TError = unknown,
 /**
  * @summary Retrieve Member
  */
-export type keelOrganizationsViewsRetrieveMemberResponse200 = {
+export type retrieveMemberResponse200 = {
   data: MembershipOut
   status: 200
 }
     
-export type keelOrganizationsViewsRetrieveMemberResponseSuccess = (keelOrganizationsViewsRetrieveMemberResponse200) & {
+export type retrieveMemberResponseSuccess = (retrieveMemberResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsRetrieveMemberResponse = (keelOrganizationsViewsRetrieveMemberResponseSuccess)
+export type retrieveMemberResponse = (retrieveMemberResponseSuccess)
 
-export const getKeelOrganizationsViewsRetrieveMemberUrl = (orgSlug: string,
+export const getRetrieveMemberUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7633,10 +7741,10 @@ export const getKeelOrganizationsViewsRetrieveMemberUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
-export const keelOrganizationsViewsRetrieveMember = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelOrganizationsViewsRetrieveMemberResponse> => {
+export const retrieveMember = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveMemberResponse> => {
   
-  return identityFetch<keelOrganizationsViewsRetrieveMemberResponse>(getKeelOrganizationsViewsRetrieveMemberUrl(orgSlug,id),
+  return identityFetch<retrieveMemberResponse>(getRetrieveMemberUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -7649,7 +7757,7 @@ export const keelOrganizationsViewsRetrieveMember = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsRetrieveMemberQueryKey = (orgSlug?: string,
+export const getRetrieveMemberQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/members/${id}/`
@@ -7657,67 +7765,67 @@ export const getKeelOrganizationsViewsRetrieveMemberQueryKey = (orgSlug?: string
     }
 
     
-export const getKeelOrganizationsViewsRetrieveMemberQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveMemberQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsRetrieveMemberQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveMemberQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>> = ({ signal }) => keelOrganizationsViewsRetrieveMember(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveMember>>> = ({ signal }) => retrieveMember(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsRetrieveMemberQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>>
-export type KeelOrganizationsViewsRetrieveMemberQueryError = unknown
+export type RetrieveMemberQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveMember>>>
+export type RetrieveMemberQueryError = unknown
 
 
-export function useKeelOrganizationsViewsRetrieveMember<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>,
+          Awaited<ReturnType<typeof retrieveMember>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>
+          Awaited<ReturnType<typeof retrieveMember>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveMember<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>,
+          Awaited<ReturnType<typeof retrieveMember>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>
+          Awaited<ReturnType<typeof retrieveMember>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveMember<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Member
  */
 
-export function useKeelOrganizationsViewsRetrieveMember<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError = unknown>(
+export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsRetrieveMemberQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveMemberQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7733,19 +7841,19 @@ export function useKeelOrganizationsViewsRetrieveMember<TData = Awaited<ReturnTy
 /**
  * @summary Update Member Role
  */
-export type keelOrganizationsViewsUpdateMemberRoleResponse200 = {
+export type updateMemberRoleResponse200 = {
   data: MembershipOut
   status: 200
 }
     
-export type keelOrganizationsViewsUpdateMemberRoleResponseSuccess = (keelOrganizationsViewsUpdateMemberRoleResponse200) & {
+export type updateMemberRoleResponseSuccess = (updateMemberRoleResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsUpdateMemberRoleResponse = (keelOrganizationsViewsUpdateMemberRoleResponseSuccess)
+export type updateMemberRoleResponse = (updateMemberRoleResponseSuccess)
 
-export const getKeelOrganizationsViewsUpdateMemberRoleUrl = (orgSlug: string,
+export const getUpdateMemberRoleUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7754,11 +7862,11 @@ export const getKeelOrganizationsViewsUpdateMemberRoleUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
-export const keelOrganizationsViewsUpdateMemberRole = async (orgSlug: string,
+export const updateMemberRole = async (orgSlug: string,
     id: string,
-    membershipRoleUpdateIn: MembershipRoleUpdateIn, options?: RequestInit): Promise<keelOrganizationsViewsUpdateMemberRoleResponse> => {
+    membershipRoleUpdateIn: MembershipRoleUpdateIn, options?: RequestInit): Promise<updateMemberRoleResponse> => {
   
-  return identityFetch<keelOrganizationsViewsUpdateMemberRoleResponse>(getKeelOrganizationsViewsUpdateMemberRoleUrl(orgSlug,id),
+  return identityFetch<updateMemberRoleResponse>(getUpdateMemberRoleUrl(orgSlug,id),
   {      
     ...options,
     method: 'PUT',
@@ -7771,11 +7879,11 @@ export const keelOrganizationsViewsUpdateMemberRole = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsUpdateMemberRoleMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext> => {
+export const getUpdateMemberRoleMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsUpdateMemberRole'];
+const mutationKey = ['updateMemberRole'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -7785,10 +7893,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>, {orgSlug: string;id: string;data: MembershipRoleUpdateIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMemberRole>>, {orgSlug: string;id: string;data: MembershipRoleUpdateIn}> = (props) => {
           const {orgSlug,id,data} = props ?? {};
 
-          return  keelOrganizationsViewsUpdateMemberRole(orgSlug,id,data,requestOptions)
+          return  updateMemberRole(orgSlug,id,data,requestOptions)
         }
 
         
@@ -7796,23 +7904,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsUpdateMemberRoleMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>>
-    export type KeelOrganizationsViewsUpdateMemberRoleMutationBody = MembershipRoleUpdateIn
-    export type KeelOrganizationsViewsUpdateMemberRoleMutationError = unknown
+    export type UpdateMemberRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateMemberRole>>>
+    export type UpdateMemberRoleMutationBody = MembershipRoleUpdateIn
+    export type UpdateMemberRoleMutationError = unknown
 
     /**
  * @summary Update Member Role
  */
-export const useKeelOrganizationsViewsUpdateMemberRole = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useUpdateMemberRole = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,{orgSlug: string;id: string;data: MembershipRoleUpdateIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsUpdateMemberRole>>,
+        Awaited<ReturnType<typeof updateMemberRole>>,
         TError,
         {orgSlug: string;id: string;data: MembershipRoleUpdateIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsUpdateMemberRoleMutationOptions(options);
+      const mutationOptions = getUpdateMemberRoleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -7820,29 +7928,38 @@ export const useKeelOrganizationsViewsUpdateMemberRole = <TError = unknown,
 /**
  * @summary List Roles
  */
-export type keelOrganizationsViewsListRolesResponse200 = {
+export type listRolesResponse200 = {
   data: PageRoleOut
   status: 200
 }
     
-export type keelOrganizationsViewsListRolesResponseSuccess = (keelOrganizationsViewsListRolesResponse200) & {
+export type listRolesResponseSuccess = (listRolesResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsListRolesResponse = (keelOrganizationsViewsListRolesResponseSuccess)
+export type listRolesResponse = (listRolesResponseSuccess)
 
-export const getKeelOrganizationsViewsListRolesUrl = (orgSlug: string,) => {
+export const getListRolesUrl = (orgSlug: string,
+    params?: ListRolesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/roles/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/roles/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/roles/`
 }
 
-export const keelOrganizationsViewsListRoles = async (orgSlug: string, options?: RequestInit): Promise<keelOrganizationsViewsListRolesResponse> => {
+export const listRoles = async (orgSlug: string,
+    params?: ListRolesParams, options?: RequestInit): Promise<listRolesResponse> => {
   
-  return identityFetch<keelOrganizationsViewsListRolesResponse>(getKeelOrganizationsViewsListRolesUrl(orgSlug),
+  return identityFetch<listRolesResponse>(getListRolesUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -7855,69 +7972,75 @@ export const keelOrganizationsViewsListRoles = async (orgSlug: string, options?:
 
 
 
-export const getKeelOrganizationsViewsListRolesQueryKey = (orgSlug?: string,) => {
+export const getListRolesQueryKey = (orgSlug?: string,
+    params?: ListRolesParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/roles/`
+    `/api/v1/orgs/${orgSlug}/roles/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsListRolesQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListRolesQueryOptions = <TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(orgSlug: string,
+    params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsListRolesQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListRolesQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>> = ({ signal }) => keelOrganizationsViewsListRoles(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoles>>> = ({ signal }) => listRoles(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsListRolesQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>>
-export type KeelOrganizationsViewsListRolesQueryError = unknown
+export type ListRolesQueryResult = NonNullable<Awaited<ReturnType<typeof listRoles>>>
+export type ListRolesQueryError = unknown
 
 
-export function useKeelOrganizationsViewsListRoles<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData>> & Pick<
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListRolesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>,
+          Awaited<ReturnType<typeof listRoles>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>
+          Awaited<ReturnType<typeof listRoles>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListRoles<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData>> & Pick<
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>,
+          Awaited<ReturnType<typeof listRoles>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>
+          Awaited<ReturnType<typeof listRoles>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsListRoles<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Roles
  */
 
-export function useKeelOrganizationsViewsListRoles<TData = Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsListRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsListRolesQueryOptions(orgSlug,options)
+  const queryOptions = getListRolesQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -7933,19 +8056,19 @@ export function useKeelOrganizationsViewsListRoles<TData = Awaited<ReturnType<ty
 /**
  * @summary Retrieve Role
  */
-export type keelOrganizationsViewsRetrieveRoleResponse200 = {
+export type retrieveRoleResponse200 = {
   data: RoleOut
   status: 200
 }
     
-export type keelOrganizationsViewsRetrieveRoleResponseSuccess = (keelOrganizationsViewsRetrieveRoleResponse200) & {
+export type retrieveRoleResponseSuccess = (retrieveRoleResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsRetrieveRoleResponse = (keelOrganizationsViewsRetrieveRoleResponseSuccess)
+export type retrieveRoleResponse = (retrieveRoleResponseSuccess)
 
-export const getKeelOrganizationsViewsRetrieveRoleUrl = (orgSlug: string,
+export const getRetrieveRoleUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -7954,10 +8077,10 @@ export const getKeelOrganizationsViewsRetrieveRoleUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/roles/${id}/`
 }
 
-export const keelOrganizationsViewsRetrieveRole = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelOrganizationsViewsRetrieveRoleResponse> => {
+export const retrieveRole = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveRoleResponse> => {
   
-  return identityFetch<keelOrganizationsViewsRetrieveRoleResponse>(getKeelOrganizationsViewsRetrieveRoleUrl(orgSlug,id),
+  return identityFetch<retrieveRoleResponse>(getRetrieveRoleUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -7970,7 +8093,7 @@ export const keelOrganizationsViewsRetrieveRole = async (orgSlug: string,
 
 
 
-export const getKeelOrganizationsViewsRetrieveRoleQueryKey = (orgSlug?: string,
+export const getRetrieveRoleQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/roles/${id}/`
@@ -7978,67 +8101,67 @@ export const getKeelOrganizationsViewsRetrieveRoleQueryKey = (orgSlug?: string,
     }
 
     
-export const getKeelOrganizationsViewsRetrieveRoleQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveRoleQueryOptions = <TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsRetrieveRoleQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveRoleQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>> = ({ signal }) => keelOrganizationsViewsRetrieveRole(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveRole>>> = ({ signal }) => retrieveRole(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsRetrieveRoleQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>>
-export type KeelOrganizationsViewsRetrieveRoleQueryError = unknown
+export type RetrieveRoleQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveRole>>>
+export type RetrieveRoleQueryError = unknown
 
 
-export function useKeelOrganizationsViewsRetrieveRole<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>,
+          Awaited<ReturnType<typeof retrieveRole>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>
+          Awaited<ReturnType<typeof retrieveRole>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveRole<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>,
+          Awaited<ReturnType<typeof retrieveRole>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>
+          Awaited<ReturnType<typeof retrieveRole>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsRetrieveRole<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Role
  */
 
-export function useKeelOrganizationsViewsRetrieveRole<TData = Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError = unknown>(
+export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsRetrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsRetrieveRoleQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveRoleQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8054,19 +8177,19 @@ export function useKeelOrganizationsViewsRetrieveRole<TData = Awaited<ReturnType
 /**
  * @summary Organization Transfer
  */
-export type keelOrganizationsViewsOrganizationTransferResponse200 = {
+export type transferOrganizationResponse200 = {
   data: MembershipOut
   status: 200
 }
     
-export type keelOrganizationsViewsOrganizationTransferResponseSuccess = (keelOrganizationsViewsOrganizationTransferResponse200) & {
+export type transferOrganizationResponseSuccess = (transferOrganizationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsOrganizationTransferResponse = (keelOrganizationsViewsOrganizationTransferResponseSuccess)
+export type transferOrganizationResponse = (transferOrganizationResponseSuccess)
 
-export const getKeelOrganizationsViewsOrganizationTransferUrl = (orgSlug: string,) => {
+export const getTransferOrganizationUrl = (orgSlug: string,) => {
 
 
   
@@ -8074,10 +8197,10 @@ export const getKeelOrganizationsViewsOrganizationTransferUrl = (orgSlug: string
   return `/api/v1/orgs/${orgSlug}/transfer/`
 }
 
-export const keelOrganizationsViewsOrganizationTransfer = async (orgSlug: string,
-    transferIn: TransferIn, options?: RequestInit): Promise<keelOrganizationsViewsOrganizationTransferResponse> => {
+export const transferOrganization = async (orgSlug: string,
+    transferIn: TransferIn, options?: RequestInit): Promise<transferOrganizationResponse> => {
   
-  return identityFetch<keelOrganizationsViewsOrganizationTransferResponse>(getKeelOrganizationsViewsOrganizationTransferUrl(orgSlug),
+  return identityFetch<transferOrganizationResponse>(getTransferOrganizationUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -8090,11 +8213,11 @@ export const keelOrganizationsViewsOrganizationTransfer = async (orgSlug: string
 
 
 
-export const getKeelOrganizationsViewsOrganizationTransferMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>, TError,{orgSlug: string;data: TransferIn}, TContext> => {
+export const getTransferOrganizationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext> => {
 
-const mutationKey = ['keelOrganizationsViewsOrganizationTransfer'];
+const mutationKey = ['transferOrganization'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8104,10 +8227,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>, {orgSlug: string;data: TransferIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof transferOrganization>>, {orgSlug: string;data: TransferIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelOrganizationsViewsOrganizationTransfer(orgSlug,data,requestOptions)
+          return  transferOrganization(orgSlug,data,requestOptions)
         }
 
         
@@ -8115,23 +8238,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelOrganizationsViewsOrganizationTransferMutationResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>>
-    export type KeelOrganizationsViewsOrganizationTransferMutationBody = TransferIn
-    export type KeelOrganizationsViewsOrganizationTransferMutationError = unknown
+    export type TransferOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof transferOrganization>>>
+    export type TransferOrganizationMutationBody = TransferIn
+    export type TransferOrganizationMutationError = unknown
 
     /**
  * @summary Organization Transfer
  */
-export const useKeelOrganizationsViewsOrganizationTransfer = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useTransferOrganization = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,{orgSlug: string;data: TransferIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelOrganizationsViewsOrganizationTransfer>>,
+        Awaited<ReturnType<typeof transferOrganization>>,
         TError,
         {orgSlug: string;data: TransferIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelOrganizationsViewsOrganizationTransferMutationOptions(options);
+      const mutationOptions = getTransferOrganizationMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -8139,29 +8262,38 @@ export const useKeelOrganizationsViewsOrganizationTransfer = <TError = unknown,
 /**
  * @summary List Widgets
  */
-export type keelWidgetsViewsListWidgetsResponse200 = {
+export type listWidgetsResponse200 = {
   data: PageWidgetOut
   status: 200
 }
     
-export type keelWidgetsViewsListWidgetsResponseSuccess = (keelWidgetsViewsListWidgetsResponse200) & {
+export type listWidgetsResponseSuccess = (listWidgetsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelWidgetsViewsListWidgetsResponse = (keelWidgetsViewsListWidgetsResponseSuccess)
+export type listWidgetsResponse = (listWidgetsResponseSuccess)
 
-export const getKeelWidgetsViewsListWidgetsUrl = (orgSlug: string,) => {
+export const getListWidgetsUrl = (orgSlug: string,
+    params?: ListWidgetsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/orgs/${orgSlug}/widgets/`
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/widgets/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/widgets/`
 }
 
-export const keelWidgetsViewsListWidgets = async (orgSlug: string, options?: RequestInit): Promise<keelWidgetsViewsListWidgetsResponse> => {
+export const listWidgets = async (orgSlug: string,
+    params?: ListWidgetsParams, options?: RequestInit): Promise<listWidgetsResponse> => {
   
-  return identityFetch<keelWidgetsViewsListWidgetsResponse>(getKeelWidgetsViewsListWidgetsUrl(orgSlug),
+  return identityFetch<listWidgetsResponse>(getListWidgetsUrl(orgSlug,params),
   {      
     ...options,
     method: 'GET'
@@ -8174,69 +8306,75 @@ export const keelWidgetsViewsListWidgets = async (orgSlug: string, options?: Req
 
 
 
-export const getKeelWidgetsViewsListWidgetsQueryKey = (orgSlug?: string,) => {
+export const getListWidgetsQueryKey = (orgSlug?: string,
+    params?: ListWidgetsParams,) => {
     return [
-    `/api/v1/orgs/${orgSlug}/widgets/`
+    `/api/v1/orgs/${orgSlug}/widgets/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelWidgetsViewsListWidgetsQueryOptions = <TData = Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError = unknown>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListWidgetsQueryOptions = <TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(orgSlug: string,
+    params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelWidgetsViewsListWidgetsQueryKey(orgSlug);
+  const queryKey =  queryOptions?.queryKey ?? getListWidgetsQueryKey(orgSlug,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>> = ({ signal }) => keelWidgetsViewsListWidgets(orgSlug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listWidgets>>> = ({ signal }) => listWidgets(orgSlug,params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelWidgetsViewsListWidgetsQueryResult = NonNullable<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>>
-export type KeelWidgetsViewsListWidgetsQueryError = unknown
+export type ListWidgetsQueryResult = NonNullable<Awaited<ReturnType<typeof listWidgets>>>
+export type ListWidgetsQueryError = unknown
 
 
-export function useKeelWidgetsViewsListWidgets<TData = Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError = unknown>(
- orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData>> & Pick<
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+ orgSlug: string,
+    params: undefined |  ListWidgetsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>,
+          Awaited<ReturnType<typeof listWidgets>>,
           TError,
-          Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>
+          Awaited<ReturnType<typeof listWidgets>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelWidgetsViewsListWidgets<TData = Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData>> & Pick<
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>,
+          Awaited<ReturnType<typeof listWidgets>>,
           TError,
-          Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>
+          Awaited<ReturnType<typeof listWidgets>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelWidgetsViewsListWidgets<TData = Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Widgets
  */
 
-export function useKeelWidgetsViewsListWidgets<TData = Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError = unknown>(
- orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsListWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = unknown>(
+ orgSlug: string,
+    params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelWidgetsViewsListWidgetsQueryOptions(orgSlug,options)
+  const queryOptions = getListWidgetsQueryOptions(orgSlug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8252,19 +8390,19 @@ export function useKeelWidgetsViewsListWidgets<TData = Awaited<ReturnType<typeof
 /**
  * @summary Create Widget
  */
-export type keelWidgetsViewsCreateWidgetResponse201 = {
+export type createWidgetResponse201 = {
   data: WidgetOut
   status: 201
 }
     
-export type keelWidgetsViewsCreateWidgetResponseSuccess = (keelWidgetsViewsCreateWidgetResponse201) & {
+export type createWidgetResponseSuccess = (createWidgetResponse201) & {
   headers: Headers;
 };
 ;
 
-export type keelWidgetsViewsCreateWidgetResponse = (keelWidgetsViewsCreateWidgetResponseSuccess)
+export type createWidgetResponse = (createWidgetResponseSuccess)
 
-export const getKeelWidgetsViewsCreateWidgetUrl = (orgSlug: string,) => {
+export const getCreateWidgetUrl = (orgSlug: string,) => {
 
 
   
@@ -8272,10 +8410,10 @@ export const getKeelWidgetsViewsCreateWidgetUrl = (orgSlug: string,) => {
   return `/api/v1/orgs/${orgSlug}/widgets/`
 }
 
-export const keelWidgetsViewsCreateWidget = async (orgSlug: string,
-    widgetIn: WidgetIn, options?: RequestInit): Promise<keelWidgetsViewsCreateWidgetResponse> => {
+export const createWidget = async (orgSlug: string,
+    widgetIn: WidgetIn, options?: RequestInit): Promise<createWidgetResponse> => {
   
-  return identityFetch<keelWidgetsViewsCreateWidgetResponse>(getKeelWidgetsViewsCreateWidgetUrl(orgSlug),
+  return identityFetch<createWidgetResponse>(getCreateWidgetUrl(orgSlug),
   {      
     ...options,
     method: 'POST',
@@ -8288,11 +8426,11 @@ export const keelWidgetsViewsCreateWidget = async (orgSlug: string,
 
 
 
-export const getKeelWidgetsViewsCreateWidgetMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext> => {
+export const getCreateWidgetMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext> => {
 
-const mutationKey = ['keelWidgetsViewsCreateWidget'];
+const mutationKey = ['createWidget'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8302,10 +8440,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>, {orgSlug: string;data: WidgetIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createWidget>>, {orgSlug: string;data: WidgetIn}> = (props) => {
           const {orgSlug,data} = props ?? {};
 
-          return  keelWidgetsViewsCreateWidget(orgSlug,data,requestOptions)
+          return  createWidget(orgSlug,data,requestOptions)
         }
 
         
@@ -8313,23 +8451,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelWidgetsViewsCreateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>>
-    export type KeelWidgetsViewsCreateWidgetMutationBody = WidgetIn
-    export type KeelWidgetsViewsCreateWidgetMutationError = unknown
+    export type CreateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof createWidget>>>
+    export type CreateWidgetMutationBody = WidgetIn
+    export type CreateWidgetMutationError = unknown
 
     /**
  * @summary Create Widget
  */
-export const useKeelWidgetsViewsCreateWidget = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useCreateWidget = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,{orgSlug: string;data: WidgetIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelWidgetsViewsCreateWidget>>,
+        Awaited<ReturnType<typeof createWidget>>,
         TError,
         {orgSlug: string;data: WidgetIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelWidgetsViewsCreateWidgetMutationOptions(options);
+      const mutationOptions = getCreateWidgetMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -8337,19 +8475,19 @@ export const useKeelWidgetsViewsCreateWidget = <TError = unknown,
 /**
  * @summary Destroy Widget
  */
-export type keelWidgetsViewsDestroyWidgetResponse204 = {
+export type destroyWidgetResponse204 = {
   data: void
   status: 204
 }
     
-export type keelWidgetsViewsDestroyWidgetResponseSuccess = (keelWidgetsViewsDestroyWidgetResponse204) & {
+export type destroyWidgetResponseSuccess = (destroyWidgetResponse204) & {
   headers: Headers;
 };
 ;
 
-export type keelWidgetsViewsDestroyWidgetResponse = (keelWidgetsViewsDestroyWidgetResponseSuccess)
+export type destroyWidgetResponse = (destroyWidgetResponseSuccess)
 
-export const getKeelWidgetsViewsDestroyWidgetUrl = (orgSlug: string,
+export const getDestroyWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -8358,10 +8496,10 @@ export const getKeelWidgetsViewsDestroyWidgetUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
-export const keelWidgetsViewsDestroyWidget = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelWidgetsViewsDestroyWidgetResponse> => {
+export const destroyWidget = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<destroyWidgetResponse> => {
   
-  return identityFetch<keelWidgetsViewsDestroyWidgetResponse>(getKeelWidgetsViewsDestroyWidgetUrl(orgSlug,id),
+  return identityFetch<destroyWidgetResponse>(getDestroyWidgetUrl(orgSlug,id),
   {      
     ...options,
     method: 'DELETE'
@@ -8373,11 +8511,11 @@ export const keelWidgetsViewsDestroyWidget = async (orgSlug: string,
 
 
 
-export const getKeelWidgetsViewsDestroyWidgetMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>, TError,{orgSlug: string;id: string}, TContext> => {
+export const getDestroyWidgetMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext> => {
 
-const mutationKey = ['keelWidgetsViewsDestroyWidget'];
+const mutationKey = ['destroyWidget'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8387,10 +8525,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>, {orgSlug: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof destroyWidget>>, {orgSlug: string;id: string}> = (props) => {
           const {orgSlug,id} = props ?? {};
 
-          return  keelWidgetsViewsDestroyWidget(orgSlug,id,requestOptions)
+          return  destroyWidget(orgSlug,id,requestOptions)
         }
 
         
@@ -8398,23 +8536,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelWidgetsViewsDestroyWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>>
+    export type DestroyWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof destroyWidget>>>
     
-    export type KeelWidgetsViewsDestroyWidgetMutationError = unknown
+    export type DestroyWidgetMutationError = unknown
 
     /**
  * @summary Destroy Widget
  */
-export const useKeelWidgetsViewsDestroyWidget = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useDestroyWidget = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyWidget>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelWidgetsViewsDestroyWidget>>,
+        Awaited<ReturnType<typeof destroyWidget>>,
         TError,
         {orgSlug: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getKeelWidgetsViewsDestroyWidgetMutationOptions(options);
+      const mutationOptions = getDestroyWidgetMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -8422,19 +8560,19 @@ export const useKeelWidgetsViewsDestroyWidget = <TError = unknown,
 /**
  * @summary Retrieve Widget
  */
-export type keelWidgetsViewsRetrieveWidgetResponse200 = {
+export type retrieveWidgetResponse200 = {
   data: WidgetOut
   status: 200
 }
     
-export type keelWidgetsViewsRetrieveWidgetResponseSuccess = (keelWidgetsViewsRetrieveWidgetResponse200) & {
+export type retrieveWidgetResponseSuccess = (retrieveWidgetResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelWidgetsViewsRetrieveWidgetResponse = (keelWidgetsViewsRetrieveWidgetResponseSuccess)
+export type retrieveWidgetResponse = (retrieveWidgetResponseSuccess)
 
-export const getKeelWidgetsViewsRetrieveWidgetUrl = (orgSlug: string,
+export const getRetrieveWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -8443,10 +8581,10 @@ export const getKeelWidgetsViewsRetrieveWidgetUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
-export const keelWidgetsViewsRetrieveWidget = async (orgSlug: string,
-    id: string, options?: RequestInit): Promise<keelWidgetsViewsRetrieveWidgetResponse> => {
+export const retrieveWidget = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<retrieveWidgetResponse> => {
   
-  return identityFetch<keelWidgetsViewsRetrieveWidgetResponse>(getKeelWidgetsViewsRetrieveWidgetUrl(orgSlug,id),
+  return identityFetch<retrieveWidgetResponse>(getRetrieveWidgetUrl(orgSlug,id),
   {      
     ...options,
     method: 'GET'
@@ -8459,7 +8597,7 @@ export const keelWidgetsViewsRetrieveWidget = async (orgSlug: string,
 
 
 
-export const getKeelWidgetsViewsRetrieveWidgetQueryKey = (orgSlug?: string,
+export const getRetrieveWidgetQueryKey = (orgSlug?: string,
     id?: string,) => {
     return [
     `/api/v1/orgs/${orgSlug}/widgets/${id}/`
@@ -8467,67 +8605,67 @@ export const getKeelWidgetsViewsRetrieveWidgetQueryKey = (orgSlug?: string,
     }
 
     
-export const getKeelWidgetsViewsRetrieveWidgetQueryOptions = <TData = Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError = unknown>(orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getRetrieveWidgetQueryOptions = <TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelWidgetsViewsRetrieveWidgetQueryKey(orgSlug,id);
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveWidgetQueryKey(orgSlug,id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>> = ({ signal }) => keelWidgetsViewsRetrieveWidget(orgSlug,id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveWidget>>> = ({ signal }) => retrieveWidget(orgSlug,id, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelWidgetsViewsRetrieveWidgetQueryResult = NonNullable<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>>
-export type KeelWidgetsViewsRetrieveWidgetQueryError = unknown
+export type RetrieveWidgetQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveWidget>>>
+export type RetrieveWidgetQueryError = unknown
 
 
-export function useKeelWidgetsViewsRetrieveWidget<TData = Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
  orgSlug: string,
-    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData>> & Pick<
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>,
+          Awaited<ReturnType<typeof retrieveWidget>>,
           TError,
-          Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>
+          Awaited<ReturnType<typeof retrieveWidget>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelWidgetsViewsRetrieveWidget<TData = Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData>> & Pick<
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>,
+          Awaited<ReturnType<typeof retrieveWidget>>,
           TError,
-          Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>
+          Awaited<ReturnType<typeof retrieveWidget>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelWidgetsViewsRetrieveWidget<TData = Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Retrieve Widget
  */
 
-export function useKeelWidgetsViewsRetrieveWidget<TData = Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError = unknown>(
+export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = unknown>(
  orgSlug: string,
-    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelWidgetsViewsRetrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelWidgetsViewsRetrieveWidgetQueryOptions(orgSlug,id,options)
+  const queryOptions = getRetrieveWidgetQueryOptions(orgSlug,id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8543,19 +8681,19 @@ export function useKeelWidgetsViewsRetrieveWidget<TData = Awaited<ReturnType<typ
 /**
  * @summary Update Widget
  */
-export type keelWidgetsViewsUpdateWidgetResponse200 = {
+export type updateWidgetResponse200 = {
   data: WidgetOut
   status: 200
 }
     
-export type keelWidgetsViewsUpdateWidgetResponseSuccess = (keelWidgetsViewsUpdateWidgetResponse200) & {
+export type updateWidgetResponseSuccess = (updateWidgetResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelWidgetsViewsUpdateWidgetResponse = (keelWidgetsViewsUpdateWidgetResponseSuccess)
+export type updateWidgetResponse = (updateWidgetResponseSuccess)
 
-export const getKeelWidgetsViewsUpdateWidgetUrl = (orgSlug: string,
+export const getUpdateWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
@@ -8564,11 +8702,11 @@ export const getKeelWidgetsViewsUpdateWidgetUrl = (orgSlug: string,
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
-export const keelWidgetsViewsUpdateWidget = async (orgSlug: string,
+export const updateWidget = async (orgSlug: string,
     id: string,
-    widgetPatchIn: WidgetPatchIn, options?: RequestInit): Promise<keelWidgetsViewsUpdateWidgetResponse> => {
+    widgetPatchIn: WidgetPatchIn, options?: RequestInit): Promise<updateWidgetResponse> => {
   
-  return identityFetch<keelWidgetsViewsUpdateWidgetResponse>(getKeelWidgetsViewsUpdateWidgetUrl(orgSlug,id),
+  return identityFetch<updateWidgetResponse>(getUpdateWidgetUrl(orgSlug,id),
   {      
     ...options,
     method: 'PUT',
@@ -8581,11 +8719,11 @@ export const keelWidgetsViewsUpdateWidget = async (orgSlug: string,
 
 
 
-export const getKeelWidgetsViewsUpdateWidgetMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext> => {
+export const getUpdateWidgetMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext> => {
 
-const mutationKey = ['keelWidgetsViewsUpdateWidget'];
+const mutationKey = ['updateWidget'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8595,10 +8733,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>, {orgSlug: string;id: string;data: WidgetPatchIn}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWidget>>, {orgSlug: string;id: string;data: WidgetPatchIn}> = (props) => {
           const {orgSlug,id,data} = props ?? {};
 
-          return  keelWidgetsViewsUpdateWidget(orgSlug,id,data,requestOptions)
+          return  updateWidget(orgSlug,id,data,requestOptions)
         }
 
         
@@ -8606,23 +8744,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelWidgetsViewsUpdateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>>
-    export type KeelWidgetsViewsUpdateWidgetMutationBody = WidgetPatchIn
-    export type KeelWidgetsViewsUpdateWidgetMutationError = unknown
+    export type UpdateWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof updateWidget>>>
+    export type UpdateWidgetMutationBody = WidgetPatchIn
+    export type UpdateWidgetMutationError = unknown
 
     /**
  * @summary Update Widget
  */
-export const useKeelWidgetsViewsUpdateWidget = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useUpdateWidget = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,{orgSlug: string;id: string;data: WidgetPatchIn}, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelWidgetsViewsUpdateWidget>>,
+        Awaited<ReturnType<typeof updateWidget>>,
         TError,
         {orgSlug: string;id: string;data: WidgetPatchIn},
         TContext
       > => {
 
-      const mutationOptions = getKeelWidgetsViewsUpdateWidgetMutationOptions(options);
+      const mutationOptions = getUpdateWidgetMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -8630,19 +8768,19 @@ export const useKeelWidgetsViewsUpdateWidget = <TError = unknown,
 /**
  * @summary Permissions Registry
  */
-export type keelOrganizationsViewsPermissionsRegistryResponse200 = {
+export type permissionsRegistryResponse200 = {
   data: void
   status: 200
 }
     
-export type keelOrganizationsViewsPermissionsRegistryResponseSuccess = (keelOrganizationsViewsPermissionsRegistryResponse200) & {
+export type permissionsRegistryResponseSuccess = (permissionsRegistryResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelOrganizationsViewsPermissionsRegistryResponse = (keelOrganizationsViewsPermissionsRegistryResponseSuccess)
+export type permissionsRegistryResponse = (permissionsRegistryResponseSuccess)
 
-export const getKeelOrganizationsViewsPermissionsRegistryUrl = () => {
+export const getPermissionsRegistryUrl = () => {
 
 
   
@@ -8650,9 +8788,9 @@ export const getKeelOrganizationsViewsPermissionsRegistryUrl = () => {
   return `/api/v1/permissions/`
 }
 
-export const keelOrganizationsViewsPermissionsRegistry = async ( options?: RequestInit): Promise<keelOrganizationsViewsPermissionsRegistryResponse> => {
+export const permissionsRegistry = async ( options?: RequestInit): Promise<permissionsRegistryResponse> => {
   
-  return identityFetch<keelOrganizationsViewsPermissionsRegistryResponse>(getKeelOrganizationsViewsPermissionsRegistryUrl(),
+  return identityFetch<permissionsRegistryResponse>(getPermissionsRegistryUrl(),
   {      
     ...options,
     method: 'GET'
@@ -8665,69 +8803,69 @@ export const keelOrganizationsViewsPermissionsRegistry = async ( options?: Reque
 
 
 
-export const getKeelOrganizationsViewsPermissionsRegistryQueryKey = () => {
+export const getPermissionsRegistryQueryKey = () => {
     return [
     `/api/v1/permissions/`
     ] as const;
     }
 
     
-export const getKeelOrganizationsViewsPermissionsRegistryQueryOptions = <TData = Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getPermissionsRegistryQueryOptions = <TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelOrganizationsViewsPermissionsRegistryQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getPermissionsRegistryQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>> = ({ signal }) => keelOrganizationsViewsPermissionsRegistry({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof permissionsRegistry>>> = ({ signal }) => permissionsRegistry({ signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelOrganizationsViewsPermissionsRegistryQueryResult = NonNullable<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>>
-export type KeelOrganizationsViewsPermissionsRegistryQueryError = unknown
+export type PermissionsRegistryQueryResult = NonNullable<Awaited<ReturnType<typeof permissionsRegistry>>>
+export type PermissionsRegistryQueryError = unknown
 
 
-export function useKeelOrganizationsViewsPermissionsRegistry<TData = Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData>> & Pick<
+export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>,
+          Awaited<ReturnType<typeof permissionsRegistry>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>
+          Awaited<ReturnType<typeof permissionsRegistry>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsPermissionsRegistry<TData = Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData>> & Pick<
+export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>,
+          Awaited<ReturnType<typeof permissionsRegistry>>,
           TError,
-          Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>
+          Awaited<ReturnType<typeof permissionsRegistry>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelOrganizationsViewsPermissionsRegistry<TData = Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary Permissions Registry
  */
 
-export function useKeelOrganizationsViewsPermissionsRegistry<TData = Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelOrganizationsViewsPermissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function usePermissionsRegistry<TData = Awaited<ReturnType<typeof permissionsRegistry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof permissionsRegistry>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelOrganizationsViewsPermissionsRegistryQueryOptions(options)
+  const queryOptions = getPermissionsRegistryQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8743,29 +8881,36 @@ export function useKeelOrganizationsViewsPermissionsRegistry<TData = Awaited<Ret
 /**
  * @summary List Plans
  */
-export type keelBillingViewsListPlansResponse200 = {
+export type listPlansResponse200 = {
   data: PagePlanOut
   status: 200
 }
     
-export type keelBillingViewsListPlansResponseSuccess = (keelBillingViewsListPlansResponse200) & {
+export type listPlansResponseSuccess = (listPlansResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsListPlansResponse = (keelBillingViewsListPlansResponseSuccess)
+export type listPlansResponse = (listPlansResponseSuccess)
 
-export const getKeelBillingViewsListPlansUrl = () => {
+export const getListPlansUrl = (params?: ListPlansParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/plans/`
+  return stringifiedParams.length > 0 ? `/api/v1/plans/?${stringifiedParams}` : `/api/v1/plans/`
 }
 
-export const keelBillingViewsListPlans = async ( options?: RequestInit): Promise<keelBillingViewsListPlansResponse> => {
+export const listPlans = async (params?: ListPlansParams, options?: RequestInit): Promise<listPlansResponse> => {
   
-  return identityFetch<keelBillingViewsListPlansResponse>(getKeelBillingViewsListPlansUrl(),
+  return identityFetch<listPlansResponse>(getListPlansUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -8778,69 +8923,69 @@ export const keelBillingViewsListPlans = async ( options?: RequestInit): Promise
 
 
 
-export const getKeelBillingViewsListPlansQueryKey = () => {
+export const getListPlansQueryKey = (params?: ListPlansParams,) => {
     return [
-    `/api/v1/plans/`
+    `/api/v1/plans/`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getKeelBillingViewsListPlansQueryOptions = <TData = Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export const getListPlansQueryOptions = <TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getKeelBillingViewsListPlansQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListPlansQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof keelBillingViewsListPlans>>> = ({ signal }) => keelBillingViewsListPlans({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlans>>> = ({ signal }) => listPlans(params, { signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
 
-export type KeelBillingViewsListPlansQueryResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsListPlans>>>
-export type KeelBillingViewsListPlansQueryError = unknown
+export type ListPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listPlans>>>
+export type ListPlansQueryError = unknown
 
 
-export function useKeelBillingViewsListPlans<TData = Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData>> & Pick<
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+ params: undefined |  ListPlansParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsListPlans>>,
+          Awaited<ReturnType<typeof listPlans>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsListPlans>>
+          Awaited<ReturnType<typeof listPlans>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsListPlans<TData = Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData>> & Pick<
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+ params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof keelBillingViewsListPlans>>,
+          Awaited<ReturnType<typeof listPlans>>,
           TError,
-          Awaited<ReturnType<typeof keelBillingViewsListPlans>>
+          Awaited<ReturnType<typeof listPlans>>
         > , 'initialData'
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useKeelBillingViewsListPlans<TData = Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+ params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
 /**
  * @summary List Plans
  */
 
-export function useKeelBillingViewsListPlans<TData = Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof keelBillingViewsListPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = unknown>(
+ params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
-  const queryOptions = getKeelBillingViewsListPlansQueryOptions(options)
+  const queryOptions = getListPlansQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
 
@@ -8859,19 +9004,19 @@ async. The only synchronous work below a signature check is one
 ``get_or_create`` and enqueuing a task.
  * @summary Stripe Webhook
  */
-export type keelBillingViewsStripeWebhookResponse200 = {
+export type stripeWebhookResponse200 = {
   data: void
   status: 200
 }
     
-export type keelBillingViewsStripeWebhookResponseSuccess = (keelBillingViewsStripeWebhookResponse200) & {
+export type stripeWebhookResponseSuccess = (stripeWebhookResponse200) & {
   headers: Headers;
 };
 ;
 
-export type keelBillingViewsStripeWebhookResponse = (keelBillingViewsStripeWebhookResponseSuccess)
+export type stripeWebhookResponse = (stripeWebhookResponseSuccess)
 
-export const getKeelBillingViewsStripeWebhookUrl = () => {
+export const getStripeWebhookUrl = () => {
 
 
   
@@ -8879,9 +9024,9 @@ export const getKeelBillingViewsStripeWebhookUrl = () => {
   return `/api/v1/stripe/webhook/`
 }
 
-export const keelBillingViewsStripeWebhook = async ( options?: RequestInit): Promise<keelBillingViewsStripeWebhookResponse> => {
+export const stripeWebhook = async ( options?: RequestInit): Promise<stripeWebhookResponse> => {
   
-  return identityFetch<keelBillingViewsStripeWebhookResponse>(getKeelBillingViewsStripeWebhookUrl(),
+  return identityFetch<stripeWebhookResponse>(getStripeWebhookUrl(),
   {      
     ...options,
     method: 'POST'
@@ -8893,11 +9038,11 @@ export const keelBillingViewsStripeWebhook = async ( options?: RequestInit): Pro
 
 
 
-export const getKeelBillingViewsStripeWebhookMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>, TError,void, TContext> => {
+export const getStripeWebhookMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext> => {
 
-const mutationKey = ['keelBillingViewsStripeWebhook'];
+const mutationKey = ['stripeWebhook'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -8907,10 +9052,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stripeWebhook>>, void> = () => {
           
 
-          return  keelBillingViewsStripeWebhook(requestOptions)
+          return  stripeWebhook(requestOptions)
         }
 
         
@@ -8918,23 +9063,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type KeelBillingViewsStripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>>
+    export type StripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof stripeWebhook>>>
     
-    export type KeelBillingViewsStripeWebhookMutationError = unknown
+    export type StripeWebhookMutationError = unknown
 
     /**
  * @summary Stripe Webhook
  */
-export const useKeelBillingViewsStripeWebhook = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
+export const useStripeWebhook = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof keelBillingViewsStripeWebhook>>,
+        Awaited<ReturnType<typeof stripeWebhook>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getKeelBillingViewsStripeWebhookMutationOptions(options);
+      const mutationOptions = getStripeWebhookMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

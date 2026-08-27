@@ -122,20 +122,20 @@ test("a Member session gets 403 insufficient_role calling the API directly — <
 
   // Atomic org creation (phase-3.md acceptance) also seeds the three
   // preset roles — B.1's create_organization service.
-  const createOrgResponse = await unsafePost(ownerContext, `${API}/api/v1/organizations/`, {
+  const createOrgResponse = await unsafePost(ownerContext, `${API}/api/v1/orgs/`, {
     name: `Permissions Test ${Date.now()}`,
   });
   expect(createOrgResponse.ok(), await createOrgResponse.text()).toBe(true);
   const org = await createOrgResponse.json();
 
-  const rolesResponse = await ownerContext.get(`${API}/api/v1/organizations/${org.slug}/roles/`);
+  const rolesResponse = await ownerContext.get(`${API}/api/v1/orgs/${org.slug}/roles/`);
   const roles = (await rolesResponse.json()).results as { id: string; name: string }[];
   const memberRole = roles.find((role) => role.name === "Member");
   expect(memberRole, "the Member preset should exist on every organisation").toBeTruthy();
 
   const inviteResponse = await unsafePost(
     ownerContext,
-    `${API}/api/v1/organizations/${org.slug}/invitations/`,
+    `${API}/api/v1/orgs/${org.slug}/invitations/`,
     { email: memberEmail, role_id: memberRole!.id },
   );
   expect(inviteResponse.ok(), await inviteResponse.text()).toBe(true);
@@ -151,7 +151,7 @@ test("a Member session gets 403 insufficient_role calling the API directly — <
   // that genuinely lacks the permission.
   const bypassedResponse = await unsafePost(
     memberContext,
-    `${API}/api/v1/organizations/${org.slug}/invitations/`,
+    `${API}/api/v1/orgs/${org.slug}/invitations/`,
     { email: uniqueEmail("blocked"), role_id: memberRole!.id },
   );
 

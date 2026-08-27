@@ -34,17 +34,22 @@ class JobResource(OrgScopedResource):
 router = JobResource.router
 
 
-@router.get("/{org_slug}/jobs/", response=Page[JobOut])
-def list_jobs(request: Any, org_slug: str) -> dict:
+@router.get("/{org_slug}/jobs/", response=Page[JobOut], operation_id="listJobs")
+def list_jobs(
+    request: Any,
+    org_slug: str,
+    status: str | None = None,
+    cursor: str | None = None,
+    limit: int | None = None,
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_VIEW,))
     queryset = selectors.list_jobs_for_organization(organization)
-    status_filter = request.GET.get("status")
-    if status_filter:
-        queryset = queryset.filter(status=status_filter)
+    if status:
+        queryset = queryset.filter(status=status)
     return paginate(request, queryset)
 
 
-@router.post("/{org_slug}/jobs/", response={202: JobOut})
+@router.post("/{org_slug}/jobs/", response={202: JobOut}, operation_id="createJob")
 def create_job(request: Any, org_slug: str, payload: JobCreateIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_CREATE,))
 
@@ -62,7 +67,7 @@ def create_job(request: Any, org_slug: str, payload: JobCreateIn) -> Any:
     return Status(202, job)
 
 
-@router.get("/{org_slug}/jobs/{id}/", response=JobOut)
+@router.get("/{org_slug}/jobs/{id}/", response=JobOut, operation_id="retrieveJob")
 def retrieve_job(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_VIEW,))
     job = selectors.list_jobs_for_organization(organization).filter(pk=id).first()
@@ -71,7 +76,7 @@ def retrieve_job(request: Any, org_slug: str, id: str) -> Any:
     return job
 
 
-@router.post("/{org_slug}/jobs/{id}/cancel/", response=JobOut)
+@router.post("/{org_slug}/jobs/{id}/cancel/", response=JobOut, operation_id="cancelJob")
 def cancel_job(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_CREATE,))
     job = selectors.list_jobs_for_organization(organization).filter(pk=id).first()

@@ -16,27 +16,27 @@
  */
 
 import {
-  meRetrieve,
-  organizationsAuditList,
-  organizationsCreate as generatedOrganizationsCreate,
-  organizationsDestroy,
-  organizationsInvitationsCreate as generatedOrganizationsInvitationsCreate,
-  organizationsInvitationsDestroy,
-  organizationsInvitationsList,
-  organizationsList,
-  organizationsMembersDestroy,
-  organizationsMembersList,
-  organizationsMembersPartialUpdate as generatedOrganizationsMembersPartialUpdate,
-  organizationsPartialUpdate as generatedOrganizationsPartialUpdate,
-  organizationsRolesList,
-  organizationsTransferCreate as generatedOrganizationsTransferCreate,
-  permissionsRetrieve as generatedPermissionsRetrieve,
-  inviteRetrieve as generatedInviteRetrieve,
-  inviteCreate as generatedInviteCreate,
-  type AuditLog,
-  type Invitation,
-  type Membership,
-  type Organization,
+  me as generatedMe,
+  listAuditLogs as generatedListAuditLogs,
+  createOrganization as generatedCreateOrganization,
+  deleteOrganization as generatedDeleteOrganization,
+  createInvitation as generatedCreateInvitation,
+  revokeInvitation as generatedRevokeInvitation,
+  listInvitations as generatedListInvitations,
+  listOrganizations as generatedListOrganizations,
+  removeMember as generatedRemoveMember,
+  listMembers as generatedListMembers,
+  updateMemberRole as generatedUpdateMemberRole,
+  updateOrganization as generatedUpdateOrganization,
+  listRoles as generatedListRoles,
+  transferOrganization as generatedTransferOrganization,
+  permissionsRegistry as generatedPermissionsRegistry,
+  inviteDetail as generatedInviteDetail,
+  inviteAccept as generatedInviteAccept,
+  type AuditLogOut,
+  type InvitationOut,
+  type MembershipOut,
+  type OrganizationOut,
 } from "@keel/api-client";
 
 import type {
@@ -52,26 +52,18 @@ import type {
   TransferBody,
 } from "./types";
 
-function withJsonBody(body: unknown): RequestInit {
-  return {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  };
-}
-
 export async function getMe(): Promise<MeResponse> {
-  const result = await meRetrieve();
+  const result = await generatedMe();
   return result.data as unknown as MeResponse;
 }
 
-export async function listOrganizations(): Promise<Organization[]> {
-  const result = await organizationsList();
+export async function listOrganizations(): Promise<OrganizationOut[]> {
+  const result = await generatedListOrganizations();
   return result.data.results;
 }
 
-export async function createOrganization(body: OrganizationCreateBody): Promise<Organization> {
-  const result = await generatedOrganizationsCreate(body as never);
+export async function createOrganization(body: OrganizationCreateBody): Promise<OrganizationOut> {
+  const result = await generatedCreateOrganization(body as never);
   return result.data;
 }
 
@@ -79,24 +71,20 @@ export async function updateOrganization(
   slug: string,
   body: OrganizationUpdateBody,
 ): Promise<void> {
-  await generatedOrganizationsPartialUpdate(slug, withJsonBody(body));
+  await generatedUpdateOrganization(slug, body as never);
 }
 
 export async function deleteOrganization(slug: string): Promise<void> {
-  await organizationsDestroy(slug);
+  await generatedDeleteOrganization(slug);
 }
 
-export async function transferOwnership(slug: string, body: TransferBody): Promise<Membership> {
-  const result = await generatedOrganizationsTransferCreate(slug, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return result.data as unknown as Membership;
+export async function transferOwnership(slug: string, body: TransferBody): Promise<MembershipOut> {
+  const result = await generatedTransferOrganization(slug, body as never);
+  return result.data as unknown as MembershipOut;
 }
 
-export async function listMembers(slug: string): Promise<Membership[]> {
-  const result = await organizationsMembersList(slug);
+export async function listMembers(slug: string): Promise<MembershipOut[]> {
+  const result = await generatedListMembers(slug);
   return result.data.results;
 }
 
@@ -115,8 +103,8 @@ function cursorFromNextUrl(next: string | null | undefined): string | null {
 export async function listAuditLogs(
   slug: string,
   cursor?: string,
-): Promise<{ results: AuditLog[]; next: string | null }> {
-  const result = await organizationsAuditList(slug, cursor ? { cursor } : undefined);
+): Promise<{ results: AuditLogOut[]; next: string | null }> {
+  const result = await generatedListAuditLogs(slug, cursor ? { cursor } : undefined);
   return { results: result.data.results, next: cursorFromNextUrl(result.data.next) };
 }
 
@@ -124,8 +112,8 @@ export async function updateMemberRole(
   slug: string,
   membershipId: string,
   body: MembershipRoleUpdateBody,
-): Promise<Membership> {
-  const result = await generatedOrganizationsMembersPartialUpdate(
+): Promise<MembershipOut> {
+  const result = await generatedUpdateMemberRole(
     slug,
     membershipId,
     body as never,
@@ -134,42 +122,42 @@ export async function updateMemberRole(
 }
 
 export async function removeMember(slug: string, membershipId: string): Promise<void> {
-  await organizationsMembersDestroy(slug, membershipId);
+  await generatedRemoveMember(slug, membershipId);
 }
 
-export async function listInvitations(slug: string): Promise<Invitation[]> {
-  const result = await organizationsInvitationsList(slug);
+export async function listInvitations(slug: string): Promise<InvitationOut[]> {
+  const result = await generatedListInvitations(slug);
   return result.data.results;
 }
 
 export async function createInvitation(
   slug: string,
   body: InvitationCreateBody,
-): Promise<Invitation> {
-  const result = await generatedOrganizationsInvitationsCreate(slug, body as never);
+): Promise<InvitationOut> {
+  const result = await generatedCreateInvitation(slug, body as never);
   return result.data;
 }
 
 export async function revokeInvitation(slug: string, invitationId: string): Promise<void> {
-  await organizationsInvitationsDestroy(slug, invitationId);
+  await generatedRevokeInvitation(slug, invitationId);
 }
 
 export async function listRoles(slug: string): Promise<RoleWithPermissions[]> {
-  const result = await organizationsRolesList(slug);
+  const result = await generatedListRoles(slug);
   return result.data.results as RoleWithPermissions[];
 }
 
 export async function getPermissionsRegistry(): Promise<PermissionsRegistryResponse> {
-  const result = await generatedPermissionsRetrieve();
+  const result = await generatedPermissionsRegistry();
   return result.data as unknown as PermissionsRegistryResponse;
 }
 
 export async function resolveInvitation(token: string): Promise<InviteResolveResponse> {
-  const result = await generatedInviteRetrieve(token);
+  const result = await generatedInviteDetail(token);
   return result.data as unknown as InviteResolveResponse;
 }
 
 export async function acceptInvitation(token: string): Promise<InviteAcceptResponse> {
-  const result = await generatedInviteCreate(token);
+  const result = await generatedInviteAccept(token);
   return result.data as unknown as InviteAcceptResponse;
 }

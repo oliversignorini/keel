@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@keel/api-client", () => ({
-  organizationsAuditList: vi.fn(),
+  listAuditLogs: vi.fn(),
 }));
 
-import { organizationsAuditList } from "@keel/api-client";
+import { listAuditLogs as generatedListAuditLogs } from "@keel/api-client";
 import { listAuditLogs } from "@/lib/org/api";
 
 describe("listAuditLogs", () => {
   it("extracts the cursor query param from a full next URL", async () => {
-    vi.mocked(organizationsAuditList).mockResolvedValueOnce({
+    vi.mocked(generatedListAuditLogs).mockResolvedValueOnce({
       data: {
         results: [],
-        next: "https://api.acme.com/api/v1/organizations/acme/audit/?cursor=abc123",
+        next: "https://api.acme.com/api/v1/orgs/acme/audit/?cursor=abc123",
         previous: null,
       },
     } as never);
@@ -23,7 +23,7 @@ describe("listAuditLogs", () => {
   });
 
   it("returns null when there is no next page", async () => {
-    vi.mocked(organizationsAuditList).mockResolvedValueOnce({
+    vi.mocked(generatedListAuditLogs).mockResolvedValueOnce({
       data: { results: [], next: null, previous: null },
     } as never);
 
@@ -33,12 +33,12 @@ describe("listAuditLogs", () => {
   });
 
   it("passes an explicit cursor through to the generated function", async () => {
-    vi.mocked(organizationsAuditList).mockResolvedValueOnce({
+    vi.mocked(generatedListAuditLogs).mockResolvedValueOnce({
       data: { results: [], next: null, previous: null },
     } as never);
 
     await listAuditLogs("acme", "abc123");
 
-    expect(organizationsAuditList).toHaveBeenCalledWith("acme", { cursor: "abc123" });
+    expect(generatedListAuditLogs).toHaveBeenCalledWith("acme", { cursor: "abc123" });
   });
 });

@@ -21,7 +21,7 @@
  * real `serializer_class` and `pnpm generate` produces it directly.
  */
 
-import type { Plan } from "@keel/api-client";
+import type { PlanOut } from "@keel/api-client";
 
 /** `PriceSerializer` — one row of `PlanSerializer.get_prices`. */
 export interface PlanPrice {
@@ -37,7 +37,7 @@ export type BillingInterval = "month" | "year";
 
 /** `GET /api/v1/plans/` with `prices` narrowed past the
  * SerializerMethodField, and `entitlements` past the JSONField. */
-export interface PlanWithPrices extends Omit<Plan, "prices" | "entitlements"> {
+export interface PlanWithPrices extends Omit<PlanOut, "prices" | "entitlements"> {
   prices: PlanPrice[];
   entitlements: PlanEntitlements;
 }

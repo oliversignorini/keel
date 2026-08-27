@@ -1150,7 +1150,7 @@ export const authConfigResponse = zod.object({
 /**
  * @summary Invite Detail
  */
-export const keelOrganizationsViewsInviteDetailParams = zod.object({
+export const inviteDetailParams = zod.object({
   "token": zod.string()
 })
 
@@ -1158,11 +1158,11 @@ export const keelOrganizationsViewsInviteDetailParams = zod.object({
 /**
  * @summary Invite Accept
  */
-export const keelOrganizationsViewsInviteAcceptParams = zod.object({
+export const inviteAcceptParams = zod.object({
   "token": zod.string()
 })
 
-export const keelOrganizationsViewsInviteAcceptResponse = zod.object({
+export const inviteAcceptResponse = zod.object({
   "id": zod.string(),
   "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
@@ -1183,7 +1183,12 @@ export const keelOrganizationsViewsInviteAcceptResponse = zod.object({
 /**
  * @summary List Organizations
  */
-export const keelOrganizationsViewsListOrganizationsResponse = zod.object({
+export const listOrganizationsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listOrganizationsResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1199,22 +1204,22 @@ export const keelOrganizationsViewsListOrganizationsResponse = zod.object({
 /**
  * @summary Create Organization
  */
-export const keelOrganizationsViewsCreateOrganizationBodyNameMax = 255;
+export const createOrganizationBodyNameMax = 255;
 
-export const keelOrganizationsViewsCreateOrganizationBodySlugMaxOne = 255;
+export const createOrganizationBodySlugMaxOne = 255;
 
 
 
-export const keelOrganizationsViewsCreateOrganizationBody = zod.object({
-  "name": zod.string().max(keelOrganizationsViewsCreateOrganizationBodyNameMax),
-  "slug": zod.union([zod.string().max(keelOrganizationsViewsCreateOrganizationBodySlugMaxOne),zod.null()]).optional()
+export const createOrganizationBody = zod.object({
+  "name": zod.string().max(createOrganizationBodyNameMax),
+  "slug": zod.union([zod.string().max(createOrganizationBodySlugMaxOne),zod.null()]).optional()
 })
 
 
 /**
  * @summary Organization Delete
  */
-export const keelOrganizationsViewsOrganizationDeleteParams = zod.object({
+export const deleteOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
@@ -1222,11 +1227,11 @@ export const keelOrganizationsViewsOrganizationDeleteParams = zod.object({
 /**
  * @summary Organization Detail
  */
-export const keelOrganizationsViewsOrganizationDetailParams = zod.object({
+export const retrieveOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsOrganizationDetailResponse = zod.object({
+export const retrieveOrganizationResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "id": zod.string(),
   "name": zod.string(),
@@ -1238,19 +1243,19 @@ export const keelOrganizationsViewsOrganizationDetailResponse = zod.object({
 /**
  * @summary Organization Update
  */
-export const keelOrganizationsViewsOrganizationUpdateParams = zod.object({
+export const updateOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsOrganizationUpdateBodyNameMaxOne = 255;
+export const updateOrganizationBodyNameMaxOne = 255;
 
 
 
-export const keelOrganizationsViewsOrganizationUpdateBody = zod.object({
-  "name": zod.union([zod.string().max(keelOrganizationsViewsOrganizationUpdateBodyNameMaxOne),zod.null()]).optional()
+export const updateOrganizationBody = zod.object({
+  "name": zod.union([zod.string().max(updateOrganizationBodyNameMaxOne),zod.null()]).optional()
 })
 
-export const keelOrganizationsViewsOrganizationUpdateResponse = zod.object({
+export const updateOrganizationResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "id": zod.string(),
   "name": zod.string(),
@@ -1262,11 +1267,16 @@ export const keelOrganizationsViewsOrganizationUpdateResponse = zod.object({
 /**
  * @summary List Audit Logs
  */
-export const keelAuditViewsListAuditLogsParams = zod.object({
+export const listAuditLogsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelAuditViewsListAuditLogsResponse = zod.object({
+export const listAuditLogsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listAuditLogsResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1294,12 +1304,12 @@ export const keelAuditViewsListAuditLogsResponse = zod.object({
 /**
  * @summary Retrieve Audit Log
  */
-export const keelAuditViewsRetrieveAuditLogParams = zod.object({
+export const retrieveAuditLogParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelAuditViewsRetrieveAuditLogResponse = zod.object({
+export const retrieveAuditLogResponse = zod.object({
   "action": zod.string(),
   "actor": zod.union([zod.object({
   "email": zod.string(),
@@ -1323,11 +1333,11 @@ export const keelAuditViewsRetrieveAuditLogResponse = zod.object({
 /**
  * @summary Create Checkout Session
  */
-export const keelBillingViewsCreateCheckoutSessionParams = zod.object({
+export const createCheckoutSessionParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelBillingViewsCreateCheckoutSessionBody = zod.object({
+export const createCheckoutSessionBody = zod.object({
   "price_id": zod.string().uuid()
 })
 
@@ -1338,7 +1348,7 @@ a **404**, not a zero balance — see the DRF-era docstring this
 replaces for the full reasoning; unchanged here.
  * @summary Get Credit Balance
  */
-export const keelBillingViewsGetCreditBalanceParams = zod.object({
+export const getCreditBalanceParams = zod.object({
   "org_slug": zod.string()
 })
 
@@ -1346,7 +1356,7 @@ export const keelBillingViewsGetCreditBalanceParams = zod.object({
 /**
  * @summary Create Billing Portal Session
  */
-export const keelBillingViewsCreateBillingPortalSessionParams = zod.object({
+export const createBillingPortalSessionParams = zod.object({
   "org_slug": zod.string()
 })
 
@@ -1354,7 +1364,7 @@ export const keelBillingViewsCreateBillingPortalSessionParams = zod.object({
 /**
  * @summary Get Subscription
  */
-export const keelBillingViewsGetSubscriptionParams = zod.object({
+export const getSubscriptionParams = zod.object({
   "org_slug": zod.string()
 })
 
@@ -1362,20 +1372,20 @@ export const keelBillingViewsGetSubscriptionParams = zod.object({
 /**
  * @summary Create Upload
  */
-export const keelFilesViewsCreateUploadParams = zod.object({
+export const createUploadParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelFilesViewsCreateUploadBodyContentTypeMax = 255;
+export const createUploadBodyContentTypeMax = 255;
 
-export const keelFilesViewsCreateUploadBodyFilenameMax = 255;
-
-
+export const createUploadBodyFilenameMax = 255;
 
 
-export const keelFilesViewsCreateUploadBody = zod.object({
-  "content_type": zod.string().max(keelFilesViewsCreateUploadBodyContentTypeMax),
-  "filename": zod.string().max(keelFilesViewsCreateUploadBodyFilenameMax),
+
+
+export const createUploadBody = zod.object({
+  "content_type": zod.string().max(createUploadBodyContentTypeMax),
+  "filename": zod.string().max(createUploadBodyFilenameMax),
   "size": zod.number().min(1)
 })
 
@@ -1386,12 +1396,12 @@ view above — the mechanism the cross-tenant test in
 ``keel/files/tests/test_uploads.py`` exercises directly.
  * @summary Retrieve Upload
  */
-export const keelFilesViewsRetrieveUploadParams = zod.object({
+export const retrieveUploadParams = zod.object({
   "org_slug": zod.string(),
   "file_id": zod.string()
 })
 
-export const keelFilesViewsRetrieveUploadResponse = zod.object({
+export const retrieveUploadResponse = zod.object({
   "content_type": zod.string(),
   "created_at": zod.string().datetime({}),
   "id": zod.string(),
@@ -1404,12 +1414,12 @@ export const keelFilesViewsRetrieveUploadResponse = zod.object({
 /**
  * @summary Complete Upload
  */
-export const keelFilesViewsCompleteUploadParams = zod.object({
+export const completeUploadParams = zod.object({
   "org_slug": zod.string(),
   "file_id": zod.string()
 })
 
-export const keelFilesViewsCompleteUploadResponse = zod.object({
+export const completeUploadResponse = zod.object({
   "content_type": zod.string(),
   "created_at": zod.string().datetime({}),
   "id": zod.string(),
@@ -1422,11 +1432,16 @@ export const keelFilesViewsCompleteUploadResponse = zod.object({
 /**
  * @summary List Invitations
  */
-export const keelOrganizationsViewsListInvitationsParams = zod.object({
+export const listInvitationsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsListInvitationsResponse = zod.object({
+export const listInvitationsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listInvitationsResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1455,11 +1470,11 @@ export const keelOrganizationsViewsListInvitationsResponse = zod.object({
 /**
  * @summary Create Invitation
  */
-export const keelOrganizationsViewsCreateInvitationParams = zod.object({
+export const createInvitationParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsCreateInvitationBody = zod.object({
+export const createInvitationBody = zod.object({
   "email": zod.string(),
   "role_id": zod.string().uuid()
 })
@@ -1468,7 +1483,7 @@ export const keelOrganizationsViewsCreateInvitationBody = zod.object({
 /**
  * @summary Revoke Invitation
  */
-export const keelOrganizationsViewsRevokeInvitationParams = zod.object({
+export const revokeInvitationParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1477,12 +1492,12 @@ export const keelOrganizationsViewsRevokeInvitationParams = zod.object({
 /**
  * @summary Retrieve Invitation
  */
-export const keelOrganizationsViewsRetrieveInvitationParams = zod.object({
+export const retrieveInvitationParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelOrganizationsViewsRetrieveInvitationResponse = zod.object({
+export const retrieveInvitationResponse = zod.object({
   "accepted_at": zod.union([zod.string().datetime({}),zod.null()]),
   "created_at": zod.string().datetime({}),
   "email": zod.string(),
@@ -1507,11 +1522,17 @@ export const keelOrganizationsViewsRetrieveInvitationResponse = zod.object({
 /**
  * @summary List Jobs
  */
-export const keelJobsViewsListJobsParams = zod.object({
+export const listJobsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelJobsViewsListJobsResponse = zod.object({
+export const listJobsQueryParams = zod.object({
+  "status": zod.union([zod.string(),zod.null()]).optional(),
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listJobsResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1541,11 +1562,11 @@ export const keelJobsViewsListJobsResponse = zod.object({
 /**
  * @summary Create Job
  */
-export const keelJobsViewsCreateJobParams = zod.object({
+export const createJobParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelJobsViewsCreateJobBody = zod.object({
+export const createJobBody = zod.object({
   "params": zod.record(zod.string(), zod.unknown()).optional(),
   "type": zod.string()
 })
@@ -1554,12 +1575,12 @@ export const keelJobsViewsCreateJobBody = zod.object({
 /**
  * @summary Retrieve Job
  */
-export const keelJobsViewsRetrieveJobParams = zod.object({
+export const retrieveJobParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelJobsViewsRetrieveJobResponse = zod.object({
+export const retrieveJobResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "error": zod.string(),
   "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
@@ -1585,12 +1606,12 @@ export const keelJobsViewsRetrieveJobResponse = zod.object({
 /**
  * @summary Cancel Job
  */
-export const keelJobsViewsCancelJobParams = zod.object({
+export const cancelJobParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelJobsViewsCancelJobResponse = zod.object({
+export const cancelJobResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "error": zod.string(),
   "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
@@ -1616,11 +1637,16 @@ export const keelJobsViewsCancelJobResponse = zod.object({
 /**
  * @summary List Members
  */
-export const keelOrganizationsViewsListMembersParams = zod.object({
+export const listMembersParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsListMembersResponse = zod.object({
+export const listMembersQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listMembersResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1645,7 +1671,7 @@ export const keelOrganizationsViewsListMembersResponse = zod.object({
 /**
  * @summary Remove Member
  */
-export const keelOrganizationsViewsRemoveMemberParams = zod.object({
+export const removeMemberParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1654,12 +1680,12 @@ export const keelOrganizationsViewsRemoveMemberParams = zod.object({
 /**
  * @summary Retrieve Member
  */
-export const keelOrganizationsViewsRetrieveMemberParams = zod.object({
+export const retrieveMemberParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelOrganizationsViewsRetrieveMemberResponse = zod.object({
+export const retrieveMemberResponse = zod.object({
   "id": zod.string(),
   "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
@@ -1680,16 +1706,16 @@ export const keelOrganizationsViewsRetrieveMemberResponse = zod.object({
 /**
  * @summary Update Member Role
  */
-export const keelOrganizationsViewsUpdateMemberRoleParams = zod.object({
+export const updateMemberRoleParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelOrganizationsViewsUpdateMemberRoleBody = zod.object({
+export const updateMemberRoleBody = zod.object({
   "role_id": zod.string().uuid()
 })
 
-export const keelOrganizationsViewsUpdateMemberRoleResponse = zod.object({
+export const updateMemberRoleResponse = zod.object({
   "id": zod.string(),
   "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
@@ -1710,11 +1736,16 @@ export const keelOrganizationsViewsUpdateMemberRoleResponse = zod.object({
 /**
  * @summary List Roles
  */
-export const keelOrganizationsViewsListRolesParams = zod.object({
+export const listRolesParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsListRolesResponse = zod.object({
+export const listRolesQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listRolesResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1729,12 +1760,12 @@ export const keelOrganizationsViewsListRolesResponse = zod.object({
 /**
  * @summary Retrieve Role
  */
-export const keelOrganizationsViewsRetrieveRoleParams = zod.object({
+export const retrieveRoleParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelOrganizationsViewsRetrieveRoleResponse = zod.object({
+export const retrieveRoleResponse = zod.object({
   "id": zod.string(),
   "is_preset": zod.boolean(),
   "name": zod.string(),
@@ -1745,15 +1776,15 @@ export const keelOrganizationsViewsRetrieveRoleResponse = zod.object({
 /**
  * @summary Organization Transfer
  */
-export const keelOrganizationsViewsOrganizationTransferParams = zod.object({
+export const transferOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelOrganizationsViewsOrganizationTransferBody = zod.object({
+export const transferOrganizationBody = zod.object({
   "membership_id": zod.string()
 })
 
-export const keelOrganizationsViewsOrganizationTransferResponse = zod.object({
+export const transferOrganizationResponse = zod.object({
   "id": zod.string(),
   "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
@@ -1774,11 +1805,16 @@ export const keelOrganizationsViewsOrganizationTransferResponse = zod.object({
 /**
  * @summary List Widgets
  */
-export const keelWidgetsViewsListWidgetsParams = zod.object({
+export const listWidgetsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelWidgetsViewsListWidgetsResponse = zod.object({
+export const listWidgetsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listWidgetsResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
@@ -1796,17 +1832,17 @@ export const keelWidgetsViewsListWidgetsResponse = zod.object({
 /**
  * @summary Create Widget
  */
-export const keelWidgetsViewsCreateWidgetParams = zod.object({
+export const createWidgetParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const keelWidgetsViewsCreateWidgetBodyDescriptionDefault = "";export const keelWidgetsViewsCreateWidgetBodyNameMax = 255;
+export const createWidgetBodyDescriptionDefault = "";export const createWidgetBodyNameMax = 255;
 
-export const keelWidgetsViewsCreateWidgetBodyStatusDefault = "";
+export const createWidgetBodyStatusDefault = "";
 
-export const keelWidgetsViewsCreateWidgetBody = zod.object({
+export const createWidgetBody = zod.object({
   "description": zod.string().optional(),
-  "name": zod.string().min(1).max(keelWidgetsViewsCreateWidgetBodyNameMax),
+  "name": zod.string().min(1).max(createWidgetBodyNameMax),
   "status": zod.string().optional()
 })
 
@@ -1814,7 +1850,7 @@ export const keelWidgetsViewsCreateWidgetBody = zod.object({
 /**
  * @summary Destroy Widget
  */
-export const keelWidgetsViewsDestroyWidgetParams = zod.object({
+export const destroyWidgetParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
@@ -1823,12 +1859,12 @@ export const keelWidgetsViewsDestroyWidgetParams = zod.object({
 /**
  * @summary Retrieve Widget
  */
-export const keelWidgetsViewsRetrieveWidgetParams = zod.object({
+export const retrieveWidgetParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelWidgetsViewsRetrieveWidgetResponse = zod.object({
+export const retrieveWidgetResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "created_by": zod.string(),
   "description": zod.string(),
@@ -1842,22 +1878,22 @@ export const keelWidgetsViewsRetrieveWidgetResponse = zod.object({
 /**
  * @summary Update Widget
  */
-export const keelWidgetsViewsUpdateWidgetParams = zod.object({
+export const updateWidgetParams = zod.object({
   "org_slug": zod.string(),
   "id": zod.string()
 })
 
-export const keelWidgetsViewsUpdateWidgetBodyNameMaxFour = 255;
+export const updateWidgetBodyNameMaxFour = 255;
 
 
 
-export const keelWidgetsViewsUpdateWidgetBody = zod.object({
+export const updateWidgetBody = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
-  "name": zod.union([zod.string().min(1).max(keelWidgetsViewsUpdateWidgetBodyNameMaxFour),zod.null()]).optional(),
+  "name": zod.union([zod.string().min(1).max(updateWidgetBodyNameMaxFour),zod.null()]).optional(),
   "status": zod.union([zod.string(),zod.null()]).optional()
 })
 
-export const keelWidgetsViewsUpdateWidgetResponse = zod.object({
+export const updateWidgetResponse = zod.object({
   "created_at": zod.string().datetime({}),
   "created_by": zod.string(),
   "description": zod.string(),
@@ -1871,7 +1907,12 @@ export const keelWidgetsViewsUpdateWidgetResponse = zod.object({
 /**
  * @summary List Plans
  */
-export const keelBillingViewsListPlansResponse = zod.object({
+export const listPlansQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listPlansResponse = zod.object({
   "next": zod.union([zod.string(),zod.null()]),
   "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({

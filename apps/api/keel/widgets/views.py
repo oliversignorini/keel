@@ -43,14 +43,16 @@ def _get_widget_or_404(organization: Any, id: str) -> Widget:
     return widget
 
 
-@router.get("/{org_slug}/widgets/", response=Page[WidgetOut])
-def list_widgets(request: Any, org_slug: str) -> dict:
+@router.get("/{org_slug}/widgets/", response=Page[WidgetOut], operation_id="listWidgets")
+def list_widgets(
+    request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_VIEW,))
     queryset = selectors.list_widgets(organization)
     return paginate(request, queryset)
 
 
-@router.post("/{org_slug}/widgets/", response={201: WidgetOut})
+@router.post("/{org_slug}/widgets/", response={201: WidgetOut}, operation_id="createWidget")
 def create_widget(request: Any, org_slug: str, payload: WidgetIn) -> Status[Widget]:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
     widget = services.create_widget(
@@ -63,7 +65,7 @@ def create_widget(request: Any, org_slug: str, payload: WidgetIn) -> Status[Widg
     return Status(201, widget)
 
 
-@router.get("/{org_slug}/widgets/{id}/", response=WidgetOut)
+@router.get("/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="retrieveWidget")
 def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_VIEW,))
     return _get_widget_or_404(organization, id)
@@ -74,7 +76,9 @@ def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
 # optional, so the two never behaved differently. One handler for both
 # keeps that surface (stage 10.D's route-by-route diff caught PUT's
 # absence as the one real gap, not just a documentation mismatch).
-@router.api_operation(["PUT", "PATCH"], "/{org_slug}/widgets/{id}/", response=WidgetOut)
+@router.api_operation(
+    ["PUT", "PATCH"], "/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="updateWidget"
+)
 def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
     widget = _get_widget_or_404(organization, id)
@@ -87,7 +91,7 @@ def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) 
     )
 
 
-@router.delete("/{org_slug}/widgets/{id}/", response={204: None})
+@router.delete("/{org_slug}/widgets/{id}/", response={204: None}, operation_id="destroyWidget")
 def destroy_widget(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
     widget = _get_widget_or_404(organization, id)

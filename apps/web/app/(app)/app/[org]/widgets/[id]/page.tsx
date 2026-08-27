@@ -6,7 +6,7 @@ import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import { deleteWidget, getWidget, updateWidget } from "@/lib/widgets/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Widget } from "@keel/api-client";
+import type { WidgetOut } from "@keel/api-client";
 import { FormField, PageHeader, ResourceForm } from "@keel/ui";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,7 +26,7 @@ export default function WidgetDetailPage() {
   const router = useRouter();
   const params = useParams<{ org: string; id: string }>();
   const { currentOrg } = useOrgContext();
-  const [widget, setWidget] = useState<Widget | null>(null);
+  const [widget, setWidget] = useState<WidgetOut | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const {

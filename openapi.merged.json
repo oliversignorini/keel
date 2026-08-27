@@ -5421,7 +5421,7 @@
     },
     "/api/v1/impersonation/exit/": {
       "post": {
-        "operationId": "keel_audit_views_impersonation_exit",
+        "operationId": "impersonationExit",
         "parameters": [],
         "responses": {
           "204": {
@@ -5436,7 +5436,7 @@
     },
     "/api/v1/invite/{token}/": {
       "get": {
-        "operationId": "keel_organizations_views_invite_detail",
+        "operationId": "inviteDetail",
         "parameters": [
           {
             "in": "path",
@@ -5456,7 +5456,7 @@
         "summary": "Invite Detail"
       },
       "post": {
-        "operationId": "keel_organizations_views_invite_accept",
+        "operationId": "inviteAccept",
         "parameters": [
           {
             "in": "path",
@@ -5485,7 +5485,7 @@
     },
     "/api/v1/me/": {
       "get": {
-        "operationId": "keel_organizations_views_me",
+        "operationId": "me",
         "parameters": [],
         "responses": {
           "200": {
@@ -5500,8 +5500,41 @@
     },
     "/api/v1/orgs/": {
       "get": {
-        "operationId": "keel_organizations_views_list_organizations",
-        "parameters": [],
+        "operationId": "listOrganizations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5520,7 +5553,7 @@
         ]
       },
       "post": {
-        "operationId": "keel_organizations_views_create_organization",
+        "operationId": "createOrganization",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -5552,7 +5585,7 @@
     },
     "/api/v1/orgs/{org_slug}/": {
       "delete": {
-        "operationId": "keel_organizations_views_organization_delete",
+        "operationId": "deleteOrganization",
         "parameters": [
           {
             "in": "path",
@@ -5575,7 +5608,7 @@
         ]
       },
       "get": {
-        "operationId": "keel_organizations_views_organization_detail",
+        "operationId": "retrieveOrganization",
         "parameters": [
           {
             "in": "path",
@@ -5605,7 +5638,7 @@
         ]
       },
       "patch": {
-        "operationId": "keel_organizations_views_organization_update",
+        "operationId": "updateOrganization",
         "parameters": [
           {
             "in": "path",
@@ -5647,7 +5680,7 @@
     },
     "/api/v1/orgs/{org_slug}/audit/": {
       "get": {
-        "operationId": "keel_audit_views_list_audit_logs",
+        "operationId": "listAuditLogs",
         "parameters": [
           {
             "in": "path",
@@ -5656,6 +5689,38 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -5679,7 +5744,7 @@
     },
     "/api/v1/orgs/{org_slug}/audit/{id}/": {
       "get": {
-        "operationId": "keel_audit_views_retrieve_audit_log",
+        "operationId": "retrieveAuditLog",
         "parameters": [
           {
             "in": "path",
@@ -5720,7 +5785,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/checkout/": {
       "post": {
-        "operationId": "keel_billing_views_create_checkout_session",
+        "operationId": "createCheckoutSession",
         "parameters": [
           {
             "in": "path",
@@ -5756,7 +5821,7 @@
     "/api/v1/orgs/{org_slug}/billing/credits/": {
       "get": {
         "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 see the DRF-era docstring this\nreplaces for the full reasoning; unchanged here.",
-        "operationId": "keel_billing_views_get_credit_balance",
+        "operationId": "getCreditBalance",
         "parameters": [
           {
             "in": "path",
@@ -5781,7 +5846,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/portal/": {
       "post": {
-        "operationId": "keel_billing_views_create_billing_portal_session",
+        "operationId": "createBillingPortalSession",
         "parameters": [
           {
             "in": "path",
@@ -5806,7 +5871,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/subscription/": {
       "get": {
-        "operationId": "keel_billing_views_get_subscription",
+        "operationId": "getSubscription",
         "parameters": [
           {
             "in": "path",
@@ -5831,7 +5896,7 @@
     },
     "/api/v1/orgs/{org_slug}/files/": {
       "post": {
-        "operationId": "keel_files_views_create_upload",
+        "operationId": "createUpload",
         "parameters": [
           {
             "in": "path",
@@ -5876,7 +5941,7 @@
     "/api/v1/orgs/{org_slug}/files/{file_id}/": {
       "get": {
         "description": "Scoped to ``organization`` in the same lookup as the completion\nview above \u2014 the mechanism the cross-tenant test in\n``keel/files/tests/test_uploads.py`` exercises directly.",
-        "operationId": "keel_files_views_retrieve_upload",
+        "operationId": "retrieveUpload",
         "parameters": [
           {
             "in": "path",
@@ -5917,7 +5982,7 @@
     },
     "/api/v1/orgs/{org_slug}/files/{file_id}/complete/": {
       "post": {
-        "operationId": "keel_files_views_complete_upload",
+        "operationId": "completeUpload",
         "parameters": [
           {
             "in": "path",
@@ -5958,7 +6023,7 @@
     },
     "/api/v1/orgs/{org_slug}/invitations/": {
       "get": {
-        "operationId": "keel_organizations_views_list_invitations",
+        "operationId": "listInvitations",
         "parameters": [
           {
             "in": "path",
@@ -5967,6 +6032,38 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -5988,7 +6085,7 @@
         ]
       },
       "post": {
-        "operationId": "keel_organizations_views_create_invitation",
+        "operationId": "createInvitation",
         "parameters": [
           {
             "in": "path",
@@ -6030,7 +6127,7 @@
     },
     "/api/v1/orgs/{org_slug}/invitations/{id}/": {
       "delete": {
-        "operationId": "keel_organizations_views_revoke_invitation",
+        "operationId": "revokeInvitation",
         "parameters": [
           {
             "in": "path",
@@ -6062,7 +6159,7 @@
         ]
       },
       "get": {
-        "operationId": "keel_organizations_views_retrieve_invitation",
+        "operationId": "retrieveInvitation",
         "parameters": [
           {
             "in": "path",
@@ -6103,7 +6200,7 @@
     },
     "/api/v1/orgs/{org_slug}/jobs/": {
       "get": {
-        "operationId": "keel_jobs_views_list_jobs",
+        "operationId": "listJobs",
         "parameters": [
           {
             "in": "path",
@@ -6112,6 +6209,54 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6133,7 +6278,7 @@
         ]
       },
       "post": {
-        "operationId": "keel_jobs_views_create_job",
+        "operationId": "createJob",
         "parameters": [
           {
             "in": "path",
@@ -6175,7 +6320,7 @@
     },
     "/api/v1/orgs/{org_slug}/jobs/{id}/": {
       "get": {
-        "operationId": "keel_jobs_views_retrieve_job",
+        "operationId": "retrieveJob",
         "parameters": [
           {
             "in": "path",
@@ -6216,7 +6361,7 @@
     },
     "/api/v1/orgs/{org_slug}/jobs/{id}/cancel/": {
       "post": {
-        "operationId": "keel_jobs_views_cancel_job",
+        "operationId": "cancelJob",
         "parameters": [
           {
             "in": "path",
@@ -6257,7 +6402,7 @@
     },
     "/api/v1/orgs/{org_slug}/members/": {
       "get": {
-        "operationId": "keel_organizations_views_list_members",
+        "operationId": "listMembers",
         "parameters": [
           {
             "in": "path",
@@ -6266,6 +6411,38 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6289,7 +6466,7 @@
     },
     "/api/v1/orgs/{org_slug}/members/{id}/": {
       "delete": {
-        "operationId": "keel_organizations_views_remove_member",
+        "operationId": "removeMember",
         "parameters": [
           {
             "in": "path",
@@ -6321,7 +6498,7 @@
         ]
       },
       "get": {
-        "operationId": "keel_organizations_views_retrieve_member",
+        "operationId": "retrieveMember",
         "parameters": [
           {
             "in": "path",
@@ -6360,7 +6537,7 @@
         ]
       },
       "patch": {
-        "operationId": "keel_organizations_views_update_member_role",
+        "operationId": "updateMemberRole",
         "parameters": [
           {
             "in": "path",
@@ -6409,7 +6586,7 @@
         ]
       },
       "put": {
-        "operationId": "keel_organizations_views_update_member_role",
+        "operationId": "updateMemberRole",
         "parameters": [
           {
             "in": "path",
@@ -6460,7 +6637,7 @@
     },
     "/api/v1/orgs/{org_slug}/roles/": {
       "get": {
-        "operationId": "keel_organizations_views_list_roles",
+        "operationId": "listRoles",
         "parameters": [
           {
             "in": "path",
@@ -6469,6 +6646,38 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6492,7 +6701,7 @@
     },
     "/api/v1/orgs/{org_slug}/roles/{id}/": {
       "get": {
-        "operationId": "keel_organizations_views_retrieve_role",
+        "operationId": "retrieveRole",
         "parameters": [
           {
             "in": "path",
@@ -6533,7 +6742,7 @@
     },
     "/api/v1/orgs/{org_slug}/transfer/": {
       "post": {
-        "operationId": "keel_organizations_views_organization_transfer",
+        "operationId": "transferOrganization",
         "parameters": [
           {
             "in": "path",
@@ -6575,7 +6784,7 @@
     },
     "/api/v1/orgs/{org_slug}/widgets/": {
       "get": {
-        "operationId": "keel_widgets_views_list_widgets",
+        "operationId": "listWidgets",
         "parameters": [
           {
             "in": "path",
@@ -6584,6 +6793,38 @@
             "schema": {
               "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6605,7 +6846,7 @@
         ]
       },
       "post": {
-        "operationId": "keel_widgets_views_create_widget",
+        "operationId": "createWidget",
         "parameters": [
           {
             "in": "path",
@@ -6647,7 +6888,7 @@
     },
     "/api/v1/orgs/{org_slug}/widgets/{id}/": {
       "delete": {
-        "operationId": "keel_widgets_views_destroy_widget",
+        "operationId": "destroyWidget",
         "parameters": [
           {
             "in": "path",
@@ -6679,7 +6920,7 @@
         ]
       },
       "get": {
-        "operationId": "keel_widgets_views_retrieve_widget",
+        "operationId": "retrieveWidget",
         "parameters": [
           {
             "in": "path",
@@ -6718,7 +6959,7 @@
         ]
       },
       "patch": {
-        "operationId": "keel_widgets_views_update_widget",
+        "operationId": "updateWidget",
         "parameters": [
           {
             "in": "path",
@@ -6767,7 +7008,7 @@
         ]
       },
       "put": {
-        "operationId": "keel_widgets_views_update_widget",
+        "operationId": "updateWidget",
         "parameters": [
           {
             "in": "path",
@@ -6818,7 +7059,7 @@
     },
     "/api/v1/permissions/": {
       "get": {
-        "operationId": "keel_organizations_views_permissions_registry",
+        "operationId": "permissionsRegistry",
         "parameters": [],
         "responses": {
           "200": {
@@ -6833,8 +7074,41 @@
     },
     "/api/v1/plans/": {
       "get": {
-        "operationId": "keel_billing_views_list_plans",
-        "parameters": [],
+        "operationId": "listPlans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -6853,7 +7127,7 @@
     "/api/v1/stripe/webhook/": {
       "post": {
         "description": "PRD \u00a76 \"Stripe webhook\": acknowledge in under 200ms, work happens\nasync. The only synchronous work below a signature check is one\n``get_or_create`` and enqueuing a task.",
-        "operationId": "keel_billing_views_stripe_webhook",
+        "operationId": "stripeWebhook",
         "parameters": [],
         "responses": {
           "200": {

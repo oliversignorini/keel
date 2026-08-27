@@ -57,13 +57,15 @@ def _get_role_or_422(role_id: object) -> Role:
 org_router = keel_router(tags=["organizations"])
 
 
-@org_router.get("/orgs/", response=Page[OrganizationOut])
-def list_organizations(request: Any) -> dict:
+@org_router.get(
+    "/orgs/", response=Page[OrganizationOut], operation_id="listOrganizations"
+)
+def list_organizations(request: Any, cursor: str | None = None, limit: int | None = None) -> dict:
     queryset = selectors.list_organizations_for_user(request.auth)
     return paginate(request, queryset)
 
 
-@org_router.post("/orgs/", response={201: OrganizationOut})
+@org_router.post("/orgs/", response={201: OrganizationOut}, operation_id="createOrganization")
 def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
 
     slug = resolve_create_slug(payload)
@@ -73,19 +75,25 @@ def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
     return Status(201, organization)
 
 
-@org_router.get("/orgs/{org_slug}/", response=OrganizationOut)
+@org_router.get(
+    "/orgs/{org_slug}/", response=OrganizationOut, operation_id="retrieveOrganization"
+)
 def organization_detail(request: Any, org_slug: str) -> Any:
     return resolve_and_authorize(request, org_slug, (Perm.ORG_VIEW,))
 
 
-@org_router.patch("/orgs/{org_slug}/", response=OrganizationOut)
+@org_router.patch(
+    "/orgs/{org_slug}/", response=OrganizationOut, operation_id="updateOrganization"
+)
 def organization_update(request: Any, org_slug: str, payload: OrganizationUpdateIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_UPDATE,))
     fields = payload.dict(exclude_unset=True)
     return services.update_organization(organization=organization, actor=request.auth, **fields)
 
 
-@org_router.delete("/orgs/{org_slug}/", response={204: None})
+@org_router.delete(
+    "/orgs/{org_slug}/", response={204: None}, operation_id="deleteOrganization"
+)
 def organization_delete(request: Any, org_slug: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_DELETE,))
@@ -97,7 +105,9 @@ def organization_delete(request: Any, org_slug: str) -> Any:
     return Status(204, None)
 
 
-@org_router.post("/orgs/{org_slug}/transfer/", response=MembershipOut)
+@org_router.post(
+    "/orgs/{org_slug}/transfer/", response=MembershipOut, operation_id="transferOrganization"
+)
 def organization_transfer(request: Any, org_slug: str, payload: TransferIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_TRANSFER,))
     to_membership_id = payload.membership_id
@@ -147,14 +157,20 @@ class InvitationResource(OrgScopedResource):
     detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{id}/"
 
 
-@nested_router.get("/{org_slug}/members/", response=Page[MembershipOut])
-def list_members(request: Any, org_slug: str) -> dict:
+@nested_router.get(
+    "/{org_slug}/members/", response=Page[MembershipOut], operation_id="listMembers"
+)
+def list_members(
+    request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     queryset = Membership.objects.select_related("user", "role").for_organization(organization)
     return paginate(request, queryset)
 
 
-@nested_router.get("/{org_slug}/members/{id}/", response=MembershipOut)
+@nested_router.get(
+    "/{org_slug}/members/{id}/", response=MembershipOut, operation_id="retrieveMember"
+)
 def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     membership = (
@@ -171,7 +187,10 @@ def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
 # Same PUT+PATCH parity note as keel.widgets.views.update_widget — DRF's
 # update()/partial_update() were the same code for members too.
 @nested_router.api_operation(
-    ["PUT", "PATCH"], "/{org_slug}/members/{id}/", response=MembershipOut
+    ["PUT", "PATCH"],
+    "/{org_slug}/members/{id}/",
+    response=MembershipOut,
+    operation_id="updateMemberRole",
 )
 def update_member_role(
     request: Any, org_slug: str, id: str, payload: MembershipRoleUpdateIn
@@ -184,7 +203,9 @@ def update_member_role(
     return services.change_member_role(membership=membership, role=role, actor=request.auth)
 
 
-@nested_router.delete("/{org_slug}/members/{id}/", response={204: None})
+@nested_router.delete(
+    "/{org_slug}/members/{id}/", response={204: None}, operation_id="removeMember"
+)
 def remove_member(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_REMOVE,))
@@ -195,14 +216,18 @@ def remove_member(request: Any, org_slug: str, id: str) -> Any:
     return Status(204, None)
 
 
-@nested_router.get("/{org_slug}/roles/", response=Page[RoleOut])
-def list_roles(request: Any, org_slug: str) -> dict:
+@nested_router.get("/{org_slug}/roles/", response=Page[RoleOut], operation_id="listRoles")
+def list_roles(
+    request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     queryset = selectors.list_roles_for_organization(organization)
     return paginate(request, queryset)
 
 
-@nested_router.get("/{org_slug}/roles/{id}/", response=RoleOut)
+@nested_router.get(
+    "/{org_slug}/roles/{id}/", response=RoleOut, operation_id="retrieveRole"
+)
 def retrieve_role(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     role = selectors.list_roles_for_organization(organization).filter(pk=id).first()
@@ -211,8 +236,12 @@ def retrieve_role(request: Any, org_slug: str, id: str) -> Any:
     return role
 
 
-@nested_router.get("/{org_slug}/invitations/", response=Page[InvitationOut])
-def list_invitations(request: Any, org_slug: str) -> dict:
+@nested_router.get(
+    "/{org_slug}/invitations/", response=Page[InvitationOut], operation_id="listInvitations"
+)
+def list_invitations(
+    request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
     queryset = Invitation.objects.select_related("role", "invited_by").for_organization(
         organization
@@ -220,7 +249,9 @@ def list_invitations(request: Any, org_slug: str) -> dict:
     return paginate(request, queryset)
 
 
-@nested_router.post("/{org_slug}/invitations/", response={201: InvitationOut})
+@nested_router.post(
+    "/{org_slug}/invitations/", response={201: InvitationOut}, operation_id="createInvitation"
+)
 def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
@@ -234,7 +265,9 @@ def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) 
     return Status(201, invitation)
 
 
-@nested_router.get("/{org_slug}/invitations/{id}/", response=InvitationOut)
+@nested_router.get(
+    "/{org_slug}/invitations/{id}/", response=InvitationOut, operation_id="retrieveInvitation"
+)
 def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
     invitation = (
@@ -248,7 +281,9 @@ def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
     return invitation
 
 
-@nested_router.delete("/{org_slug}/invitations/{id}/", response={204: None})
+@nested_router.delete(
+    "/{org_slug}/invitations/{id}/", response={204: None}, operation_id="revokeInvitation"
+)
 def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
@@ -264,7 +299,7 @@ def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 me_router = keel_router(tags=["me"])
 
 
-@me_router.get("/me/")
+@me_router.get("/me/", operation_id="me")
 def me(request: Any) -> dict:
     user = request.auth
     organizations: list[dict[str, Any]] = []
@@ -292,7 +327,7 @@ def me(request: Any) -> dict:
     }
 
 
-@me_router.get("/permissions/")
+@me_router.get("/permissions/", operation_id="permissionsRegistry")
 def permissions_registry(request: Any) -> dict:
     return {"codes": selectors.registered_permission_codes()}
 
@@ -314,7 +349,7 @@ def _resolve_valid_invitation(token: str) -> Invitation:
     return invitation
 
 
-@invite_router.get("/invite/{token}/")
+@invite_router.get("/invite/{token}/", operation_id="inviteDetail")
 def invite_detail(request: Any, token: str) -> dict:
     invitation = _resolve_valid_invitation(token)
     return {
@@ -327,7 +362,7 @@ def invite_detail(request: Any, token: str) -> dict:
     }
 
 
-@invite_router.post("/invite/{token}/", response=MembershipOut)
+@invite_router.post("/invite/{token}/", response=MembershipOut, operation_id="inviteAccept")
 def invite_accept(request: Any, token: str) -> Any:
     if not request.auth.is_authenticated:
         raise NotAuthenticated()

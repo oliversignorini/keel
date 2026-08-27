@@ -41,14 +41,16 @@ router = AuditLogResource.router
 impersonation_router = keel_router(tags=["impersonation"])
 
 
-@router.get("/{org_slug}/audit/", response=Page[AuditLogOut])
-def list_audit_logs(request: Any, org_slug: str) -> dict:
+@router.get("/{org_slug}/audit/", response=Page[AuditLogOut], operation_id="listAuditLogs")
+def list_audit_logs(
+    request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
+) -> dict:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
     queryset = selectors.list_audit_logs_for_organization(organization)
     return paginate(request, queryset)
 
 
-@router.get("/{org_slug}/audit/{id}/", response=AuditLogOut)
+@router.get("/{org_slug}/audit/{id}/", response=AuditLogOut, operation_id="retrieveAuditLog")
 def retrieve_audit_log(request: Any, org_slug: str, id: str) -> AuditLog:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
     row = selectors.list_audit_logs_for_organization(organization).filter(pk=id).first()
@@ -58,7 +60,10 @@ def retrieve_audit_log(request: Any, org_slug: str, id: str) -> AuditLog:
 
 
 @impersonation_router.post(
-    "/impersonation/exit/", response={204: None}, url_name="impersonation-exit"
+    "/impersonation/exit/",
+    response={204: None},
+    url_name="impersonation-exit",
+    operation_id="impersonationExit",
 )
 def impersonation_exit(request: Any) -> Status[None]:
     from keel.accounts.models import User

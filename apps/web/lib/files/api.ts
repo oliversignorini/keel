@@ -4,9 +4,9 @@
  */
 
 import {
-  organizationsFilesCompleteCreate,
-  organizationsFilesCreate,
-  organizationsFilesRetrieve,
+  completeUpload as generatedCompleteUpload,
+  createUpload,
+  retrieveUpload,
 } from "@keel/api-client";
 
 import type { FileUploadResource, PresignedUploadRequest, PresignedUploadResponse } from "./types";
@@ -17,11 +17,7 @@ export async function createPresignedUpload(
   orgSlug: string,
   body: PresignedUploadRequest,
 ): Promise<PresignedUploadResponse> {
-  const result = await organizationsFilesCreate(orgSlug, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const result = await createUpload(orgSlug, body as never);
   return result.data as unknown as PresignedUploadResponse;
 }
 
@@ -59,13 +55,13 @@ export function uploadToPresignedUrl(
  * the row to `complete` (apps/api/keel/files/services.py verifies the
  * object actually exists before doing so). */
 export async function completeUpload(orgSlug: string, fileId: string): Promise<FileUploadResource> {
-  const result = await organizationsFilesCompleteCreate(orgSlug, fileId, { method: "POST" });
+  const result = await generatedCompleteUpload(orgSlug, fileId, { method: "POST" });
   return result.data as unknown as FileUploadResource;
 }
 
 /** Requires `files.view`. Used to reconcile a `FileUpload` row's status
  * after a page reload — see `<FileUpload>`'s docstring. */
 export async function getFileUpload(orgSlug: string, fileId: string): Promise<FileUploadResource> {
-  const result = await organizationsFilesRetrieve(orgSlug, fileId);
+  const result = await retrieveUpload(orgSlug, fileId);
   return result.data as unknown as FileUploadResource;
 }

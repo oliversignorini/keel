@@ -5,13 +5,13 @@
  * error handling.
  */
 import {
-  organizationsWidgetsCreate,
-  organizationsWidgetsDestroy,
-  organizationsWidgetsList,
-  organizationsWidgetsPartialUpdate,
-  organizationsWidgetsRetrieve,
-  type PaginatedWidgetList,
-  type Widget,
+  createWidget as generatedCreateWidget,
+  destroyWidget,
+  listWidgets as generatedListWidgets,
+  retrieveWidget,
+  updateWidget as generatedUpdateWidget,
+  type PageWidgetOut,
+  type WidgetOut,
 } from "@keel/api-client";
 
 export interface WidgetWriteBody {
@@ -23,18 +23,18 @@ export interface WidgetWriteBody {
 export async function listWidgets(
   orgSlug: string,
   params?: { cursor?: string; limit?: number },
-): Promise<PaginatedWidgetList> {
-  const result = await organizationsWidgetsList(orgSlug, params);
+): Promise<PageWidgetOut> {
+  const result = await generatedListWidgets(orgSlug, params);
   return result.data;
 }
 
-export async function getWidget(orgSlug: string, id: string): Promise<Widget> {
-  const result = await organizationsWidgetsRetrieve(orgSlug, id);
+export async function getWidget(orgSlug: string, id: string): Promise<WidgetOut> {
+  const result = await retrieveWidget(orgSlug, id);
   return result.data;
 }
 
-export async function createWidget(orgSlug: string, body: WidgetWriteBody): Promise<Widget> {
-  const result = await organizationsWidgetsCreate(orgSlug, body as never);
+export async function createWidget(orgSlug: string, body: WidgetWriteBody): Promise<WidgetOut> {
+  const result = await generatedCreateWidget(orgSlug, body as never);
   return result.data;
 }
 
@@ -42,11 +42,11 @@ export async function updateWidget(
   orgSlug: string,
   id: string,
   body: Partial<WidgetWriteBody>,
-): Promise<Widget> {
-  const result = await organizationsWidgetsPartialUpdate(orgSlug, id, body as never);
+): Promise<WidgetOut> {
+  const result = await generatedUpdateWidget(orgSlug, id, body as never);
   return result.data;
 }
 
 export async function deleteWidget(orgSlug: string, id: string): Promise<void> {
-  await organizationsWidgetsDestroy(orgSlug, id);
+  await destroyWidget(orgSlug, id);
 }
