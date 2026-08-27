@@ -120,3 +120,9 @@ uv run python manage.py makemigrations --check --dry-run
 `docs/deploy-railway.md` covers the Railway path, including the answer to whether the target Postgres ships `pgvector` — it does not by default, and the doc names the templates that do.
 
 The SSE endpoint runs as a **separate uvicorn service** from the same image. A held-open connection under a sync worker pool exhausts it far below what request/response load testing suggests, and a proxy that buffers `text/event-stream` produces a job tray that shows nothing for four minutes and then everything at once. `infra/railway.json` declares both services.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
