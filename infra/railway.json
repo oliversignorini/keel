@@ -11,7 +11,8 @@
         "healthcheckPath": "/healthz/",
         "healthcheckTimeout": 30,
         "restartPolicyType": "ON_FAILURE",
-        "restartPolicyMaxRetries": 5
+        "restartPolicyMaxRetries": 5,
+        "preDeployCommand": ["python manage.py migrate --no-input"]
       }
     },
     "stream": {
