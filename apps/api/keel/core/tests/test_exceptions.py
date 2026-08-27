@@ -9,6 +9,7 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 
+from keel.core import exceptions as keel_exceptions
 from keel.core.exceptions import (
     Conflict,
     PaymentRequired,
@@ -155,3 +156,40 @@ def test_unhandled_exception_returns_none_for_django_default_handling() -> None:
     response = exception_handler(ValueError("boom"), {})
 
     assert response is None
+
+
+def test_keel_not_authenticated_matches_drf_shape() -> None:
+    """Framework-independent counterpart used by keel.core.ninja_auth —
+    same code/status DRF's own NotAuthenticated produces."""
+    exc = keel_exceptions.NotAuthenticated()
+
+    assert exc.status_code == 401
+    assert exc.code == "not_authenticated"
+    assert exc.message == "Authentication credentials were not provided."
+
+
+def test_keel_authentication_failed_matches_drf_shape() -> None:
+    exc = keel_exceptions.AuthenticationFailed()
+
+    assert exc.status_code == 401
+    assert exc.code == "authentication_failed"
+    assert exc.message == "Incorrect authentication credentials."
+
+
+def test_keel_throttled_without_a_wait_uses_the_default_message() -> None:
+    """keel.core.ninja_throttle only ever raises with wait= set; this
+    proves the no-wait branch still produces a sane envelope."""
+    exc = keel_exceptions.Throttled()
+
+    assert exc.wait is None
+    assert exc.status_code == 429
+    assert exc.code == "throttled"
+    assert exc.message == "Request was throttled."
+
+
+def test_keel_throttled_with_a_wait_pluralizes_correctly() -> None:
+    singular = keel_exceptions.Throttled(wait=1)
+    plural = keel_exceptions.Throttled(wait=30)
+
+    assert "1 second." in singular.message
+    assert "30 seconds." in plural.message

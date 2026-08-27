@@ -59,3 +59,12 @@ ACCOUNT_RATE_LIMITS = False  # type: ignore[assignment]
 # from run history. tests/test_rate_limiting.py re-enables this
 # explicitly (and clears the cache first) to test the mechanism itself.
 REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_CLASSES": []}  # noqa: F405
+
+# Same reasoning, for keel.core.ninja_throttle (the DRF-independent
+# equivalent, PRD phase-10.md 10.A): None disables both throttles'
+# `check()` short-circuit. keel/core/tests/test_ninja_throttle.py
+# constructs throttle instances with an explicit `rate=` to test the
+# mechanism itself, bypassing this the same way tests/test_rate_limiting.py
+# does for the DRF throttles above.
+KEEL_API_THROTTLE_USER_RATE = None
+KEEL_API_THROTTLE_ANON_RATE = None

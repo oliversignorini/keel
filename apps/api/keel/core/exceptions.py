@@ -39,6 +39,27 @@ class DomainError(drf_exceptions.APIException):
         super().__init__(detail=self.message, code=self.code)
 
 
+class NotAuthenticated(DomainError):
+    """Framework-independent counterpart to DRF's own ``NotAuthenticated``
+    (used by ``keel.core.ninja_auth``, PRD §7: anonymous request to a
+    protected route answers 401, never 403)."""
+
+    status_code = 401
+    default_code = "not_authenticated"
+    default_message = "Authentication credentials were not provided."
+
+
+class AuthenticationFailed(DomainError):
+    """Framework-independent counterpart to DRF's own ``AuthenticationFailed``
+    — used by ``keel.core.ninja_auth`` for a CSRF failure on an
+    otherwise-authenticated session, matching
+    ``keel.core.authentication.SessionAuthentication``'s 401 behaviour."""
+
+    status_code = 401
+    default_code = "authentication_failed"
+    default_message = "Incorrect authentication credentials."
+
+
 class PaymentRequired(DomainError):
     status_code = 402
     default_code = "payment_required"
@@ -61,6 +82,26 @@ class UnprocessableEntity(DomainError):
     status_code = 422
     default_code = "unprocessable_entity"
     default_message = "Semantically invalid but well-formed."
+
+
+class Throttled(DomainError):
+    """Framework-independent counterpart to DRF's own ``Throttled`` — used
+    by ``keel.core.ninja_throttle``. ``wait`` is the number of seconds the
+    caller should wait, surfaced as the ``Retry-After`` header by the
+    Ninja exception handler (``keel.core.ninja_exceptions``)."""
+
+    status_code = 429
+    default_code = "throttled"
+    default_message = "Request was throttled."
+
+    def __init__(self, wait: float | None = None, details: Any = None) -> None:
+        self.wait = wait
+        if wait is not None:
+            unit = "second" if int(wait) == 1 else "seconds"
+            message = f"{self.default_message} Expected available in {int(wait)} {unit}."
+        else:
+            message = self.default_message
+        super().__init__(code=self.default_code, message=message, details=details)
 
 
 def _validation_details(detail: Any) -> list[dict[str, Any]]:

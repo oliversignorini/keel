@@ -7,6 +7,8 @@ from drf_spectacular.views import SpectacularAPIView
 from redis import Redis
 from redis.exceptions import RedisError
 
+from keel.core.ninja_api import api as ninja_api
+
 
 def healthz(request: HttpRequest) -> JsonResponse:
     """Liveness probe. No DB access — must answer even if the DB is down."""
@@ -40,6 +42,7 @@ urlpatterns = [
     path("readyz/", readyz, name="readyz"),
     path("admin/", admin.site.urls),
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/v1/", ninja_api.urls),
     path("api/v1/", include("keel.organizations.urls")),
     path("api/v1/", include("keel.billing.urls")),
     path("api/v1/", include("keel.files.urls")),

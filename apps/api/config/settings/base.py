@@ -336,6 +336,16 @@ REST_FRAMEWORK = {
     },
 }
 
+# Same rates, exposed as real settings (rather than only nested inside
+# REST_FRAMEWORK's dict) so keel.core.ninja_throttle — which has no
+# dependency on rest_framework, and so survives its removal in stage 10.E
+# — can read them directly. DRF's DEFAULT_THROTTLE_RATES above stays the
+# source every DRF view still reads until it is migrated; both read the
+# same env vars, so the two mechanisms cannot drift apart while they
+# briefly coexist.
+KEEL_API_THROTTLE_USER_RATE: str | None = REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["user"]  # type: ignore[index]
+KEEL_API_THROTTLE_ANON_RATE: str | None = REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["anon"]  # type: ignore[index]
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Keel API",
     "DESCRIPTION": "Keel — Django + Next.js SaaS template.",
