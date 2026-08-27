@@ -62,8 +62,6 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django.contrib.sites",
     # Third party
-    "rest_framework",
-    "drf_spectacular",
     "corsheaders",
     # allauth headless (PRD §4 "Auth architecture", §8 Phase 2)
     "allauth",
@@ -301,51 +299,15 @@ AUDIT_LOG_RETENTION_DAYS = env.int("AUDIT_LOG_RETENTION_DAYS", default=365)
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
 
-# --- DRF ---------------------------------------------------------------
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        # Not DRF's own SessionAuthentication (PRD §8 Phase 2 A.4): that
-        # class has no WWW-Authenticate challenge, which makes DRF coerce
-        # an unauthenticated request's 401 to 403 (documented DRF
-        # behavior — see keel/core/authentication.py). PRD §7 requires a
-        # real 401 for "no session, or session expired".
-        "keel.core.authentication.SessionAuthentication",
-    ],
-    # Deny by default (PRD §4, task 1.12) — a viewset that forgets to
-    # declare permissions is unreachable rather than open.
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_PAGINATION_CLASS": "keel.core.pagination.CursorPagination",
-    "EXCEPTION_HANDLER": "keel.core.exceptions.exception_handler",
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    # General API rate limiting (PRD §3 NFR "Security": "Rate limiting ...
-    # on the API generally"; docs/plans/phase-8.md 8.6). allauth's own
-    # limiter already covers /_allauth/* — this is everything else.
-    # DRF's default throttle handler already sets Retry-After from
-    # Throttled.wait (see keel.core.exceptions's docstring) and Django's
-    # cache (Redis, PRD §3 "Redis for ... rate limit counters") backs the
-    # counters, so no new mechanism is needed, only turning this on.
-    "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.UserRateThrottle",
-        "rest_framework.throttling.AnonRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "user": env("KEEL_API_THROTTLE_USER_RATE", default="300/minute"),
-        "anon": env("KEEL_API_THROTTLE_ANON_RATE", default="60/minute"),
-    },
-}
-
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Keel API",
-    "DESCRIPTION": "Keel — Django + Next.js SaaS template.",
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
-    # Matches allauth headless's own spec version (3.0.3) so
-    # scripts/merge_openapi.py (A.3) merges two documents in the same
-    # OpenAPI dialect rather than mixing 3.0 and 3.1 JSON Schema variants.
-    "OAS_VERSION": "3.0.3",
-}
+# --- General API rate limiting -------------------------------------------
+# PRD §3 NFR "Security": "Rate limiting ... on the API generally";
+# docs/plans/phase-8.md 8.6. allauth's own limiter already covers
+# /_allauth/* — this is everything else. Read by keel.core.ninja_throttle,
+# which every Ninja operation runs through via keel.core.ninja_auth.
+# Django's cache (Redis, PRD §3 "Redis for ... rate limit counters") backs
+# the counters. `None` disables a throttle entirely (config/settings/test.py).
+KEEL_API_THROTTLE_USER_RATE: str | None = env("KEEL_API_THROTTLE_USER_RATE", default="300/minute")
+KEEL_API_THROTTLE_ANON_RATE: str | None = env("KEEL_API_THROTTLE_ANON_RATE", default="60/minute")
 
 # --- allauth headless (PRD §4 "Auth architecture", §8 Phase 2 A.1) ---------
 # `HEADLESS_ONLY = True`: no allauth template-rendered account views, only
@@ -473,16 +435,9 @@ LOGGING = {
 
 # --- Organisations / permissions (PRD §4 "Tenancy and permissions") -------
 # The membership-resolution seam keel/core/authz.py documents: keel.core
-# cannot import keel.organizations, so OrgScopedViewSet resolves the
+# cannot import keel.organizations, so OrgScopedResource resolves the
 # organisation through this dotted path instead.
 KEEL_ORGANIZATION_RESOLVER = "keel.organizations.resolvers.resolve_organization"
-
-# Dotted path to the DRF router the tenant-isolation meta-test walks
-# (PRD §4 invariant 7). Empty until a worktree registers real viewsets on
-# a router — the meta-test itself is built and proven in this phase
-# against fixture viewsets; it starts covering production viewsets the
-# moment this points at a real router.
-KEEL_API_ROUTER = env("KEEL_API_ROUTER", default="keel.organizations.urls.api_registry")
 
 # Custom roles are a per-project feature flag, off by default (PRD §4,
 # "Tenancy and permissions") — the Role model and roles.manage permission

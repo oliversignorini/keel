@@ -3,9 +3,40 @@ from django.contrib import admin
 from django.db import connections
 from django.http import HttpRequest, JsonResponse
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView
 from redis import Redis
 from redis.exceptions import RedisError
+
+from keel.audit.views import impersonation_router as audit_impersonation_router
+from keel.audit.views import router as audit_router
+from keel.billing.views import plans_router as billing_plans_router
+from keel.billing.views import router as billing_router
+from keel.billing.views import webhook_router as billing_webhook_router
+from keel.core.ninja_api import api as ninja_api
+from keel.files.views import router as files_router
+from keel.jobs.views import router as jobs_router
+from keel.organizations.views import invite_router as org_invite_router
+from keel.organizations.views import me_router as org_me_router
+from keel.organizations.views import nested_router as org_nested_router
+from keel.organizations.views import org_router
+from keel.widgets.views import router as widgets_router
+
+# Every app's Ninja router mounts on this one shared api instance (stage
+# 10.A/10.D's note in keel/core/ninja_api.py). "/orgs", not
+# "/organizations" — PRD §7 names the segment "orgs"; the implementation
+# used the longer form until this rename (phase-10.md's second "allowed
+# change", done in one sweep across every route here).
+ninja_api.add_router("/orgs", widgets_router)
+ninja_api.add_router("/orgs", audit_router)
+ninja_api.add_router("", audit_impersonation_router)
+ninja_api.add_router("", billing_plans_router)
+ninja_api.add_router("/orgs", billing_router)
+ninja_api.add_router("", billing_webhook_router)
+ninja_api.add_router("/orgs", jobs_router)
+ninja_api.add_router("/orgs", files_router)
+ninja_api.add_router("", org_router)
+ninja_api.add_router("/orgs", org_nested_router)
+ninja_api.add_router("", org_me_router)
+ninja_api.add_router("", org_invite_router)
 
 
 def healthz(request: HttpRequest) -> JsonResponse:
@@ -39,12 +70,10 @@ urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("readyz/", readyz, name="readyz"),
     path("admin/", admin.site.urls),
-    path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/v1/", include("keel.organizations.urls")),
-    path("api/v1/", include("keel.billing.urls")),
-    path("api/v1/", include("keel.files.urls")),
-    path("api/v1/", include("keel.jobs.urls")),
-    path("api/v1/", include("keel.audit.urls")),
+    # Ninja serves the OpenAPI document itself at /api/v1/openapi.json —
+    # there is no separate schema view to mount (drf-spectacular's
+    # /api/v1/schema/ is gone with DRF).
+    path("api/v1/", ninja_api.urls),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8
     # Phase 2 A.1; allauth headless installation docs).

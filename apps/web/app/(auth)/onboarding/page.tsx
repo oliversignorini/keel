@@ -17,7 +17,7 @@ interface OnboardingFormValues {
 /**
  * `/onboarding` (PRD §5 Routes, §6 "Signup → first organisation"):
  * creates the visitor's first organisation. `createOrganization` calls
- * `POST /api/v1/organizations/`, which is atomic end to end on the server
+ * `POST /api/v1/orgs/`, which is atomic end to end on the server
  * — org, Owner membership, and the three preset roles are created
  * together or not at all (organizations/services.py `create_organization`,
  * phase-3.md acceptance: "Creating an organisation is atomic ... all or

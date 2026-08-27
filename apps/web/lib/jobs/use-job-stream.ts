@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { Job } from "@keel/api-client";
-
-import { getJob, jobStreamUrl, listJobs } from "./api";
+import { getJob, jobStreamUrl, listJobs, type Job } from "./api";
 import type { JobStreamConnection, JobStreamEvent } from "./types";
 
 const POLL_INTERVAL_MS = 4_000;

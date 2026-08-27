@@ -10,7 +10,7 @@ import {
 } from "@/lib/org/api";
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
-import type { Membership } from "@keel/api-client";
+import type { MembershipOut } from "@keel/api-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -128,7 +128,7 @@ function TransferSection({
   orgSlug: string;
   onTransferred: () => Promise<void>;
 }) {
-  const [members, setMembers] = useState<Membership[]>([]);
+  const [members, setMembers] = useState<MembershipOut[]>([]);
   const [targetId, setTargetId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

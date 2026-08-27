@@ -55,7 +55,7 @@ def _request_for(org_slug, user):
     method) — the production ASGI service runs the same
     ``settings.MIDDLEWARE`` as everything else, so this stub only
     stands in for what that middleware would already have done."""
-    request = RequestFactory().get(f"/api/v1/organizations/{org_slug}/jobs/stream/")
+    request = RequestFactory().get(f"/api/v1/orgs/{org_slug}/jobs/stream/")
     request.user = user
 
     async def auser():

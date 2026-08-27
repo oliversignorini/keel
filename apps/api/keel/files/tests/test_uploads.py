@@ -10,8 +10,8 @@ import boto3
 import pytest
 import requests
 from django.conf import settings
+from django.test import Client as APIClient
 from moto import mock_aws
-from rest_framework.test import APIClient
 
 from keel.accounts.models import User
 from keel.files.models import FileUpload
@@ -51,7 +51,7 @@ def _add_member(org: Organization) -> User:
 
 def _client_for(user: User) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_login(user)
     return client
 
 
@@ -72,9 +72,9 @@ def test_full_flow_presign_then_direct_upload_then_complete() -> None:
     client = _client_for(owner)
 
     create_response = client.post(
-        f"/api/v1/organizations/{org.slug}/files/",
+        f"/api/v1/orgs/{org.slug}/files/",
         {"filename": "report.pdf", "content_type": "application/pdf", "size": 1234},
-        format="json",
+        content_type="application/json",
     )
     assert create_response.status_code == 201
     body = create_response.json()
@@ -90,7 +90,7 @@ def test_full_flow_presign_then_direct_upload_then_complete() -> None:
     )
     assert put_response.status_code == 200
 
-    complete_response = client.post(f"/api/v1/organizations/{org.slug}/files/{file_id}/complete/")
+    complete_response = client.post(f"/api/v1/orgs/{org.slug}/files/{file_id}/complete/")
     assert complete_response.status_code == 200
     assert complete_response.json()["status"] == FileUpload.STATUS_COMPLETE
 
@@ -103,13 +103,13 @@ def test_complete_before_the_object_actually_exists_is_rejected() -> None:
     client = _client_for(owner)
 
     create_response = client.post(
-        f"/api/v1/organizations/{org.slug}/files/",
+        f"/api/v1/orgs/{org.slug}/files/",
         {"filename": "report.pdf", "content_type": "application/pdf", "size": 1234},
-        format="json",
+        content_type="application/json",
     )
     file_id = create_response.json()["file"]["id"]
 
-    complete_response = client.post(f"/api/v1/organizations/{org.slug}/files/{file_id}/complete/")
+    complete_response = client.post(f"/api/v1/orgs/{org.slug}/files/{file_id}/complete/")
 
     assert complete_response.status_code == 422
     assert FileUpload.objects.get(pk=file_id).status == FileUpload.STATUS_PENDING
@@ -125,22 +125,22 @@ def test_a_file_is_unreadable_from_a_different_organization() -> None:
     org_b, owner_b = _org_with_owner()
 
     create_response = _client_for(owner_a).post(
-        f"/api/v1/organizations/{org_a.slug}/files/",
+        f"/api/v1/orgs/{org_a.slug}/files/",
         {"filename": "secret.pdf", "content_type": "application/pdf", "size": 1},
-        format="json",
+        content_type="application/json",
     )
     file_id = create_response.json()["file"]["id"]
 
     # Owner B is a legitimate owner of *their own* organisation — this
     # is not a permission-denied case, it's a does-not-exist-here case.
     cross_tenant_response = _client_for(owner_b).get(
-        f"/api/v1/organizations/{org_b.slug}/files/{file_id}/"
+        f"/api/v1/orgs/{org_b.slug}/files/{file_id}/"
     )
     assert cross_tenant_response.status_code == 404
 
     # Confirming via org_a with an unrelated member is the actual owner path.
     same_org_response = _client_for(owner_a).get(
-        f"/api/v1/organizations/{org_a.slug}/files/{file_id}/"
+        f"/api/v1/orgs/{org_a.slug}/files/{file_id}/"
     )
     assert same_org_response.status_code == 200
 
@@ -157,9 +157,9 @@ def test_a_suspended_member_cannot_create_an_upload() -> None:
     )
 
     response = _client_for(member).post(
-        f"/api/v1/organizations/{org.slug}/files/",
+        f"/api/v1/orgs/{org.slug}/files/",
         {"filename": "x.pdf", "content_type": "application/pdf", "size": 1},
-        format="json",
+        content_type="application/json",
     )
 
     assert response.status_code == 404

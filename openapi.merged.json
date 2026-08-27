@@ -1643,68 +1643,101 @@
         ],
         "type": "object"
       },
-      "AuditLog": {
+      "AuditActorOut": {
         "properties": {
-          "action": {
-            "readOnly": true,
-            "type": "string"
-          },
-          "actor": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/_AuditActor"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
-          },
-          "created_at": {
-            "format": "date-time",
-            "readOnly": true,
+          "email": {
+            "title": "Email",
             "type": "string"
           },
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
-          "impersonator": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/_AuditActor"
-              }
-            ],
-            "nullable": true,
-            "readOnly": true
-          },
-          "ip": {
-            "nullable": true,
-            "readOnly": true,
-            "type": "string"
-          },
-          "metadata": {
-            "readOnly": true
-          },
-          "target_id": {
-            "readOnly": true,
-            "type": "string"
-          },
-          "target_type": {
-            "readOnly": true,
+          "name": {
+            "title": "Name",
             "type": "string"
           }
         },
         "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "title": "AuditActorOut",
+        "type": "object"
+      },
+      "AuditLogOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "impersonator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_type": {
+            "title": "Target Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
           "action",
           "actor",
-          "created_at",
-          "id",
           "impersonator",
-          "ip",
-          "metadata",
+          "target_type",
           "target_id",
-          "target_type"
+          "metadata",
+          "ip",
+          "created_at"
         ],
+        "title": "AuditLogOut",
         "type": "object"
       },
       "Authenticated": {
@@ -2074,6 +2107,20 @@
         ],
         "type": "object"
       },
+      "CheckoutIn": {
+        "properties": {
+          "price_id": {
+            "format": "uuid",
+            "title": "Price Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "price_id"
+        ],
+        "title": "CheckoutIn",
+        "type": "object"
+      },
       "ClientID": {
         "description": "The client ID (in case of OAuth2 or OpenID Connect based providers)\n",
         "example": "123.apps.googleusercontent.com",
@@ -2292,6 +2339,45 @@
         },
         "type": "object"
       },
+      "FileUploadOut": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "content_type",
+          "size",
+          "status",
+          "created_at"
+        ],
+        "title": "FileUploadOut",
+        "type": "object"
+      },
       "Flow": {
         "properties": {
           "id": {
@@ -2346,181 +2432,260 @@
         ],
         "type": "object"
       },
-      "Invitation": {
+      "InvitationCreateIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "role_id": {
+            "format": "uuid",
+            "title": "Role Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role_id"
+        ],
+        "title": "InvitationCreateIn",
+        "type": "object"
+      },
+      "InvitationOut": {
         "properties": {
           "accepted_at": {
-            "format": "date-time",
-            "nullable": true,
-            "readOnly": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
           },
           "created_at": {
             "format": "date-time",
-            "readOnly": true,
+            "title": "Created At",
             "type": "string"
           },
           "email": {
-            "format": "email",
-            "readOnly": true,
+            "title": "Email",
             "type": "string"
           },
           "expires_at": {
             "format": "date-time",
-            "readOnly": true,
+            "title": "Expires At",
             "type": "string"
           },
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
           "invited_by": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/_UserSummary"
+                "$ref": "#/components/schemas/UserSummaryOut"
+              },
+              {
+                "type": "null"
               }
-            ],
-            "readOnly": true
+            ]
           },
           "revoked_at": {
-            "format": "date-time",
-            "nullable": true,
-            "readOnly": true,
-            "type": "string"
-          },
-          "role": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/Role"
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
-            "readOnly": true
+            "title": "Revoked At"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleOut"
           },
           "status": {
-            "readOnly": true,
+            "title": "Status",
             "type": "string"
           }
         },
         "required": [
-          "accepted_at",
-          "created_at",
-          "email",
-          "expires_at",
           "id",
-          "invited_by",
-          "revoked_at",
+          "email",
           "role",
-          "status"
+          "invited_by",
+          "expires_at",
+          "accepted_at",
+          "revoked_at",
+          "status",
+          "created_at"
         ],
+        "title": "InvitationOut",
         "type": "object"
       },
-      "Job": {
+      "JobCreateIn": {
+        "properties": {
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "JobCreateIn",
+        "type": "object"
+      },
+      "JobOut": {
         "properties": {
           "created_at": {
             "format": "date-time",
-            "readOnly": true,
+            "title": "Created At",
             "type": "string"
           },
           "error": {
+            "title": "Error",
             "type": "string"
           },
           "finished_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
           },
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
-          "params": {},
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
           "result_ref": {
-            "maxLength": 255,
+            "title": "Result Ref",
             "type": "string"
           },
           "started_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           },
           "status": {
-            "$ref": "#/components/schemas/JobStatusEnum"
+            "title": "Status",
+            "type": "string"
           },
           "steps": {
             "items": {
-              "$ref": "#/components/schemas/JobStep"
+              "$ref": "#/components/schemas/JobStepOut"
             },
-            "readOnly": true,
+            "title": "Steps",
             "type": "array"
           },
           "type": {
-            "maxLength": 100,
+            "title": "Type",
             "type": "string"
           }
         },
         "required": [
-          "created_at",
           "id",
-          "steps",
-          "type"
+          "type",
+          "status",
+          "params",
+          "result_ref",
+          "error",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "steps"
         ],
+        "title": "JobOut",
         "type": "object"
       },
-      "JobStatusEnum": {
-        "description": "* `queued` - Queued\n* `running` - Running\n* `succeeded` - Succeeded\n* `partial` - Partial\n* `failed` - Failed",
-        "enum": [
-          "queued",
-          "running",
-          "succeeded",
-          "partial",
-          "failed"
-        ],
-        "type": "string"
-      },
-      "JobStep": {
+      "JobStepOut": {
         "properties": {
           "error": {
+            "title": "Error",
             "type": "string"
           },
           "finished_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
           },
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
           "name": {
-            "maxLength": 255,
+            "title": "Name",
             "type": "string"
           },
           "ordinal": {
-            "maximum": 2147483647,
-            "minimum": -2147483648,
+            "title": "Ordinal",
             "type": "integer"
           },
           "output_ref": {
-            "maxLength": 255,
+            "title": "Output Ref",
             "type": "string"
           },
           "started_at": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           },
           "status": {
-            "maxLength": 16,
+            "title": "Status",
             "type": "string"
           }
         },
         "required": [
           "id",
           "name",
-          "ordinal"
+          "ordinal",
+          "status",
+          "output_ref",
+          "started_at",
+          "finished_at",
+          "error"
         ],
+        "title": "JobStepOut",
         "type": "object"
       },
       "Login": {
@@ -2613,280 +2778,466 @@
         ],
         "type": "object"
       },
-      "Membership": {
+      "MembershipOut": {
         "properties": {
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
           "joined_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Joined At"
           },
           "role": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Role"
-              }
-            ],
-            "readOnly": true
+            "$ref": "#/components/schemas/RoleOut"
           },
           "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MembershipStatusEnum"
-              }
-            ],
-            "readOnly": true
+            "title": "Status",
+            "type": "string"
           },
           "user": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/_UserSummary"
-              }
-            ],
-            "readOnly": true
+            "$ref": "#/components/schemas/UserSummaryOut"
           }
         },
         "required": [
           "id",
-          "joined_at",
+          "user",
           "role",
           "status",
-          "user"
+          "joined_at"
         ],
+        "title": "MembershipOut",
         "type": "object"
       },
-      "MembershipStatusEnum": {
-        "description": "* `active` - Active\n* `suspended` - Suspended",
-        "enum": [
-          "active",
-          "suspended"
+      "MembershipRoleUpdateIn": {
+        "properties": {
+          "role_id": {
+            "format": "uuid",
+            "title": "Role Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role_id"
         ],
-        "type": "string"
+        "title": "MembershipRoleUpdateIn",
+        "type": "object"
       },
       "OptionalTimestamp": {
-        "$ref": "#/components/schemas/Timestamp",
-        "nullable": true
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ]
       },
-      "Organization": {
+      "OrganizationCreateIn": {
         "properties": {
-          "created_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "readOnly": true,
-            "type": "string"
-          },
           "name": {
             "maxLength": 255,
+            "title": "Name",
             "type": "string"
           },
           "slug": {
-            "pattern": "^[-a-zA-Z0-9_]+$",
-            "readOnly": true,
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "OrganizationCreateIn",
+        "type": "object"
+      },
+      "OrganizationOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
             "type": "string"
           },
           "updated_at": {
             "format": "date-time",
-            "readOnly": true,
+            "title": "Updated At",
             "type": "string"
           }
         },
         "required": [
-          "created_at",
           "id",
           "name",
           "slug",
+          "created_at",
           "updated_at"
         ],
+        "title": "OrganizationOut",
         "type": "object"
       },
-      "PaginatedAuditLogList": {
+      "OrganizationUpdateIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "OrganizationUpdateIn",
+        "type": "object"
+      },
+      "Page_AuditLogOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/AuditLog"
+              "$ref": "#/components/schemas/AuditLogOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[AuditLogOut]",
         "type": "object"
       },
-      "PaginatedInvitationList": {
+      "Page_InvitationOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Invitation"
+              "$ref": "#/components/schemas/InvitationOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[InvitationOut]",
         "type": "object"
       },
-      "PaginatedJobList": {
+      "Page_JobOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Job"
+              "$ref": "#/components/schemas/JobOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[JobOut]",
         "type": "object"
       },
-      "PaginatedMembershipList": {
+      "Page_MembershipOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Membership"
+              "$ref": "#/components/schemas/MembershipOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[MembershipOut]",
         "type": "object"
       },
-      "PaginatedOrganizationList": {
+      "Page_OrganizationOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Organization"
+              "$ref": "#/components/schemas/OrganizationOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[OrganizationOut]",
         "type": "object"
       },
-      "PaginatedRoleList": {
+      "Page_PlanOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Role"
+              "$ref": "#/components/schemas/PlanOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[PlanOut]",
         "type": "object"
       },
-      "PaginatedWidgetList": {
+      "Page_RoleOut_": {
         "properties": {
           "next": {
-            "example": "http://api.example.org/accounts/?cursor=cD00ODY%3D\"",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
           },
           "previous": {
-            "example": "http://api.example.org/accounts/?cursor=cj0xJnA9NDg3",
-            "format": "uri",
-            "nullable": true,
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
           },
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Widget"
+              "$ref": "#/components/schemas/RoleOut"
             },
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "results"
+          "results",
+          "next",
+          "previous"
         ],
+        "title": "Page[RoleOut]",
+        "type": "object"
+      },
+      "Page_WidgetOut_": {
+        "properties": {
+          "next": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/WidgetOut"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results",
+          "next",
+          "previous"
+        ],
+        "title": "Page[WidgetOut]",
         "type": "object"
       },
       "PasskeySignup": {
@@ -2900,81 +3251,6 @@
         "description": "The password.\n",
         "example": "Alohomora!",
         "type": "string"
-      },
-      "PatchedMembership": {
-        "properties": {
-          "id": {
-            "format": "uuid",
-            "readOnly": true,
-            "type": "string"
-          },
-          "joined_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
-          },
-          "role": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Role"
-              }
-            ],
-            "readOnly": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MembershipStatusEnum"
-              }
-            ],
-            "readOnly": true
-          },
-          "user": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/_UserSummary"
-              }
-            ],
-            "readOnly": true
-          }
-        },
-        "type": "object"
-      },
-      "PatchedWidget": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
-          },
-          "created_by": {
-            "format": "uuid",
-            "readOnly": true,
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "readOnly": true,
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 255,
-            "type": "string"
-          },
-          "status": {
-            "maxLength": 32,
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "Phone": {
         "description": "The phone number.\n",
@@ -3043,42 +3319,100 @@
         ],
         "type": "object"
       },
-      "Plan": {
+      "PlanOut": {
         "properties": {
           "code": {
-            "maxLength": 100,
+            "title": "Code",
             "type": "string"
           },
-          "entitlements": {},
+          "entitlements": {
+            "additionalProperties": true,
+            "title": "Entitlements",
+            "type": "object"
+          },
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
           "name": {
-            "maxLength": 255,
+            "title": "Name",
             "type": "string"
           },
           "prices": {
             "items": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/components/schemas/PriceOut"
             },
-            "readOnly": true,
+            "title": "Prices",
             "type": "array"
           },
           "sort_order": {
-            "maximum": 2147483647,
-            "minimum": -2147483648,
+            "title": "Sort Order",
             "type": "integer"
           }
         },
         "required": [
-          "code",
           "id",
+          "code",
           "name",
+          "entitlements",
+          "sort_order",
           "prices"
         ],
+        "title": "PlanOut",
+        "type": "object"
+      },
+      "PresignedUploadRequest": {
+        "properties": {
+          "content_type": {
+            "maxLength": 255,
+            "title": "Content Type",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 255,
+            "title": "Filename",
+            "type": "string"
+          },
+          "size": {
+            "minimum": 1,
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "content_type",
+          "size"
+        ],
+        "title": "PresignedUploadRequest",
+        "type": "object"
+      },
+      "PriceOut": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "interval": {
+            "title": "Interval",
+            "type": "string"
+          },
+          "unit_amount": {
+            "title": "Unit Amount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "interval",
+          "unit_amount",
+          "currency"
+        ],
+        "title": "PriceOut",
         "type": "object"
       },
       "Process": {
@@ -3388,31 +3722,35 @@
         ],
         "type": "object"
       },
-      "Role": {
+      "RoleOut": {
         "properties": {
           "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "title": "Id",
             "type": "string"
           },
           "is_preset": {
-            "readOnly": true,
+            "title": "Is Preset",
             "type": "boolean"
           },
           "name": {
-            "readOnly": true,
+            "title": "Name",
             "type": "string"
           },
           "permissions": {
-            "readOnly": true
+            "items": {
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
           }
         },
         "required": [
           "id",
-          "is_preset",
           "name",
-          "permissions"
+          "permissions",
+          "is_preset"
         ],
+        "title": "RoleOut",
         "type": "object"
       },
       "SensitiveRecoveryCodesAuthenticator": {
@@ -3561,6 +3899,19 @@
         "example": 1711555057.065702,
         "type": "number"
       },
+      "TransferIn": {
+        "properties": {
+          "membership_id": {
+            "title": "Membership Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "membership_id"
+        ],
+        "title": "TransferIn",
+        "type": "object"
+      },
       "User": {
         "properties": {
           "display": {
@@ -3601,6 +3952,29 @@
         "required": [
           "track_activity"
         ],
+        "type": "object"
+      },
+      "UserSummaryOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "title": "UserSummaryOut",
         "type": "object"
       },
       "Username": {
@@ -3734,89 +4108,115 @@
         ],
         "type": "object"
       },
-      "Widget": {
+      "WidgetIn": {
         "properties": {
-          "created_at": {
-            "format": "date-time",
-            "readOnly": true,
-            "type": "string"
-          },
-          "created_by": {
-            "format": "uuid",
-            "readOnly": true,
-            "type": "string"
-          },
           "description": {
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "readOnly": true,
+            "default": "",
+            "title": "Description",
             "type": "string"
           },
           "name": {
             "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
             "type": "string"
           },
           "status": {
-            "maxLength": 32,
+            "default": "",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WidgetIn",
+        "type": "object"
+      },
+      "WidgetOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
             "type": "string"
           },
           "updated_at": {
             "format": "date-time",
-            "readOnly": true,
+            "title": "Updated At",
             "type": "string"
           }
         },
         "required": [
-          "created_at",
-          "created_by",
           "id",
           "name",
+          "description",
+          "status",
+          "created_by",
+          "created_at",
           "updated_at"
         ],
+        "title": "WidgetOut",
         "type": "object"
       },
-      "_AuditActor": {
+      "WidgetPatchIn": {
         "properties": {
-          "email": {
-            "format": "email",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           },
           "name": {
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
           }
         },
-        "required": [
-          "email",
-          "id",
-          "name"
-        ],
-        "type": "object"
-      },
-      "_UserSummary": {
-        "properties": {
-          "email": {
-            "format": "email",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "id",
-          "name"
-        ],
+        "title": "WidgetPatchIn",
         "type": "object"
       }
     }
@@ -3826,7 +4226,7 @@
     "title": "Keel API",
     "version": "1.0.0"
   },
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "paths": {
     "/_allauth/browser/v1/account/email": {
       "delete": {
@@ -5021,12 +5421,14 @@
     },
     "/api/v1/impersonation/exit/": {
       "post": {
-        "operationId": "impersonation_exit_create",
+        "operationId": "impersonationExit",
+        "parameters": [],
         "responses": {
-          "200": {
-            "description": "No response body"
+          "204": {
+            "description": "No Content"
           }
         },
+        "summary": "Impersonation Exit",
         "tags": [
           "impersonation"
         ]
@@ -5034,88 +5436,102 @@
     },
     "/api/v1/invite/{token}/": {
       "get": {
-        "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",
-        "operationId": "invite_retrieve",
+        "operationId": "inviteDetail",
         "parameters": [
           {
             "in": "path",
             "name": "token",
             "required": true,
             "schema": {
+              "title": "Token",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
-        "security": [
-          {}
-        ],
-        "tags": [
-          "invite"
-        ]
+        "summary": "Invite Detail"
       },
       "post": {
-        "description": "``/invite/<token>/`` (PRD \u00a76 \"Invitation\"; phase-3.md B.4). All four\nedge cases: wrong email rejected without disclosing the invitee;\nexpired and revoked indistinguishable to the recipient; not signed in\nreturns enough to drive signup with a locked email; signed in with a\nmatching email accepts.",
-        "operationId": "invite_create",
+        "operationId": "inviteAccept",
         "parameters": [
           {
             "in": "path",
             "name": "token",
             "required": true,
             "schema": {
+              "title": "Token",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipOut"
+                }
+              }
+            },
+            "description": "OK"
           }
         },
-        "tags": [
-          "invite"
-        ]
+        "summary": "Invite Accept"
       }
     },
     "/api/v1/me/": {
       "get": {
-        "description": "``GET /me/`` \u2014 user, organisations, current role, resolved\npermission codes and entitlements per organisation (PRD \u00a77;\ndocs/plans/phase-4.md B.4: \"Resolution feeds GET /api/v1/me/, which\nPhase 3 owns \u2014 coordinate rather than duplicating it\").",
-        "operationId": "me_retrieve",
+        "operationId": "me",
+        "parameters": [],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Me",
         "tags": [
           "me"
         ]
       }
     },
-    "/api/v1/organizations/": {
+    "/api/v1/orgs/": {
       "get": {
-        "description": "``/organizations/`` \u2014 list the caller's organisations, or create a\nnew one. Not tenant-scoped: there is no organisation in the URL to\nresolve yet (PRD \u00a74, org creation happens before tenant context\nexists), so this deliberately does not use ``OrgScopedViewSet``.",
-        "operationId": "organizations_list",
+        "operationId": "listOrganizations",
         "parameters": [
           {
-            "description": "The pagination cursor value.",
             "in": "query",
             "name": "cursor",
             "required": false,
             "schema": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           },
           {
-            "description": "Number of results to return per page.",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -5124,35 +5540,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedOrganizationList"
+                  "$ref": "#/components/schemas/Page_OrganizationOut_"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "List Organizations",
         "tags": [
           "organizations"
         ]
       },
       "post": {
-        "description": "``/organizations/`` \u2014 list the caller's organisations, or create a\nnew one. Not tenant-scoped: there is no organisation in the URL to\nresolve yet (PRD \u00a74, org creation happens before tenant context\nexists), so this deliberately does not use ``OrgScopedViewSet``.",
-        "operationId": "organizations_create",
+        "operationId": "createOrganization",
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Organization"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Organization"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Organization"
+                "$ref": "#/components/schemas/OrganizationCreateIn"
               }
             }
           },
@@ -5163,114 +5570,157 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationOut"
                 }
               }
             },
-            "description": ""
+            "description": "Created"
           }
         },
+        "summary": "Create Organization",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/": {
+    "/api/v1/orgs/{org_slug}/": {
       "delete": {
-        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
-        "operationId": "organizations_destroy",
+        "operationId": "deleteOrganization",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
         "responses": {
           "204": {
-            "description": "No response body"
+            "description": "No Content"
           }
         },
+        "summary": "Organization Delete",
         "tags": [
           "organizations"
         ]
       },
       "get": {
-        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
-        "operationId": "organizations_retrieve",
+        "operationId": "retrieveOrganization",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            },
+            "description": "OK"
           }
         },
+        "summary": "Organization Detail",
         "tags": [
           "organizations"
         ]
       },
       "patch": {
-        "description": "``/organizations/<org_slug>/`` \u2014 retrieve, update, or delete a\nsingle organisation.\n\nResolving ``org_slug`` *is* the tenant boundary here (there is no\nseparate row inside the organisation that could leak to another\ntenant the way a ``Membership`` or ``Invitation`` row could), so this\ncalls the same resolver ``OrgScopedViewSet`` uses directly rather than\ninheriting it \u2014 a non-member and a nonexistent slug both 404 (PRD \u00a76).",
-        "operationId": "organizations_partial_update",
+        "operationId": "updateOrganization",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            },
+            "description": "OK"
           }
         },
+        "summary": "Organization Update",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/audit/": {
+    "/api/v1/orgs/{org_slug}/audit/": {
       "get": {
-        "operationId": "organizations_audit_list",
+        "operationId": "listAuditLogs",
         "parameters": [
-          {
-            "description": "The pagination cursor value.",
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Number of results to return per page.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -5279,35 +5729,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedAuditLogList"
+                  "$ref": "#/components/schemas/Page_AuditLogOut_"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "List Audit Logs",
         "tags": [
-          "organizations"
+          "audit"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/audit/{id}/": {
+    "/api/v1/orgs/{org_slug}/audit/{id}/": {
       "get": {
-        "operationId": "organizations_audit_retrieve",
+        "operationId": "retrieveAuditLog",
         "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "id",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -5317,232 +5770,235 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuditLog"
+                  "$ref": "#/components/schemas/AuditLogOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Audit Log",
         "tags": [
-          "organizations"
+          "audit"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/billing/checkout/": {
+    "/api/v1/orgs/{org_slug}/billing/checkout/": {
       "post": {
-        "description": "``POST /organizations/<org_slug>/billing/checkout/``.",
-        "operationId": "organizations_billing_checkout_create",
+        "operationId": "createCheckoutSession",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutIn"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Create Checkout Session",
         "tags": [
-          "organizations"
+          "billing"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/billing/credits/": {
+    "/api/v1/orgs/{org_slug}/billing/credits/": {
       "get": {
-        "description": "``GET /organizations/<org_slug>/billing/credits/`` (PRD \u00a77's\ncredits endpoint list; docs/plans/phase-4.md Worktree C's\n``<CreditMeter>``, which is \"rendered **only when credits are\nenabled**\").\n\nBehind ``BILLING_CREDITS``, off by default (phase-4.md A.5: \"With it\noff: no endpoints, no meter, no cost\"). Off is a **404**, not a zero\nbalance: the flag decides whether this feature exists at all, so the\nweb meter's absence-of-data path is \"there is nothing here\" rather\nthan \"you have no credits\" \u2014 two states a user would read very\ndifferently. 404 is also what an unresolvable organisation already\nreturns from ``_get_organization``, which keeps the flag from being a\ndistinguishable signal to a non-member either way.",
-        "operationId": "organizations_billing_credits_retrieve",
+        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 see the DRF-era docstring this\nreplaces for the full reasoning; unchanged here.",
+        "operationId": "getCreditBalance",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Get Credit Balance",
         "tags": [
-          "organizations"
+          "billing"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/billing/portal/": {
+    "/api/v1/orgs/{org_slug}/billing/portal/": {
       "post": {
-        "description": "``POST /organizations/<org_slug>/billing/portal/``.",
-        "operationId": "organizations_billing_portal_create",
+        "operationId": "createBillingPortalSession",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Create Billing Portal Session",
         "tags": [
-          "organizations"
+          "billing"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/billing/subscription/": {
+    "/api/v1/orgs/{org_slug}/billing/subscription/": {
       "get": {
-        "description": "``GET /organizations/<org_slug>/billing/subscription/``.",
-        "operationId": "organizations_billing_subscription_retrieve",
+        "operationId": "getSubscription",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Get Subscription",
         "tags": [
-          "organizations"
+          "billing"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/files/": {
+    "/api/v1/orgs/{org_slug}/files/": {
       "post": {
-        "description": "``POST /organizations/<org_slug>/files/``.",
-        "operationId": "organizations_files_create",
+        "operationId": "createUpload",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignedUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "200": {
-            "description": "No response body"
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Created"
           }
         },
+        "summary": "Create Upload",
         "tags": [
-          "organizations"
+          "files"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/files/{file_id}/": {
+    "/api/v1/orgs/{org_slug}/files/{file_id}/": {
       "get": {
-        "description": "``GET /organizations/<org_slug>/files/<file_id>/``. Scoped to\n``organization`` in the same lookup as the completion view above \u2014\nthe mechanism the cross-tenant test in\n``keel/files/tests/test_uploads.py`` exercises directly.",
-        "operationId": "organizations_files_retrieve",
+        "description": "Scoped to ``organization`` in the same lookup as the completion\nview above \u2014 the mechanism the cross-tenant test in\n``keel/files/tests/test_uploads.py`` exercises directly.",
+        "operationId": "retrieveUpload",
         "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "file_id",
             "required": true,
             "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
+              "title": "File Id",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadOut"
+                }
+              }
+            },
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Upload",
         "tags": [
-          "organizations"
+          "files"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/files/{file_id}/complete/": {
+    "/api/v1/orgs/{org_slug}/files/{file_id}/complete/": {
       "post": {
-        "description": "``POST /organizations/<org_slug>/files/<file_id>/complete/``.",
-        "operationId": "organizations_files_complete_create",
+        "operationId": "completeUpload",
         "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "file_id",
             "required": true,
             "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "No response body"
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      }
-    },
-    "/api/v1/organizations/{org_slug}/invitations/": {
-      "get": {
-        "description": "``/organizations/<org_slug>/invitations/``.",
-        "operationId": "organizations_invitations_list",
-        "parameters": [
-          {
-            "description": "The pagination cursor value.",
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Number of results to return per page.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
+              "title": "File Id",
               "type": "string"
             }
           }
@@ -5552,26 +6008,91 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedInvitationList"
+                  "$ref": "#/components/schemas/FileUploadOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Complete Upload",
         "tags": [
-          "organizations"
+          "files"
         ]
-      },
-      "post": {
-        "description": "``/organizations/<org_slug>/invitations/``.",
-        "operationId": "organizations_invitations_create",
+      }
+    },
+    "/api/v1/orgs/{org_slug}/invitations/": {
+      "get": {
+        "operationId": "listInvitations",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_InvitationOut_"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "List Invitations",
+        "tags": [
+          "organizations"
+        ]
+      },
+      "post": {
+        "operationId": "createInvitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
@@ -5580,185 +6101,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Invitation"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Invitation"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Invitation"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invitation"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      }
-    },
-    "/api/v1/organizations/{org_slug}/invitations/{id}/": {
-      "delete": {
-        "description": "``/organizations/<org_slug>/invitations/``.",
-        "operationId": "organizations_invitations_destroy",
-        "parameters": [
-          {
-            "description": "A UUID string identifying this invitation.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No response body"
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      },
-      "get": {
-        "description": "``/organizations/<org_slug>/invitations/``.",
-        "operationId": "organizations_invitations_retrieve",
-        "parameters": [
-          {
-            "description": "A UUID string identifying this invitation.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invitation"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      }
-    },
-    "/api/v1/organizations/{org_slug}/jobs/": {
-      "get": {
-        "operationId": "organizations_jobs_list",
-        "parameters": [
-          {
-            "description": "The pagination cursor value.",
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Number of results to return per page.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedJobList"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      },
-      "post": {
-        "operationId": "organizations_jobs_create",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
+                "$ref": "#/components/schemas/InvitationCreateIn"
               }
             }
           },
@@ -5769,35 +6112,70 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/InvitationOut"
                 }
               }
             },
-            "description": ""
+            "description": "Created"
           }
         },
+        "summary": "Create Invitation",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/jobs/{id}/": {
-      "get": {
-        "operationId": "organizations_jobs_retrieve",
+    "/api/v1/orgs/{org_slug}/invitations/{id}/": {
+      "delete": {
+        "operationId": "revokeInvitation",
         "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "summary": "Revoke Invitation",
+        "tags": [
+          "organizations"
+        ]
+      },
+      "get": {
+        "operationId": "retrieveInvitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -5807,35 +6185,107 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/InvitationOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Invitation",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/jobs/{id}/cancel/": {
-      "post": {
-        "operationId": "organizations_jobs_cancel_create",
+    "/api/v1/orgs/{org_slug}/jobs/": {
+      "get": {
+        "operationId": "listJobs",
         "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_JobOut_"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "List Jobs",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "post": {
+        "operationId": "createJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
@@ -5844,67 +6294,49 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
+                "$ref": "#/components/schemas/JobCreateIn"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobOut"
                 }
               }
             },
-            "description": ""
+            "description": "Accepted"
           }
         },
+        "summary": "Create Job",
         "tags": [
-          "organizations"
+          "jobs"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/members/": {
+    "/api/v1/orgs/{org_slug}/jobs/{id}/": {
       "get": {
-        "description": "``/organizations/<org_slug>/members/``.",
-        "operationId": "organizations_members_list",
+        "operationId": "retrieveJob",
         "parameters": [
-          {
-            "description": "The pagination cursor value.",
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Number of results to return per page.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -5914,70 +6346,175 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMembershipList"
+                  "$ref": "#/components/schemas/JobOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Job",
         "tags": [
-          "organizations"
+          "jobs"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/members/{id}/": {
-      "delete": {
-        "description": "``/organizations/<org_slug>/members/``.",
-        "operationId": "organizations_members_destroy",
+    "/api/v1/orgs/{org_slug}/jobs/{id}/cancel/": {
+      "post": {
+        "operationId": "cancelJob",
         "parameters": [
-          {
-            "description": "A UUID string identifying this membership.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "Cancel Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_slug}/members/": {
+      "get": {
+        "operationId": "listMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_MembershipOut_"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "List Members",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_slug}/members/{id}/": {
+      "delete": {
+        "operationId": "removeMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
         ],
         "responses": {
           "204": {
-            "description": "No response body"
+            "description": "No Content"
           }
         },
+        "summary": "Remove Member",
         "tags": [
           "organizations"
         ]
       },
       "get": {
-        "description": "``/organizations/<org_slug>/members/``.",
-        "operationId": "organizations_members_retrieve",
+        "operationId": "retrieveMember",
         "parameters": [
-          {
-            "description": "A UUID string identifying this membership.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -5987,36 +6524,36 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Membership"
+                  "$ref": "#/components/schemas/MembershipOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Member",
         "tags": [
           "organizations"
         ]
       },
       "patch": {
-        "description": "``/organizations/<org_slug>/members/``.",
-        "operationId": "organizations_members_partial_update",
+        "operationId": "updateMemberRole",
         "parameters": [
-          {
-            "description": "A UUID string identifying this membership.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -6025,56 +6562,47 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PatchedMembership"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchedMembership"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchedMembership"
+                "$ref": "#/components/schemas/MembershipRoleUpdateIn"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Membership"
+                  "$ref": "#/components/schemas/MembershipOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Update Member Role",
         "tags": [
           "organizations"
         ]
       },
       "put": {
-        "description": "``/organizations/<org_slug>/members/``.",
-        "operationId": "organizations_members_update",
+        "operationId": "updateMemberRole",
         "parameters": [
-          {
-            "description": "A UUID string identifying this membership.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -6083,67 +6611,73 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Membership"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Membership"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Membership"
+                "$ref": "#/components/schemas/MembershipRoleUpdateIn"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Membership"
+                  "$ref": "#/components/schemas/MembershipOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Update Member Role",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/roles/": {
+    "/api/v1/orgs/{org_slug}/roles/": {
       "get": {
-        "description": "``/organizations/<org_slug>/roles/`` \u2014 read-only: the three global\npresets plus any custom roles belonging to the organisation.",
-        "operationId": "organizations_roles_list",
+        "operationId": "listRoles",
         "parameters": [
-          {
-            "description": "The pagination cursor value.",
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Number of results to return per page.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6152,36 +6686,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedRoleList"
+                  "$ref": "#/components/schemas/Page_RoleOut_"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "List Roles",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/roles/{id}/": {
+    "/api/v1/orgs/{org_slug}/roles/{id}/": {
       "get": {
-        "description": "``/organizations/<org_slug>/roles/`` \u2014 read-only: the three global\npresets plus any custom roles belonging to the organisation.",
-        "operationId": "organizations_roles_retrieve",
+        "operationId": "retrieveRole",
         "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "id",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -6191,71 +6727,104 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Role"
+                  "$ref": "#/components/schemas/RoleOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Role",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/transfer/": {
+    "/api/v1/orgs/{org_slug}/transfer/": {
       "post": {
-        "description": "``POST /organizations/<org_slug>/transfer/`` \u2014 hand ownership to\nanother active member.",
-        "operationId": "organizations_transfer_create",
+        "operationId": "transferOrganization",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferIn"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipOut"
+                }
+              }
+            },
+            "description": "OK"
           }
         },
+        "summary": "Organization Transfer",
         "tags": [
           "organizations"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/widgets/": {
+    "/api/v1/orgs/{org_slug}/widgets/": {
       "get": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_list",
+        "operationId": "listWidgets",
         "parameters": [
           {
-            "description": "The pagination cursor value.",
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "cursor",
             "required": false,
             "schema": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           },
           {
-            "description": "Number of results to return per page.",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
             }
           }
         ],
@@ -6264,26 +6833,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedWidgetList"
+                  "$ref": "#/components/schemas/Page_WidgetOut_"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "List Widgets",
         "tags": [
-          "organizations"
+          "widgets"
         ]
       },
       "post": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_create",
+        "operationId": "createWidget",
         "parameters": [
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
               "type": "string"
             }
           }
@@ -6292,17 +6862,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Widget"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Widget"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Widget"
+                "$ref": "#/components/schemas/WidgetIn"
               }
             }
           },
@@ -6313,70 +6873,70 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Widget"
+                  "$ref": "#/components/schemas/WidgetOut"
                 }
               }
             },
-            "description": ""
+            "description": "Created"
           }
         },
+        "summary": "Create Widget",
         "tags": [
-          "organizations"
+          "widgets"
         ]
       }
     },
-    "/api/v1/organizations/{org_slug}/widgets/{id}/": {
+    "/api/v1/orgs/{org_slug}/widgets/{id}/": {
       "delete": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_destroy",
+        "operationId": "destroyWidget",
         "parameters": [
-          {
-            "description": "A UUID string identifying this widget.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
         ],
         "responses": {
           "204": {
-            "description": "No response body"
+            "description": "No Content"
           }
         },
+        "summary": "Destroy Widget",
         "tags": [
-          "organizations"
+          "widgets"
         ]
       },
       "get": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_retrieve",
+        "operationId": "retrieveWidget",
         "parameters": [
-          {
-            "description": "A UUID string identifying this widget.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -6386,36 +6946,36 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Widget"
+                  "$ref": "#/components/schemas/WidgetOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Retrieve Widget",
         "tags": [
-          "organizations"
+          "widgets"
         ]
       },
       "patch": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_partial_update",
+        "operationId": "updateWidget",
         "parameters": [
-          {
-            "description": "A UUID string identifying this widget.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
           {
             "in": "path",
             "name": "org_slug",
             "required": true,
             "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
               "type": "string"
             }
           }
@@ -6424,75 +6984,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PatchedWidget"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchedWidget"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchedWidget"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Widget"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "organizations"
-        ]
-      },
-      "put": {
-        "description": "``/organizations/<org_slug>/widgets/`` \u2014 the reference-slice CRUD\nendpoint (PRD \u00a77's demo-resource route table).",
-        "operationId": "organizations_widgets_update",
-        "parameters": [
-          {
-            "description": "A UUID string identifying this widget.",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "org_slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Widget"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Widget"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Widget"
+                "$ref": "#/components/schemas/WidgetPatchIn"
               }
             }
           },
@@ -6503,74 +6995,146 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Widget"
+                  "$ref": "#/components/schemas/WidgetOut"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
+        "summary": "Update Widget",
         "tags": [
-          "organizations"
+          "widgets"
+        ]
+      },
+      "put": {
+        "operationId": "updateWidget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "title": "Org Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WidgetPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "Update Widget",
+        "tags": [
+          "widgets"
         ]
       }
     },
     "/api/v1/permissions/": {
       "get": {
-        "description": "``GET /permissions/`` \u2014 the full permission-code registry, for the\nrole editor (PRD \u00a77). Global: identical for every caller, not\ntenant-scoped data.",
-        "operationId": "permissions_retrieve",
+        "operationId": "permissionsRegistry",
+        "parameters": [],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
+        "summary": "Permissions Registry",
         "tags": [
-          "permissions"
+          "me"
         ]
       }
     },
     "/api/v1/plans/": {
       "get": {
-        "description": "``GET /api/v1/plans/`` \u2014 the pricing page reads this unauthenticated\n(docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an\n``OrgScopedViewSet``: a plan is not owned by any organisation, and\nunlike ``OrgScopedViewSet`` requests it never resolves ``org_slug``.\n\n``required_permissions`` is declared (``GlobalViewSet`` requires a\nnon-empty value at import time) but not enforced here \u2014 enforcement is\n``HasOrgPermission``, which only ``OrgScopedViewSet`` wires in.\n``permission_classes`` is overridden to ``AllowAny`` instead, which is\nthe actual gate for this endpoint. The declared code documents what an\nauthenticated billing surface would require if this list were ever\nmoved behind a login.",
-        "operationId": "plans_list",
+        "operationId": "listPlans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Plan"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/Page_PlanOut_"
                 }
               }
             },
-            "description": ""
+            "description": "OK"
           }
         },
-        "security": [
-          {}
-        ],
-        "tags": [
-          "plans"
-        ]
+        "summary": "List Plans"
       }
     },
     "/api/v1/stripe/webhook/": {
       "post": {
-        "description": "``POST /api/v1/stripe/webhook/`` (PRD \u00a76 \"Stripe webhook\";\ndocs/plans/phase-4.md B.3). No session auth or CSRF: this is a\nserver-to-server call from Stripe with no session cookie, verified by\nsignature instead \u2014 DRF's ``SessionAuthentication`` only enforces CSRF\nonce it has resolved a session user, which an unauthenticated request\nnever does, so leaving ``authentication_classes`` empty here is belt\nand braces, not a gap.\n\nRecords the event and acknowledges before any processing happens\n(PRD \u00a76, \"Acknowledge in under 200ms ... work happens async\") \u2014 the\nonly synchronous work below a signature check is one\n``get_or_create`` and enqueuing a task.",
-        "operationId": "stripe_webhook_create",
+        "description": "PRD \u00a76 \"Stripe webhook\": acknowledge in under 200ms, work happens\nasync. The only synchronous work below a signature check is one\n``get_or_create`` and enqueuing a task.",
+        "operationId": "stripeWebhook",
+        "parameters": [],
         "responses": {
           "200": {
-            "description": "No response body"
+            "description": "OK"
           }
         },
-        "security": [
-          {}
-        ],
-        "tags": [
-          "stripe"
-        ]
+        "summary": "Stripe Webhook"
       }
     }
   },

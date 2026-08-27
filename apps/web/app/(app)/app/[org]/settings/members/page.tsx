@@ -13,7 +13,7 @@ import {
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import type { RoleWithPermissions } from "@/lib/org/types";
-import { ApiError, type Invitation, type Membership } from "@keel/api-client";
+import { ApiError, type InvitationOut, type MembershipOut } from "@keel/api-client";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -32,8 +32,8 @@ import { useCallback, useEffect, useState } from "react";
  */
 export default function MembersSettingsPage() {
   const { currentOrg } = useOrgContext();
-  const [members, setMembers] = useState<Membership[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [members, setMembers] = useState<MembershipOut[]>([]);
+  const [invitations, setInvitations] = useState<InvitationOut[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);

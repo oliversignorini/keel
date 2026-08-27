@@ -1148,283 +1148,319 @@ export const authConfigResponse = zod.object({
 
 
 /**
- * ``/invite/<token>/`` (PRD §6 "Invitation"; phase-3.md B.4). All four
-edge cases: wrong email rejected without disclosing the invitee;
-expired and revoked indistinguishable to the recipient; not signed in
-returns enough to drive signup with a locked email; signed in with a
-matching email accepts.
+ * @summary Invite Detail
  */
-export const inviteRetrieveParams = zod.object({
+export const inviteDetailParams = zod.object({
   "token": zod.string()
 })
 
 
 /**
- * ``/invite/<token>/`` (PRD §6 "Invitation"; phase-3.md B.4). All four
-edge cases: wrong email rejected without disclosing the invitee;
-expired and revoked indistinguishable to the recipient; not signed in
-returns enough to drive signup with a locked email; signed in with a
-matching email accepts.
+ * @summary Invite Accept
  */
-export const inviteCreateParams = zod.object({
+export const inviteAcceptParams = zod.object({
   "token": zod.string()
+})
+
+export const inviteAcceptResponse = zod.object({
+  "id": zod.string(),
+  "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.string(),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
 })
 
 
 /**
- * ``/organizations/`` — list the caller's organisations, or create a
-new one. Not tenant-scoped: there is no organisation in the URL to
-resolve yet (PRD §4, org creation happens before tenant context
-exists), so this deliberately does not use ``OrgScopedViewSet``.
+ * @summary List Organizations
  */
-export const organizationsListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
+export const listOrganizationsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
 })
 
-export const organizationsListResponseResultsItemNameMax = 255;
-
-export const organizationsListResponseResultsItemSlugRegExp = new RegExp('^[-a-zA-Z0-9_]+$');
-
-
-export const organizationsListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
+export const listOrganizationsResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
   "created_at": zod.string().datetime({}),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsListResponseResultsItemNameMax),
-  "slug": zod.string().regex(organizationsListResponseResultsItemSlugRegExp),
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
   "updated_at": zod.string().datetime({})
 }))
 })
 
 
 /**
- * ``/organizations/`` — list the caller's organisations, or create a
-new one. Not tenant-scoped: there is no organisation in the URL to
-resolve yet (PRD §4, org creation happens before tenant context
-exists), so this deliberately does not use ``OrgScopedViewSet``.
+ * @summary Create Organization
  */
-export const organizationsCreateBodyNameMax = 255;
+export const createOrganizationBodyNameMax = 255;
+
+export const createOrganizationBodySlugMaxOne = 255;
 
 
 
-export const organizationsCreateBody = zod.object({
-  "name": zod.string().max(organizationsCreateBodyNameMax)
+export const createOrganizationBody = zod.object({
+  "name": zod.string().max(createOrganizationBodyNameMax),
+  "slug": zod.union([zod.string().max(createOrganizationBodySlugMaxOne),zod.null()]).optional()
 })
 
 
 /**
- * ``/organizations/<org_slug>/`` — retrieve, update, or delete a
-single organisation.
-
-Resolving ``org_slug`` *is* the tenant boundary here (there is no
-separate row inside the organisation that could leak to another
-tenant the way a ``Membership`` or ``Invitation`` row could), so this
-calls the same resolver ``OrgScopedViewSet`` uses directly rather than
-inheriting it — a non-member and a nonexistent slug both 404 (PRD §6).
+ * @summary Organization Delete
  */
-export const organizationsDestroyParams = zod.object({
+export const deleteOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
 
 /**
- * ``/organizations/<org_slug>/`` — retrieve, update, or delete a
-single organisation.
-
-Resolving ``org_slug`` *is* the tenant boundary here (there is no
-separate row inside the organisation that could leak to another
-tenant the way a ``Membership`` or ``Invitation`` row could), so this
-calls the same resolver ``OrgScopedViewSet`` uses directly rather than
-inheriting it — a non-member and a nonexistent slug both 404 (PRD §6).
+ * @summary Organization Detail
  */
-export const organizationsRetrieveParams = zod.object({
+export const retrieveOrganizationParams = zod.object({
   "org_slug": zod.string()
+})
+
+export const retrieveOrganizationResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "updated_at": zod.string().datetime({})
 })
 
 
 /**
- * ``/organizations/<org_slug>/`` — retrieve, update, or delete a
-single organisation.
-
-Resolving ``org_slug`` *is* the tenant boundary here (there is no
-separate row inside the organisation that could leak to another
-tenant the way a ``Membership`` or ``Invitation`` row could), so this
-calls the same resolver ``OrgScopedViewSet`` uses directly rather than
-inheriting it — a non-member and a nonexistent slug both 404 (PRD §6).
+ * @summary Organization Update
  */
-export const organizationsPartialUpdateParams = zod.object({
+export const updateOrganizationParams = zod.object({
   "org_slug": zod.string()
 })
 
+export const updateOrganizationBodyNameMaxOne = 255;
 
-export const organizationsAuditListParams = zod.object({
+
+
+export const updateOrganizationBody = zod.object({
+  "name": zod.union([zod.string().max(updateOrganizationBodyNameMaxOne),zod.null()]).optional()
+})
+
+export const updateOrganizationResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "updated_at": zod.string().datetime({})
+})
+
+
+/**
+ * @summary List Audit Logs
+ */
+export const listAuditLogsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsAuditListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
+export const listAuditLogsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
 })
 
-export const organizationsAuditListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
+export const listAuditLogsResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
   "action": zod.string(),
-  "actor": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "actor": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}).nullable(),
+}),zod.null()]),
   "created_at": zod.string().datetime({}),
-  "id": zod.string().uuid(),
-  "impersonator": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "id": zod.string(),
+  "impersonator": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}).nullable(),
-  "ip": zod.string().nullable(),
-  "metadata": zod.unknown(),
+}),zod.null()]),
+  "ip": zod.union([zod.string(),zod.null()]),
+  "metadata": zod.record(zod.string(), zod.unknown()),
   "target_id": zod.string(),
   "target_type": zod.string()
 }))
 })
 
 
-export const organizationsAuditRetrieveParams = zod.object({
-  "id": zod.string(),
-  "org_slug": zod.string()
+/**
+ * @summary Retrieve Audit Log
+ */
+export const retrieveAuditLogParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
-export const organizationsAuditRetrieveResponse = zod.object({
+export const retrieveAuditLogResponse = zod.object({
   "action": zod.string(),
-  "actor": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "actor": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}).nullable(),
+}),zod.null()]),
   "created_at": zod.string().datetime({}),
-  "id": zod.string().uuid(),
-  "impersonator": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "id": zod.string(),
+  "impersonator": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}).nullable(),
-  "ip": zod.string().nullable(),
-  "metadata": zod.unknown(),
+}),zod.null()]),
+  "ip": zod.union([zod.string(),zod.null()]),
+  "metadata": zod.record(zod.string(), zod.unknown()),
   "target_id": zod.string(),
   "target_type": zod.string()
 })
 
 
 /**
- * ``POST /organizations/<org_slug>/billing/checkout/``.
+ * @summary Create Checkout Session
  */
-export const organizationsBillingCheckoutCreateParams = zod.object({
+export const createCheckoutSessionParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const createCheckoutSessionBody = zod.object({
+  "price_id": zod.string().uuid()
+})
+
+
+/**
+ * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
+a **404**, not a zero balance — see the DRF-era docstring this
+replaces for the full reasoning; unchanged here.
+ * @summary Get Credit Balance
+ */
+export const getCreditBalanceParams = zod.object({
   "org_slug": zod.string()
 })
 
 
 /**
- * ``GET /organizations/<org_slug>/billing/credits/`` (PRD §7's
-credits endpoint list; docs/plans/phase-4.md Worktree C's
-``<CreditMeter>``, which is "rendered **only when credits are
-enabled**").
-
-Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5: "With it
-off: no endpoints, no meter, no cost"). Off is a **404**, not a zero
-balance: the flag decides whether this feature exists at all, so the
-web meter's absence-of-data path is "there is nothing here" rather
-than "you have no credits" — two states a user would read very
-differently. 404 is also what an unresolvable organisation already
-returns from ``_get_organization``, which keeps the flag from being a
-distinguishable signal to a non-member either way.
+ * @summary Create Billing Portal Session
  */
-export const organizationsBillingCreditsRetrieveParams = zod.object({
+export const createBillingPortalSessionParams = zod.object({
   "org_slug": zod.string()
 })
 
 
 /**
- * ``POST /organizations/<org_slug>/billing/portal/``.
+ * @summary Get Subscription
  */
-export const organizationsBillingPortalCreateParams = zod.object({
+export const getSubscriptionParams = zod.object({
   "org_slug": zod.string()
 })
 
 
 /**
- * ``GET /organizations/<org_slug>/billing/subscription/``.
+ * @summary Create Upload
  */
-export const organizationsBillingSubscriptionRetrieveParams = zod.object({
+export const createUploadParams = zod.object({
   "org_slug": zod.string()
+})
+
+export const createUploadBodyContentTypeMax = 255;
+
+export const createUploadBodyFilenameMax = 255;
+
+
+
+
+export const createUploadBody = zod.object({
+  "content_type": zod.string().max(createUploadBodyContentTypeMax),
+  "filename": zod.string().max(createUploadBodyFilenameMax),
+  "size": zod.number().min(1)
 })
 
 
 /**
- * ``POST /organizations/<org_slug>/files/``.
- */
-export const organizationsFilesCreateParams = zod.object({
-  "org_slug": zod.string()
-})
-
-
-/**
- * ``GET /organizations/<org_slug>/files/<file_id>/``. Scoped to
-``organization`` in the same lookup as the completion view above —
-the mechanism the cross-tenant test in
+ * Scoped to ``organization`` in the same lookup as the completion
+view above — the mechanism the cross-tenant test in
 ``keel/files/tests/test_uploads.py`` exercises directly.
+ * @summary Retrieve Upload
  */
-export const organizationsFilesRetrieveParams = zod.object({
-  "file_id": zod.string().uuid(),
-  "org_slug": zod.string()
+export const retrieveUploadParams = zod.object({
+  "org_slug": zod.string(),
+  "file_id": zod.string()
 })
 
-
-/**
- * ``POST /organizations/<org_slug>/files/<file_id>/complete/``.
- */
-export const organizationsFilesCompleteCreateParams = zod.object({
-  "file_id": zod.string().uuid(),
-  "org_slug": zod.string()
-})
-
-
-/**
- * ``/organizations/<org_slug>/invitations/``.
- */
-export const organizationsInvitationsListParams = zod.object({
-  "org_slug": zod.string()
-})
-
-export const organizationsInvitationsListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
-})
-
-export const organizationsInvitationsListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
-  "results": zod.array(zod.object({
-  "accepted_at": zod.string().datetime({}).nullable(),
+export const retrieveUploadResponse = zod.object({
+  "content_type": zod.string(),
   "created_at": zod.string().datetime({}),
-  "email": zod.string().email(),
+  "id": zod.string(),
+  "key": zod.string(),
+  "size": zod.number(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary Complete Upload
+ */
+export const completeUploadParams = zod.object({
+  "org_slug": zod.string(),
+  "file_id": zod.string()
+})
+
+export const completeUploadResponse = zod.object({
+  "content_type": zod.string(),
+  "created_at": zod.string().datetime({}),
+  "id": zod.string(),
+  "key": zod.string(),
+  "size": zod.number(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary List Invitations
+ */
+export const listInvitationsParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const listInvitationsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listInvitationsResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
+  "results": zod.array(zod.object({
+  "accepted_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "created_at": zod.string().datetime({}),
+  "email": zod.string(),
   "expires_at": zod.string().datetime({}),
-  "id": zod.string().uuid(),
-  "invited_by": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "id": zod.string(),
+  "invited_by": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}),
-  "revoked_at": zod.string().datetime({}).nullable(),
+}),zod.null()]),
+  "revoked_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
-  "id": zod.string().uuid(),
+  "id": zod.string(),
   "is_preset": zod.boolean(),
   "name": zod.string(),
-  "permissions": zod.unknown()
+  "permissions": zod.array(zod.string())
 }),
   "status": zod.string()
 }))
@@ -1432,606 +1468,464 @@ export const organizationsInvitationsListResponse = zod.object({
 
 
 /**
- * ``/organizations/<org_slug>/invitations/``.
+ * @summary Create Invitation
  */
-export const organizationsInvitationsCreateParams = zod.object({
+export const createInvitationParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsInvitationsCreateBody = zod.object({
-
+export const createInvitationBody = zod.object({
+  "email": zod.string(),
+  "role_id": zod.string().uuid()
 })
 
 
 /**
- * ``/organizations/<org_slug>/invitations/``.
+ * @summary Revoke Invitation
  */
-export const organizationsInvitationsDestroyParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this invitation.'),
-  "org_slug": zod.string()
+export const revokeInvitationParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
 
 /**
- * ``/organizations/<org_slug>/invitations/``.
+ * @summary Retrieve Invitation
  */
-export const organizationsInvitationsRetrieveParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this invitation.'),
-  "org_slug": zod.string()
+export const retrieveInvitationParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
-export const organizationsInvitationsRetrieveResponse = zod.object({
-  "accepted_at": zod.string().datetime({}).nullable(),
+export const retrieveInvitationResponse = zod.object({
+  "accepted_at": zod.union([zod.string().datetime({}),zod.null()]),
   "created_at": zod.string().datetime({}),
-  "email": zod.string().email(),
+  "email": zod.string(),
   "expires_at": zod.string().datetime({}),
-  "id": zod.string().uuid(),
-  "invited_by": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
+  "id": zod.string(),
+  "invited_by": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
   "name": zod.string()
-}),
-  "revoked_at": zod.string().datetime({}).nullable(),
+}),zod.null()]),
+  "revoked_at": zod.union([zod.string().datetime({}),zod.null()]),
   "role": zod.object({
-  "id": zod.string().uuid(),
+  "id": zod.string(),
   "is_preset": zod.boolean(),
   "name": zod.string(),
-  "permissions": zod.unknown()
+  "permissions": zod.array(zod.string())
 }),
   "status": zod.string()
 })
 
 
-export const organizationsJobsListParams = zod.object({
+/**
+ * @summary List Jobs
+ */
+export const listJobsParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsJobsListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
+export const listJobsQueryParams = zod.object({
+  "status": zod.union([zod.string(),zod.null()]).optional(),
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
 })
 
-export const organizationsJobsListResponseResultsItemResultRefMax = 255;
-
-export const organizationsJobsListResponseResultsItemStepsItemNameMax = 255;
-
-export const organizationsJobsListResponseResultsItemStepsItemOrdinalMin = -2147483648;
-export const organizationsJobsListResponseResultsItemStepsItemOrdinalMax = 2147483647;
-
-export const organizationsJobsListResponseResultsItemStepsItemOutputRefMax = 255;
-
-export const organizationsJobsListResponseResultsItemStepsItemStatusMax = 16;
-
-export const organizationsJobsListResponseResultsItemTypeMax = 100;
-
-
-
-export const organizationsJobsListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
+export const listJobsResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
   "created_at": zod.string().datetime({}),
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "params": zod.unknown().optional(),
-  "result_ref": zod.string().max(organizationsJobsListResponseResultsItemResultRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
-  "steps": zod.array(zod.object({
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsJobsListResponseResultsItemStepsItemNameMax),
-  "ordinal": zod.number().min(organizationsJobsListResponseResultsItemStepsItemOrdinalMin).max(organizationsJobsListResponseResultsItemStepsItemOrdinalMax),
-  "output_ref": zod.string().max(organizationsJobsListResponseResultsItemStepsItemOutputRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.string().max(organizationsJobsListResponseResultsItemStepsItemStatusMax).optional()
-})),
-  "type": zod.string().max(organizationsJobsListResponseResultsItemTypeMax)
-}))
-})
-
-
-export const organizationsJobsCreateParams = zod.object({
-  "org_slug": zod.string()
-})
-
-export const organizationsJobsCreateBodyResultRefMax = 255;
-
-export const organizationsJobsCreateBodyTypeMax = 100;
-
-
-
-export const organizationsJobsCreateBody = zod.object({
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "params": zod.unknown().optional(),
-  "result_ref": zod.string().max(organizationsJobsCreateBodyResultRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
-  "type": zod.string().max(organizationsJobsCreateBodyTypeMax)
-})
-
-
-export const organizationsJobsRetrieveParams = zod.object({
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
   "id": zod.string(),
-  "org_slug": zod.string()
-})
-
-export const organizationsJobsRetrieveResponseResultRefMax = 255;
-
-export const organizationsJobsRetrieveResponseStepsItemNameMax = 255;
-
-export const organizationsJobsRetrieveResponseStepsItemOrdinalMin = -2147483648;
-export const organizationsJobsRetrieveResponseStepsItemOrdinalMax = 2147483647;
-
-export const organizationsJobsRetrieveResponseStepsItemOutputRefMax = 255;
-
-export const organizationsJobsRetrieveResponseStepsItemStatusMax = 16;
-
-export const organizationsJobsRetrieveResponseTypeMax = 100;
-
-
-
-export const organizationsJobsRetrieveResponse = zod.object({
-  "created_at": zod.string().datetime({}),
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "params": zod.unknown().optional(),
-  "result_ref": zod.string().max(organizationsJobsRetrieveResponseResultRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "params": zod.record(zod.string(), zod.unknown()),
+  "result_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string(),
   "steps": zod.array(zod.object({
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsJobsRetrieveResponseStepsItemNameMax),
-  "ordinal": zod.number().min(organizationsJobsRetrieveResponseStepsItemOrdinalMin).max(organizationsJobsRetrieveResponseStepsItemOrdinalMax),
-  "output_ref": zod.string().max(organizationsJobsRetrieveResponseStepsItemOutputRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.string().max(organizationsJobsRetrieveResponseStepsItemStatusMax).optional()
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "name": zod.string(),
+  "ordinal": zod.number(),
+  "output_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string()
 })),
-  "type": zod.string().max(organizationsJobsRetrieveResponseTypeMax)
+  "type": zod.string()
+}))
 })
 
 
-export const organizationsJobsCancelCreateParams = zod.object({
-  "id": zod.string(),
+/**
+ * @summary Create Job
+ */
+export const createJobParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsJobsCancelCreateBodyResultRefMax = 255;
-
-export const organizationsJobsCancelCreateBodyTypeMax = 100;
-
-
-
-export const organizationsJobsCancelCreateBody = zod.object({
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "params": zod.unknown().optional(),
-  "result_ref": zod.string().max(organizationsJobsCancelCreateBodyResultRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
-  "type": zod.string().max(organizationsJobsCancelCreateBodyTypeMax)
+export const createJobBody = zod.object({
+  "params": zod.record(zod.string(), zod.unknown()).optional(),
+  "type": zod.string()
 })
 
-export const organizationsJobsCancelCreateResponseResultRefMax = 255;
 
-export const organizationsJobsCancelCreateResponseStepsItemNameMax = 255;
+/**
+ * @summary Retrieve Job
+ */
+export const retrieveJobParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
 
-export const organizationsJobsCancelCreateResponseStepsItemOrdinalMin = -2147483648;
-export const organizationsJobsCancelCreateResponseStepsItemOrdinalMax = 2147483647;
-
-export const organizationsJobsCancelCreateResponseStepsItemOutputRefMax = 255;
-
-export const organizationsJobsCancelCreateResponseStepsItemStatusMax = 16;
-
-export const organizationsJobsCancelCreateResponseTypeMax = 100;
-
-
-
-export const organizationsJobsCancelCreateResponse = zod.object({
+export const retrieveJobResponse = zod.object({
   "created_at": zod.string().datetime({}),
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "params": zod.unknown().optional(),
-  "result_ref": zod.string().max(organizationsJobsCancelCreateResponseResultRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']).optional().describe('\* `queued` - Queued\n\* `running` - Running\n\* `succeeded` - Succeeded\n\* `partial` - Partial\n\* `failed` - Failed'),
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "params": zod.record(zod.string(), zod.unknown()),
+  "result_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string(),
   "steps": zod.array(zod.object({
-  "error": zod.string().optional(),
-  "finished_at": zod.string().datetime({}).nullish(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsJobsCancelCreateResponseStepsItemNameMax),
-  "ordinal": zod.number().min(organizationsJobsCancelCreateResponseStepsItemOrdinalMin).max(organizationsJobsCancelCreateResponseStepsItemOrdinalMax),
-  "output_ref": zod.string().max(organizationsJobsCancelCreateResponseStepsItemOutputRefMax).optional(),
-  "started_at": zod.string().datetime({}).nullish(),
-  "status": zod.string().max(organizationsJobsCancelCreateResponseStepsItemStatusMax).optional()
-})),
-  "type": zod.string().max(organizationsJobsCancelCreateResponseTypeMax)
-})
-
-
-/**
- * ``/organizations/<org_slug>/members/``.
- */
-export const organizationsMembersListParams = zod.object({
-  "org_slug": zod.string()
-})
-
-export const organizationsMembersListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
-})
-
-export const organizationsMembersListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
-  "results": zod.array(zod.object({
-  "id": zod.string().uuid(),
-  "joined_at": zod.string().datetime({}),
-  "role": zod.object({
-  "id": zod.string().uuid(),
-  "is_preset": zod.boolean(),
-  "name": zod.string(),
-  "permissions": zod.unknown()
-}),
-  "status": zod.enum(['active', 'suspended']).describe('\* `active` - Active\n\* `suspended` - Suspended'),
-  "user": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
-  "name": zod.string()
-})
-}))
-})
-
-
-/**
- * ``/organizations/<org_slug>/members/``.
- */
-export const organizationsMembersDestroyParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this membership.'),
-  "org_slug": zod.string()
-})
-
-
-/**
- * ``/organizations/<org_slug>/members/``.
- */
-export const organizationsMembersRetrieveParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this membership.'),
-  "org_slug": zod.string()
-})
-
-export const organizationsMembersRetrieveResponse = zod.object({
-  "id": zod.string().uuid(),
-  "joined_at": zod.string().datetime({}),
-  "role": zod.object({
-  "id": zod.string().uuid(),
-  "is_preset": zod.boolean(),
-  "name": zod.string(),
-  "permissions": zod.unknown()
-}),
-  "status": zod.enum(['active', 'suspended']).describe('\* `active` - Active\n\* `suspended` - Suspended'),
-  "user": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
-  "name": zod.string()
-})
-})
-
-
-/**
- * ``/organizations/<org_slug>/members/``.
- */
-export const organizationsMembersPartialUpdateParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this membership.'),
-  "org_slug": zod.string()
-})
-
-export const organizationsMembersPartialUpdateBody = zod.object({
-
-})
-
-export const organizationsMembersPartialUpdateResponse = zod.object({
-  "id": zod.string().uuid(),
-  "joined_at": zod.string().datetime({}),
-  "role": zod.object({
-  "id": zod.string().uuid(),
-  "is_preset": zod.boolean(),
-  "name": zod.string(),
-  "permissions": zod.unknown()
-}),
-  "status": zod.enum(['active', 'suspended']).describe('\* `active` - Active\n\* `suspended` - Suspended'),
-  "user": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
-  "name": zod.string()
-})
-})
-
-
-/**
- * ``/organizations/<org_slug>/members/``.
- */
-export const organizationsMembersUpdateParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this membership.'),
-  "org_slug": zod.string()
-})
-
-export const organizationsMembersUpdateBody = zod.object({
-
-})
-
-export const organizationsMembersUpdateResponse = zod.object({
-  "id": zod.string().uuid(),
-  "joined_at": zod.string().datetime({}),
-  "role": zod.object({
-  "id": zod.string().uuid(),
-  "is_preset": zod.boolean(),
-  "name": zod.string(),
-  "permissions": zod.unknown()
-}),
-  "status": zod.enum(['active', 'suspended']).describe('\* `active` - Active\n\* `suspended` - Suspended'),
-  "user": zod.object({
-  "email": zod.string().email(),
-  "id": zod.string().uuid(),
-  "name": zod.string()
-})
-})
-
-
-/**
- * ``/organizations/<org_slug>/roles/`` — read-only: the three global
-presets plus any custom roles belonging to the organisation.
- */
-export const organizationsRolesListParams = zod.object({
-  "org_slug": zod.string()
-})
-
-export const organizationsRolesListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
-})
-
-export const organizationsRolesListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
-  "results": zod.array(zod.object({
-  "id": zod.string().uuid(),
-  "is_preset": zod.boolean(),
-  "name": zod.string(),
-  "permissions": zod.unknown()
-}))
-})
-
-
-/**
- * ``/organizations/<org_slug>/roles/`` — read-only: the three global
-presets plus any custom roles belonging to the organisation.
- */
-export const organizationsRolesRetrieveParams = zod.object({
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
   "id": zod.string(),
+  "name": zod.string(),
+  "ordinal": zod.number(),
+  "output_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string()
+})),
+  "type": zod.string()
+})
+
+
+/**
+ * @summary Cancel Job
+ */
+export const cancelJobParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const cancelJobResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "params": zod.record(zod.string(), zod.unknown()),
+  "result_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string(),
+  "steps": zod.array(zod.object({
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "name": zod.string(),
+  "ordinal": zod.number(),
+  "output_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.string()
+})),
+  "type": zod.string()
+})
+
+
+/**
+ * @summary List Members
+ */
+export const listMembersParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsRolesRetrieveResponse = zod.object({
-  "id": zod.string().uuid(),
+export const listMembersQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listMembersResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
+  "results": zod.array(zod.object({
+  "id": zod.string(),
+  "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
   "is_preset": zod.boolean(),
   "name": zod.string(),
-  "permissions": zod.unknown()
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.string(),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
+}))
 })
 
 
 /**
- * ``POST /organizations/<org_slug>/transfer/`` — hand ownership to
-another active member.
+ * @summary Remove Member
  */
-export const organizationsTransferCreateParams = zod.object({
-  "org_slug": zod.string()
+export const removeMemberParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary Retrieve Member
  */
-export const organizationsWidgetsListParams = zod.object({
+export const retrieveMemberParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const retrieveMemberResponse = zod.object({
+  "id": zod.string(),
+  "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.string(),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
+})
+
+
+/**
+ * @summary Update Member Role
+ */
+export const updateMemberRoleParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const updateMemberRoleBody = zod.object({
+  "role_id": zod.string().uuid()
+})
+
+export const updateMemberRoleResponse = zod.object({
+  "id": zod.string(),
+  "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.string(),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
+})
+
+
+/**
+ * @summary List Roles
+ */
+export const listRolesParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsWidgetsListQueryParams = zod.object({
-  "cursor": zod.string().optional().describe('The pagination cursor value.'),
-  "limit": zod.number().optional().describe('Number of results to return per page.')
+export const listRolesQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
 })
 
-export const organizationsWidgetsListResponseResultsItemNameMax = 255;
+export const listRolesResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
+  "results": zod.array(zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}))
+})
 
-export const organizationsWidgetsListResponseResultsItemStatusMax = 32;
+
+/**
+ * @summary Retrieve Role
+ */
+export const retrieveRoleParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
+})
+
+export const retrieveRoleResponse = zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+})
 
 
+/**
+ * @summary Organization Transfer
+ */
+export const transferOrganizationParams = zod.object({
+  "org_slug": zod.string()
+})
 
-export const organizationsWidgetsListResponse = zod.object({
-  "next": zod.string().url().nullish(),
-  "previous": zod.string().url().nullish(),
+export const transferOrganizationBody = zod.object({
+  "membership_id": zod.string()
+})
+
+export const transferOrganizationResponse = zod.object({
+  "id": zod.string(),
+  "joined_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.string(),
+  "user": zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+})
+})
+
+
+/**
+ * @summary List Widgets
+ */
+export const listWidgetsParams = zod.object({
+  "org_slug": zod.string()
+})
+
+export const listWidgetsQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const listWidgetsResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
   "results": zod.array(zod.object({
   "created_at": zod.string().datetime({}),
-  "created_by": zod.string().uuid(),
-  "description": zod.string().optional(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsWidgetsListResponseResultsItemNameMax),
-  "status": zod.string().max(organizationsWidgetsListResponseResultsItemStatusMax).optional(),
+  "created_by": zod.string(),
+  "description": zod.string(),
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
   "updated_at": zod.string().datetime({})
 }))
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary Create Widget
  */
-export const organizationsWidgetsCreateParams = zod.object({
+export const createWidgetParams = zod.object({
   "org_slug": zod.string()
 })
 
-export const organizationsWidgetsCreateBodyNameMax = 255;
+export const createWidgetBodyDescriptionDefault = "";export const createWidgetBodyNameMax = 255;
 
-export const organizationsWidgetsCreateBodyStatusMax = 32;
+export const createWidgetBodyStatusDefault = "";
 
-
-
-export const organizationsWidgetsCreateBody = zod.object({
+export const createWidgetBody = zod.object({
   "description": zod.string().optional(),
-  "name": zod.string().max(organizationsWidgetsCreateBodyNameMax),
-  "status": zod.string().max(organizationsWidgetsCreateBodyStatusMax).optional()
+  "name": zod.string().min(1).max(createWidgetBodyNameMax),
+  "status": zod.string().optional()
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary Destroy Widget
  */
-export const organizationsWidgetsDestroyParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
-  "org_slug": zod.string()
+export const destroyWidgetParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary Retrieve Widget
  */
-export const organizationsWidgetsRetrieveParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
-  "org_slug": zod.string()
+export const retrieveWidgetParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
-export const organizationsWidgetsRetrieveResponseNameMax = 255;
-
-export const organizationsWidgetsRetrieveResponseStatusMax = 32;
-
-
-
-export const organizationsWidgetsRetrieveResponse = zod.object({
+export const retrieveWidgetResponse = zod.object({
   "created_at": zod.string().datetime({}),
-  "created_by": zod.string().uuid(),
-  "description": zod.string().optional(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsWidgetsRetrieveResponseNameMax),
-  "status": zod.string().max(organizationsWidgetsRetrieveResponseStatusMax).optional(),
+  "created_by": zod.string(),
+  "description": zod.string(),
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
   "updated_at": zod.string().datetime({})
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary Update Widget
  */
-export const organizationsWidgetsPartialUpdateParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
-  "org_slug": zod.string()
+export const updateWidgetParams = zod.object({
+  "org_slug": zod.string(),
+  "id": zod.string()
 })
 
-export const organizationsWidgetsPartialUpdateBodyNameMax = 255;
-
-export const organizationsWidgetsPartialUpdateBodyStatusMax = 32;
+export const updateWidgetBodyNameMaxFour = 255;
 
 
 
-export const organizationsWidgetsPartialUpdateBody = zod.object({
-  "description": zod.string().optional(),
-  "name": zod.string().max(organizationsWidgetsPartialUpdateBodyNameMax).optional(),
-  "status": zod.string().max(organizationsWidgetsPartialUpdateBodyStatusMax).optional()
+export const updateWidgetBody = zod.object({
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.union([zod.string().min(1).max(updateWidgetBodyNameMaxFour),zod.null()]).optional(),
+  "status": zod.union([zod.string(),zod.null()]).optional()
 })
 
-export const organizationsWidgetsPartialUpdateResponseNameMax = 255;
-
-export const organizationsWidgetsPartialUpdateResponseStatusMax = 32;
-
-
-
-export const organizationsWidgetsPartialUpdateResponse = zod.object({
+export const updateWidgetResponse = zod.object({
   "created_at": zod.string().datetime({}),
-  "created_by": zod.string().uuid(),
-  "description": zod.string().optional(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsWidgetsPartialUpdateResponseNameMax),
-  "status": zod.string().max(organizationsWidgetsPartialUpdateResponseStatusMax).optional(),
+  "created_by": zod.string(),
+  "description": zod.string(),
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
   "updated_at": zod.string().datetime({})
 })
 
 
 /**
- * ``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
-endpoint (PRD §7's demo-resource route table).
+ * @summary List Plans
  */
-export const organizationsWidgetsUpdateParams = zod.object({
-  "id": zod.string().uuid().describe('A UUID string identifying this widget.'),
-  "org_slug": zod.string()
+export const listPlansQueryParams = zod.object({
+  "cursor": zod.union([zod.string(),zod.null()]).optional(),
+  "limit": zod.union([zod.number(),zod.null()]).optional()
 })
 
-export const organizationsWidgetsUpdateBodyNameMax = 255;
-
-export const organizationsWidgetsUpdateBodyStatusMax = 32;
-
-
-
-export const organizationsWidgetsUpdateBody = zod.object({
-  "description": zod.string().optional(),
-  "name": zod.string().max(organizationsWidgetsUpdateBodyNameMax),
-  "status": zod.string().max(organizationsWidgetsUpdateBodyStatusMax).optional()
+export const listPlansResponse = zod.object({
+  "next": zod.union([zod.string(),zod.null()]),
+  "previous": zod.union([zod.string(),zod.null()]),
+  "results": zod.array(zod.object({
+  "code": zod.string(),
+  "entitlements": zod.record(zod.string(), zod.unknown()),
+  "id": zod.string(),
+  "name": zod.string(),
+  "prices": zod.array(zod.object({
+  "currency": zod.string(),
+  "id": zod.string(),
+  "interval": zod.string(),
+  "unit_amount": zod.number()
+})),
+  "sort_order": zod.number()
+}))
 })
-
-export const organizationsWidgetsUpdateResponseNameMax = 255;
-
-export const organizationsWidgetsUpdateResponseStatusMax = 32;
-
-
-
-export const organizationsWidgetsUpdateResponse = zod.object({
-  "created_at": zod.string().datetime({}),
-  "created_by": zod.string().uuid(),
-  "description": zod.string().optional(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(organizationsWidgetsUpdateResponseNameMax),
-  "status": zod.string().max(organizationsWidgetsUpdateResponseStatusMax).optional(),
-  "updated_at": zod.string().datetime({})
-})
-
-
-/**
- * ``GET /api/v1/plans/`` — the pricing page reads this unauthenticated
-(docs/plans/phase-4.md B.1), so it is a ``GlobalViewSet`` rather than an
-``OrgScopedViewSet``: a plan is not owned by any organisation, and
-unlike ``OrgScopedViewSet`` requests it never resolves ``org_slug``.
-
-``required_permissions`` is declared (``GlobalViewSet`` requires a
-non-empty value at import time) but not enforced here — enforcement is
-``HasOrgPermission``, which only ``OrgScopedViewSet`` wires in.
-``permission_classes`` is overridden to ``AllowAny`` instead, which is
-the actual gate for this endpoint. The declared code documents what an
-authenticated billing surface would require if this list were ever
-moved behind a login.
- */
-export const plansListResponseCodeMax = 100;
-
-export const plansListResponseNameMax = 255;
-
-export const plansListResponseSortOrderMin = -2147483648;
-export const plansListResponseSortOrderMax = 2147483647;
-
-
-
-export const plansListResponseItem = zod.object({
-  "code": zod.string().max(plansListResponseCodeMax),
-  "entitlements": zod.unknown().optional(),
-  "id": zod.string().uuid(),
-  "name": zod.string().max(plansListResponseNameMax),
-  "prices": zod.array(zod.record(zod.string(), zod.unknown())),
-  "sort_order": zod.number().min(plansListResponseSortOrderMin).max(plansListResponseSortOrderMax).optional()
-})
-export const plansListResponse = zod.array(plansListResponseItem)

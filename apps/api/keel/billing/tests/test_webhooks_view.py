@@ -9,7 +9,7 @@ import json
 
 import pytest
 import stripe
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.billing import tasks
 from keel.billing.models import StripeEvent

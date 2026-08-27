@@ -3,7 +3,7 @@ Stripe calls are monkeypatched on ``stripe_client`` — no real Stripe call,
 no stripe-mock (PRD §4, "No credentials")."""
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.accounts.models import User
 from keel.billing import stripe_client
@@ -44,7 +44,7 @@ def _add_member(org: Organization) -> User:
 
 def _client_for(user: User) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_login(user)
     return client
 
 
@@ -71,11 +71,13 @@ def test_checkout_returns_url_and_persists_customer_id(monkeypatch: pytest.Monke
     )
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(price.id)},
+        content_type="application/json",
     )
 
-    assert response.status_code == 200, response.data
-    assert response.data["url"] == "https://stripe.test/checkout/xyz"
+    assert response.status_code == 200, response.json()
+    assert response.json()["url"] == "https://stripe.test/checkout/xyz"
     org.refresh_from_db()
     assert org.stripe_customer_id == "cus_123"
 
@@ -99,7 +101,9 @@ def test_checkout_reuses_existing_customer_id(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(stripe_client, "create_checkout_session", _create_checkout_session)
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(price.id)},
+        content_type="application/json",
     )
 
     assert response.status_code == 200
@@ -113,11 +117,13 @@ def test_checkout_requires_billing_manage() -> None:
     price = _price()
 
     response = _client_for(member).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(price.id)},
+        content_type="application/json",
     )
 
     assert response.status_code == 403
-    assert response.data["error"]["code"] == "insufficient_role"
+    assert response.json()["error"]["code"] == "insufficient_role"
 
 
 def test_checkout_rejects_inactive_price() -> None:
@@ -127,11 +133,13 @@ def test_checkout_rejects_inactive_price() -> None:
     price.save(update_fields=["is_active"])
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(price.id)},
+        content_type="application/json",
     )
 
     assert response.status_code == 422
-    assert response.data["error"]["code"] == "price_not_found"
+    assert response.json()["error"]["code"] == "price_not_found"
 
 
 def test_checkout_blocks_a_downgrade_below_current_usage(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -176,12 +184,14 @@ def test_checkout_blocks_a_downgrade_below_current_usage(monkeypatch: pytest.Mon
     monkeypatch.setattr(stripe_client, "create_checkout_session", _fail)
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(new_price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(new_price.id)},
+        content_type="application/json",
     )
 
-    assert response.status_code == 409, response.data
-    assert response.data["error"]["code"] == "downgrade_blocked"
-    assert "seats" in response.data["error"]["message"]
+    assert response.status_code == 409, response.json()
+    assert response.json()["error"]["code"] == "downgrade_blocked"
+    assert "seats" in response.json()["error"]["message"]
 
 
 def test_checkout_404s_for_nonmember() -> None:
@@ -190,7 +200,9 @@ def test_checkout_404s_for_nonmember() -> None:
     price = _price()
 
     response = _client_for(outsider).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/", {"price_id": str(price.id)}
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
+        {"price_id": str(price.id)},
+        content_type="application/json",
     )
 
     assert response.status_code == 404
@@ -209,17 +221,17 @@ def test_portal_returns_url(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda **kw: "https://stripe.test/portal/xyz",
     )
 
-    response = _client_for(owner).post(f"/api/v1/organizations/{org.slug}/billing/portal/")
+    response = _client_for(owner).post(f"/api/v1/orgs/{org.slug}/billing/portal/")
 
     assert response.status_code == 200
-    assert response.data["url"] == "https://stripe.test/portal/xyz"
+    assert response.json()["url"] == "https://stripe.test/portal/xyz"
 
 
 def test_portal_requires_billing_manage() -> None:
     org, _owner = _org_with_owner()
     member = _add_member(org)
 
-    response = _client_for(member).post(f"/api/v1/organizations/{org.slug}/billing/portal/")
+    response = _client_for(member).post(f"/api/v1/orgs/{org.slug}/billing/portal/")
 
     assert response.status_code == 403
 
@@ -230,10 +242,10 @@ def test_portal_requires_billing_manage() -> None:
 def test_subscription_returns_null_when_none_exists() -> None:
     org, owner = _org_with_owner()
 
-    response = _client_for(owner).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(owner).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
-    assert response.data["subscription"] is None
+    assert response.json()["subscription"] is None
 
 
 def test_subscription_returns_row_when_one_exists() -> None:
@@ -247,18 +259,18 @@ def test_subscription_returns_row_when_one_exists() -> None:
         status="trialing",
     )
 
-    response = _client_for(owner).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(owner).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
-    assert response.data["subscription"]["status"] == "trialing"
-    assert response.data["subscription"]["plan"] == "starter"
+    assert response.json()["subscription"]["status"] == "trialing"
+    assert response.json()["subscription"]["plan"] == "starter"
 
 
 def test_subscription_view_is_readable_by_billing_view_alone() -> None:
     org, _owner = _org_with_owner()
     member = _add_member(org)
 
-    response = _client_for(member).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(member).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
 
@@ -267,6 +279,6 @@ def test_subscription_404s_for_nonmember() -> None:
     org, _owner = _org_with_owner()
     outsider = _user("outsider")
 
-    response = _client_for(outsider).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(outsider).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 404

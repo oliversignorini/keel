@@ -8,7 +8,7 @@ active) is tested end-to-end in ``test_webhooks_replay.py``; this module
 covers the "access is not immediately revoked" half specifically."""
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.accounts.models import User
 from keel.billing.entitlements import check_feature, check_limit, resolve_entitlements
@@ -96,12 +96,12 @@ def test_dunning_state_is_visible_but_does_not_gate_the_subscription_endpoint() 
     org, owner = _org_with_owner()
     _subscribe(org, status="past_due")
     client = APIClient()
-    client.force_authenticate(user=owner)
+    client.force_login(owner)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
-    assert response.data["subscription"]["status"] == "past_due"
+    assert response.json()["subscription"]["status"] == "past_due"
 
 
 def test_seat_beyond_limit_still_denied_regardless_of_dunning() -> None:

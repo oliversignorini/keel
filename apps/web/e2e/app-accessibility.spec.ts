@@ -65,7 +65,7 @@ async function signUpVerifyLoginAndCreateOrg(
   await unsafePost(request, `${API}/_allauth/browser/v1/auth/email/verify`, { key });
   await unsafePost(request, `${API}/_allauth/browser/v1/auth/login`, { email, password });
 
-  const orgResponse = await unsafePost(request, `${API}/api/v1/organizations/`, {
+  const orgResponse = await unsafePost(request, `${API}/api/v1/orgs/`, {
     name: `Axe Test ${Date.now()}`,
   });
   expect(orgResponse.ok(), await orgResponse.text()).toBe(true);

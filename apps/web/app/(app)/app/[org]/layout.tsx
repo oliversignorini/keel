@@ -10,7 +10,7 @@ import { useEffect } from "react";
  * looked up from `/api/v1/me/`'s organisation list (see
  * lib/org/org-context.tsx) rather than fetched by slug directly — the API
  * already makes a non-member and a nonexistent slug indistinguishable at
- * `GET /api/v1/organizations/{slug}/` (both 404, PRD §6 "Permission
+ * `GET /api/v1/orgs/{slug}/` (both 404, PRD §6 "Permission
  * denial": "Wrong organisation → 404, never 403. Existence is not
  * disclosed across tenant boundaries"), and deriving the client's notion
  * of membership from the same list the switcher renders keeps that

@@ -1,4 +1,4 @@
-"""``GET /organizations/<slug>/billing/credits/`` (PRD §7's credits
+"""``GET /orgs/<slug>/billing/credits/`` (PRD §7's credits
 endpoint list; docs/plans/phase-4.md Worktree C's ``<CreditMeter>``).
 
 Both flag states are covered, which is the point of A.5: with
@@ -7,8 +7,8 @@ zero — the web meter renders nothing at all in that state.
 """
 
 import pytest
+from django.test import Client as APIClient
 from django.test import override_settings
-from rest_framework.test import APIClient
 
 from keel.accounts.models import User
 from keel.billing import credits
@@ -40,12 +40,12 @@ def _org_with_owner() -> tuple[Organization, User]:
 
 def _client_for(user: User) -> APIClient:
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_login(user)
     return client
 
 
 def _url(org: Organization) -> str:
-    return f"/api/v1/organizations/{org.slug}/billing/credits/"
+    return f"/api/v1/orgs/{org.slug}/billing/credits/"
 
 
 @override_settings(BILLING_CREDITS=True)
@@ -55,8 +55,8 @@ def test_returns_the_balance_when_credits_are_enabled() -> None:
 
     response = _client_for(owner).get(_url(org))
 
-    assert response.status_code == 200, response.data
-    assert response.data == {"balance": 250}
+    assert response.status_code == 200, response.json()
+    assert response.json() == {"balance": 250}
 
 
 @override_settings(BILLING_CREDITS=True)
@@ -66,8 +66,8 @@ def test_returns_zero_when_no_credit_balance_row_exists_yet() -> None:
 
     response = _client_for(owner).get(_url(org))
 
-    assert response.status_code == 200, response.data
-    assert response.data == {"balance": 0}
+    assert response.status_code == 200, response.json()
+    assert response.json() == {"balance": 0}
 
 
 @override_settings(BILLING_CREDITS=False)
@@ -90,7 +90,7 @@ def test_readable_by_billing_view_alone() -> None:
 
     response = _client_for(member).get(_url(org))
 
-    assert response.status_code == 200, response.data
+    assert response.status_code == 200, response.json()
 
 
 @override_settings(BILLING_CREDITS=True)

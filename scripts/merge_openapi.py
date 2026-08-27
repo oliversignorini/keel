@@ -2,8 +2,9 @@
 """Deterministically merge the two OpenAPI documents this project serves
 (PRD §7, §8 Phase 2 A.3) into one file for client generation.
 
-- ``drf-spectacular`` describes ``/api/v1/…`` (this project's own DRF
-  views).
+- Django Ninja describes ``/api/v1/…`` (this project's own views;
+  phase-10.md 10.D — replaced drf-spectacular when the API layer moved
+  off DRF).
 - ``django-allauth`` headless describes ``/_allauth/browser/v1/…`` (PRD §4
   "Auth architecture": "allauth's headless flow ... also serves its own
   OpenAPI specification").
@@ -115,12 +116,14 @@ def merge(base: dict, extra: dict, extra_label: str) -> dict:
     }
 
 
-def build_drf_spec() -> dict:
-    from drf_spectacular.generators import SchemaGenerator
+def build_ninja_spec() -> dict:
+    from keel.core.ninja_api import api
 
-    generator = SchemaGenerator()
-    generator.coerce_path_pk = True
-    return generator.get_schema(request=None, public=True)
+    # NinjaAPI.get_openapi_schema() returns an OpenAPISchema (a dict
+    # subclass with extra behaviour) — coerce to a plain dict so the rest
+    # of this script (which round-trips everything through json.dumps)
+    # doesn't depend on that subclass's methods surviving the trip.
+    return dict(api.get_openapi_schema())
 
 
 # allauth headless's own schema (allauth.headless.spec.internal.schema.get_schema)
@@ -174,6 +177,38 @@ ALLAUTH_OPERATION_IDS: dict[tuple[str, str], str] = {
 }
 
 
+def _normalize_nullable_to_31(node: Any) -> None:
+    """Rewrite OpenAPI 3.0-style ``{"nullable": true, ...}`` into the
+    OpenAPI 3.1 / JSON Schema 2020-12 shape ``{"anyOf": [{...}, {"type":
+    "null"}]}``, in place, recursively.
+
+    allauth headless's own schema generator (``allauth.headless.spec``)
+    predates 3.1 and still emits the 3.0 keyword; Ninja emits real 3.1
+    (stage 10.D's finding — see the ADR / phase-10 report). A document
+    declaring ``"openapi": "3.1.0"`` throughout is otherwise fine mixed
+    dialect-wise for every case tested (orval 7.21 resolves Ninja's own
+    ``anyOf``-with-``null`` fields correctly) — the one real gap found
+    was exactly this: ``nullable: true`` beside a bare ``$ref`` is a
+    3.1-invalid combination (2020-12 doesn't define ``nullable`` at all,
+    and sibling keys next to a ``$ref`` are ignored by spec), so orval's
+    3.1-mode parser silently drops the null-ness instead of erroring.
+    Fixed at the source here rather than left as a known gap.
+    """
+    if isinstance(node, dict):
+        if node.get("nullable") is True:
+            del node["nullable"]
+            inner = {k: v for k, v in node.items()}
+            node.clear()
+            node["anyOf"] = [inner, {"type": "null"}]
+            _normalize_nullable_to_31(inner)
+            return
+        for value in node.values():
+            _normalize_nullable_to_31(value)
+    elif isinstance(node, list):
+        for item in node:
+            _normalize_nullable_to_31(item)
+
+
 def _assign_allauth_operation_ids(spec: dict) -> None:
     missing: list[str] = []
     for path, methods in spec.get("paths", {}).items():
@@ -210,6 +245,7 @@ def build_allauth_spec() -> dict:
     finally:
         uuid.uuid4 = real_uuid4
     _assign_allauth_operation_ids(schema)
+    _normalize_nullable_to_31(schema)
     return schema
 
 
@@ -221,10 +257,10 @@ def main() -> int:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
     django.setup()
 
-    drf_spec = build_drf_spec()
+    ninja_spec = build_ninja_spec()
     allauth_spec = build_allauth_spec()
 
-    merged = merge(drf_spec, allauth_spec, extra_label="Allauth")
+    merged = merge(ninja_spec, allauth_spec, extra_label="Allauth")
     OUTPUT_PATH.write_text(json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"Wrote {OUTPUT_PATH} ({len(merged['paths'])} paths).")
     return 0

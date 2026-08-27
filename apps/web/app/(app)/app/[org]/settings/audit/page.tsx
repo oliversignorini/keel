@@ -6,7 +6,7 @@ import { Can } from "@/components/org/can";
 import { listAuditLogs } from "@/lib/org/api";
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
-import { ApiError, type AuditLog } from "@keel/api-client";
+import { ApiError, type AuditLogOut } from "@keel/api-client";
 
 /**
  * `/app/[org]/settings/audit` (PRD §5 Routes; PRD §7's audit endpoint;
@@ -18,7 +18,7 @@ import { ApiError, type AuditLog } from "@keel/api-client";
 export default function AuditSettingsPage() {
   const { currentOrg } = useOrgContext();
   const orgSlug = currentOrg?.slug ?? "";
-  const [rows, setRows] = useState<AuditLog[]>([]);
+  const [rows, setRows] = useState<AuditLogOut[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

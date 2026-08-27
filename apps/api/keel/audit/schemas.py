@@ -1,0 +1,45 @@
+"""Schema for the audit read surface (PRD §7; docs/plans/phase-8.md 8.2;
+phase-10.md 10.C)."""
+
+from datetime import datetime
+from typing import Any
+
+from ninja import Schema
+
+
+class AuditActorOut(Schema):
+    id: str
+    email: str
+    name: str
+
+
+class AuditLogOut(Schema):
+    id: str
+    action: str
+    actor: AuditActorOut | None
+    impersonator: AuditActorOut | None
+    target_type: str
+    target_id: str
+    metadata: dict[str, Any]
+    ip: str | None
+    created_at: datetime
+
+    @staticmethod
+    def resolve_id(obj: Any) -> str:
+        return str(obj.id)
+
+    @staticmethod
+    def resolve_actor(obj: Any) -> dict[str, Any] | None:
+        if obj.actor_id is None:
+            return None
+        return {"id": str(obj.actor.id), "email": obj.actor.email, "name": obj.actor.name}
+
+    @staticmethod
+    def resolve_impersonator(obj: Any) -> dict[str, Any] | None:
+        if obj.impersonator_id is None:
+            return None
+        return {
+            "id": str(obj.impersonator.id),
+            "email": obj.impersonator.email,
+            "name": obj.impersonator.name,
+        }

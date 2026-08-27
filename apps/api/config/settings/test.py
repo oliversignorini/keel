@@ -52,10 +52,13 @@ R2_BUCKET = "keel-test"
 ACCOUNT_RATE_LIMITS = False  # type: ignore[assignment]
 
 # Same reasoning as ACCOUNT_RATE_LIMITS above, for the general API
-# throttle (docs/plans/phase-8.md 8.6): DRF's throttle counters live in
-# the same real Redis cache, keyed by client ident/user id, and persist
-# across the whole test run — hundreds of tests hitting the same
-# endpoints would otherwise trip an unrelated test's rate limit purely
-# from run history. tests/test_rate_limiting.py re-enables this
-# explicitly (and clears the cache first) to test the mechanism itself.
-REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_CLASSES": []}  # noqa: F405
+# throttle (docs/plans/phase-8.md 8.6): keel.core.ninja_throttle's
+# counters live in the same real Redis cache, keyed by client ident/user
+# id, and persist across the whole test run — hundreds of tests hitting
+# the same endpoints would otherwise trip an unrelated test's rate limit
+# purely from run history. `None` short-circuits both throttles' `check()`.
+# tests/test_rate_limiting.py constructs throttle instances with an
+# explicit `rate=` (and clears the cache first) to test the mechanism
+# itself, bypassing this.
+KEEL_API_THROTTLE_USER_RATE = None
+KEEL_API_THROTTLE_ANON_RATE = None

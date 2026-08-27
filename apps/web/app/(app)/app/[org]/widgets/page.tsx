@@ -4,7 +4,7 @@ import { Can } from "@/components/org/can";
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import { deleteWidget, listWidgets } from "@/lib/widgets/api";
-import type { Widget } from "@keel/api-client";
+import type { WidgetOut } from "@keel/api-client";
 import { type ColumnDef, DataTable, EmptyState, PageHeader } from "@keel/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -23,7 +23,7 @@ function cursorFromUrl(url: string | null | undefined): string | undefined {
  */
 export default function WidgetsPage() {
   const { currentOrg } = useOrgContext();
-  const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [widgets, setWidgets] = useState<WidgetOut[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [history, setHistory] = useState<(string | undefined)[]>([]);
   const [next, setNext] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function WidgetsPage() {
     void load(cursor);
   }, [currentOrg, cursor, load]);
 
-  const columns = useMemo<ColumnDef<Widget, unknown>[]>(
+  const columns = useMemo<ColumnDef<WidgetOut, unknown>[]>(
     () => [
       {
         accessorKey: "name",

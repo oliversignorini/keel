@@ -1,4 +1,4 @@
-"""Row factory used both by ``WidgetViewSet.test_factory`` (PRD §4
+"""Row factory used both by ``WidgetResource.test_factory`` (PRD §4
 invariant 7 — the cross-org meta-test walk) and directly by this app's
 own tests."""
 

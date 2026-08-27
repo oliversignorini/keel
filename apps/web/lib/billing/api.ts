@@ -9,11 +9,11 @@
  */
 
 import {
-  organizationsBillingCheckoutCreate,
-  organizationsBillingCreditsRetrieve,
-  organizationsBillingPortalCreate,
-  organizationsBillingSubscriptionRetrieve,
-  plansList,
+  createBillingPortalSession,
+  createCheckoutSession as generatedCreateCheckoutSession,
+  getCreditBalance as generatedGetCreditBalance,
+  getSubscription as generatedGetSubscription,
+  listPlans as listPlansGenerated,
 } from "@keel/api-client";
 
 import type {
@@ -28,12 +28,12 @@ import type {
  * safe to call from a server component with no session (see
  * app/pricing/page.tsx). */
 export async function listPlans(): Promise<PlanWithPrices[]> {
-  const result = await plansList();
-  return result.data as unknown as PlanWithPrices[];
+  const result = await listPlansGenerated();
+  return result.data.results as unknown as PlanWithPrices[];
 }
 
 export async function getSubscription(orgSlug: string): Promise<SubscriptionResponse> {
-  const result = await organizationsBillingSubscriptionRetrieve(orgSlug);
+  const result = await generatedGetSubscription(orgSlug);
   return result.data as unknown as SubscriptionResponse;
 }
 
@@ -42,7 +42,7 @@ export async function getSubscription(orgSlug: string): Promise<SubscriptionResp
  * separate invoice endpoint in this API (phase-4.md Worktree C's "invoice
  * access"). */
 export async function createPortalSession(orgSlug: string): Promise<StripeRedirectResponse> {
-  const result = await organizationsBillingPortalCreate(orgSlug, { method: "POST" });
+  const result = await createBillingPortalSession(orgSlug, { method: "POST" });
   return result.data as unknown as StripeRedirectResponse;
 }
 
@@ -51,11 +51,7 @@ export async function createCheckoutSession(
   orgSlug: string,
   body: CheckoutBody,
 ): Promise<StripeRedirectResponse> {
-  const result = await organizationsBillingCheckoutCreate(orgSlug, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const result = await generatedCreateCheckoutSession(orgSlug, body as never);
   return result.data as unknown as StripeRedirectResponse;
 }
 
@@ -63,6 +59,6 @@ export async function createCheckoutSession(
  * is off server-side — the flag decides whether this endpoint exists at
  * all (billing/views.py `CreditBalanceView`). */
 export async function getCreditBalance(orgSlug: string): Promise<CreditBalanceResponse> {
-  const result = await organizationsBillingCreditsRetrieve(orgSlug);
+  const result = await generatedGetCreditBalance(orgSlug);
   return result.data as unknown as CreditBalanceResponse;
 }

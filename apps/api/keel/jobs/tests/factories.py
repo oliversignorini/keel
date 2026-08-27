@@ -1,4 +1,4 @@
-"""Row builders for jobs tests, plus ``JobViewSet.test_factory``'s target
+"""Row builders for jobs tests, plus ``JobResource.test_factory``'s target
 (PRD §4 invariant 7 — the cross-org meta-test walk)."""
 
 from django.utils.crypto import get_random_string

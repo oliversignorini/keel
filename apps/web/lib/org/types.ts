@@ -29,12 +29,12 @@
  * `serializer_class` and `pnpm generate` produces it directly.
  */
 
-import type { Membership, Role } from "@keel/api-client";
+import type { MembershipOut, RoleOut } from "@keel/api-client";
 
-/** `Role.permissions` is a Postgres JSONField; drf-spectacular can only
- * say `unknown`. It is always a flat list of permission codes
+/** `Role.permissions` is a Postgres JSONField; the generated schema can
+ * only say `unknown`. It is always a flat list of permission codes
  * (organizations/models.py `Role.permissions`). */
-export interface RoleWithPermissions extends Omit<Role, "permissions"> {
+export interface RoleWithPermissions extends Omit<RoleOut, "permissions"> {
   permissions: string[];
 }
 
@@ -67,33 +67,33 @@ export interface PermissionsRegistryResponse {
   codes: string[];
 }
 
-/** `POST /api/v1/organizations/` body (OrganizationListCreateView.create,
+/** `POST /api/v1/orgs/` body (OrganizationListCreateView.create,
  * validated by OrganizationCreateSerializer). */
 export interface OrganizationCreateBody {
   name: string;
   slug?: string;
 }
 
-/** `PATCH /api/v1/organizations/{slug}/` body
+/** `PATCH /api/v1/orgs/{slug}/` body
  * (OrganizationDetailView.patch, OrganizationUpdateSerializer). */
 export interface OrganizationUpdateBody {
   name?: string;
 }
 
-/** `POST /api/v1/organizations/{slug}/transfer/` body
+/** `POST /api/v1/orgs/{slug}/transfer/` body
  * (OrganizationTransferView.post reads `membership_id` off raw request.data). */
 export interface TransferBody {
   membership_id: string;
 }
 
-/** `POST /api/v1/organizations/{slug}/invitations/` body
+/** `POST /api/v1/orgs/{slug}/invitations/` body
  * (InvitationViewSet.create, InvitationCreateSerializer). */
 export interface InvitationCreateBody {
   email: string;
   role_id: string;
 }
 
-/** `PATCH /api/v1/organizations/{slug}/members/{id}/` body
+/** `PATCH /api/v1/orgs/{slug}/members/{id}/` body
  * (MembershipViewSet.update, MembershipRoleUpdateSerializer). */
 export interface MembershipRoleUpdateBody {
   role_id: string;
@@ -116,4 +116,4 @@ export interface InviteResolveResponse {
 /** `POST /api/v1/invite/{token}/` (InvitationAcceptView.post) — accept.
  * Returns the new Membership, which the generated client already types
  * correctly (MembershipSerializer is a real ModelSerializer). */
-export type InviteAcceptResponse = Membership;
+export type InviteAcceptResponse = MembershipOut;

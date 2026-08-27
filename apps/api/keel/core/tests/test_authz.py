@@ -1,26 +1,26 @@
+"""The authorization *vocabulary* (PRD §4 invariant 2): ``Decision``, the
+registry, ``has_perm``, and the membership-resolution seam.
+
+The base class a resource declares against, and its import-time checks,
+moved to ``keel/core/ninja_authz.py`` when DRF was removed — those are
+tested in ``test_ninja_authz.py``. What is left here is framework-free and
+is what every guard and every route ultimately runs through.
+"""
+
 from dataclasses import FrozenInstanceError
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
-from rest_framework.response import Response
-from rest_framework.test import APIRequestFactory
 
 from keel.core.authz import (
     Decision,
-    GlobalViewSet,
-    HasOrgPermission,
-    OrgScopedViewSet,
     PermissionRegistry,
     UnregisteredPermissionCode,
+    _resolve_organization,
     has_perm,
-    registered_scoped_viewsets,
 )
-from keel.core.exceptions import PermissionDeniedWithReason
-
-pytestmark = pytest.mark.django_db
-
 
 # --- Decision --------------------------------------------------------------
 
@@ -84,7 +84,7 @@ def test_registry_iteration_is_stable_and_inspectable() -> None:
 # --- has_perm ------------------------------------------------------------
 
 
-def test_has_perm_resolves_through_registry(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_has_perm_resolves_through_registry() -> None:
     from keel.core import authz
 
     def guard(user, organization, subject=None):
@@ -97,158 +97,32 @@ def test_has_perm_resolves_through_registry(monkeypatch: pytest.MonkeyPatch) -> 
     assert decision.allowed is True
 
 
+def test_has_perm_passes_the_subject_through_to_the_guard() -> None:
+    """State denials (PRD §4 invariant 2) depend on the guard inspecting
+    the row, so the subject must reach it rather than being dropped."""
+    from keel.core import authz
+
+    seen: dict[str, Any] = {}
+
+    def guard(user, organization, subject=None):
+        seen["subject"] = subject
+        return Decision.deny("cannot_remove_last_owner")
+
+    authz.registry.register("fixture.subject", guard)
+    row = SimpleNamespace(pk=1)
+
+    decision = has_perm(user=None, organization=None, code="fixture.subject", subject=row)
+
+    assert seen["subject"] is row
+    assert decision.reason == "cannot_remove_last_owner"
+
+
 def test_has_perm_on_unregistered_code_raises_rather_than_denying() -> None:
     with pytest.raises(UnregisteredPermissionCode):
         has_perm(user=None, organization=None, code="fixture.definitely_not_registered")
 
 
-# --- HasOrgPermission ------------------------------------------------------
-
-
-def test_has_org_permission_allows_when_decision_allows() -> None:
-    from keel.core import authz
-
-    authz.registry.register(
-        "fixture.allow_perm", lambda user, organization, subject=None: Decision.allow()
-    )
-
-    view = SimpleNamespace(required_permissions=["fixture.allow_perm"], organization=object())
-    request = SimpleNamespace(user=object())
-
-    assert HasOrgPermission().has_permission(request, view) is True
-
-
-def test_has_org_permission_raises_permission_denied_with_reason_on_deny() -> None:
-    from keel.core import authz
-
-    authz.registry.register(
-        "fixture.deny_perm",
-        lambda user, organization, subject=None: Decision.deny(
-            "insufficient_role", details={"required": "org.update"}
-        ),
-    )
-
-    view = SimpleNamespace(required_permissions=["fixture.deny_perm"], organization=object())
-    request = SimpleNamespace(user=object())
-
-    with pytest.raises(PermissionDeniedWithReason) as exc_info:
-        HasOrgPermission().has_permission(request, view)
-
-    assert exc_info.value.code == "insufficient_role"
-    assert exc_info.value.details == {"required": "org.update"}
-
-
-# --- Import-time checks on OrgScopedViewSet / GlobalViewSet ------------
-
-
-def test_viewset_without_required_permissions_raises_at_import_time() -> None:
-    with pytest.raises(ImproperlyConfigured):
-
-        class BadViewSet(OrgScopedViewSet):
-            test_factory = "keel.core.tests.test_authz.fake_factory"
-
-
-def test_viewset_without_organization_scoped_or_global_justification_raises() -> None:
-    with pytest.raises(ImproperlyConfigured):
-
-        class BadGlobalViewSet(GlobalViewSet):
-            required_permissions = ("fixture.view",)
-            organization_scoped = False
-
-
-def test_org_scoped_viewset_without_test_factory_raises() -> None:
-    with pytest.raises(ImproperlyConfigured):
-
-        class BadOrgViewSet(OrgScopedViewSet):
-            required_permissions = ("fixture.view",)
-
-
-def test_org_scoped_viewset_with_everything_declared_does_not_raise() -> None:
-    class GoodOrgViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.view",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-
-    assert GoodOrgViewSet.organization_scoped is True
-
-
-def test_global_viewset_with_justification_does_not_raise() -> None:
-    class GoodGlobalViewSet(GlobalViewSet):
-        required_permissions = ("fixture.view",)
-        organization_scoped = False
-        GLOBAL_JUSTIFICATION = "Reference data, identical across tenants."
-
-    assert GoodGlobalViewSet.GLOBAL_JUSTIFICATION
-
-
-def test_abstract_org_scoped_intermediate_base_skips_the_test_factory_check() -> None:
-    """A project may want its own abstract mixin between OrgScopedViewSet
-    and its concrete viewsets; declaring __abstract__ = True opts out of
-    the test_factory check the same way OrgScopedViewSet itself does."""
-
-    class AbstractIntermediateViewSet(OrgScopedViewSet):
-        __abstract__ = True
-
-    assert AbstractIntermediateViewSet.test_factory is None
-
-
-# --- The scoped-viewset registry (PRD §4 invariant 7) -----------------
-# Every well-formed OrgScopedViewSet subclass records itself so nothing
-# can define a scoped viewset without the tenant-isolation meta-test
-# being able to find it — see
-# keel/organizations/tests/test_meta_router_wiring.py for the CI check
-# that actually enforces this.
-
-
-def test_org_scoped_viewset_subclass_is_recorded_in_the_registry() -> None:
-    class RecordedViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.view",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-
-    assert RecordedViewSet in registered_scoped_viewsets()
-
-
-def test_abstract_org_scoped_subclass_is_not_recorded() -> None:
-    before = set(registered_scoped_viewsets())
-
-    class AbstractNotRecordedViewSet(OrgScopedViewSet):
-        __abstract__ = True
-
-    after = set(registered_scoped_viewsets())
-
-    assert after == before
-
-
-def test_org_scoped_subclass_opting_out_of_scoping_is_not_recorded() -> None:
-    before = set(registered_scoped_viewsets())
-
-    class OptedOutViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.view",)
-        organization_scoped = False
-        GLOBAL_JUSTIFICATION = "Fixture — deliberately opts out."
-
-    after = set(registered_scoped_viewsets())
-
-    assert after == before
-    assert OptedOutViewSet not in after
-
-
-def test_get_queryset_filters_through_for_organization() -> None:
-    class FakeQuerySet:
-        def for_organization(self, organization):
-            return f"filtered-for-{organization}"
-
-    class FixtureQuerysetViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.queryset",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-        queryset = FakeQuerySet()
-
-    view = FixtureQuerysetViewSet()
-    view.organization = "org-1"
-
-    assert view.get_queryset() == "filtered-for-org-1"
-
-
-# --- End-to-end: Decision.deny reaches the client as a 403 envelope -------
+# --- The membership-resolution seam --------------------------------------
 
 
 def fixture_org_resolver(request, org_slug):
@@ -257,92 +131,29 @@ def fixture_org_resolver(request, org_slug):
     return SimpleNamespace(pk=org_slug, slug=org_slug)
 
 
-def test_decision_deny_reaches_client_as_403_envelope(settings: Any) -> None:
-    from keel.core import authz
-
-    authz.registry.register(
-        "fixture.e2e_deny",
-        lambda user, organization, subject=None: Decision.deny(
-            "insufficient_role", details={"required": "org.update"}
-        ),
-    )
-
-    class FixtureDenyViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.e2e_deny",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-
-        def list(self, request, *args, **kwargs):
-            return Response({"ok": True})
-
+def test_resolve_organization_delegates_to_the_configured_dotted_path(settings: Any) -> None:
     settings.KEEL_ORGANIZATION_RESOLVER = f"{__name__}.fixture_org_resolver"
-    settings.REST_FRAMEWORK = {
-        **settings.REST_FRAMEWORK,
-        "EXCEPTION_HANDLER": "keel.core.exceptions.exception_handler",
-    }
 
-    request = APIRequestFactory().get("/fake/acme/things/")
-    request.user = SimpleNamespace(is_authenticated=True, is_active=True)
-    view = FixtureDenyViewSet.as_view({"get": "list"})
+    organization = _resolve_organization(request=None, org_slug="acme")
 
-    response = view(request, org_slug="acme")
-    response.render()
-
-    assert response.status_code == 403
-    assert response.data["error"]["code"] == "insufficient_role"
-    assert response.data["error"]["details"] == {"required": "org.update"}
+    assert organization.slug == "acme"
 
 
-def test_org_scoped_viewset_404s_when_organization_does_not_resolve(
+def test_resolve_organization_returns_none_for_a_slug_the_resolver_rejects(
     settings: Any,
 ) -> None:
-    from keel.core import authz
-
-    authz.registry.register(
-        "fixture.e2e_missing_org",
-        lambda user, organization, subject=None: Decision.allow(),
-    )
-
-    class FixtureMissingOrgViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.e2e_missing_org",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-
-        def list(self, request, *args, **kwargs):
-            return Response({"ok": True})
-
+    """One outcome for "no such org" and "not a member" alike — a 403
+    would confirm the organisation exists to someone outside it (PRD §4
+    invariant 7); callers turn this ``None`` into a 404."""
     settings.KEEL_ORGANIZATION_RESOLVER = f"{__name__}.fixture_org_resolver"
 
-    request = APIRequestFactory().get("/fake/missing/things/")
-    request.user = SimpleNamespace(is_authenticated=True, is_active=True)
-    view = FixtureMissingOrgViewSet.as_view({"get": "list"})
-
-    response = view(request, org_slug="missing")
-    response.render()
-
-    assert response.status_code == 404
+    assert _resolve_organization(request=None, org_slug="missing") is None
 
 
 def test_organization_resolver_unconfigured_raises_improperly_configured(
     settings: Any,
 ) -> None:
-    from keel.core import authz
-
-    authz.registry.register(
-        "fixture.e2e_unconfigured",
-        lambda user, organization, subject=None: Decision.allow(),
-    )
-
-    class FixtureUnconfiguredViewSet(OrgScopedViewSet):
-        required_permissions = ("fixture.e2e_unconfigured",)
-        test_factory = "keel.core.tests.test_authz.fake_factory"
-
-        def list(self, request, *args, **kwargs):
-            return Response({"ok": True})
-
     settings.KEEL_ORGANIZATION_RESOLVER = None
 
-    request = APIRequestFactory().get("/fake/acme/things/")
-    request.user = SimpleNamespace(is_authenticated=True, is_active=True)
-    view = FixtureUnconfiguredViewSet.as_view({"get": "list"})
-
     with pytest.raises(ImproperlyConfigured):
-        view(request, org_slug="acme")
+        _resolve_organization(request=None, org_slug="acme")

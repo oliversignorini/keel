@@ -12,25 +12,6 @@ from urllib.parse import unquote
 import pytest
 from django.core import mail
 from django.test import Client
-from django.urls import include, path
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-
-class _ProtectedTestView(APIView):
-    """Exists only for test_401_response_..._matches_the_phase_1_error_envelope
-    below: a minimal DRF view behind the project's real DEFAULT_PERMISSION/
-    AUTHENTICATION_CLASSES, standing in for a protected /api/v1/ endpoint
-    that doesn't exist yet in this phase (/api/v1/me/ is Phase 3)."""
-
-    def get(self, request: object) -> Response:
-        return Response({"ok": True})
-
-
-urlpatterns = [
-    path("api/v1/_test-protected/", _ProtectedTestView.as_view()),
-    path("", include("config.urls")),
-]
 
 pytestmark = pytest.mark.django_db(transaction=True)
 # transaction=True: allauth sends confirmation/reset emails from
@@ -320,18 +301,14 @@ def test_session_listing_and_revocation() -> None:
     assert session_response.json()["meta"]["is_authenticated"] is False
 
 
-def test_401_response_from_a_drf_view_matches_the_phase_1_error_envelope(
-    settings,
-) -> None:
-    """Not an allauth endpoint — a plain DRF view behind IsAuthenticated,
+def test_401_response_from_an_api_route_matches_the_phase_1_error_envelope() -> None:
+    """Not an allauth endpoint — a real, protected /api/v1/ route,
     proving keel/core/exceptions.py's envelope (PRD §7) is what an
-    unauthenticated request to this project's own /api/v1/ surface gets,
-    as distinct from allauth's {status,data,meta} shape (see
+    unauthenticated request to this project's own API surface gets, as
+    distinct from allauth's {status,data,meta} shape (see
     docs/auth-client-contract.md)."""
-    settings.ROOT_URLCONF = __name__
-
     client = Client()
-    response = client.get("/api/v1/_test-protected/")
+    response = client.get("/api/v1/orgs/")
 
     assert response.status_code == 401, response.content
     body = response.json()
