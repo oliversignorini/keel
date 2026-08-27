@@ -31,6 +31,7 @@ list before generating.
 9. `admin.py` — register the model.
 
 ## Permissions (`apps/api/keel/organizations/permissions.py` — the only
+
 file allowed to add these)
 
 - Add `<RESOURCE>_VIEW` and `<RESOURCE>_MANAGE` codes to `Perm`.

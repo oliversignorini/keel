@@ -6,14 +6,14 @@ including a future agent working from `CLAUDE.md`.
 
 ## Supported versions
 
-| Component | Version this repo targets | Where it's pinned |
-|---|---|---|
-| Python | 3.12+ | `apps/api/pyproject.toml` `requires-python`, enforced at runtime by the floor check in `apps/api/config/settings/base.py` |
-| Django | 6.0+ (currently resolves to 6.1) | `apps/api/pyproject.toml` (`django~=6.0`), enforced by the same floor check |
-| Node.js | 22+ | root `package.json` `engines.node` |
-| pnpm | 9.5.0 | root `package.json` `packageManager` (corepack-pinned) |
-| PostgreSQL | 17 | `infra/compose.dev.yml` / `infra/compose.prod.yml` (`pgvector/pgvector:pg17`); see `docs/deploy-railway.md` for the hosted-provider equivalents |
-| Redis | 7 | `infra/compose.dev.yml` / `infra/compose.prod.yml` (`redis:7`) |
+| Component  | Version this repo targets        | Where it's pinned                                                                                                                               |
+| ---------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Python     | 3.12+                            | `apps/api/pyproject.toml` `requires-python`, enforced at runtime by the floor check in `apps/api/config/settings/base.py`                       |
+| Django     | 6.0+ (currently resolves to 6.1) | `apps/api/pyproject.toml` (`django~=6.0`), enforced by the same floor check                                                                     |
+| Node.js    | 22+                              | root `package.json` `engines.node`                                                                                                              |
+| pnpm       | 9.5.0                            | root `package.json` `packageManager` (corepack-pinned)                                                                                          |
+| PostgreSQL | 17                               | `infra/compose.dev.yml` / `infra/compose.prod.yml` (`pgvector/pgvector:pg17`); see `docs/deploy-railway.md` for the hosted-provider equivalents |
+| Redis      | 7                                | `infra/compose.dev.yml` / `infra/compose.prod.yml` (`redis:7`)                                                                                  |
 
 `~=6.0` on Django is deliberate: it floats within the 6.x series (picking
 up 6.1, 6.2, …) but will not silently jump to a 7.0 major, which is exactly

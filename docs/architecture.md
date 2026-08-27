@@ -48,6 +48,7 @@ lives there — only the vocabulary. The codes and their guard
 implementations live in `organizations/permissions.py`.
 
 **Enforced by:**
+
 - `scripts/check_permission_lint.py` — greps for `Decision.allow(` /
   `Decision.deny(` / `registry.register(` outside
   `keel/organizations/permissions.py` and fails the build on a hit.

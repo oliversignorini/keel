@@ -21,7 +21,7 @@ boilerplate.
    task-driven.
 3. `serializers.py` — one read serializer.
 4. `views.py` — `<Resource>ViewSet(mixins.ListModelMixin,
-   mixins.RetrieveModelMixin, OrgScopedViewSet)` (or `GlobalViewSet`).
+mixins.RetrieveModelMixin, OrgScopedViewSet)` (or `GlobalViewSet`).
    Org-scoped: `organization_scoped = True` + `test_factory`. Global:
    `organization_scoped = False` + `GLOBAL_JUSTIFICATION` naming why no
    tenant leak is possible.

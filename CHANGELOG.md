@@ -9,6 +9,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 ## [Unreleased]
 
 ### Phase 8 — Observability and hardening
+
 - Audit meta-test over the service registry; staff impersonation (admin
   action, exit endpoint, banner) with service-layer restrictions
 - Audit read surface and settings tab
@@ -18,12 +19,14 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
   widget list
 
 ### Phase 7 — Marketing site
+
 - `(marketing)` route group and landing page
 - Human labels for pricing-page feature codes
 - MDX blog via content-collections
 - Sitemap, `robots.txt`, OG images, JSON-LD
 
 ### Phase 6 — Application shell and subdomain routing
+
 - Host-based middleware splitting `app.lvh.me` from the marketing/auth apex
 - `<AppShell>` and the shared component kit
 - Widget vertical slice (full CRUD, end to end) as the reference resource
@@ -31,6 +34,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 - Real-browser cross-host login test
 
 ### Phase 5 — Async work, email, and file uploads
+
 - Celery queues (`default`, `email`, `external`, `scheduled`), the Tier 1
   task shim, retry/dead-letter/redrive
 - Six scheduled jobs (plan sync, invitation expiry, trial-ending notices,
@@ -41,6 +45,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
   and SSE (`useJobStream`, `<JobTray>`)
 
 ### Phase 4 — Billing and credits
+
 - Append-only credit ledger with serialised holds and a daily cap
 - `rebuild_credit_balances` management command; operator credit
   adjustments in Django admin, reasoned and audited
@@ -52,6 +57,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 - Pricing page, billing settings, usage gates and meter, billing banners
 
 ### Phase 3 — Organisations, permissions, and tenancy
+
 - `organizations/permissions.py` — the permission registry and
   `has_perm` as the single source of truth
 - Preset role seeding
@@ -62,6 +68,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 - Organisation switcher, onboarding, invitations, settings (frontend)
 
 ### Phase 2 — Authentication
+
 - allauth headless wiring; cookie, CORS, and CSRF configuration for the
   cross-host session
 - Deterministic OpenAPI merge and the generated TypeScript API client
@@ -70,6 +77,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 - Playwright + `axe-core` for auth and account routes
 
 ### Phase 1 — Core domain primitives
+
 - `jobs` and `connections` apps, ID scheme, base models, error envelope
 - `keel/core/authz.py` — the authorization registry and `Decision` type
 - Audit decorators (`@audited` / `@not_audited`), cursor pagination,
@@ -79,6 +87,7 @@ by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
 - DRF, drf-spectacular, CORS, and logging configuration
 
 ### Phase 0 — Toolchain and skeleton
+
 - pnpm workspace (turbo, workspace config), `apps/web` Next.js 15
   skeleton, `packages/ui` theme contract and `packages/api-client` stub
 - `apps/api` Django 6 skeleton with `uv`, `infra/compose.dev.yml`

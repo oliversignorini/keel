@@ -18,7 +18,7 @@ Follow the shape in `keel/jobs/demo.py`.
    (`keel.jobs.registry`) and returning a small JSON-serialisable value
    or `None`.
 2. Register a `JobTypeSpec(type=..., queue=..., credit_estimate=...,
-   steps=(...))` at import time in a module under the owning app (or
+steps=(...))` at import time in a module under the owning app (or
    `keel/jobs/` itself if the job doesn't belong to one domain app).
    Pick `queue` from the four cost-profile queues (`default`, `email`,
    `external`, `scheduled`) — never invent a fifth without checking

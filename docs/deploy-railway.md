@@ -16,7 +16,7 @@ Real, reproducible evidence — not documentation-reading — for the parts
 that don't require Railway itself:
 
 - `apps/api/Dockerfile` builds successfully (`docker build -f
-  apps/api/Dockerfile apps/api`), including the `collectstatic` step run
+apps/api/Dockerfile apps/api`), including the `collectstatic` step run
   at build time.
 - The built image, run against `infra/compose.dev.yml`'s real Postgres and
   Redis containers:
@@ -243,7 +243,7 @@ on when "runs exactly once" is available for free by picking one service
 to own it.
 
 **Why not hidden in the image build (`docker build` running `migrate`):**
-a migration needs a live database connection and the *target* environment's
+a migration needs a live database connection and the _target_ environment's
 credentials, neither of which exist at build time — and coupling the two
 means a build that succeeds says nothing about whether the migration
 against production data will.
@@ -264,8 +264,8 @@ starting against a schema its own code doesn't expect yet.
   migration in this codebase must be backward-compatible with the
   previous release's code for at least one deploy (add-nullable-column,
   not rename-and-drop-in-one-step — the standard Django "expand/contract"
-  pattern). Rolling back the *code* (Railway's dashboard has a one-click
-  "redeploy a previous build") while leaving the *schema* migrated forward
+  pattern). Rolling back the _code_ (Railway's dashboard has a one-click
+  "redeploy a previous build") while leaving the _schema_ migrated forward
   is the recovery path — rolling the schema back too is a last resort,
   since a `migrate <app> <previous_number>` against data written by the
   rolled-forward schema can itself be destructive (dropped columns lose
@@ -280,10 +280,10 @@ starting against a schema its own code doesn't expect yet.
 `apps/api/config/settings/`. Every variable Django reads has an entry;
 nothing in `.env.example` was found unused. New in Phase 12:
 
-| Variable | Required in prod? | What breaks without it |
-|---|---|---|
-| `DJANGO_DB_CONN_MAX_AGE` | No — defaults to `0` (no persistent connections), which is the safe default for Neon's pooled endpoint | On Railway Postgres (no pooler in front of it), leaving this at `0` costs a fresh TCP+TLS handshake per request; see "Pooling" below |
-| `DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS` | No — defaults to `False` | On Neon's pooled endpoint, leaving this `False` risks a server-side cursor opened in one pooled transaction and used in another that got a different underlying connection — see "Pooling" below |
+| Variable                                | Required in prod?                                                                                      | What breaks without it                                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DJANGO_DB_CONN_MAX_AGE`                | No — defaults to `0` (no persistent connections), which is the safe default for Neon's pooled endpoint | On Railway Postgres (no pooler in front of it), leaving this at `0` costs a fresh TCP+TLS handshake per request; see "Pooling" below                                                             |
+| `DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS` | No — defaults to `False`                                                                               | On Neon's pooled endpoint, leaving this `False` risks a server-side cursor opened in one pooled transaction and used in another that got a different underlying connection — see "Pooling" below |
 
 **Full env-var-to-provider reconciliation (which variables a real Railway
 deploy needed vs. `.env.example`'s existing set) is a blocked step** — it
@@ -311,7 +311,7 @@ reading the settings code alone:
 reads to configure the database (`env.db("DATABASE_URL", ...)`, parsed by
 `django-environ`) — no code path branches on which provider issued the
 URL. That was true before this phase; what this phase adds is the pooling
-behavior that makes it *safely* true rather than just *nominally* true.
+behavior that makes it _safely_ true rather than just _nominally_ true.
 
 **Railway Postgres — the documented quick path.** Provision via "Add
 Database → PostgreSQL" (or the `pgvector` template if `pgvector` is
@@ -336,7 +336,7 @@ out a **pooled** connection string by default (hostname contains
 underlying Postgres connection is returned to Neon's own pool at the end
 of every transaction, not held for the life of the client connection.
 Combined with Django's own `CONN_MAX_AGE` (which pools at the
-*application* layer, reusing one psycopg connection across requests) this
+_application_ layer, reusing one psycopg connection across requests) this
 interacts badly in two ways, both documented by Neon
 (`neon.com/docs/connect/connection-pooling`, checked 2026-08):
 
@@ -347,7 +347,7 @@ interacts badly in two ways, both documented by Neon
 2. Transaction-mode pooling does not preserve session state (`SET`,
    `LISTEN`/`NOTIFY`, and SQL-level server-side cursors) across pooled
    transaction boundaries — a cursor opened in one transaction can be
-   handed a *different* underlying connection on its next fetch.
+   handed a _different_ underlying connection on its next fetch.
 
 So, for Neon:
 
@@ -373,50 +373,50 @@ human checklist.
 Before the first real deploy goes live for real users:
 
 - [ ] **Domains.** `api.<domain>` (Railway custom domain, or the
-  Railway-issued `*.up.railway.app` for a first smoke test) and
-  `<domain>` / `app.<domain>` (Vercel). See "Auth cookie domain" above for
-  why the registrable domain must match between them.
+      Railway-issued `*.up.railway.app` for a first smoke test) and
+      `<domain>` / `app.<domain>` (Vercel). See "Auth cookie domain" above for
+      why the registrable domain must match between them.
 - [ ] **DNS.** `CNAME`/`A` records per the domain provider's instructions
-  for both Railway and Vercel custom domains. Both platforms issue their
-  own TLS certs once DNS is verified — no manual cert step on either.
+      for both Railway and Vercel custom domains. Both platforms issue their
+      own TLS certs once DNS is verified — no manual cert step on either.
 - [ ] **TLS.** `DJANGO_SECURE_SSL_REDIRECT=true` (this repo's `prod.py`
-  default). `prod.py` also sets `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO",
-  "https")` so Django trusts Railway's edge-forwarded scheme — confirmed
-  against Railway's own docs that its edge sets this header
-  (`docs.railway.com/networking/edge-networking`, checked 2026-08), not
-  yet confirmed against a real deploy inspecting the header Railway
-  actually sends (see the human checklist).
+      default). `prod.py` also sets `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO",
+"https")` so Django trusts Railway's edge-forwarded scheme — confirmed
+      against Railway's own docs that its edge sets this header
+      (`docs.railway.com/networking/edge-networking`, checked 2026-08), not
+      yet confirmed against a real deploy inspecting the header Railway
+      actually sends (see the human checklist).
 - [ ] **Secrets.** `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` — both must
-  be freshly generated per environment, never the `.env.example`
-  placeholder values, and never reused between staging and production
-  (`KEEL_ENCRYPTION_KEY` in particular: rotating it does not
-  retroactively re-encrypt existing `Connection` rows — see
-  `apps/api/keel/core/crypto.py`).
+      be freshly generated per environment, never the `.env.example`
+      placeholder values, and never reused between staging and production
+      (`KEEL_ENCRYPTION_KEY` in particular: rotating it does not
+      retroactively re-encrypt existing `Connection` rows — see
+      `apps/api/keel/core/crypto.py`).
 - [ ] **CORS/CSRF.** `DJANGO_CORS_ALLOWED_ORIGINS` and
-  `DJANGO_CSRF_TRUSTED_ORIGINS` set to the real production origins
-  (`https://app.<domain>`, `https://<domain>`) — the `.env.example`
-  defaults are `lvh.me` dev origins and must not ship to prod.
+      `DJANGO_CSRF_TRUSTED_ORIGINS` set to the real production origins
+      (`https://app.<domain>`, `https://<domain>`) — the `.env.example`
+      defaults are `lvh.me` dev origins and must not ship to prod.
 - [ ] **Allowed hosts.** `DJANGO_ALLOWED_HOSTS` set to `api.<domain>` (and
-  Railway's own `*.up.railway.app` host if that's kept reachable as a
-  fallback) — the `.env.example` default is `lvh.me,.lvh.me,localhost,
-  127.0.0.1` and must not ship to prod.
+      Railway's own `*.up.railway.app` host if that's kept reachable as a
+      fallback) — the `.env.example` default is `lvh.me,.lvh.me,localhost,
+127.0.0.1` and must not ship to prod.
 - [ ] **First superuser.** `python manage.py createsuperuser` — run once,
-  against the production database, via `railway run` (executes against
-  the deployed environment's variables without a separate SSH step) or a
-  one-off Railway "Run Command" from the dashboard. Not `preDeployCommand`
-  — that runs on every deploy and `createsuperuser` isn't idempotent.
+      against the production database, via `railway run` (executes against
+      the deployed environment's variables without a separate SSH step) or a
+      one-off Railway "Run Command" from the dashboard. Not `preDeployCommand`
+      — that runs on every deploy and `createsuperuser` isn't idempotent.
 - [ ] **`manage.py check --deploy` clean** (or every warning explicitly
-  accepted) against `config.settings.prod` with real production env vars
-  — `docs/plans/phase-9.md` 9.C wires this into CI against placeholder
-  vars; run it again by hand against the real ones before the first
-  deploy, since a placeholder passing doesn't prove a real secret does.
+      accepted) against `config.settings.prod` with real production env vars
+      — `docs/plans/phase-9.md` 9.C wires this into CI against placeholder
+      vars; run it again by hand against the real ones before the first
+      deploy, since a placeholder passing doesn't prove a real secret does.
 - [ ] **Sentry, PostHog, Stripe, Resend, Google OAuth** credentials set
-  (`SENTRY_DSN`, `POSTHOG_PROJECT_API_KEY`, `STRIPE_SECRET_KEY` +
-  `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GOOGLE_OAUTH_CLIENT_ID` +
-  `GOOGLE_OAUTH_CLIENT_SECRET`) — each is a documented no-op when blank
-  (see `base.py`'s comments on each), so a blank one fails silently
-  rather than loudly; verify each is actually set, don't rely on an error
-  to notice one was missed.
+      (`SENTRY_DSN`, `POSTHOG_PROJECT_API_KEY`, `STRIPE_SECRET_KEY` +
+      `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GOOGLE_OAUTH_CLIENT_ID` +
+      `GOOGLE_OAUTH_CLIENT_SECRET`) — each is a documented no-op when blank
+      (see `base.py`'s comments on each), so a blank one fails silently
+      rather than loudly; verify each is actually set, don't rely on an error
+      to notice one was missed.
 
 Every unchecked box above that needs a live Railway/Vercel account is
 also on the human checklist at the bottom of this doc.
@@ -425,21 +425,20 @@ also on the human checklist at the bottom of this doc.
 
 Railway's pricing (`docs.railway.com/pricing/plans`, checked 2026-08) is
 usage-based on top of a plan minimum: **Hobby, $5/month minimum**, billed
-at `$10/GB-RAM/month`, `$20/vCPU/month`, `$0.05/GB` network egress,
-`$0.15/GB/month` volume storage — the plan fee is credited against usage,
+at `$10/GB-RAM/month`, `$20/vCPU/month`, `$0.05/GB`network egress,`$0.15/GB/month` volume storage — the plan fee is credited against usage,
 not charged on top of it.
 
 Four services (`api`, `stream`, `worker`, `beat`) at a conservative
 low-traffic sizing (0.5 vCPU / 512MB each, Railway's own low end) plus a
 small Postgres volume and Redis:
 
-| Resource | Sizing | Monthly cost |
-|---|---|---|
-| `api` + `stream` + `worker` + `beat` compute | 4 × (0.5 vCPU, 512MB RAM), running continuously | 4 × (0.5×$20 + 0.5×$10) = **$60** |
-| Postgres volume | 1GB to start | **$0.15** |
-| Redis (no persistent volume needed for cache+broker use here) | — | **~$0** |
-| Network egress | Low-traffic estimate, 5GB/month | **$0.25** |
-| **Total** | | **≈ $60–65/month**, Pro plan ($20 minimum) since Hobby's $5 credit is exhausted well before this |
+| Resource                                                      | Sizing                                          | Monthly cost                                                                                     |
+| ------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `api` + `stream` + `worker` + `beat` compute                  | 4 × (0.5 vCPU, 512MB RAM), running continuously | 4 × (0.5×$20 + 0.5×$10) = **$60**                                                                |
+| Postgres volume                                               | 1GB to start                                    | **$0.15**                                                                                        |
+| Redis (no persistent volume needed for cache+broker use here) | —                                               | **~$0**                                                                                          |
+| Network egress                                                | Low-traffic estimate, 5GB/month                 | **$0.25**                                                                                        |
+| **Total**                                                     |                                                 | **≈ $60–65/month**, Pro plan ($20 minimum) since Hobby's $5 credit is exhausted well before this |
 
 This is a **written estimate from Railway's published per-unit rates, not
 a real bill** — actual usage-based cost depends on real traffic and was
@@ -511,7 +510,7 @@ prepared by the config/docs/scripts in this phase's diff.
    `preDeployCommand` (`migrate`) succeeds, all four services report
    healthy, `/healthz/` responds on `api` and `stream`.
 7. **Create the first superuser** via `railway run python manage.py
-   createsuperuser` (or the dashboard's one-off Run Command) and log in
+createsuperuser` (or the dashboard's one-off Run Command) and log in
    to `/admin/`.
 8. **Dispatch a real Celery job** (any of the six scheduled tasks, or the
    demo job `keel.jobs.demo` registers) and confirm the `worker` service
@@ -542,4 +541,3 @@ prepared by the config/docs/scripts in this phase's diff.
 14. **Record the real monthly bill** after a week or two of running, and
     compare it against the written estimate in "Cost estimate" above —
     replace the estimate with the measured number once one exists.
-

@@ -147,11 +147,11 @@ Both API surfaces distinguish "not authenticated" from "authenticated but
 disallowed," but the two do not share a response envelope — see
 `docs/auth-client-contract.md` "Response envelope" for the two shapes.
 
-| Status | `/_allauth/browser/v1/…` meaning | `/api/v1/…` meaning |
-|---|---|---|
-| **401** | No session, or a partially-authenticated session (e.g. TOTP pending — check `data.flows`, not the status code alone) | No session, or an expired one |
-| **403** | Action disallowed for a reason that isn't "log in" (signup closed, social re-auth required) | Authenticated but denied by `has_perm` — `code` in the error envelope is `Decision.reason` (`docs/architecture.md` invariant 2) |
-| **409** | Conflict with current state (already authenticated, email link reused) — not guaranteed to carry an `errors` array | Conflict from a `DomainError` subclass mapped to 409 |
+| Status  | `/_allauth/browser/v1/…` meaning                                                                                     | `/api/v1/…` meaning                                                                                                             |
+| ------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **401** | No session, or a partially-authenticated session (e.g. TOTP pending — check `data.flows`, not the status code alone) | No session, or an expired one                                                                                                   |
+| **403** | Action disallowed for a reason that isn't "log in" (signup closed, social re-auth required)                          | Authenticated but denied by `has_perm` — `code` in the error envelope is `Decision.reason` (`docs/architecture.md` invariant 2) |
+| **409** | Conflict with current state (already authenticated, email link reused) — not guaranteed to carry an `errors` array   | Conflict from a `DomainError` subclass mapped to 409                                                                            |
 
 The rule that matters for `/api/v1/…`: **403 always carries a machine
 readable `reason`**, because `has_perm` returns a `Decision`, never a

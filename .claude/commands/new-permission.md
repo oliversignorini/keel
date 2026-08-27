@@ -13,7 +13,7 @@ and `check_permission_lint.py` exist to catch.
      role — e.g. "can only approve invoices under $X" or a last-owner
      style guard): write a dedicated guard function following
      `_members_remove_guard`'s shape — takes `(user, organization,
-     subject=None)`, returns a `Decision.allow()` or
+subject=None)`, returns a `Decision.allow()` or
      `Decision.deny(reason, details=...)` with a specific machine-
      readable `reason`, never a bare `Decision.deny("no")`.
 3. `registry.register(Perm.<NAME>, <guard>)` next to the other
