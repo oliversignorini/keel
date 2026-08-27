@@ -54,6 +54,13 @@ jobs:
         working-directory: apps/api
         run: uv run python ../../scripts/check_permission_lint.py
 
+      - name: bandit
+        working-directory: apps/api
+        run: uv run bandit -c pyproject.toml -r keel -x '*/tests/*,*/migrations/*'
+        # Exclusions and skipped rule IDs are in apps/api/pyproject.toml's
+        # [tool.bandit], each with a comment explaining why it's a false
+        # positive here.
+
       - name: eslint
         run: pnpm --filter web lint
 
@@ -155,6 +162,25 @@ jobs:
         # Phase 1's baseline migration, and CI fails loudly the day
         # someone adds a model without its migration.
 
+      - name: manage.py check --deploy
+        working-directory: apps/api
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          # Obvious placeholders, not real secrets — this only imports
+          # config.settings.prod far enough to run Django's system checks;
+          # nothing here binds a port or talks to Stripe/Sentry/etc.
+          # SECRET_KEY is deliberately NOT overridden: base.py's own
+          # insecure default is exactly the finding this gate exists to
+          # surface (security.W009) — see the report for the phase that
+          # owns fixing it.
+          DJANGO_ALLOWED_HOSTS: "lvh.me,.lvh.me,localhost,127.0.0.1"
+          DJANGO_SECURE_SSL_REDIRECT: "true"
+          KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
+        run: uv run python manage.py check --deploy
+        # Errors fail the build; warnings only print (Django's own
+        # behavior — see docs/plans/phase-9.md 9.C). Currently all-warning
+        # on this codebase (verified locally), so this is blocking.
+
       - name: pytest
         working-directory: apps/api
         run: uv run pytest
@@ -237,8 +263,70 @@ jobs:
         # deterministic run to run (a reordering merge would fail here
         # randomly, which is exactly the failure mode A.3 warns about).
 
-  e2e-accessibility:
+  e2e:
+    # Was "e2e-accessibility" — renamed because it now also runs
+    # e2e/auth-flows.spec.ts against a live API, not only axe-core
+    # (docs/plans/phase-9.md 9.C).
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: keel
+          POSTGRES_USER: keel
+          POSTGRES_PASSWORD: keel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keel -d keel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+        options: >-
+          --health-cmd "wget --quiet --tries=1 --spider http://localhost:8025/livez"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # lvh.me is a public DNS name whose wildcard resolves to 127.0.0.1
+      # (see .env.example's "Subdomain routing" block) — used as-is here
+      # rather than /etc/hosts entries, since GitHub-hosted runners have
+      # outbound DNS. auth-flows.spec.ts exercises the cross-host cookie
+      # behaviour (apex vs `app.`) that plan 6.A introduced, so the apex
+      # and the app host both need to be real, distinct hosts, not both
+      # "localhost".
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SECRET_KEY: e2e-ci-placeholder-not-for-prod-use
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: "lvh.me,.lvh.me,localhost,127.0.0.1"
+      DATABASE_URL: postgres://keel:keel@localhost:5432/keel
+      REDIS_URL: redis://localhost:6379/0
+      KEEL_APP_DOMAIN: app.lvh.me
+      DJANGO_SESSION_COOKIE_DOMAIN: .lvh.me
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://app.lvh.me:3100,http://lvh.me:3100
+      DJANGO_CORS_ALLOWED_ORIGINS: http://app.lvh.me:3100,http://lvh.me:3100
+      KEEL_FRONTEND_URL: http://lvh.me:3100
+      KEEL_APP_FRONTEND_URL: http://app.lvh.me:3100
+      EMAIL_HOST: localhost
+      EMAIL_PORT: "1025"
+      KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
+      NEXT_PUBLIC_API_BASE_URL: http://api.lvh.me:8000
+      NEXT_PUBLIC_SITE_URL: http://lvh.me:3100
+      E2E_BASE_URL: http://lvh.me:3100
     steps:
       - uses: actions/checkout@v4
 
@@ -256,6 +344,41 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: Build email templates
+        run: pnpm --filter @keel/emails build
+        # Same reason as the test-api job's identical step: allauth's
+        # signup/verify/reset emails read packages/emails/dist, which is
+        # a gitignored build artifact.
+
+      - name: Migrate the database
+        working-directory: apps/api
+        run: uv run python manage.py migrate
+
+      - name: Start the Django API in the background
+        working-directory: apps/api
+        run: |
+          uv run python manage.py runserver 0.0.0.0:8000 > /tmp/django-e2e.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/healthz/ > /dev/null; then
+              echo "Django is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Django did not become healthy within 30s"
+          cat /tmp/django-e2e.log
+          exit 1
+
       - name: Install Playwright browsers
         working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium
@@ -263,10 +386,18 @@ jobs:
       - name: axe-core on every auth and account route
         working-directory: apps/web
         run: pnpm exec playwright test e2e/accessibility.spec.ts
-        # e2e/auth-flows.spec.ts is intentionally not run here — it needs
-        # the real Django API (allauth) and Mailpit, both p2-auth-api's
-        # responsibility, plus CI service wiring that worktree owns. Wire
-        # it in once that lands; see e2e/auth-flows.spec.ts's header.
+
+      - name: Signup, login, logout, and password reset against the live API
+        working-directory: apps/web
+        continue-on-error: true
+        run: pnpm exec playwright test e2e/auth-flows.spec.ts
+        # Non-blocking (TODO Phase 11 — Auth BFF hardening): wired up and
+        # genuinely running against a live Django API + Mailpit for the
+        # first time, but 3 of 3 tests fail on this codebase as it stands
+        # today, each further than the last — see the report for the
+        # exact failures. This is the honest state of the suite, not a
+        # CI wiring gap; landing it non-blocking is docs/plans/phase-9.md
+        # 9.C's own rule for a gate that fails for a real reason.
 
   contracts:
     runs-on: ubuntu-latest

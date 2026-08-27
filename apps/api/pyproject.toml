@@ -24,11 +24,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "bandit>=1.8.0",
     "django-stubs>=6.1.0",
     "factory-boy>=3.3.3",
     "import-linter>=2.13",
     "moto[s3]>=5.0.0",
     "mypy>=2.3.1",
+    "pip-audit>=2.7.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=7.1.0",
@@ -146,3 +148,19 @@ name = "keel.core does not import keel.organizations"
 type = "forbidden"
 source_modules = ["keel.core"]
 forbidden_modules = ["keel.organizations"]
+
+# Bandit (docs/plans/phase-9.md 9.C). Runs over keel/ in the `lint` job,
+# invoked with `-x '*/tests/*,*/migrations/*'` — CLI excludes, not
+# exclude_dirs here, because bandit's config-file exclude_dirs matches
+# directory names, not globs, and silently fails to exclude
+# keel/<app>/tests for every app.
+[tool.bandit]
+# B101 (assert_used): asserts are used throughout as documented
+# invariant checks after a queryset already guarantees the condition
+# (e.g. keel/billing/services.py:244's trial_end__isnull=False query),
+# not as request validation — nothing security-relevant depends on them
+# surviving `python -O`.
+# B311 (blacklist / random): keel/core/tasks.py and keel/jobs/runner.py
+# use `random.uniform` only to jitter retry backoff timing, never for a
+# token, key, or anything an attacker could predict to their advantage.
+skips = ["B101", "B311"]
