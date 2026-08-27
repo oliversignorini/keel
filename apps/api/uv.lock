@@ -828,6 +828,15 @@ wheels = [
 ]
 
 [[package]]
+name = "gunicorn"
+version = "26.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/8a/e4ef6ee11701b6cd64702848415ffb69eeff85cb388a3c6c7fe86f22f3f8/gunicorn-26.2.0.tar.gz", hash = "sha256:62b864895d9ebff0b2f9867ba04fe811c93121596540830c9c916d0769668447", size = 787921, upload-time = "2026-08-24T15:05:59.3Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/85/7522a52e5e2f42faf1a129113ab63e548c42e103e9af395b7bfe65e403e2/gunicorn-26.2.0-py3-none-any.whl", hash = "sha256:bd249d0b3f7972f7432f0a6b6ff3b3ee2d129f70cd1ff6c09a9dd9e29a2b88e3", size = 228389, upload-time = "2026-08-24T15:05:57.67Z" },
+]
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -928,6 +937,7 @@ dependencies = [
     { name = "django-environ" },
     { name = "djangorestframework" },
     { name = "drf-spectacular" },
+    { name = "gunicorn" },
     { name = "posthog" },
     { name = "psycopg", extra = ["binary"] },
     { name = "redis" },
@@ -936,6 +946,7 @@ dependencies = [
     { name = "stripe" },
     { name = "uuid-utils" },
     { name = "uvicorn" },
+    { name = "whitenoise" },
 ]
 
 [package.dev-dependencies]
@@ -963,6 +974,7 @@ requires-dist = [
     { name = "django-environ", specifier = ">=0.14.0" },
     { name = "djangorestframework", specifier = ">=3.18.0" },
     { name = "drf-spectacular", specifier = ">=0.30.0" },
+    { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "posthog", specifier = ">=3.7.4" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "redis", specifier = ">=8.1.0" },
@@ -971,6 +983,7 @@ requires-dist = [
     { name = "stripe", specifier = ">=13.0.1" },
     { name = "uuid-utils", specifier = ">=0.17.0" },
     { name = "uvicorn", specifier = ">=0.34.0" },
+    { name = "whitenoise", specifier = ">=6.8.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1975,6 +1988,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/dd/b2/381be8cfdee792dd117872481b6e378f85c957dd7c5bca38897b08f765fd/werkzeug-3.1.8.tar.gz", hash = "sha256:9bad61a4268dac112f1c5cd4630a56ede601b6ed420300677a869083d70a4c44", size = 875852, upload-time = "2026-04-02T18:49:14.268Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/93/8c/2e650f2afeb7ee576912636c23ddb621c91ac6a98e66dc8d29c3c69446e1/werkzeug-3.1.8-py3-none-any.whl", hash = "sha256:63a77fb8892bf28ebc3178683445222aa500e48ebad5ec77b0ad80f8726b1f50", size = 226459, upload-time = "2026-04-02T18:49:12.72Z" },
+]
+
+[[package]]
+name = "whitenoise"
+version = "6.12.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/2a/55b3f3a4ec326cd077c1c3defeee656b9298372a69229134d930151acd01/whitenoise-6.12.0.tar.gz", hash = "sha256:f723ebb76a112e98816ff80fcea0a6c9b8ecde835f8ddda25df7a30a3c2db6ad", size = 26841, upload-time = "2026-02-27T00:05:42.028Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/eb/d5583a11486211f3ebd4b385545ae787f32363d453c19fffd81106c9c138/whitenoise-6.12.0-py3-none-any.whl", hash = "sha256:fc5e8c572e33ebf24795b47b6a7da8da3c00cff2349f5b04c02f28d0cc5a3cc2", size = 20302, upload-time = "2026-02-27T00:05:40.086Z" },
 ]
 
 [[package]]

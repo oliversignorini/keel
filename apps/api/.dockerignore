@@ -1,0 +1,14 @@
+# Keeps .env (and any local secrets) out of the build context entirely —
+# `apps/api/Dockerfile`'s `COPY . .` would otherwise bake it into an
+# image layer even if no later step reads it. Also keeps the image build
+# fast and the layer cache stable by excluding things that change on
+# every run but are never needed inside the container.
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+staticfiles/
+.git/

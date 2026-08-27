@@ -1,14 +1,12 @@
 # Self-host production compose: full stack, prod parity.
 #
-# TODO(Phase 9 — Template mechanics / docs/deploy-selfhost.md): this file is
-# a sketch, not a working stack. The Railway path (infra/railway.json) is
-# primary; this is the self-host alternative (Hostinger VPS + Coolify +
-# Caddy) named in the PRD Appendix. It needs a real Dockerfile for
-# apps/api (gunicorn/uvicorn per PRD §4), the worker and beat commands
-# wired to config.celery, and infra/Caddyfile in front of it — none of
-# which exist yet in Phase 0. The `api` and `stream` services below are
-# written against that not-yet-existing Dockerfile the same way
-# infra/railway.json is (see that file and docs/deploy-railway.md).
+# TODO(Phase 17 — Template mechanics / docs/deploy-selfhost.md): this file
+# is a sketch, not a working stack. The Railway path (infra/railway.json)
+# is primary; this is the self-host alternative (Hostinger VPS + Coolify +
+# Caddy) named in the PRD Appendix. apps/api/Dockerfile now exists (Phase
+# 12, gunicorn/uvicorn/celery — see docs/deploy-railway.md) and the `api`
+# and `stream` services below build against it correctly; what's still
+# missing is infra/Caddyfile in front of it and a self-host deploy guide.
 name: keel-prod
 
 services:

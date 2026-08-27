@@ -12,6 +12,9 @@ dependencies = [
     "django-environ>=0.14.0",
     "djangorestframework>=3.18.0",
     "drf-spectacular>=0.30.0",
+    # WSGI server for the `api` Railway service (infra/railway.json) — not
+    # needed in dev, where `manage.py runserver` is the whole story.
+    "gunicorn>=23.0.0",
     "posthog>=3.7.4",
     "psycopg[binary]>=3.3.4",
     "redis>=8.1.0",
@@ -20,6 +23,10 @@ dependencies = [
     "stripe>=13.0.1",
     "uuid-utils>=0.17.0",
     "uvicorn>=0.34.0",
+    # Serves collected static files (Django admin CSS/JS) in production —
+    # apps/api/config/settings/prod.py wires WhiteNoiseMiddleware and
+    # STORAGES. Not used in dev, where DEBUG=True serves them directly.
+    "whitenoise>=6.8.0",
 ]
 
 [dependency-groups]
