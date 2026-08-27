@@ -17,6 +17,20 @@ cookie-based and CSRF-protected; the app client is bearer-token based via
 unused"). Every request below assumes `/_allauth/browser/v1/` and
 `credentials: 'include'`.
 
+**Since Phase 11** (`docs/adr/0002-auth-bff-shape.md`), that path is
+always same-origin against Next.js, not Django directly —
+`packages/api-client/src/http/mutator.ts`'s `API_BASE_URL` is the empty
+string unconditionally. The Next.js BFF proxy
+(`apps/web/app/api/v1/[...path]/route.ts`,
+`apps/web/app/api/internal/allauth/[...path]/route.ts`) forwards the call
+to Django's real origin server-side (`KEEL_API_INTERNAL_URL`, a
+server-only env var — never shipped to the browser bundle) and relays
+the response, including every `Set-Cookie` header, back unchanged. This
+document's wire-level mechanics (cookies, CSRF, envelopes) describe what
+the browser actually sees, which is unchanged by the proxy existing —
+only the network hop between "browser" and "Django" gained a same-origin
+middle step.
+
 ## Cookies
 
 | Cookie      | Set by                                                                             | Purpose                                                                                                                                                           |
@@ -46,12 +60,14 @@ that calls `django.middleware.csrf.get_token()` — and every headless
    name are unchanged from Django's defaults).
 3. `GET` requests never need the header.
 
-## Response envelope — two different shapes on the wire
+## Response envelope — two shapes on the wire, one after Phase 11
 
-**This is the thing most likely to bite the client if missed.** The two
-API surfaces do not share an envelope.
+**This is the thing most likely to bite the client if missed** — for a
+raw request against Django. What actually reaches the browser is
+different now, and simpler: see "What the BFF normalizes" below before
+assuming you need to handle both shapes client-side.
 
-### `/_allauth/browser/v1/…` (allauth headless)
+### `/_allauth/browser/v1/…` (allauth headless) — Django's own shape
 
 ```json
 {
@@ -71,10 +87,26 @@ On failure, allauth adds an `errors` array instead of (or alongside) `data`:
 ```
 
 `status` inside the body always matches the HTTP status code. There is no
-`error.code` / `error.message` / `error.details` shape here — do not reuse
-the Phase 1 error-envelope client-side error mapper for `/_allauth/`
-responses. Build a second, small mapper for this shape, or adapt the
-existing one to branch on which base path the request hit.
+`error.code` / `error.message` / `error.details` shape here.
+
+### What the BFF normalizes (Phase 11, api-patterns review finding 16)
+
+The shapes above are what Django answers with — but the browser talks to
+the Next.js BFF, not Django directly (see "Base URL and client type"
+above), and the BFF's allauth route handler
+(`apps/web/app/api/internal/allauth/[...path]/route.ts`) rewrites every
+non-2xx allauth response into Keel's own envelope
+(`{"error": {"code", "message", "details"}}`, same as `/api/v1/…` below)
+before it reaches the browser, using
+`@keel/api-client`'s `normalizeErrorEnvelope`. A **success** response
+(2xx) is passed through unchanged — the `data.flows` pending-flow shape
+below only ever appears inside a 401, which counts as an error and gets
+normalized like everything else. Practically: the browser now sees
+exactly **one** error envelope shape regardless of which API surface
+answered. The two-shapes-on-the-wire distinction above still matters if
+you're calling Django directly (tests, `curl`, a future non-browser
+client) — it just isn't something `apps/web`'s own code has to branch on
+any more.
 
 ### `/api/v1/…` (DRF, this project's own endpoints)
 
@@ -193,3 +225,15 @@ are merged deterministically by `scripts/merge_openapi.py` (A.3) into
 here that alters allauth's exposed surface (flipping `KEEL_MFA_ENABLED`,
 adding a social provider, etc.) — CI fails if the checked-in client is
 stale relative to a fresh merge.
+
+Since Phase 11 (api-patterns review finding 5), the merged document also
+declares how a caller authenticates — `components.securitySchemes.
+sessionCookie` (the `sessionid` cookie) and `.csrfHeader` (`X-CSRFToken`,
+required on unsafe methods) — applied per operation, and a top-level
+`servers: [{"url": "/"}]` documenting that the BFF is the intended
+same-origin caller of this document. Before committing a change that
+touches `/api/v1` request/response shapes, also run
+`scripts/check_openapi_compat.py` (ddia review finding 25) — it fails on
+a removed field, a newly-required request field, or a narrowed enum
+relative to the previous commit's `openapi.merged.json`, the additive-only
+rule this project holds `/api/v1` to.

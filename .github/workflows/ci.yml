@@ -318,13 +318,20 @@ jobs:
       KEEL_APP_DOMAIN: app.lvh.me
       DJANGO_SESSION_COOKIE_DOMAIN: .lvh.me
       DJANGO_CSRF_TRUSTED_ORIGINS: http://app.lvh.me:3100,http://lvh.me:3100
-      DJANGO_CORS_ALLOWED_ORIGINS: http://app.lvh.me:3100,http://lvh.me:3100
+      # Empty since Phase 11 (docs/adr/0002-auth-bff-shape.md): the Next.js
+      # BFF proxy terminates every /api/v1 and /_allauth call server-side,
+      # so the browser never makes a credentialed cross-origin fetch to
+      # Django directly in this suite — CORS has nothing to allow.
+      DJANGO_CORS_ALLOWED_ORIGINS: ""
       KEEL_FRONTEND_URL: http://lvh.me:3100
       KEEL_APP_FRONTEND_URL: http://app.lvh.me:3100
       EMAIL_HOST: localhost
       EMAIL_PORT: "1025"
       KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
-      NEXT_PUBLIC_API_BASE_URL: http://api.lvh.me:8000
+      # Server-only — the Next.js process (not the browser) dials Django
+      # directly through these (apps/web/lib/api/internal-origins.ts).
+      KEEL_API_INTERNAL_URL: http://api.lvh.me:8000
+      KEEL_API_STREAM_INTERNAL_URL: http://localhost:8001
       NEXT_PUBLIC_SITE_URL: http://lvh.me:3100
       E2E_BASE_URL: http://lvh.me:3100
     steps:
@@ -391,13 +398,29 @@ jobs:
         working-directory: apps/web
         continue-on-error: true
         run: pnpm exec playwright test e2e/auth-flows.spec.ts
-        # Non-blocking (TODO Phase 11 — Auth BFF hardening): wired up and
-        # genuinely running against a live Django API + Mailpit for the
-        # first time, but 3 of 3 tests fail on this codebase as it stands
-        # today, each further than the last — see the report for the
-        # exact failures. This is the honest state of the suite, not a
-        # CI wiring gap; landing it non-blocking is docs/plans/phase-9.md
-        # 9.C's own rule for a gate that fails for a real reason.
+        # Still non-blocking after Phase 11 (Auth BFF hardening) — but for
+        # a different reason than before. The BFF proxy itself (the
+        # thing this phase built) is verified working end to end against
+        # this exact stack: signup/login/config all reach Django through
+        # apps/web/app/api/v1/[...path] and .../api/internal/allauth/
+        # [...path], CSRF and cookie relay both check out, and the
+        # cross-host apex<->app redirect and the pending-session /login
+        # ping-pong (lib/auth/route-guard.ts) are both fixed. What still
+        # blocks all 3 tests is upstream of the BFF entirely: a fresh
+        # `EmailAddress` row comes back `verified=True` immediately after
+        # signup even though `ACCOUNT_EMAIL_VERIFICATION="mandatory"` —
+        # confirmed directly in a Django shell, no HTTP layer involved —
+        # so the emailed confirmation key's own `EmailConfirmationHMAC.
+        # from_key()` correctly refuses to re-verify an already-verified
+        # address and reports "invalid or expired". The existing backend
+        # test (`keel/accounts/tests/test_auth_flows.py::_signup_and_verify`)
+        # already tolerates exactly this ambiguity — it asserts the verify
+        # call's status is `in (200, 401)` rather than requiring 200 —
+        # which reads as this having been a known, unexplained flake
+        # before this phase, not something Phase 11 introduced. Allauth/
+        # email-verification internals are explicitly out of this phase's
+        # ownership (docs/plans/phase-11.md's Boundary table) — flagging
+        # for whoever owns that surface next, see the Phase 11 report.
 
   contracts:
     runs-on: ubuntu-latest

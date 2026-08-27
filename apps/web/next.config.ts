@@ -17,6 +17,19 @@ const nextConfig: NextConfig = {
   // workspace package) — Next transpiles it as part of this app's build.
   transpilePackages: ["@keel/ui"],
 
+  // docs/adr/0002-auth-bff-shape.md: Django's own APPEND_SLASH redirects
+  // `/api/v1/me` -> `/api/v1/me/`, and the generated client already
+  // requests the trailing-slash form — but Next.js's own framework-level
+  // trailing-slash redirect (`trailingSlash: false`'s default behaviour)
+  // strips it right back off *before* the `/api/v1/[...path]` route
+  // handler ever runs, so the two redirects fight forever. This is
+  // exactly what `skipTrailingSlashRedirect` exists for (Next's own docs
+  // name "acting as a reverse proxy" as the use case). Verified live:
+  // without it, `GET /api/v1/me/` 308s to `/api/v1/me`, which the proxy
+  // forwards slash-less, which Django 301s back to `/api/v1/me/` — an
+  // infinite loop.
+  skipTrailingSlashRedirect: true,
+
   // Security headers (PRD §3 NFR "Security"; docs/plans/phase-8.md 8.6).
   // HSTS only over HTTPS — a plain-HTTP dev server would otherwise pin
   // itself into HTTPS-only in the browser, which is exactly the kind of
@@ -24,8 +37,6 @@ const nextConfig: NextConfig = {
   // always serves HTTP, so this is equivalent to "production only" here.
   async headers() {
     const csp = buildContentSecurityPolicy({
-      apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-      apiStreamUrl: process.env.NEXT_PUBLIC_API_STREAM_URL,
       sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
       posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
       dev: process.env.NODE_ENV !== "production",
@@ -48,7 +59,19 @@ const nextConfig: NextConfig = {
 // Wires apps/web/content-collections.ts into the Next.js build (phase-7.md
 // 7.4). Removing the marketing route group (PRD §8 Phase 9) means dropping
 // this wrapper too — see docs/marketing-removal.md.
-const configWithContentCollections = withContentCollections(nextConfig);
+//
+// withContentCollections returns a config object with several of
+// nextConfig's own keys silently absent rather than merged through —
+// verified directly: `headers` and `skipTrailingSlashRedirect` are both
+// `undefined` on its return value even when present on the object passed
+// in. Whatever it does internally, it isn't a full-config passthrough, so
+// those two are re-applied explicitly afterward rather than trusted to
+// have survived.
+const configWithContentCollections: NextConfig = {
+  ...withContentCollections(nextConfig),
+  headers: nextConfig.headers,
+  skipTrailingSlashRedirect: nextConfig.skipTrailingSlashRedirect,
+};
 
 // Source-map upload (PRD §4: "source maps uploaded"; docs/plans/
 // phase-8.md 8.4) needs SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT —

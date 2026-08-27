@@ -11,6 +11,30 @@ function request(url: string, { session = false }: { session?: boolean } = {}): 
   return req;
 }
 
+describe("middleware — docs/adr/0002-auth-bff-shape.md BFF rewrite", () => {
+  it("rewrites /_allauth/… to the routable internal allauth handler", () => {
+    const response = middleware(request("http://app.lvh.me:3000/_allauth/browser/v1/auth/session"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "http://app.lvh.me:3000/api/internal/allauth/browser/v1/auth/session",
+    );
+  });
+
+  it("rewrites bare /_allauth with no trailing path", () => {
+    const response = middleware(request("http://lvh.me:3000/_allauth"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "http://lvh.me:3000/api/internal/allauth",
+    );
+  });
+
+  it("does not apply the app-host /app rewrite or auth-guard redirects to /_allauth", () => {
+    const response = middleware(request("http://app.lvh.me:3000/_allauth/browser/v1/auth/session"));
+
+    expect(response.status).not.toBe(307);
+  });
+});
+
 describe("middleware — plan 6.A host-based routing", () => {
   it("rewrites the app host's root to /app internally, keeping the visible URL", () => {
     const response = middleware(request("http://app.lvh.me:3000/", { session: true }));
@@ -78,11 +102,11 @@ describe("middleware — plan 6.A host-based routing", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("sends an authenticated apex visitor away from /login to the app host's root", () => {
+  it("does not redirect a visitor with a session cookie away from /login (ADR 0002 — lib/auth/route-guard.ts)", () => {
     const response = middleware(request("http://lvh.me:3000/login", { session: true }));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://app.lvh.me:3000/");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 
   it("lets an unauthenticated apex visitor reach /login", () => {

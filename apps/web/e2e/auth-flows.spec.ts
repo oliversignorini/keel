@@ -103,6 +103,21 @@ test("login with valid credentials establishes a session and logout ends it", as
   expect(sessionCookie, "a session cookie should be set after login").toBeTruthy();
   expect(sessionCookie?.httpOnly).toBe(true);
   expect(sessionCookie?.sameSite).toBe("Lax");
+
+  // Phase 11 acceptance: no auth token anywhere JS can read it — the
+  // session lives only in the HttpOnly cookie above. `document.cookie`
+  // never includes an HttpOnly cookie by construction, so checking it's
+  // empty of "sessionid" doubles as the assertion that the cookie really
+  // is HttpOnly, not just that the flag is set on the object Playwright
+  // read out-of-band.
+  const clientVisibleState = await page.evaluate(() => ({
+    localStorageKeys: Object.keys(window.localStorage),
+    sessionStorageKeys: Object.keys(window.sessionStorage),
+    documentCookie: document.cookie,
+  }));
+  expect(clientVisibleState.localStorageKeys).toEqual([]);
+  expect(clientVisibleState.sessionStorageKeys).toEqual([]);
+  expect(clientVisibleState.documentCookie).not.toContain("sessionid");
 });
 
 test("password reset round-trips end to end via Mailpit", async ({ page, request }) => {

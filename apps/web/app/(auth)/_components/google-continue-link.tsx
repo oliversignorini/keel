@@ -1,4 +1,4 @@
-import { API_BASE_URL, getAuthProviderRedirectUrl, readCsrfCookie } from "@keel/api-client";
+import { getAuthProviderRedirectUrl, readCsrfCookie } from "@keel/api-client";
 
 // Django's default POST-field name for a plain (non-fetch) form submission
 // — distinct from CSRF_HEADER_NAME, which src/http/mutator.ts uses for
@@ -21,11 +21,21 @@ const CSRF_FORM_FIELD_NAME = "csrfmiddlewaretoken";
  * renders an actual `<form method="post">` instead of an `<a href>` — the
  * only way to get a POST *and* a full navigation without JavaScript
  * driving the redirect itself.
+ *
+ * The action is a same-origin relative path, proxied like every other
+ * `/_allauth/…` call (docs/adr/0002-auth-bff-shape.md) — the BFF relays
+ * Django's 302 to Google untouched (`redirect: 'manual'` in
+ * apps/web/lib/api/proxy.ts), so the browser's own top-level navigation
+ * still ends up following the redirect to Google itself. The one hop
+ * that stays genuinely direct to Django is Google's own callback
+ * (registered as `/accounts/google/login/callback/`, a headed, non-
+ * `/_allauth` URL that was never routed through Next.js) — an OAuth
+ * property, not something this form controls.
  */
 export function GoogleContinueLink({ nextPath = "/onboarding" }: { nextPath?: string }) {
   const callbackUrl =
     typeof window === "undefined" ? nextPath : new URL(nextPath, window.location.origin).toString();
-  const action = `${API_BASE_URL}${getAuthProviderRedirectUrl()}`;
+  const action = getAuthProviderRedirectUrl();
   const csrfToken = readCsrfCookie();
 
   return (

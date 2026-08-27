@@ -68,6 +68,30 @@ def resolve_entitlements(organization: Any) -> dict[str, Any]:
     subscription = (
         Subscription.objects.filter(organization=organization).select_related("plan").first()
     )
+    return _entitlements_from_subscription(subscription)
+
+
+def resolve_entitlements_bulk(organizations: Any) -> dict[Any, dict[str, Any]]:
+    """One query for every organisation's entitlements, keyed by
+    ``organization_id`` — the bulk counterpart to ``resolve_entitlements``.
+
+    ``GET /api/v1/me/`` (api-patterns finding 12) used to call
+    ``resolve_entitlements`` once per organisation in a Python loop; a
+    single ``organization__in`` query replaces the whole loop. An
+    organisation with no row here still resolves to the same "no
+    subscription" default ``resolve_entitlements`` returns, via the
+    caller doing ``bulk.get(org.id, _entitlements_from_subscription(None))``.
+    """
+    subscriptions = Subscription.objects.filter(organization__in=organizations).select_related(
+        "plan"
+    )
+    return {
+        subscription.organization_id: _entitlements_from_subscription(subscription)
+        for subscription in subscriptions
+    }
+
+
+def _entitlements_from_subscription(subscription: Any) -> dict[str, Any]:
     if subscription is None:
         return {"features": [], "limits": {}}
     entitlements: dict[str, Any] = subscription.plan.entitlements or {}

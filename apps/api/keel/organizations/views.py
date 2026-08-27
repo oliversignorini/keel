@@ -21,7 +21,7 @@ from django.http import Http404, HttpResponse
 from django.utils import timezone
 from ninja import Status
 
-from keel.billing.entitlements import resolve_entitlements
+from keel.billing.entitlements import resolve_entitlements_bulk
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
 from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
@@ -304,10 +304,20 @@ me_router = keel_router(tags=["me"])
 
 @me_router.get("/me/", response=MeOut, operation_id="retrieveMe")
 def me(request: Any) -> dict:
+    """Three queries total regardless of how many organisations the user
+    belongs to (api-patterns finding 12 — this used to be 2N+1: one
+    membership lookup and one subscription lookup per organisation, in a
+    Python loop)."""
     user = request.auth
+    org_list = list(selectors.list_organizations_for_user(user))
+    memberships = selectors.get_active_memberships_by_organization(
+        user=user, organizations=org_list
+    )
+    entitlements_by_org = resolve_entitlements_bulk(org_list)
+
     organizations: list[dict[str, Any]] = []
-    for organization in selectors.list_organizations_for_user(user):
-        membership = selectors.get_membership(user=user, organization=organization)
+    for organization in org_list:
+        membership = memberships.get(organization.id)
         organizations.append(
             {
                 "id": str(organization.id),
@@ -315,7 +325,9 @@ def me(request: Any) -> dict:
                 "name": organization.name,
                 "role": membership.role.name if membership else None,
                 "permissions": selectors.resolve_permission_codes(membership),
-                "entitlements": resolve_entitlements(organization),
+                "entitlements": entitlements_by_org.get(
+                    organization.id, {"features": [], "limits": {}}
+                ),
             }
         )
     impersonator = getattr(request, "impersonator", None)

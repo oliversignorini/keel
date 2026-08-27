@@ -306,7 +306,17 @@ CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=["http://
 # message for that failure does not say so — django-cors-headers would
 # silently reflect every origin if CORS_ALLOWED_ORIGIN_REGEXES or
 # CORS_ALLOW_ALL_ORIGINS were used here instead of an explicit list.
-CORS_ALLOWED_ORIGINS = env.list("DJANGO_CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+#
+# Empty by default (docs/adr/0002-auth-bff-shape.md): since the Next.js
+# BFF terminates every `/api/v1/…` and `/_allauth/…` call server-side and
+# forwards it itself, no browser `fetch()`/`XMLHttpRequest` should ever
+# reach this origin directly with credentials — CORS exists here purely
+# as defense in depth against a call site that bypasses the proxy by
+# mistake, not as the mechanism that lets the app work. Set
+# DJANGO_CORS_ALLOWED_ORIGINS only for a deployment that still needs a
+# browser to call this API directly (see the ADR's "what Phase 12 needs"
+# note before doing that in production).
+CORS_ALLOWED_ORIGINS = env.list("DJANGO_CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOW_CREDENTIALS = True
 
 # --- Email (Mailpit in dev, see infra/compose.dev.yml) ---------------------

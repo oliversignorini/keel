@@ -9,34 +9,11 @@ describe("buildContentSecurityPolicy", () => {
     expect(csp).toContain("connect-src 'self'");
   });
 
-  it("allows the API origin — the criterion that fails in production only", () => {
-    const csp = buildContentSecurityPolicy({ apiBaseUrl: "https://api.acme.com" });
-
-    expect(csp).toContain("connect-src 'self' https://api.acme.com");
-  });
-
-  it("allows the SSE stream origin alongside the API origin", () => {
-    const csp = buildContentSecurityPolicy({
-      apiBaseUrl: "https://api.acme.com",
-      apiStreamUrl: "https://api.acme.com/stream",
-    });
+  it("does not allow any API/stream origin in connect-src — every fetch is same-origin via the BFF proxy (ADR 0002)", () => {
+    const csp = buildContentSecurityPolicy({});
 
     const connectSrc = csp.match(/connect-src ([^;]+)/)?.[1] ?? "";
-    expect(connectSrc.split(" ")).toEqual(["'self'", "https://api.acme.com"]);
-  });
-
-  it("de-duplicates when the API and stream share an origin", () => {
-    const csp = buildContentSecurityPolicy({
-      apiBaseUrl: "https://api.acme.com",
-      apiStreamUrl: "https://api.acme.com:8001",
-    });
-
-    const connectSrc = csp.match(/connect-src ([^;]+)/)?.[1] ?? "";
-    expect(connectSrc.split(" ")).toEqual([
-      "'self'",
-      "https://api.acme.com",
-      "https://api.acme.com:8001",
-    ]);
+    expect(connectSrc.split(" ")).toEqual(["'self'"]);
   });
 
   it("allows the Sentry ingest origin when a DSN is configured", () => {
@@ -53,9 +30,15 @@ describe("buildContentSecurityPolicy", () => {
     expect(csp).toContain("https://us.i.posthog.com");
   });
 
-  it("ignores a blank or malformed URL rather than throwing", () => {
-    expect(() => buildContentSecurityPolicy({ apiBaseUrl: "" })).not.toThrow();
-    expect(() => buildContentSecurityPolicy({ apiBaseUrl: "not a url" })).not.toThrow();
+  it("scopes form-action to 'self' — GoogleContinueLink's <form> post is now same-origin too (ADR 0002)", () => {
+    const csp = buildContentSecurityPolicy({});
+
+    expect(csp).toContain("form-action 'self'");
+  });
+
+  it("ignores a blank or malformed Sentry DSN rather than throwing", () => {
+    expect(() => buildContentSecurityPolicy({ sentryDsn: "" })).not.toThrow();
+    expect(() => buildContentSecurityPolicy({ sentryDsn: "not a url" })).not.toThrow();
   });
 
   it("allows 'unsafe-eval' only in dev — Next's HMR needs eval(), production doesn't", () => {

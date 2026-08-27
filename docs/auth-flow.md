@@ -96,18 +96,66 @@ sequenceDiagram
 Every app-shell page load calls this once to resolve auth state — there is
 no client-side session cache that outlives the cookie itself.
 
+## The Next.js BFF proxy (Phase 11)
+
+Every `/api/v1/…` and `/_allauth/…` call the browser makes is same-origin
+against Next.js, which forwards it to Django itself — the browser never
+holds Django's address. `docs/adr/0002-auth-bff-shape.md` is the decision
+record; this is the request shape it produced.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant N as app.lvh.me (Next.js — same origin as B)
+    participant D as api.lvh.me (Django, server-only)
+
+    B->>N: fetch('/_allauth/browser/v1/auth/login', {credentials:'include'})<br/>Cookie: sessionid, csrftoken (same-origin, Domain=.lvh.me)
+    Note over N: middleware.ts rewrites /_allauth/* to<br/>/api/internal/allauth/[...path] (route.ts)
+    N->>D: fetch(same body/headers, server-to-server)<br/>KEEL_API_INTERNAL_URL
+    D-->>N: 200 + Set-Cookie: sessionid, csrftoken
+    N-->>B: 200 + Set-Cookie relayed unchanged<br/>(each Set-Cookie header re-added individually)
+```
+
+`/api/v1/…` calls go through the sibling
+`apps/web/app/api/v1/[...path]/route.ts` handler directly (no rewrite
+needed — that path has no leading-underscore folder-naming problem).
+Both handlers share one proxy function, `apps/web/lib/api/proxy.ts`:
+
+- Request bodies are buffered (`request.blob()`), not streamed — Django's
+  dev server doesn't decode a chunked-transfer-encoded request body, and
+  every body this proxy ever forwards is a small JSON/form payload
+  anyway (presigned uploads PUT straight to storage, bypassing this
+  proxy entirely).
+- Response bodies stream through unbuffered by default — this is what
+  lets `GET .../jobs/stream/` (SSE) work: the `/api/v1/[...path]` route
+  detects that one path shape and forwards it to the dedicated stream
+  service (`KEEL_API_STREAM_INTERNAL_URL`) instead of the sync API
+  origin, piping the `text/event-stream` response through as it arrives.
+- `/_allauth/…` responses get one more step: a non-2xx JSON body is
+  re-emitted as Keel's own `{error:{code,message,details}}` envelope
+  (reusing `@keel/api-client`'s `normalizeErrorEnvelope`) before
+  reaching the browser — see "Response envelope" below.
+
+**The one thing that stays genuinely direct to Django**: Google's own
+OAuth callback (`/accounts/google/login/callback/`), because that URL is
+registered with Google and isn't under `/_allauth/` to begin with. The
+form POST that _starts_ that flow (`GoogleContinueLink`) is proxied like
+everything else — the BFF relays Django's 302 to Google untouched.
+
 ## Cross-host cookie behaviour
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
     participant N as app.lvh.me (Next.js)
-    participant A as api.lvh.me (Django)
+    participant D as api.lvh.me (Django, via the BFF proxy above)
 
     B->>N: GET app.lvh.me
-    N-->>B: HTML (no cookies from N)
-    B->>A: fetch(api.lvh.me/..., credentials: 'include')<br/>Cookie: sessionid (Domain=.lvh.me)
-    A-->>B: 200 + response body<br/>(CORS: Access-Control-Allow-Credentials: true,<br/>Access-Control-Allow-Origin: https://app.lvh.me)
+    N-->>B: HTML (no cookies from N directly — set via the BFF's own Set-Cookie relay on API calls)
+    B->>N: fetch('/api/v1/…', credentials: 'include')<br/>Cookie: sessionid (Domain=.lvh.me)
+    N->>D: forwarded server-to-server
+    D-->>N: 200 + response body
+    N-->>B: 200 + response body (same-origin — no CORS involved on this hop at all)
 ```
 
 `sessionid` and `csrftoken` are both `Domain`-scoped to the registrable
@@ -115,10 +163,11 @@ parent domain (`.acme.com` in production, `.lvh.me` in dev; host-only,
 i.e. unset `Domain`, on plain `localhost`, which is why the project uses
 `lvh.me` instead — see `README.md` "Why `lvh.me` and not `localhost`").
 This is what lets one session cookie authenticate both the marketing/app
-Next.js host and the separate API host. There is currently no BFF
-proxying this call from within Next.js — the browser calls the API origin
-directly; see `docs/architecture.md`'s "Note on the pipeline today" for
-the gap this leaves for Phase 11.
+Next.js host and the app host — a browser<->Next.js concern the BFF
+proxy above doesn't change. `CORS_ALLOWED_ORIGINS` is empty by default
+since Phase 11 (`docs/adr/0002-auth-bff-shape.md`): the browser<->Django
+hop shown here no longer exists for a programmatic call — only the BFF's
+own server-to-server request does, which isn't subject to CORS at all.
 
 ## CSRF acquisition
 

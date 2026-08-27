@@ -14,16 +14,6 @@ import {
 
 export type Job = JobOut;
 
-/**
- * The dedicated ASGI service's origin (PRD §4 system architecture; §5.5.5
- * footgun 1 — SSE must never share gunicorn's sync worker pool). Same
- * hostname as the API via path routing in production; a distinct port in
- * dev, where nothing does that routing for you — see
- * `apps/api/config/asgi_stream.py`'s docstring for how to run it
- * (`uvicorn config.asgi_stream:application --port 8001`).
- */
-export const API_STREAM_URL = process.env.NEXT_PUBLIC_API_STREAM_URL ?? "http://localhost:8001";
-
 /** Requires `jobs.view`. Cursor-paginated; `useJobStream` reads every
  * page's worth the tray needs to reconcile with on mount/reload. */
 export async function listJobs(orgSlug: string): Promise<Job[]> {
@@ -58,8 +48,14 @@ export async function cancelJob(orgSlug: string, jobId: string): Promise<Job> {
   return unwrapData(result);
 }
 
-/** `GET .../jobs/stream/` — SSE, served only by the stream service
- * (`config/urls_stream.py`), never by `API_BASE_URL`'s sync process. */
+/** `GET .../jobs/stream/` — SSE. Same-origin relative path
+ * (docs/adr/0002-auth-bff-shape.md): the BFF proxy
+ * (apps/web/app/api/v1/[...path]/route.ts) detects this exact path shape
+ * and forwards it to the dedicated stream service instead of the sync
+ * API origin — see `apps/web/lib/api/internal-origins.ts` and
+ * `apps/api/config/asgi_stream.py`'s docstring for why that service has
+ * to stay separate from gunicorn's sync worker pool (PRD §5.5.5 footgun
+ * 1). The browser no longer needs to know that split exists. */
 export function jobStreamUrl(orgSlug: string): string {
-  return `${API_STREAM_URL}/api/v1/orgs/${orgSlug}/jobs/stream/`;
+  return `/api/v1/orgs/${orgSlug}/jobs/stream/`;
 }

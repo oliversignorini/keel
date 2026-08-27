@@ -1,12 +1,16 @@
 /**
- * Content-Security-Policy for the app (docs/plans/phase-8.md 8.6). The
- * one directive that matters most here is `connect-src`: the app is on
- * `app.<domain>` and the API is on `api.<domain>` (PRD §4 "Auth
- * architecture"), so a `connect-src` that only allows `'self'` blocks
- * every `fetch()` this app makes — and only in production, since dev's
- * same-origin proxy setups don't usually hit this. Getting it wrong here
- * is exactly the failure the brief calls out: "fails in production
- * only."
+ * Content-Security-Policy for the app (docs/plans/phase-8.md 8.6;
+ * narrowed by docs/adr/0002-auth-bff-shape.md). Every programmatic
+ * `fetch()`/`XMLHttpRequest` this app makes is now same-origin — the
+ * Next.js BFF proxies `/api/v1/…` and `/_allauth/…` to Django itself —
+ * so `connect-src 'self'` (plus Sentry/PostHog) is now sufficient; it no
+ * longer needs the API/stream origins the way it did pre-phase-11.
+ *
+ * `GoogleContinueLink`'s real `<form method="post">` is now also a
+ * same-origin relative action, proxied by the BFF like everything else
+ * (ADR 0002) — there is no longer any cross-origin call the browser
+ * makes on its own, so both `connect-src` and the `form-action` this
+ * revision adds can stay `'self'`-only.
  *
  * Pure function of env values so it's testable without a running Next
  * server — see csp.test.ts.
@@ -22,8 +26,6 @@ function originOf(url: string | undefined): string | null {
 }
 
 export interface CspEnv {
-  apiBaseUrl?: string;
-  apiStreamUrl?: string;
   sentryDsn?: string;
   posthogHost?: string;
   /** true under `next dev`. Next's dev server evaluates its hot-reload
@@ -37,10 +39,8 @@ export interface CspEnv {
 
 export function buildContentSecurityPolicy(env: CspEnv): string {
   const connectSrc = new Set<string>(["'self'"]);
-  for (const url of [env.apiBaseUrl, env.apiStreamUrl, env.posthogHost]) {
-    const origin = originOf(url);
-    if (origin) connectSrc.add(origin);
-  }
+  const posthogOrigin = originOf(env.posthogHost);
+  if (posthogOrigin) connectSrc.add(posthogOrigin);
   const sentryOrigin = originOf(env.sentryDsn);
   if (sentryOrigin) connectSrc.add(sentryOrigin);
 
@@ -58,6 +58,7 @@ export function buildContentSecurityPolicy(env: CspEnv): string {
     "img-src 'self' data: https:",
     "font-src 'self' data:",
     `connect-src ${[...connectSrc].join(" ")}`,
+    "form-action 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
   ];

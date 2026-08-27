@@ -183,8 +183,10 @@ Dev runs `stream` as a second local process, not via Railway or
 Docker Compose: `pnpm --filter api dev:stream` (wraps `uv run uvicorn
 config.asgi_stream:application --port 8001 --reload`), alongside the
 usual `pnpm --filter api dev` (gunicorn's dev equivalent, `runserver`,
-on 8000). `NEXT_PUBLIC_API_STREAM_URL` (`.env.example`) points the web
-app at whichever port `stream` is actually running on.
+on 8000). `KEEL_API_STREAM_INTERNAL_URL` (`.env.example`; server-only
+since docs/adr/0002-auth-bff-shape.md — the browser no longer talks to
+`stream` directly, the Next.js BFF proxy does) points the web app's
+server process at whichever port `stream` is actually running on.
 
 Env var provisioning beyond what's already in `.env.example` arrives
 with Phase 9 (`init`).
@@ -470,9 +472,12 @@ auth-cookie constraint already lives:
 1. Import the repo into a new Vercel project, root directory
    `apps/web`, framework preset Next.js (auto-detected).
 2. Set every `NEXT_PUBLIC_*` variable from `.env.example`'s "Web" section
-   to the real production values — `NEXT_PUBLIC_API_BASE_URL` and
-   `NEXT_PUBLIC_API_STREAM_URL` pointing at the deployed Railway `api`
-   and `stream` services' real hostnames.
+   to the real production values, plus the two server-only ones Vercel
+   never exposes to the browser bundle — `KEEL_API_INTERNAL_URL` and
+   `KEEL_API_STREAM_INTERNAL_URL` — pointing at the deployed Railway
+   `api` and `stream` services' real hostnames. Since
+   docs/adr/0002-auth-bff-shape.md, those two are what the BFF proxy
+   itself dials; nothing in the browser needs Django's address anymore.
 3. Configure the custom domain(s) and, if preview-deployment auth testing
    matters, the wildcard preview domain described above (**Vercel Pro
    required**).
