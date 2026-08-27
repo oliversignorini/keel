@@ -1,7 +1,7 @@
 # Keel — Django + Next.js SaaS Template
 
 **Product Requirements Document**
-Version 1.3 · 26 August 2026
+Version 1.4 · 27 August 2026
 Owner: Oliver Signorini
 
 > **Keel** — the structural backbone a ship is built on; everything else attaches to it. Rename freely; the init script handles it.
@@ -55,6 +55,19 @@ v1.2 was written before any of it was built. Phases 0 through 8 have now been im
 | 7 | The tenant URL segment is recorded as `organizations`, not `orgs` | The implementation used the longer form throughout. Named here as a known deviation rather than left as a silent disagreement between spec and code; see "Outstanding" below |
 
 **Outstanding at v1.3.** Three items are known and deferred rather than done: the `organizations` → `orgs` URL rename, a cursor envelope on `GET /api/v1/plans/` (it returns a bare array, against the §7 convention that all collections are cursor-paginated), and wiring `e2e/auth-flows.spec.ts` into CI — it needs the live API and Mailpit as service containers, and only the accessibility spec runs today. Phase 9 is not built.
+
+### Revision note — v1.4
+
+v1.3 recorded what building Phases 0–8 taught. v1.4 records two decisions taken after a full review of the repository against the project's direction — see `docs/review-2026-08.md` for the review itself and `docs/adr/0001-django-ninja-over-drf.md` for the first decision's reasoning. Neither changes what Keel is; both change how the rest of it gets built.
+
+| # | Change | Driver |
+|---|---|---|
+| 1 | **The API layer moves from DRF to Django Ninja.** §2's selected stack no longer names DRF. Django remains the app, auth, ORM, admin and jobs authority; Ninja is the typed API layer | DRF arrived with the stack in §2 and was never argued for. Pydantic-native schemas remove the serializer/type duplication in a template whose central claim is that the client is generated and drift is a build error. The migration cost — 19 viewsets, the invariant meta-tests, the cursor paginator, the OpenAPI pipeline — is recorded in ADR 0001, along with the case against |
+| 2 | **Phases 9 onward are renumbered into one execution sequence.** §8's "Phase 9 — Template mechanics" is now **Phase 17**; its content is unchanged | `init` rewrites every file in the repository. Running it before the Ninja migration, the auth BFF, storage and the hardening pass means writing its rewrite rules against a structure that is about to change |
+
+**The new sequence.** 9 Release credibility · 10 DRF → Ninja · 11 Auth BFF hardening · 12 Railway and Postgres baseline · 13 Document storage · 14 Billing and credits polish · 15 Jobs and audit foundations · 16 Production hardening · 17 Template mechanics (`init`, this document's §8 Phase 9) · 18 Portfolio polish and v1.0. Each has a plan file at `docs/plans/phase-N.md` carrying the boundary, tasks and acceptance criteria.
+
+**Outstanding at v1.3, now owned.** The `organizations` → `orgs` rename and the cursor envelope on `GET /api/v1/plans/` are folded into Phase 10.C, which already sweeps every route and every frontend call site. Wiring `e2e/auth-flows.spec.ts` into CI is Phase 9.C.
 
 ---
 
@@ -1360,6 +1373,8 @@ A third, smaller: HTTP/1.1 caps concurrent connections per host at six per brows
 ---
 
 ### Phase 9 — Template mechanics · Medium
+
+> **Renumbered to Phase 17** in the v1.4 sequence. The content below is unchanged and remains the specification; only its slot moved. Implementation plan: `docs/plans/phase-17.md`.
 
 **The phase that makes it a template rather than an app.**
 
