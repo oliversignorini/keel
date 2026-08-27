@@ -4,7 +4,9 @@ A Django 6 + Next.js 15 SaaS template. Auth, multi-tenant organisations with gra
 
 `keel-prd.md` is the specification and the reasoning behind it. This file is how to run the thing.
 
-**Status:** Phases 0–8 built and merged. Phase 9 — the `init` script that turns this into a template — is not built yet, so today it is a working application rather than something you can instantiate.
+**Status:** Phases 0–8 built and merged. Today this is a working application, not yet something you can instantiate — `init` is Phase 17.
+
+`docs/review-2026-08.md` is the current state of the repository and the plan for the rest of it; `docs/plans/phase-9.md` onward are the worktree-sized specifications, and `docs/adr/` holds the decisions.
 
 ---
 
@@ -99,10 +101,15 @@ uv run python manage.py makemigrations --check --dry-run
 
 ## What is not done
 
-- **Phase 9** — `init`, `CLAUDE.md`, the slash commands, and the deployment guides. Without it this is an app, not a template.
-- **URL segment** is `/api/v1/organizations/…`; the PRD specifies `/orgs/`. A known deviation, not yet reconciled.
-- **`GET /api/v1/plans/`** returns a bare array rather than the cursor envelope §7 requires of collections.
-- **`e2e/auth-flows.spec.ts`** is written but not wired into CI — it needs the live API and Mailpit as service containers. Only the accessibility spec runs today.
+- **`init`, `CLAUDE.md` and the slash commands.** Without them this is an app, not a template. `CLAUDE.md` and the commands are Phase 9; `init` is Phase 17.
+- **No `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md` or `CHANGELOG.md`,** and no Dependabot. Phase 9.
+- **`docs/architecture.md` does not exist** — the link below points at it anyway. Phase 9.B.
+- **CI has no production or security gates:** no `check --deploy`, Bandit, `pip-audit`, `pnpm audit` or secret scanning. Phase 9.C.
+- **No query-count tests anywhere.** Phase 16.A.
+- **The API layer is DRF and is moving to Django Ninja** — `docs/adr/0001-django-ninja-over-drf.md`, implemented in Phase 10.
+- **URL segment** is `/api/v1/organizations/…`; the PRD specifies `/orgs/`. Reconciled in Phase 10.C.
+- **`GET /api/v1/plans/`** returns a bare array rather than the cursor envelope §7 requires of collections. Phase 10.C.
+- **`e2e/auth-flows.spec.ts`** is written but not wired into CI — it needs the live API and Mailpit as service containers. Phase 9.C.
 - **Stripe test clocks** (trial end, renewal, cancellation) are untested; they need a live test account. Everything else runs against `stripe-mock`.
 - **No credentials** are configured for Stripe, Google OAuth, Resend, R2, Sentry or PostHog. Each is wired against a stub or local stand-in and works with the integration disabled.
 
