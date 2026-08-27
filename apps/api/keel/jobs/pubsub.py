@@ -13,7 +13,25 @@ Celery task) uses the sync ``redis`` client. The subscriber
 (``keel/jobs/sse.py``, running on the dedicated ASGI service) uses
 ``redis.asyncio`` directly — no seam is needed between them since pub/sub
 messages are just bytes on a channel name.
-"""
+
+Every event carries a ``seq``: a per-organisation counter (``INCR``,
+atomic) stamped on the way out (ddia#16). Redis pub/sub is at-most-once
+with no buffer — a client that is disconnected when an event publishes
+never receives it, and a bare event stream gives the client no way to
+even notice a gap. ``seq`` doesn't fix that on its own (there is nothing
+to replay from — this is not a Redis Stream), but it turns "silently
+missed an event" into "detected a gap": a reconnecting client compares
+the ``seq`` on the first event it receives against the last one it saw
+before disconnecting and, on any gap, refetches ``GET
+/orgs/<org_slug>/jobs/`` (already the source of truth for job state) to
+resynchronise rather than trusting a stream it knows skipped something.
+This is the cheaper of the two fixes the ddia review names — a move to
+Redis Streams (``XADD``/``XRANGE`` with ``Last-Event-ID`` replay) buys
+true resumability, at the cost of a second Redis data structure and a
+retention policy for it. The tray only ever needs "am I looking at the
+current state", which a refetch answers exactly as well as a replayed
+event log would; the seq number is what lets the client know *when* to
+ask."""
 
 from __future__ import annotations
 
@@ -42,8 +60,17 @@ def _get_client() -> Redis:
     return _client
 
 
+def _seq_key(organization_id: Any) -> str:
+    return f"jobs:stream:seq:{organization_id}"
+
+
+def next_seq(organization_id: Any) -> int:
+    return int(_get_client().incr(_seq_key(organization_id)))
+
+
 def publish_event(organization_id: Any, event: dict[str, Any]) -> None:
-    _get_client().publish(channel_for_organization(organization_id), json.dumps(event))
+    stamped = {**event, "seq": next_seq(organization_id)}
+    _get_client().publish(channel_for_organization(organization_id), json.dumps(stamped))
 
 
 def job_event(job: Any) -> dict[str, Any]:

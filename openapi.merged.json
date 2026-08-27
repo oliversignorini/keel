@@ -2825,6 +2825,56 @@
         "title": "JobStepOut",
         "type": "object"
       },
+      "JobStreamEvent": {
+        "description": "One Server-Sent Event payload from GET /api/v1/orgs/{org_slug}/jobs/stream/ \u2014 a `job` or `step` transition for any job in the organisation (keel/jobs/pubsub.py `job_event`/`step_event`). `seq` is a per-organisation, monotonically increasing counter (ddia#16): a client reconnecting after a gap compares the seq it last saw against the first seq of the new connection and, on any gap, refetches GET /api/v1/orgs/{org_slug}/jobs/ rather than trusting a stream it knows skipped an event.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "job_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ordinal": {
+            "type": "integer"
+          },
+          "output_ref": {
+            "type": "string"
+          },
+          "result_ref": {
+            "type": "string"
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "step_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "job",
+              "step"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "seq",
+          "job_id"
+        ],
+        "type": "object"
+      },
       "Login": {
         "allOf": [
           {
@@ -6283,6 +6333,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
           "201": {
             "content": {
               "application/json": {
@@ -7364,6 +7424,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
           "201": {
             "content": {
               "application/json": {
@@ -7833,6 +7905,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
           "201": {
             "content": {
               "application/json": {
@@ -8313,6 +8395,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
           "202": {
             "content": {
               "application/json": {
@@ -8395,6 +8487,44 @@
           }
         },
         "summary": "Create Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_slug}/jobs/stream/": {
+      "get": {
+        "description": "Server-Sent Events, not served by this Ninja app \u2014 see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).",
+        "operationId": "streamJobs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStreamEvent"
+                }
+              }
+            },
+            "description": "text/event-stream of JobStreamEvent payloads."
+          },
+          "403": {
+            "description": "Authenticated but lacks jobs.view."
+          },
+          "404": {
+            "description": "Unknown or non-member organisation."
+          }
+        },
+        "summary": "Live job/step events for the organisation (SSE)",
         "tags": [
           "jobs"
         ]

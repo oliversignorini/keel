@@ -205,6 +205,17 @@ def test_keel_throttled_without_a_wait_uses_the_default_message() -> None:
     assert exc.status_code == 429
     assert exc.code == "throttled"
     assert exc.message == "Request was throttled."
+    assert exc.response_headers == {}
+
+
+def test_keel_throttled_with_a_wait_exposes_a_retry_after_header() -> None:
+    exc = keel_exceptions.Throttled(wait=12.5)
+
+    assert exc.response_headers == {"Retry-After": "12"}
+
+
+def test_a_plain_domain_error_has_no_response_headers() -> None:
+    assert keel_exceptions.DomainError().response_headers == {}
 
 
 def test_keel_throttled_with_a_wait_pluralizes_correctly() -> None:

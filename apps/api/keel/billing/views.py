@@ -31,6 +31,7 @@ from keel.billing.schemas import (
     SubscriptionEnvelopeOut,
 )
 from keel.core.exceptions import UnprocessableEntity
+from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import GlobalResource, keel_router, public_router, resolve_and_authorize
 from keel.core.ninja_pagination import Page, paginate
 from keel.organizations.permissions import Perm
@@ -102,6 +103,7 @@ def _frontend_base() -> str:
     response=CheckoutSessionOut,
     operation_id="createCheckoutSession",
 )
+@idempotent
 def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
     price = Price.objects.filter(pk=str(payload.price_id), is_active=True).first()

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from keel.billing import credits
@@ -19,6 +19,12 @@ from keel.jobs.models import Job
 from keel.jobs.pubsub import publish_job_event
 from keel.jobs.registry import UnknownJobType, registry
 from keel.jobs.runner import hold_already_settled, locked_hold_entry, run_job_task
+
+# Bumped only if Job.params's shape changes in a way old step code can't
+# read (ddia#24) — stamped on every job at creation so a resumed job can
+# tell which shape its own params are in. Nothing reads this yet; it
+# exists so the first breaking params change has somewhere to check.
+PARAMS_VERSION = 1
 
 
 @audited("job.created")
@@ -39,8 +45,11 @@ def create_job(
         if idempotency_key:
             # select_for_update serialises this against a second request
             # replaying the same key inside the same transaction window;
-            # keel.jobs.idempotency's cache claim covers the same race at
-            # the HTTP layer, cheaper, ahead of ever reaching here.
+            # keel.core.idempotency's cache claim covers the same race at
+            # the HTTP layer, cheaper, ahead of ever reaching here. The
+            # database UniqueConstraint below (ddia#11) is the final
+            # backstop if both of those are somehow bypassed — caught as
+            # IntegrityError just below.
             existing = (
                 Job.objects.select_for_update()
                 .filter(organization=organization, idempotency_key=idempotency_key)
@@ -49,13 +58,38 @@ def create_job(
             if existing is not None:
                 return existing
 
-        job = Job.objects.create(
-            organization=organization,
-            type=type,
-            requested_by=actor,
-            params=params or {},
-            idempotency_key=idempotency_key,
-        )
+        job_params = dict(params or {})
+        job_params["_v"] = PARAMS_VERSION
+        try:
+            with transaction.atomic():
+                job = Job.objects.create(
+                    organization=organization,
+                    type=type,
+                    requested_by=actor,
+                    params=job_params,
+                    # Pinned at creation (ddia#24): re-registering `type`
+                    # with a different step list later must not re-price
+                    # (or re-total) a job already in flight — the runner
+                    # reads this column, never `len(spec.steps)`, once the
+                    # job exists.
+                    step_count=len(spec.steps),
+                    idempotency_key=idempotency_key,
+                )
+        except IntegrityError:
+            # The UniqueConstraint on (organization, idempotency_key)
+            # (ddia#11) caught a race the two softer guards above
+            # (select_for_update over a row that didn't exist yet when
+            # this request read it, and keel.core.idempotency's cache
+            # claim) both missed — two concurrent requests with the same
+            # key can still both reach this far. Whoever lost the race
+            # returns the row the winner created instead of erroring.
+            existing = Job.objects.filter(
+                organization=organization, idempotency_key=idempotency_key
+            ).first()
+            if existing is None:
+                raise
+            return existing
+
         if credits.credits_enabled() and spec.credit_estimate > 0:
             credits.hold(organization, spec.credit_estimate, job=job, actor=actor)
 

@@ -63,9 +63,8 @@ def domain_error_response(exc: DomainError) -> HttpResponse:
     exception handler below and ``keel.core.ninja_throttle.ThrottleMiddleware``,
     which raises/catches ``Throttled`` outside Ninja's own dispatch."""
     response = _envelope(exc.status_code, exc.code, exc.message, exc.details)
-    wait = getattr(exc, "wait", None)
-    if wait is not None:
-        response["Retry-After"] = f"{int(wait)}"
+    for header, value in exc.response_headers.items():
+        response[header] = value
     return response
 
 

@@ -55,6 +55,13 @@ def test_create_job_returns_202_quickly_with_the_work_not_yet_started() -> None:
     org, owner = _org_with_owner()
     client = _client_for(owner)
 
+    # A cold Python process's very first request pays a one-time cost
+    # (URLconf resolution, first-import of every view module the
+    # urlconf touches) that has nothing to do with this route's own
+    # latency — warm it up first so the timed request below measures
+    # steady-state job creation, the thing this test actually asserts.
+    client.get(f"/api/v1/orgs/{org.slug}/jobs/")
+
     started = time.perf_counter()
     response = client.post(
         f"/api/v1/orgs/{org.slug}/jobs/",

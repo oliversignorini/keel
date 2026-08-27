@@ -18,6 +18,7 @@ from typing import Any
 from django.http import Http404
 from ninja import Status
 
+from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.files import services
 from keel.files.models import FileUpload
@@ -36,7 +37,8 @@ class FileUploadResource(OrgScopedResource):
 router = FileUploadResource.router
 
 
-@router.post("/{org_slug}/files/", response={201: dict}, operation_id="createUpload")
+@router.post("/{org_slug}/files/", response={201: dict, 200: dict}, operation_id="createUpload")
+@idempotent
 def create_upload(request: Any, org_slug: str, payload: PresignedUploadRequest) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
     file_upload, upload_url = services.create_presigned_upload(

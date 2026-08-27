@@ -40,6 +40,16 @@ class DomainError(Exception):
         self.details = details
         super().__init__(self.message)
 
+    @property
+    def response_headers(self) -> dict[str, str]:
+        """Extra headers the envelope handler should attach to the HTTP
+        response, empty by default. ``Throttled`` overrides this instead
+        of the handler reaching for ``getattr(exc, "wait", None)`` — a
+        private fact about one subclass leaking into the one place that's
+        supposed to render any ``DomainError`` uniformly (posd finding
+        12)."""
+        return {}
+
 
 class NotAuthenticated(DomainError):
     """Framework-independent counterpart to DRF's own ``NotAuthenticated``
@@ -104,3 +114,9 @@ class Throttled(DomainError):
         else:
             message = self.default_message
         super().__init__(code=self.default_code, message=message, details=details)
+
+    @property
+    def response_headers(self) -> dict[str, str]:
+        if self.wait is None:
+            return {}
+        return {"Retry-After": f"{int(self.wait)}"}

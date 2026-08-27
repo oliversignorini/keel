@@ -115,6 +115,7 @@ def _settle_credits(job: Job, succeeded: int, total: int) -> None:
 def run_job(job_id: Any) -> None:
     job = Job.objects.select_related("organization").get(pk=job_id)
     spec = registry.get(job.type)
+    limiter = OrgConcurrencyLimiter()
 
     if job.status == Job.STATUS_QUEUED:
         job.status = Job.STATUS_RUNNING
@@ -124,7 +125,12 @@ def run_job(job_id: Any) -> None:
 
     results: dict[str, Any] = {}
     succeeded = 0
-    total = len(spec.steps)
+    # Pinned at creation (ddia#24), not the live registry's step count —
+    # a job created before `type` was re-registered with a different step
+    # list must still total against the count it was actually held
+    # credits for. Falls back to the registry for rows written before
+    # this column existed (job.step_count is nullable).
+    total = job.step_count if job.step_count is not None else len(spec.steps)
 
     for ordinal, step_spec in enumerate(spec.steps):
         job.refresh_from_db(fields=["status", "error"])
@@ -134,6 +140,14 @@ def run_job(job_id: Any) -> None:
             # and published the terminal event — stop before the next
             # step rather than resuming or overwriting its outcome.
             return
+
+        # Step-boundary heartbeat (ddia#15): the concurrency slot this
+        # job holds (acquired by run_job_task before run_job was called)
+        # has a 1-hour lease with no renewal otherwise — any job whose
+        # steps together take longer than that silently loses its slot
+        # partway through, over-admitting the organisation for the rest
+        # of the run. Renewing here costs one Redis round trip per step.
+        limiter.renew(job.organization_id, job.id)
 
         step, _created = JobStep.objects.get_or_create(
             job=job,

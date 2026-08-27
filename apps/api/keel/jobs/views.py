@@ -4,11 +4,11 @@ it is served by the dedicated ASGI service, not this router; see
 ``keel/jobs/sse.py`` and ``config/urls_stream.py``. Neither ever used
 DRF, so neither needed migrating.
 
-``create_job`` calls ``keel.jobs.idempotency.check_and_claim`` explicitly
-at the top of its body — the Ninja counterpart to DRF's
-``idempotency_scoped = True`` class attribute, which
+``create_job`` is decorated ``@idempotent`` — the Ninja counterpart to
+DRF's ``idempotency_scoped = True`` class attribute, which
 ``IdempotencyKeyMiddleware.process_view`` detected via ``view_func.cls``,
-a hook Ninja's routing has no equivalent of. See that module's docstring.
+a hook Ninja's routing has no equivalent of. See
+``keel.core.idempotency``'s docstring.
 """
 
 from typing import Any
@@ -16,9 +16,10 @@ from typing import Any
 from django.http import Http404
 from ninja import Status
 
+from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
-from keel.jobs import idempotency, selectors, services
+from keel.core.ninja_pagination import paginated
+from keel.jobs import selectors, services
 from keel.jobs.schemas import JobCreateIn, JobOut, JobStatus
 from keel.organizations.permissions import Perm
 
@@ -34,29 +35,25 @@ class JobResource(OrgScopedResource):
 router = JobResource.router
 
 
-@router.get("/{org_slug}/jobs/", response=Page[JobOut], operation_id="listJobs")
+@paginated(router.get, "/{org_slug}/jobs/", JobOut, operation_id="listJobs")
 def list_jobs(
     request: Any,
     org_slug: str,
     status: JobStatus | None = None,
     cursor: str | None = None,
     limit: int | None = None,
-) -> dict:
+) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_VIEW,))
     queryset = selectors.list_jobs_for_organization(organization)
     if status:
         queryset = queryset.filter(status=status)
-    return paginate(request, queryset)
+    return queryset
 
 
-@router.post("/{org_slug}/jobs/", response={202: JobOut}, operation_id="createJob")
+@router.post("/{org_slug}/jobs/", response={202: JobOut, 200: JobOut}, operation_id="createJob")
+@idempotent
 def create_job(request: Any, org_slug: str, payload: JobCreateIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_CREATE,))
-
-    cached_response = idempotency.check_and_claim(request, org_slug)
-    if cached_response is not None:
-        return cached_response
-
     job = services.create_job(
         organization=organization,
         actor=request.auth,

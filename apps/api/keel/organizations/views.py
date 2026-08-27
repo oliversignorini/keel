@@ -23,6 +23,7 @@ from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
+from keel.core.idempotency import idempotent
 from keel.core.ninja_authz import (
     OrgScopedResource,
     keel_router,
@@ -70,7 +71,12 @@ def list_organizations(request: Any, cursor: str | None = None, limit: int | Non
     return paginate(request, queryset)
 
 
-@org_router.post("/orgs/", response={201: OrganizationOut}, operation_id="createOrganization")
+@org_router.post(
+    "/orgs/",
+    response={201: OrganizationOut, 200: OrganizationOut},
+    operation_id="createOrganization",
+)
+@idempotent
 def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
 
     slug = resolve_create_slug(payload)
@@ -243,8 +249,11 @@ def list_invitations(
 
 
 @nested_router.post(
-    "/{org_slug}/invitations/", response={201: InvitationOut}, operation_id="createInvitation"
+    "/{org_slug}/invitations/",
+    response={201: InvitationOut, 200: InvitationOut},
+    operation_id="createInvitation",
 )
+@idempotent
 def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
@@ -356,6 +365,7 @@ def invite_detail(request: Any, token: str) -> dict:
 
 
 @invite_router.post("/invite/{token}/", response=MembershipOut, operation_id="acceptInvite")
+@idempotent
 def invite_accept(request: Any, token: str) -> Any:
     if not request.auth.is_authenticated:
         raise NotAuthenticated()
