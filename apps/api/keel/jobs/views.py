@@ -17,7 +17,7 @@ from django.http import Http404
 from ninja import Status
 
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginate
+from keel.core.ninja_pagination import Page, paginate
 from keel.jobs import idempotency, selectors, services
 from keel.jobs.schemas import JobCreateIn, JobOut
 from keel.organizations.permissions import Perm
@@ -34,14 +34,14 @@ class JobResource(OrgScopedResource):
 router = JobResource.router
 
 
-@router.get("/{org_slug}/jobs/")
+@router.get("/{org_slug}/jobs/", response=Page[JobOut])
 def list_jobs(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.JOBS_VIEW,))
     queryset = selectors.list_jobs_for_organization(organization)
     status_filter = request.GET.get("status")
     if status_filter:
         queryset = queryset.filter(status=status_filter)
-    return paginate(request, queryset, lambda job: JobOut.from_orm(job).dict())
+    return paginate(request, queryset)
 
 
 @router.post("/{org_slug}/jobs/", response={202: JobOut})

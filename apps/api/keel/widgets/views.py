@@ -15,7 +15,7 @@ from django.http import Http404
 from ninja import Status
 
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginate
+from keel.core.ninja_pagination import Page, paginate
 from keel.organizations.permissions import Perm
 from keel.widgets import selectors, services
 from keel.widgets.models import Widget
@@ -43,11 +43,11 @@ def _get_widget_or_404(organization: Any, pk: str) -> Widget:
     return widget
 
 
-@router.get("/{org_slug}/widgets/", response=dict)
+@router.get("/{org_slug}/widgets/", response=Page[WidgetOut])
 def list_widgets(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_VIEW,))
     queryset = selectors.list_widgets(organization)
-    return paginate(request, queryset, lambda widget: WidgetOut.from_orm(widget).dict())
+    return paginate(request, queryset)
 
 
 @router.post("/{org_slug}/widgets/", response={201: WidgetOut})

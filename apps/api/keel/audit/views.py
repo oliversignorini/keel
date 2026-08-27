@@ -22,7 +22,7 @@ from keel.audit.models import AuditLog
 from keel.audit.schemas import AuditLogOut
 from keel.core.impersonation import end_impersonation, get_impersonator_id
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginate
+from keel.core.ninja_pagination import Page, paginate
 from keel.organizations.permissions import Perm
 
 
@@ -41,11 +41,11 @@ router = AuditLogResource.router
 impersonation_router = keel_router(tags=["impersonation"])
 
 
-@router.get("/{org_slug}/audit/")
+@router.get("/{org_slug}/audit/", response=Page[AuditLogOut])
 def list_audit_logs(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
     queryset = selectors.list_audit_logs_for_organization(organization)
-    return paginate(request, queryset, lambda row: AuditLogOut.from_orm(row).dict())
+    return paginate(request, queryset)
 
 
 @router.get("/{org_slug}/audit/{pk}/", response=AuditLogOut)

@@ -19,14 +19,29 @@ removal in stage 10.E.
 from base64 import b64decode, b64encode
 from collections import namedtuple
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Generic, TypeVar
 from urllib import parse
 
 from django.http import HttpRequest
+from ninja import Schema
 
 from keel.core.exceptions import UnprocessableEntity
 
 Cursor = namedtuple("Cursor", ["offset", "reverse", "position"])
+
+T = TypeVar("T")
+
+
+class Page(Schema, Generic[T]):  # noqa: UP046 — PEP 695 syntax isn't pydantic-generic-safe here
+    """Response-schema declaration for a paginated Ninja route — pass
+    ``response=Page[WidgetOut]`` so the OpenAPI schema (and the generated
+    TypeScript client) knows a list endpoint's ``results`` are typed rows,
+    not an opaque object. ``paginate()`` below builds the matching runtime
+    dict; this class only exists for the schema declaration."""
+
+    results: list[T]
+    next: str | None
+    previous: str | None
 
 
 def _positive_int(value: Any, strict: bool = False, cutoff: int | None = None) -> int:
@@ -280,10 +295,29 @@ class CursorPaginator:
         return self._encode_cursor(Cursor(offset=offset, reverse=True, position=position))
 
 
-def paginate(request: HttpRequest, queryset: Any, serialize: Any) -> dict[str, Any]:
-    """Paginate ``queryset`` per the request's ``cursor``/``limit`` params
-    and serialize each row with ``serialize`` (a callable, e.g. a Ninja
-    ``Schema.from_orm`` or plain dict-builder)."""
+def paginate(
+    request: HttpRequest, queryset: Any, ordering: Sequence[str] | None = None
+) -> dict[str, Any]:
+    """Paginate ``queryset`` per the request's ``cursor``/``limit`` params.
+    Returns raw rows in ``results`` — pair with ``response=Page[XOut]`` on
+    the route so Ninja serializes each row itself (running any
+    ``resolve_*`` methods against the real ORM instance, the same way it
+    already does for a plain ``response=XOut`` detail route). Serializing
+    rows here first and declaring ``Page[XOut]`` would double-serialize:
+    a resolver like ``resolve_created_by`` reads ``obj.created_by_id``,
+    which only exists on the ORM instance, not on an already-built dict
+    keyed by the schema's own output field names.
+
+    ``CursorPaginator`` always re-orders the queryset by its own
+    ``ordering`` (the within-tie offset it encodes only makes sense
+    against one fixed ordering), so a queryset built with its own
+    ``.order_by(...)`` needs that same ordering passed explicitly here —
+    the default ``(-created_at, id)`` would silently override it
+    otherwise. ``code`` is unique, so ``("sort_order", "code")`` is a
+    valid tiebreaking ordering for ``keel.billing.views.list_plans``.
+    """
     paginator = CursorPaginator()
+    if ordering is not None:
+        paginator.ordering = ordering
     page = paginator.paginate_queryset(queryset, request)
-    return paginator.get_paginated_response([serialize(obj) for obj in page])
+    return paginator.get_paginated_response(page)

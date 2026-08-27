@@ -25,7 +25,7 @@ from keel.billing.entitlements import resolve_entitlements
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
 from keel.core.ninja_auth import optional_session_auth
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginate
+from keel.core.ninja_pagination import Page, paginate
 from keel.organizations import selectors, services
 from keel.organizations.models import Invitation, Membership, Role
 from keel.organizations.permissions import Perm
@@ -57,10 +57,10 @@ def _get_role_or_422(role_id: object) -> Role:
 org_router = keel_router(tags=["organizations"])
 
 
-@org_router.get("/orgs/")
+@org_router.get("/orgs/", response=Page[OrganizationOut])
 def list_organizations(request: Any) -> dict:
     queryset = selectors.list_organizations_for_user(request.auth)
-    return paginate(request, queryset, lambda org: OrganizationOut.from_orm(org).dict())
+    return paginate(request, queryset)
 
 
 @org_router.post("/orgs/", response={201: OrganizationOut})
@@ -147,11 +147,11 @@ class InvitationResource(OrgScopedResource):
     detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{pk}/"
 
 
-@nested_router.get("/{org_slug}/members/")
+@nested_router.get("/{org_slug}/members/", response=Page[MembershipOut])
 def list_members(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     queryset = Membership.objects.select_related("user", "role").for_organization(organization)
-    return paginate(request, queryset, lambda m: MembershipOut.from_orm(m).dict())
+    return paginate(request, queryset)
 
 
 @nested_router.get("/{org_slug}/members/{pk}/", response=MembershipOut)
@@ -191,11 +191,11 @@ def remove_member(request: Any, org_slug: str, pk: str) -> Any:
     return Status(204, None)
 
 
-@nested_router.get("/{org_slug}/roles/")
+@nested_router.get("/{org_slug}/roles/", response=Page[RoleOut])
 def list_roles(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
     queryset = selectors.list_roles_for_organization(organization)
-    return paginate(request, queryset, lambda role: RoleOut.from_orm(role).dict())
+    return paginate(request, queryset)
 
 
 @nested_router.get("/{org_slug}/roles/{pk}/", response=RoleOut)
@@ -207,13 +207,13 @@ def retrieve_role(request: Any, org_slug: str, pk: str) -> Any:
     return role
 
 
-@nested_router.get("/{org_slug}/invitations/")
+@nested_router.get("/{org_slug}/invitations/", response=Page[InvitationOut])
 def list_invitations(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
     queryset = Invitation.objects.select_related("role", "invited_by").for_organization(
         organization
     )
-    return paginate(request, queryset, lambda i: InvitationOut.from_orm(i).dict())
+    return paginate(request, queryset)
 
 
 @nested_router.post("/{org_slug}/invitations/", response={201: InvitationOut})

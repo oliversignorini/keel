@@ -26,7 +26,7 @@ from keel.billing.models import Plan, Price, StripeEvent, Subscription
 from keel.billing.schemas import CheckoutIn, PlanOut, SubscriptionOut
 from keel.core.exceptions import UnprocessableEntity
 from keel.core.ninja_authz import GlobalResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginate
+from keel.core.ninja_pagination import Page, paginate
 from keel.organizations.permissions import Perm
 
 # --- Plans: public, no auth ------------------------------------------------
@@ -64,7 +64,7 @@ class PlanResource(GlobalResource):
     )
 
 
-@plans_router.get("/plans/")
+@plans_router.get("/plans/", response=Page[PlanOut])
 def list_plans(request: HttpRequest) -> dict:
     active_prices = Prefetch(
         "prices",
@@ -76,7 +76,7 @@ def list_plans(request: HttpRequest) -> dict:
         .order_by("sort_order", "code")
         .prefetch_related(active_prices)
     )
-    return paginate(request, queryset, lambda plan: PlanOut.from_orm(plan).dict())
+    return paginate(request, queryset, ordering=("sort_order", "code"))
 
 
 # --- Checkout / portal / subscription / credits: session-authenticated ----
