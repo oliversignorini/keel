@@ -13,13 +13,18 @@ its own retrieve-shaped operation.
 """
 
 import uuid
+from typing import Any
 
 from django.test import Client
 from django.urls.exceptions import Resolver404
 from django.utils.module_loading import import_string
 
 from keel.accounts.models import User
-from keel.core.ninja_authz import OrgScopedResource, registered_scoped_resources
+from keel.core.ninja_authz import (
+    OrgScopedResource,
+    registered_global_resources,
+    registered_scoped_resources,
+)
 from keel.organizations.models import Membership, Organization, Role
 
 
@@ -32,6 +37,23 @@ def production_scoped_resources() -> list[type[OrgScopedResource]]:
     outside a ``tests`` package — the Ninja equivalent of
     ``tenant_isolation.py``'s production-viewset filter."""
     return [cls for cls in registered_scoped_resources() if _is_production_module(cls)]
+
+
+def iter_global_justifications() -> Any:
+    """``(resource name, GLOBAL_JUSTIFICATION)`` for every production
+    ``organization_scoped = False`` ``GlobalResource`` — the Ninja
+    counterpart to ``tenant_isolation.py``'s DRF-side function of the
+    same name, walking ``keel.core.ninja_authz.registered_global_resources()``
+    instead of ``keel.core.authz.registered_global_viewsets()``."""
+    seen = set()
+    for resource in registered_global_resources():
+        if resource in seen:
+            continue
+        seen.add(resource)
+        if not _is_production_module(resource):
+            continue
+        if not getattr(resource, "organization_scoped", False):
+            yield resource.__name__, resource.GLOBAL_JUSTIFICATION
 
 
 def resource_route_is_wired(resource_cls: type[OrgScopedResource]) -> bool:

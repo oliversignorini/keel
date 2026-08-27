@@ -1,166 +1,88 @@
-"""Checkout, portal, and subscription views (PRD §7; docs/plans/phase-4.md
-B.2). Plain ``APIView``s in the ``OrganizationDetailView`` shape, not
-``OrgScopedViewSet``s: each resolves ``org_slug`` and acts on *the*
-subscription for that organisation — there is no separate addressable row
-id in the URL for a cross-org leak to hide behind, the same reasoning
-``keel.organizations.viewsets.OrganizationDetailView`` documents.
+"""Billing views (PRD §7; docs/plans/phase-4.md B.1, B.2, B.3; phase-10.md
+10.C). ``CheckoutSessionView``/``BillingPortalView``/``SubscriptionView``/
+``CreditBalanceView`` resolve ``org_slug`` and act on *the* subscription
+for that organisation directly via ``resolve_and_authorize`` — there is
+no separate addressable row id in the URL for a cross-org leak to hide
+behind (the same reasoning ``keel.organizations.viewsets.
+OrganizationDetailView`` documents), so none of these is an
+``OrgScopedResource``.
+
+``GET /api/v1/plans/`` (PRD §7's "three allowed changes", phase-10.md):
+now cursor-paginated like every other collection, ordered
+``(sort_order, code)`` — ``code`` is unique, so that ordering is a valid
+total order for ``CursorPaginator`` (see its module docstring on why the
+tuple must end in a unique tiebreaker). It stops being the one
+unpaginated collection PRD §7 calls out as a deviation.
 """
 
+from typing import Any
+
 import stripe
-from django.http import Http404
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from django.db.models import Prefetch
+from django.http import Http404, HttpRequest, HttpResponse
+from ninja import Router
 
 from keel.billing import credits, services, stripe_client, tasks
-from keel.billing.models import Price, StripeEvent, Subscription
-from keel.billing.serializers import (
-    CheckoutRequestSerializer,
-    SubscriptionSerializer,
-)
-from keel.core.authz import has_perm
-from keel.core.exceptions import PermissionDeniedWithReason, UnprocessableEntity
-from keel.organizations.models import Organization
+from keel.billing.models import Plan, Price, StripeEvent, Subscription
+from keel.billing.schemas import CheckoutIn, PlanOut, SubscriptionOut
+from keel.core.exceptions import UnprocessableEntity
+from keel.core.ninja_authz import GlobalResource, keel_router, resolve_and_authorize
+from keel.core.ninja_pagination import paginate
 from keel.organizations.permissions import Perm
-from keel.organizations.resolvers import resolve_organization
+
+# --- Plans: public, no auth ------------------------------------------------
+
+plans_router = Router(auth=None)
 
 
-class _OrganizationBillingView(APIView):
-    permission_classes = (IsAuthenticated,)
-    required_permission: str
+class PlanResource(GlobalResource):
+    """``GET /api/v1/plans/`` — the pricing page reads this
+    unauthenticated (docs/plans/phase-4.md B.1), so this is a
+    ``GlobalResource`` with a public router rather than
+    ``resolve_and_authorize``'s session-authenticated path: a plan is not
+    owned by any organisation, and this request never resolves
+    ``org_slug``.
 
-    def _get_organization(self, request: Request, org_slug: str) -> Organization:
-        organization = resolve_organization(request, org_slug)
-        if organization is None:
-            raise Http404
-        decision = has_perm(request.user, organization, self.required_permission)
-        if not decision.allowed:
-            raise PermissionDeniedWithReason(
-                code=decision.reason or "permission_denied", details=decision.details
-            )
-        return organization
-
-
-class CheckoutSessionView(_OrganizationBillingView):
-    """``POST /organizations/<org_slug>/billing/checkout/``."""
-
-    required_permission = Perm.BILLING_MANAGE
-
-    def post(self, request: Request, org_slug: str) -> Response:
-        organization = self._get_organization(request, org_slug)
-        serializer = CheckoutRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        price = Price.objects.filter(
-            pk=serializer.validated_data["price_id"], is_active=True
-        ).first()
-        if price is None:
-            raise UnprocessableEntity(code="price_not_found", message="Unknown or inactive price.")
-        url = services.create_checkout_session(
-            organization=organization,
-            actor=request.user,
-            impersonator=getattr(request, "impersonator", None),
-            price=price,
-            success_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=success",
-            cancel_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=cancelled",
-        )
-        return Response({"url": url})
-
-
-class BillingPortalView(_OrganizationBillingView):
-    """``POST /organizations/<org_slug>/billing/portal/``."""
-
-    required_permission = Perm.BILLING_MANAGE
-
-    def post(self, request: Request, org_slug: str) -> Response:
-        organization = self._get_organization(request, org_slug)
-        url = services.create_portal_session(
-            organization=organization,
-            actor=request.user,
-            impersonator=getattr(request, "impersonator", None),
-            return_url=f"{_frontend_base()}/{organization.slug}/settings/billing",
-        )
-        return Response({"url": url})
-
-
-class SubscriptionView(_OrganizationBillingView):
-    """``GET /organizations/<org_slug>/billing/subscription/``."""
-
-    required_permission = Perm.BILLING_VIEW
-
-    def get(self, request: Request, org_slug: str) -> Response:
-        organization = self._get_organization(request, org_slug)
-        subscription = Subscription.objects.filter(organization=organization).first()
-        if subscription is None:
-            return Response({"subscription": None})
-        return Response({"subscription": SubscriptionSerializer(subscription).data})
-
-
-class CreditBalanceView(_OrganizationBillingView):
-    """``GET /organizations/<org_slug>/billing/credits/`` (PRD §7's
-    credits endpoint list; docs/plans/phase-4.md Worktree C's
-    ``<CreditMeter>``, which is "rendered **only when credits are
-    enabled**").
-
-    Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5: "With it
-    off: no endpoints, no meter, no cost"). Off is a **404**, not a zero
-    balance: the flag decides whether this feature exists at all, so the
-    web meter's absence-of-data path is "there is nothing here" rather
-    than "you have no credits" — two states a user would read very
-    differently. 404 is also what an unresolvable organisation already
-    returns from ``_get_organization``, which keeps the flag from being a
-    distinguishable signal to a non-member either way.
+    ``required_permissions`` is declared (``GlobalResource`` requires a
+    non-empty value at import time) but not enforced — the router's
+    ``auth=None`` is the actual gate. The declared code documents what an
+    authenticated billing surface would require if this list were ever
+    moved behind a login.
     """
 
-    required_permission = Perm.BILLING_VIEW
+    router = plans_router
+    organization_scoped = False
+    required_permissions = (Perm.BILLING_VIEW,)
+    GLOBAL_JUSTIFICATION = (
+        "Plans and prices are catalogue data, not tenant data: every "
+        "organisation sees the same list, the pricing page reads it before "
+        "anyone has signed in or picked an organisation, and Stripe — not "
+        "this table — is the source of truth for what a plan is. There is "
+        "no per-organisation row here to leak; the only thing scoped to an "
+        "organisation is which plan it has subscribed to, which lives on "
+        "Subscription and is reached through an OrgScopedResource, not this "
+        "one."
+    )
 
-    def get(self, request: Request, org_slug: str) -> Response:
-        if not credits.credits_enabled():
-            raise Http404
-        organization = self._get_organization(request, org_slug)
-        return Response({"balance": credits.get_balance(organization)})
+
+@plans_router.get("/plans/")
+def list_plans(request: HttpRequest) -> dict:
+    active_prices = Prefetch(
+        "prices",
+        queryset=Price.objects.filter(is_active=True).order_by("interval"),
+        to_attr="active_prices",
+    )
+    queryset = (
+        Plan.objects.filter(is_active=True)
+        .order_by("sort_order", "code")
+        .prefetch_related(active_prices)
+    )
+    return paginate(request, queryset, lambda plan: PlanOut.from_orm(plan).dict())
 
 
-class StripeWebhookView(APIView):
-    """``POST /api/v1/stripe/webhook/`` (PRD §6 "Stripe webhook";
-    docs/plans/phase-4.md B.3). No session auth or CSRF: this is a
-    server-to-server call from Stripe with no session cookie, verified by
-    signature instead — DRF's ``SessionAuthentication`` only enforces CSRF
-    once it has resolved a session user, which an unauthenticated request
-    never does, so leaving ``authentication_classes`` empty here is belt
-    and braces, not a gap.
+# --- Checkout / portal / subscription / credits: session-authenticated ----
 
-    Records the event and acknowledges before any processing happens
-    (PRD §6, "Acknowledge in under 200ms ... work happens async") — the
-    only synchronous work below a signature check is one
-    ``get_or_create`` and enqueuing a task.
-    """
-
-    permission_classes = (AllowAny,)
-    authentication_classes = ()
-
-    def post(self, request: Request) -> Response:
-        sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
-        try:
-            event = stripe_client.verify_webhook_signature(
-                payload=request.body, sig_header=sig_header
-            )
-        except stripe.SignatureVerificationError:
-            # Unsigned or wrongly-signed: 400, change nothing, no retry
-            # (PRD §6) — no StripeEvent row is written for a payload that
-            # never proved it came from Stripe.
-            return Response(status=400)
-
-        stripe_event, created = StripeEvent.objects.get_or_create(
-            id=event["id"],
-            defaults={"type": event["type"], "payload": event.to_dict()},
-        )
-        if created:
-            tasks.dispatch_stripe_event.delay(str(stripe_event.pk))
-        # Already recorded (a replay) or freshly created: either way this
-        # is a 200 — idempotent no-op for a replay (PRD §6, "Already
-        # processed → 200 immediately").
-        return Response(status=200)
+router = keel_router(tags=["billing"])
 
 
 def _frontend_base() -> str:
@@ -168,3 +90,87 @@ def _frontend_base() -> str:
 
     base: str = settings.APP_FRONTEND_URL
     return base.rstrip("/")
+
+
+@router.post("/{org_slug}/billing/checkout/")
+def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) -> dict:
+    organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
+    price = Price.objects.filter(pk=str(payload.price_id), is_active=True).first()
+    if price is None:
+        raise UnprocessableEntity(code="price_not_found", message="Unknown or inactive price.")
+    url = services.create_checkout_session(
+        organization=organization,
+        actor=request.auth,
+        impersonator=getattr(request, "impersonator", None),
+        price=price,
+        success_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=success",
+        cancel_url=f"{_frontend_base()}/{organization.slug}/settings/billing?checkout=cancelled",
+    )
+    return {"url": url}
+
+
+@router.post("/{org_slug}/billing/portal/")
+def create_billing_portal_session(request: Any, org_slug: str) -> dict:
+    organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
+    url = services.create_portal_session(
+        organization=organization,
+        actor=request.auth,
+        impersonator=getattr(request, "impersonator", None),
+        return_url=f"{_frontend_base()}/{organization.slug}/settings/billing",
+    )
+    return {"url": url}
+
+
+@router.get("/{org_slug}/billing/subscription/")
+def get_subscription(request: Any, org_slug: str) -> dict:
+    organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
+    subscription = Subscription.objects.filter(organization=organization).first()
+    if subscription is None:
+        return {"subscription": None}
+    return {"subscription": SubscriptionOut.from_orm(subscription).dict()}
+
+
+@router.get("/{org_slug}/billing/credits/")
+def get_credit_balance(request: Any, org_slug: str) -> dict:
+    """Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
+    a **404**, not a zero balance — see the DRF-era docstring this
+    replaces for the full reasoning; unchanged here."""
+    if not credits.credits_enabled():
+        raise Http404
+    organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
+    return {"balance": credits.get_balance(organization)}
+
+
+# --- Stripe webhook: public, signature-verified, CSRF-exempt --------------
+# django-ninja views are always csrf_exempt at the Django middleware level
+# (see keel/core/ninja_api.py's module docstring) — this router's `auth=None`
+# is what keeps it session-independent, matching DRF's own
+# `authentication_classes = ()` + `permission_classes = (AllowAny,)`.
+
+webhook_router = Router(auth=None)
+
+
+@webhook_router.post("/stripe/webhook/")
+def stripe_webhook(request: HttpRequest) -> HttpResponse:
+    """PRD §6 "Stripe webhook": acknowledge in under 200ms, work happens
+    async. The only synchronous work below a signature check is one
+    ``get_or_create`` and enqueuing a task."""
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+    try:
+        event = stripe_client.verify_webhook_signature(payload=request.body, sig_header=sig_header)
+    except stripe.SignatureVerificationError:
+        # Unsigned or wrongly-signed: 400, change nothing, no retry (PRD
+        # §6) — no StripeEvent row is written for a payload that never
+        # proved it came from Stripe.
+        return HttpResponse(status=400)
+
+    stripe_event, created = StripeEvent.objects.get_or_create(
+        id=event["id"],
+        defaults={"type": event["type"], "payload": event.to_dict()},
+    )
+    if created:
+        tasks.dispatch_stripe_event.delay(str(stripe_event.pk))
+    # Already recorded (a replay) or freshly created: either way this is a
+    # 200 — idempotent no-op for a replay (PRD §6, "Already processed →
+    # 200 immediately").
+    return HttpResponse(status=200)

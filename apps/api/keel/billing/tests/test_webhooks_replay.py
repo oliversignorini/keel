@@ -10,7 +10,7 @@ import json
 
 import pytest
 import stripe
-from rest_framework.test import APIClient
+from django.test import Client as APIClient
 
 from keel.accounts.models import User
 from keel.billing.models import Plan, Price, StripeEvent, Subscription
@@ -90,13 +90,13 @@ def _subscription_snapshot() -> dict | None:
 def _assert_identical_after_replay(event: dict) -> None:
     client = APIClient()
     first = _post_signed(event, client)
-    assert first.status_code == 200, first.data
+    assert first.status_code == 200, first.content
     before = _subscription_snapshot()
     row_count_after_first = Subscription.objects.count()
 
     second = _post_signed(event, client)
 
-    assert second.status_code == 200, second.data
+    assert second.status_code == 200, second.content
     assert Subscription.objects.count() == row_count_after_first
     assert _subscription_snapshot() == before
     assert StripeEvent.objects.get(pk=event["id"]).error == ""
