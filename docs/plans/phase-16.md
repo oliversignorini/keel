@@ -120,6 +120,28 @@ this should already hold — verify and test rather than assume.
 - [ ] Validation-boundary audit written down
 - [ ] Async boundary verified: 202 for long work, tasks take IDs, failures visible
 
+## 16.D — Local pre-push gates (added 28 Aug 2026)
+
+The repo runs on a free GitHub Actions plan, so the answer to "this gate
+should be more visible in CI" is usually "run it before it reaches CI".
+Add a pre-push hook layer (lefthook or pre-commit, whichever the audit
+prefers) that mirrors the blocking CI gates locally: ruff check + format,
+mypy, permission lint, bandit, eslint, prettier, the fast half of pytest,
+and `merge_openapi.py` + client-regen drift. Push aborts on failure; a
+documented `--no-verify` escape hatch exists and CI stays authoritative.
+
+Fold in the CI-visibility findings from the August 2026 reviews rather
+than adding Actions minutes for them:
+
+- `manage.py check --deploy` currently passes while producing only
+  warnings (including `security.W009`). Flip it to `--fail-level WARNING`
+  with explicit `SILENCED_SYSTEM_CHECKS` — the W009 silence dies when
+  16.B makes production refuse a default `SECRET_KEY`.
+- `e2e/auth-flows.spec.ts` and `pnpm audit` sit behind step-level
+  `continue-on-error`, so their failures are invisible behind a green
+  job. Once Phase 11 makes auth-flows pass, delete the flag outright;
+  for pnpm audit prefer a visible summary annotation over a new job.
+
 ## Report back
 
 Per slice: what was already right, what was not, and anything you found that
