@@ -67,6 +67,42 @@ class OrgScopedModel(UUIDv7PrimaryKeyModel, TimestampedModel):
         abstract = True
 
 
+class ProvenanceMixin(models.Model):
+    """Nullable link from a produced record back to the job run and the
+    input that produced it (phase-15 provenance hook).
+
+    Future document-ingestion work needs to answer "what produced this
+    row, from what input, by which job run" — this is the smallest thing
+    that answers it: two columns, no behaviour, string-referenced onto
+    ``jobs.Job`` the same way ``OrgScopedModel.organization`` string-refs
+    ``organizations.Organization`` above, so any app's model can inherit
+    this mixin without ever importing ``keel.jobs`` (PRD §4 invariant 2)
+    and without ``keel.jobs`` knowing a single one of its consumers
+    exists. ``keel/jobs/models.py::JobArtifact`` demonstrates the shape
+    against the demo job; a real ingestion pipeline (out of this phase's
+    scope) would add this mixin to whatever model it produces rows into
+    and set the two fields from inside its own job steps."""
+
+    produced_by_job = models.ForeignKey(
+        "jobs.Job",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    produced_by_input_ref = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Opaque description of the specific input this row was derived from "
+        "(a source row's id, a file key, a params field) — free-form because what "
+        "counts as 'the input' is a consumer decision, not this mixin's.",
+    )
+
+    class Meta:
+        abstract = True
+
+
 class SoftDeleteModel(models.Model):
     """Abstract mixin for the few tables that need a soft-delete marker.
 

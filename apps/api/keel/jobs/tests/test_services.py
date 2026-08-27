@@ -1,6 +1,9 @@
 """``create_job`` / ``cancel_job`` (PRD §5.5.3 idempotency, §4 credits)."""
 
+from unittest.mock import patch
+
 import pytest
+from django.db import IntegrityError
 
 from keel.billing import credits
 from keel.billing.models import CreditLedgerEntry
@@ -141,3 +144,82 @@ def test_cancel_job_is_a_no_op_on_an_already_terminal_job() -> None:
     )
     result = services.cancel_job(job=job, actor=user)
     assert result.status == Job.STATUS_SUCCEEDED
+
+
+def test_the_database_constraint_rejects_a_duplicate_key_even_with_no_application_guard() -> None:
+    """ddia#11: the ``UniqueConstraint`` itself, independent of
+    ``create_job``'s own guards — proves the database, not just the
+    service, refuses two rows for one (organization, idempotency_key)."""
+    org = make_organization()
+    Job.objects.create(
+        organization=org, type=DEMO_JOB_TYPE, requested_by=make_user(), idempotency_key="dupe"
+    )
+    with pytest.raises(IntegrityError):
+        Job.objects.create(
+            organization=org, type=DEMO_JOB_TYPE, requested_by=make_user(), idempotency_key="dupe"
+        )
+
+
+def test_two_jobs_with_no_idempotency_key_do_not_collide() -> None:
+    """The constraint's ``condition=~Q(idempotency_key="")`` — every job
+    created without a key is exempt from the uniqueness it enforces on
+    real keys."""
+    org = make_organization()
+    first = Job.objects.create(organization=org, type=DEMO_JOB_TYPE, requested_by=make_user())
+    second = Job.objects.create(organization=org, type=DEMO_JOB_TYPE, requested_by=make_user())
+    assert first.pk != second.pk
+
+
+def test_create_job_survives_a_race_the_select_for_update_guard_misses(
+    django_capture_on_commit_callbacks,
+) -> None:
+    """ddia#11: ``select_for_update`` inside ``create_job`` locks a row
+    that doesn't exist yet when two requests both read ``None`` for the
+    same key — it cannot stop both from proceeding to
+    ``Job.objects.create``. This simulates exactly that race (patching the
+    lookup to keep returning ``None`` even though a row already exists)
+    and proves the database ``UniqueConstraint`` is the real backstop:
+    the loser's ``IntegrityError`` is caught and it returns the winner's
+    row instead of raising or creating a second one."""
+    org = make_organization()
+    user = make_user()
+
+    with django_capture_on_commit_callbacks(execute=False):
+        winner = services.create_job(
+            organization=org, actor=user, type=DEMO_JOB_TYPE, idempotency_key="raced"
+        )
+
+        with patch("keel.jobs.services.Job.objects.select_for_update") as mock_select_for_update:
+            mock_select_for_update.return_value.filter.return_value.first.return_value = None
+            loser = services.create_job(
+                organization=org, actor=user, type=DEMO_JOB_TYPE, idempotency_key="raced"
+            )
+
+    assert loser.pk == winner.pk
+    assert Job.objects.filter(organization=org, idempotency_key="raced").count() == 1
+
+
+def test_create_job_pins_step_count_from_the_registry_at_creation(
+    django_capture_on_commit_callbacks,
+) -> None:
+    """ddia#24: ``Job.step_count`` is stamped once, at creation, from
+    the registry's step list — the runner totals against this column,
+    never a live re-read of the registry (see
+    ``keel.jobs.runner.run_job``)."""
+    org = make_organization()
+    with django_capture_on_commit_callbacks(execute=False):
+        job = services.create_job(organization=org, actor=make_user(), type=DEMO_JOB_TYPE)
+    assert job.step_count == 3  # demo job's three steps
+
+
+def test_create_job_stamps_a_params_version(django_capture_on_commit_callbacks) -> None:
+    """ddia#24: every job's params carry a version tag so a resumed job
+    (or a future migration of the params shape) can tell which shape it
+    was written against."""
+    org = make_organization()
+    with django_capture_on_commit_callbacks(execute=False):
+        job = services.create_job(
+            organization=org, actor=make_user(), type=DEMO_JOB_TYPE, params={"items": [1]}
+        )
+    assert job.params["_v"] == services.PARAMS_VERSION
+    assert job.params["items"] == [1]

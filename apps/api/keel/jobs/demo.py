@@ -18,8 +18,23 @@ def _step_prepare(context: StepContext) -> str:
 
 
 def _step_count(context: StepContext) -> int:
+    from keel.jobs.models import JobArtifact
+
     items = context.params.get("items", [])
-    return len(items)
+    count = len(items)
+    # Demonstrates the provenance hook (keel.core.models.ProvenanceMixin)
+    # against a real produced record: this row carries the job that made
+    # it and a description of the input it was derived from, without
+    # JobArtifact or this step needing anything beyond what StepContext
+    # already gives every step.
+    JobArtifact.objects.create(
+        organization_id=context.organization_id,
+        produced_by_job_id=context.job_id,
+        produced_by_input_ref=f"params.items[{count}]",
+        kind="demo.count",
+        value={"count": count},
+    )
+    return count
 
 
 def _step_finish(context: StepContext) -> str:

@@ -210,6 +210,27 @@ def test_run_job_task_dead_letters_after_exhausting_retries(settings) -> None:
     assert "boom" in failed.error
 
 
+def test_run_job_renews_the_concurrency_lease_at_each_step_boundary() -> None:
+    """ddia#15: ``LEASE_SECONDS`` is never renewed by ``try_acquire``
+    alone (it is only called once, before ``run_job`` starts) — a job
+    whose steps together outlive the lease must not silently lose its
+    slot partway through."""
+    with _Registered(
+        "t.heartbeat",
+        (
+            JobStepSpec(name="a", run=lambda ctx: "ok"),
+            JobStepSpec(name="b", run=lambda ctx: "ok"),
+        ),
+    ):
+        org = make_organization()
+        job = _job(org, "t.heartbeat")
+
+        with patch("keel.jobs.runner.OrgConcurrencyLimiter.renew") as mock_renew:
+            run_job(job.id)
+
+    assert mock_renew.call_count == 2  # once per step boundary
+
+
 def test_a_saturated_organization_retries_without_dead_lettering(settings) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = False
@@ -222,10 +243,13 @@ def test_a_saturated_organization_retries_without_dead_lettering(settings) -> No
         # retries inline (no real sleep) — see
         # keel/core/tests/test_tasks_retry.py's `flaky` test for the
         # same pattern against the shim — so this completes in-process.
+        # `renew` (ddia#15's step-boundary heartbeat) calls `try_acquire`
+        # too, so the mock must keep returning True for every call after
+        # the slot is actually won, not just the one that wins it.
         acquisitions = iter([False, False, True])
         with patch(
             "keel.jobs.concurrency.OrgConcurrencyLimiter.try_acquire",
-            side_effect=lambda *a, **k: next(acquisitions),
+            side_effect=lambda *a, **k: next(acquisitions, True),
         ):
             run_job_task.delay(str(job.id))
 

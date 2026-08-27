@@ -1249,6 +1249,14 @@ export const createOrganizationBody = zod.object({
   "slug": zod.union([zod.string().max(createOrganizationBodySlugMaxOne),zod.null()]).optional()
 })
 
+export const createOrganizationResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "updated_at": zod.string().datetime({})
+})
+
 
 /**
  * @summary Organization Delete
@@ -1481,6 +1489,20 @@ export const createUploadBody = zod.object({
   "size": zod.number().min(1)
 })
 
+export const createUploadResponse = zod.object({
+  "file": zod.object({
+  "completed_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "content_type": zod.string(),
+  "created_at": zod.string().datetime({}),
+  "failure_reason": zod.string(),
+  "filename": zod.string(),
+  "id": zod.string(),
+  "size": zod.number(),
+  "status": zod.enum(['pending', 'available', 'failed', 'expired', 'deleted'])
+}),
+  "upload_url": zod.string()
+}).describe('posd#7: the create-upload route returned a bare ``dict``\n(``response={201: dict}``), which the generated TypeScript client\ntypes as ``void`` — the fix the review names, ``PresignedUploadOut``,\ntyped as its own schema rather than folded onto ``FileUploadOut`` so\n``upload_url`` (a one-time, expiring value, never worth persisting or\ndisplaying alongside a file\'s other fields) stays out of every other\nresponse that reuses ``FileUploadOut``.')
+
 
 /**
  * @summary Delete File
@@ -1623,6 +1645,27 @@ export const createInvitationBody = zod.object({
   "role_id": zod.string().uuid()
 })
 
+export const createInvitationResponse = zod.object({
+  "accepted_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "created_at": zod.string().datetime({}),
+  "email": zod.string(),
+  "expires_at": zod.string().datetime({}),
+  "id": zod.string(),
+  "invited_by": zod.union([zod.object({
+  "email": zod.string(),
+  "id": zod.string(),
+  "name": zod.string()
+}),zod.null()]),
+  "revoked_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "role": zod.object({
+  "id": zod.string(),
+  "is_preset": zod.boolean(),
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+}),
+  "status": zod.enum(['pending', 'accepted', 'revoked', 'expired'])
+})
+
 
 /**
  * @summary Revoke Invitation
@@ -1713,6 +1756,37 @@ export const createJobParams = zod.object({
 export const createJobBody = zod.object({
   "params": zod.record(zod.string(), zod.unknown()).optional(),
   "type": zod.string()
+})
+
+export const createJobResponse = zod.object({
+  "created_at": zod.string().datetime({}),
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "params": zod.record(zod.string(), zod.unknown()),
+  "result_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed']),
+  "steps": zod.array(zod.object({
+  "error": zod.string(),
+  "finished_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "id": zod.string(),
+  "name": zod.string(),
+  "ordinal": zod.number(),
+  "output_ref": zod.string(),
+  "started_at": zod.union([zod.string().datetime({}),zod.null()]),
+  "status": zod.enum(['queued', 'running', 'succeeded', 'partial', 'failed'])
+})),
+  "type": zod.string()
+})
+
+
+/**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
+ * @summary Live job/step events for the organisation (SSE)
+ */
+export const streamJobsParams = zod.object({
+  "org_slug": zod.string()
 })
 
 

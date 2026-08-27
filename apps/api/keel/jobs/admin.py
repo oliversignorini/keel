@@ -4,10 +4,11 @@ from django.contrib import admin
 from django.http import HttpRequest
 
 from keel.core.tasks import redrive
-from keel.jobs.models import FailedTask, Job, JobStep
+from keel.jobs.models import FailedTask, Job, JobArtifact, JobStep
 
 admin.site.register(Job)
 admin.site.register(JobStep)
+admin.site.register(JobArtifact)
 
 
 @admin.register(FailedTask)

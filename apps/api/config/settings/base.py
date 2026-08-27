@@ -113,7 +113,7 @@ MIDDLEWARE = [
     # callable (or none, for a public router) the route underneath uses.
     "keel.core.ninja_throttle.ThrottleMiddleware",
     "keel.core.middleware.ImpersonationMiddleware",
-    "keel.jobs.idempotency.IdempotencyKeyMiddleware",
+    "keel.core.idempotency.IdempotencyKeyMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

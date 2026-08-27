@@ -593,6 +593,32 @@ export interface JobStepOut {
   status: JobStepOutStatus;
 }
 
+export type JobStreamEventType = typeof JobStreamEventType[keyof typeof JobStreamEventType];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const JobStreamEventType = {
+  job: 'job',
+  step: 'step',
+} as const;
+
+/**
+ * One Server-Sent Event payload from GET /api/v1/orgs/{org_slug}/jobs/stream/ — a `job` or `step` transition for any job in the organisation (keel/jobs/pubsub.py `job_event`/`step_event`). `seq` is a per-organisation, monotonically increasing counter (ddia#16): a client reconnecting after a gap compares the seq it last saw against the first seq of the new connection and, on any gap, refetches GET /api/v1/orgs/{org_slug}/jobs/ rather than trusting a stream it knows skipped an event.
+ */
+export interface JobStreamEvent {
+  error?: string;
+  job_id: string;
+  job_type?: string;
+  name?: string;
+  ordinal?: number;
+  output_ref?: string;
+  result_ref?: string;
+  seq: number;
+  status?: string;
+  step_id?: string;
+  type: JobStreamEventType;
+}
+
 export type LoginAllOf = {
   password: Password;
 };
@@ -5767,6 +5793,11 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
 /**
  * @summary Create Organization
  */
+export type createOrganizationResponse200 = {
+  data: OrganizationOut
+  status: 200
+}
+
 export type createOrganizationResponse201 = {
   data: OrganizationOut
   status: 201
@@ -5807,7 +5838,7 @@ export type createOrganizationResponse429 = {
   status: 429
 }
     
-export type createOrganizationResponseSuccess = (createOrganizationResponse201) & {
+export type createOrganizationResponseSuccess = (createOrganizationResponse200 | createOrganizationResponse201) & {
   headers: Headers;
 };
 export type createOrganizationResponseError = (createOrganizationResponse400 | createOrganizationResponse401 | createOrganizationResponse403 | createOrganizationResponse404 | createOrganizationResponse409 | createOrganizationResponse422 | createOrganizationResponse429) & {
@@ -7313,6 +7344,11 @@ export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TErr
 /**
  * @summary Create Upload
  */
+export type createUploadResponse200 = {
+  data: PresignedUploadOut
+  status: 200
+}
+
 export type createUploadResponse201 = {
   data: PresignedUploadOut
   status: 201
@@ -7353,7 +7389,7 @@ export type createUploadResponse429 = {
   status: 429
 }
     
-export type createUploadResponseSuccess = (createUploadResponse201) & {
+export type createUploadResponseSuccess = (createUploadResponse200 | createUploadResponse201) & {
   headers: Headers;
 };
 export type createUploadResponseError = (createUploadResponse400 | createUploadResponse401 | createUploadResponse403 | createUploadResponse404 | createUploadResponse409 | createUploadResponse422 | createUploadResponse429) & {
@@ -8449,6 +8485,11 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
 /**
  * @summary Create Invitation
  */
+export type createInvitationResponse200 = {
+  data: InvitationOut
+  status: 200
+}
+
 export type createInvitationResponse201 = {
   data: InvitationOut
   status: 201
@@ -8489,7 +8530,7 @@ export type createInvitationResponse429 = {
   status: 429
 }
     
-export type createInvitationResponseSuccess = (createInvitationResponse201) & {
+export type createInvitationResponseSuccess = (createInvitationResponse200 | createInvitationResponse201) & {
   headers: Headers;
 };
 export type createInvitationResponseError = (createInvitationResponse400 | createInvitationResponse401 | createInvitationResponse403 | createInvitationResponse404 | createInvitationResponse409 | createInvitationResponse422 | createInvitationResponse429) & {
@@ -9016,6 +9057,11 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
 /**
  * @summary Create Job
  */
+export type createJobResponse200 = {
+  data: JobOut
+  status: 200
+}
+
 export type createJobResponse202 = {
   data: JobOut
   status: 202
@@ -9056,7 +9102,7 @@ export type createJobResponse429 = {
   status: 429
 }
     
-export type createJobResponseSuccess = (createJobResponse202) & {
+export type createJobResponseSuccess = (createJobResponse200 | createJobResponse202) & {
   headers: Headers;
 };
 export type createJobResponseError = (createJobResponse400 | createJobResponse401 | createJobResponse403 | createJobResponse404 | createJobResponse409 | createJobResponse422 | createJobResponse429) & {
@@ -9135,6 +9181,132 @@ export const useCreateJob = <TError = ErrorEnvelope,
       return useMutation(mutationOptions, queryClient);
     }
     
+/**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
+ * @summary Live job/step events for the organisation (SSE)
+ */
+export type streamJobsResponse200 = {
+  data: JobStreamEvent
+  status: 200
+}
+
+export type streamJobsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type streamJobsResponse404 = {
+  data: void
+  status: 404
+}
+    
+export type streamJobsResponseSuccess = (streamJobsResponse200) & {
+  headers: Headers;
+};
+export type streamJobsResponseError = (streamJobsResponse403 | streamJobsResponse404) & {
+  headers: Headers;
+};
+
+export type streamJobsResponse = (streamJobsResponseSuccess | streamJobsResponseError)
+
+export const getStreamJobsUrl = (orgSlug: string,) => {
+
+
+  
+
+  return `/api/v1/orgs/${orgSlug}/jobs/stream/`
+}
+
+export const streamJobs = async (orgSlug: string, options?: RequestInit): Promise<streamJobsResponse> => {
+  
+  return identityFetch<streamJobsResponse>(getStreamJobsUrl(orgSlug),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getStreamJobsQueryKey = (orgSlug?: string,) => {
+    return [
+    `/api/v1/orgs/${orgSlug}/jobs/stream/`
+    ] as const;
+    }
+
+    
+export const getStreamJobsQueryOptions = <TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getStreamJobsQueryKey(orgSlug);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof streamJobs>>> = ({ signal }) => streamJobs(orgSlug, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type StreamJobsQueryResult = NonNullable<Awaited<ReturnType<typeof streamJobs>>>
+export type StreamJobsQueryError = void
+
+
+export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
+ orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof streamJobs>>,
+          TError,
+          Awaited<ReturnType<typeof streamJobs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof streamJobs>>,
+          TError,
+          Awaited<ReturnType<typeof streamJobs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Live job/step events for the organisation (SSE)
+ */
+
+export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
+ orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getStreamJobsQueryOptions(orgSlug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
 /**
  * @summary Retrieve Job
  */

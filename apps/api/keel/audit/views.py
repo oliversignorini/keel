@@ -22,7 +22,7 @@ from keel.audit.models import AuditLog
 from keel.audit.schemas import AuditLogOut
 from keel.core.impersonation import end_impersonation, get_impersonator_id
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.ninja_pagination import paginated
 from keel.organizations.permissions import Perm
 
 
@@ -41,13 +41,26 @@ router = AuditLogResource.router
 impersonation_router = keel_router(tags=["impersonation"])
 
 
-@router.get("/{org_slug}/audit/", response=Page[AuditLogOut], operation_id="listAuditLogs")
+@paginated(
+    router.get,
+    "/{org_slug}/audit/",
+    AuditLogOut,
+    # ddia#18: ordered on the UUIDv7 primary key, not `created_at`.
+    # `created_at` is `auto_now_add`, stamped when the row is actually
+    # inserted — two causally-ordered audit writes can land in either
+    # order depending on which app server's request finishes its
+    # transaction first, and a cursor filtering `created_at__lt=<cursor>`
+    # then silently skips a row inserted afterwards with an earlier
+    # timestamp. `id` is UUIDv7, monotonic by construction
+    # (keel/core/ids.py) and already unique, so it needs no tiebreaker.
+    ordering=("-id",),
+    operation_id="listAuditLogs",
+)
 def list_audit_logs(
     request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
-) -> dict:
+) -> Any:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
-    queryset = selectors.list_audit_logs_for_organization(organization)
-    return paginate(request, queryset)
+    return selectors.list_audit_logs_for_organization(organization)
 
 
 @router.get("/{org_slug}/audit/{id}/", response=AuditLogOut, operation_id="retrieveAuditLog")

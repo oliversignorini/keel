@@ -81,3 +81,26 @@ def test_default_limit_reads_settings(settings) -> None:
     settings.JOBS_MAX_CONCURRENT_PER_ORG = 7
     limiter = OrgConcurrencyLimiter(client=Redis.from_url(settings.JOBS_REDIS_URL))
     assert limiter.limit == 7
+
+
+def test_renew_refreshes_a_held_slot_without_consuming_another() -> None:
+    """ddia#15: the step-boundary heartbeat (``run_job``) calls this —
+    proves it succeeds for a slot already held even when the semaphore is
+    fully saturated, and that it does not itself count as a new
+    acquisition."""
+    limiter = _limiter(limit=1)
+    org = _org_id()
+    assert limiter.try_acquire(org, "job-1") is True
+    assert limiter.renew(org, "job-1") is True
+    assert limiter.current_count(org) == 1
+    limiter.release(org, "job-1")
+
+
+def test_acquire_reads_time_from_redis_not_the_caller() -> None:
+    """ddia#15: a worker with a skewed local clock must not decide expiry
+    — this module must not import ``time`` at all, so there is nothing
+    for a caller's clock to feed in; ``TIME`` is read inside the Lua
+    script from Redis's own clock instead."""
+    import keel.jobs.concurrency as concurrency_module
+
+    assert not hasattr(concurrency_module, "time")

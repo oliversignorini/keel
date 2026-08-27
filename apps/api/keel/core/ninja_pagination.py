@@ -16,7 +16,8 @@ types beyond Django's own.
 
 from base64 import b64decode, b64encode
 from collections import namedtuple
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from functools import wraps
 from typing import Any, Generic, TypeVar
 from urllib import parse
 
@@ -321,3 +322,48 @@ def paginate(
         paginator.ordering = ordering
     page = paginator.paginate_queryset(queryset, request)
     return paginator.get_paginated_response(page)
+
+
+def paginated(
+    router_method: Callable[..., Any],
+    path: str,
+    schema: Any,
+    *,
+    ordering: Sequence[str] | None = None,
+    **route_kwargs: Any,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Declares a paginated list route in one place (posd finding 8, for
+    ``keel.jobs``/``keel.audit`` — the heaviest list surfaces): the
+    response schema (``Page[schema]``) and the ordering are stated once
+    here instead of the two or three places a hand-rolled
+    ``@router.get(..., response=Page[XOut])`` plus a bare
+    ``paginate(request, queryset)`` call requires — and whenever the
+    queryset carries its own ``.order_by()``, that same ordering used to
+    need repeating as ``paginate(..., ordering=...)`` or it was silently
+    overridden, exactly the trap this decorator removes by taking
+    ``ordering`` once, here, and never asking the view body to restate it.
+
+    The decorated view still declares ``cursor``/``limit`` as ordinary
+    parameters — Ninja needs the real signature for both its OpenAPI
+    document and its own request-argument resolution, so this can't hide
+    them — but returns a plain queryset instead of calling ``paginate``
+    itself::
+
+        @paginated(router.get, "/{org_slug}/jobs/", JobOut, operation_id="listJobs")
+        def list_jobs(request, org_slug, status=None, cursor=None, limit=None):
+            ...
+            return queryset
+    """
+
+    def decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(view_func)
+        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> dict[str, Any]:
+            queryset = view_func(request, *args, **kwargs)
+            return paginate(request, queryset, ordering=ordering)
+
+        registered: Callable[..., Any] = router_method(path, response=Page[schema], **route_kwargs)(
+            wrapper
+        )
+        return registered
+
+    return decorator

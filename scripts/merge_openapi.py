@@ -116,6 +116,85 @@ def merge(base: dict, extra: dict, extra_label: str) -> dict:
     }
 
 
+# api-patterns finding 23: the SSE job stream is served by a separate
+# ASGI service (config/urls_stream.py, keel/jobs/sse.py) that Ninja never
+# routes through, so `api.get_openapi_schema()` below knows nothing about
+# it — nothing detects drift between the events it actually emits
+# (keel/jobs/pubsub.py's `job_event`/`step_event`, both now carrying a
+# `seq` — ddia#16) and whatever the frontend assumed. Declared here by
+# hand instead, in the one place two independently-generated specs are
+# already combined, so it at least reaches the document even though
+# Ninja never serves it.
+_JOB_STREAM_PATH = "/api/v1/orgs/{org_slug}/jobs/stream/"
+_JOB_STREAM_SCHEMA_NAME = "JobStreamEvent"
+_JOB_STREAM_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "description": (
+        "One Server-Sent Event payload from GET " + _JOB_STREAM_PATH + " — a `job` or "
+        "`step` transition for any job in the organisation "
+        "(keel/jobs/pubsub.py `job_event`/`step_event`). `seq` is a per-organisation, "
+        "monotonically increasing counter (ddia#16): a client reconnecting after a gap "
+        "compares the seq it last saw against the first seq of the new connection and, "
+        "on any gap, refetches GET " + "/api/v1/orgs/{org_slug}/jobs/" + " rather than "
+        "trusting a stream it knows skipped an event."
+    ),
+    "properties": {
+        "type": {"type": "string", "enum": ["job", "step"]},
+        "seq": {"type": "integer"},
+        "job_id": {"type": "string", "format": "uuid"},
+        "status": {"type": "string"},
+        "job_type": {"type": "string"},
+        "result_ref": {"type": "string"},
+        "error": {"type": "string"},
+        "step_id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "ordinal": {"type": "integer"},
+        "output_ref": {"type": "string"},
+    },
+    "required": ["type", "seq", "job_id"],
+}
+
+
+def _add_job_stream_path(spec: dict) -> None:
+    spec.setdefault("components", {}).setdefault("schemas", {})[_JOB_STREAM_SCHEMA_NAME] = (
+        _JOB_STREAM_SCHEMA
+    )
+    spec.setdefault("paths", {})[_JOB_STREAM_PATH] = {
+        "get": {
+            "operationId": "streamJobs",
+            "tags": ["jobs"],
+            "summary": "Live job/step events for the organisation (SSE)",
+            "description": (
+                "Server-Sent Events, not served by this Ninja app — see "
+                "config/urls_stream.py and keel/jobs/sse.py. Declared here so the "
+                "event shape is part of the published contract even though no "
+                "generated client method calls it directly (EventSource is the "
+                "actual client)."
+            ),
+            "parameters": [
+                {
+                    "name": "org_slug",
+                    "in": "path",
+                    "required": True,
+                    "schema": {"type": "string"},
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "text/event-stream of JobStreamEvent payloads.",
+                    "content": {
+                        "text/event-stream": {
+                            "schema": {"$ref": f"#/components/schemas/{_JOB_STREAM_SCHEMA_NAME}"}
+                        }
+                    },
+                },
+                "403": {"description": "Authenticated but lacks jobs.view."},
+                "404": {"description": "Unknown or non-member organisation."},
+            },
+        }
+    }
+
+
 def build_ninja_spec() -> dict:
     from keel.core.ninja_api import api
 
@@ -123,7 +202,9 @@ def build_ninja_spec() -> dict:
     # subclass with extra behaviour) — coerce to a plain dict so the rest
     # of this script (which round-trips everything through json.dumps)
     # doesn't depend on that subclass's methods surviving the trip.
-    return dict(api.get_openapi_schema())
+    spec = dict(api.get_openapi_schema())
+    _add_job_stream_path(spec)
+    return spec
 
 
 # allauth headless's own schema (allauth.headless.spec.internal.schema.get_schema)
