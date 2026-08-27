@@ -13,7 +13,7 @@ in production between the response and the broker delivering the task.
 import time
 
 import pytest
-from rest_framework.test import APIClient
+from django.test import Client
 
 from keel.accounts.models import User
 from keel.jobs.demo import DEMO_JOB_TYPE
@@ -35,9 +35,9 @@ def _user(prefix: str = "user") -> User:
     )
 
 
-def _client_for(user: User) -> APIClient:
-    client = APIClient()
-    client.force_authenticate(user=user)
+def _client_for(user: User) -> Client:
+    client = Client()
+    client.force_login(user)
     return client
 
 
@@ -59,15 +59,16 @@ def test_create_job_returns_202_quickly_with_the_work_not_yet_started() -> None:
     response = client.post(
         f"/api/v1/organizations/{org.slug}/jobs/",
         {"type": DEMO_JOB_TYPE, "params": {"items": [1]}},
-        format="json",
+        content_type="application/json",
     )
     elapsed_ms = (time.perf_counter() - started) * 1000
 
-    assert response.status_code == 202, response.data
-    assert response.data["status"] == Job.STATUS_QUEUED
+    assert response.status_code == 202, response.json()
+    body = response.json()
+    assert body["status"] == Job.STATUS_QUEUED
     assert elapsed_ms < 300, f"POST took {elapsed_ms:.1f}ms"
 
-    job = Job.objects.get(pk=response.data["id"])
+    job = Job.objects.get(pk=body["id"])
     assert job.status == Job.STATUS_QUEUED
     assert job.started_at is None
 
@@ -75,18 +76,23 @@ def test_create_job_returns_202_quickly_with_the_work_not_yet_started() -> None:
 def test_replaying_the_same_idempotency_key_over_http_returns_the_original_job() -> None:
     org, owner = _org_with_owner()
     client = _client_for(owner)
-    headers = {"HTTP_IDEMPOTENCY_KEY": "replay-key-1"}
 
     first = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/", {"type": DEMO_JOB_TYPE}, **headers
+        f"/api/v1/organizations/{org.slug}/jobs/",
+        {"type": DEMO_JOB_TYPE},
+        content_type="application/json",
+        HTTP_IDEMPOTENCY_KEY="replay-key-1",
     )
     second = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/", {"type": DEMO_JOB_TYPE}, **headers
+        f"/api/v1/organizations/{org.slug}/jobs/",
+        {"type": DEMO_JOB_TYPE},
+        content_type="application/json",
+        HTTP_IDEMPOTENCY_KEY="replay-key-1",
     )
 
     assert first.status_code == 202
     assert second.status_code == 202
-    assert second.data["id"] == first.data["id"]
+    assert second.json()["id"] == first.json()["id"]
     assert Job.objects.filter(organization=org).count() == 1
 
 
@@ -103,7 +109,7 @@ def test_list_jobs_filterable_by_status() -> None:
     response = client.get(f"/api/v1/organizations/{org.slug}/jobs/?status=succeeded")
 
     assert response.status_code == 200
-    statuses = [row["status"] for row in response.data["results"]]
+    statuses = [row["status"] for row in response.json()["results"]]
     assert statuses == [Job.STATUS_SUCCEEDED]
 
 
@@ -116,7 +122,7 @@ def test_retrieve_a_job_includes_its_steps() -> None:
     response = client.get(f"/api/v1/organizations/{org.slug}/jobs/{job.id}/")
 
     assert response.status_code == 200
-    assert len(response.data["steps"]) == 1
+    assert len(response.json()["steps"]) == 1
 
 
 def test_cancel_marks_a_queued_job_failed() -> None:
@@ -127,7 +133,7 @@ def test_cancel_marks_a_queued_job_failed() -> None:
     response = client.post(f"/api/v1/organizations/{org.slug}/jobs/{job.id}/cancel/")
 
     assert response.status_code == 200
-    assert response.data["status"] == Job.STATUS_FAILED
+    assert response.json()["status"] == Job.STATUS_FAILED
 
 
 def test_a_member_without_jobs_create_is_denied_with_a_reason() -> None:
@@ -139,11 +145,16 @@ def test_a_member_without_jobs_create_is_denied_with_a_reason() -> None:
     )
     client = _client_for(member)
 
-    response = client.post(f"/api/v1/organizations/{org.slug}/jobs/", {"type": DEMO_JOB_TYPE})
+    response = client.post(
+        f"/api/v1/organizations/{org.slug}/jobs/",
+        {"type": DEMO_JOB_TYPE},
+        content_type="application/json",
+    )
 
     assert response.status_code == 403
-    assert response.data["error"]["code"] == "insufficient_role"
-    assert response.data["error"]["details"]["required"] == Perm.JOBS_CREATE
+    body = response.json()
+    assert body["error"]["code"] == "insufficient_role"
+    assert body["error"]["details"]["required"] == Perm.JOBS_CREATE
 
 
 def test_cross_organization_job_access_404s() -> None:

@@ -13,6 +13,7 @@ from keel.billing.views import plans_router as billing_plans_router
 from keel.billing.views import router as billing_router
 from keel.billing.views import webhook_router as billing_webhook_router
 from keel.core.ninja_api import api as ninja_api
+from keel.jobs.views import router as jobs_router
 from keel.widgets.views import router as widgets_router
 
 # Every app's Ninja router mounts on this one shared api instance (stage
@@ -25,6 +26,7 @@ ninja_api.add_router("", audit_impersonation_router)
 ninja_api.add_router("", billing_plans_router)
 ninja_api.add_router("/organizations", billing_router)
 ninja_api.add_router("", billing_webhook_router)
+ninja_api.add_router("/organizations", jobs_router)
 
 
 def healthz(request: HttpRequest) -> JsonResponse:
@@ -62,7 +64,6 @@ urlpatterns = [
     path("api/v1/", ninja_api.urls),
     path("api/v1/", include("keel.organizations.urls")),
     path("api/v1/", include("keel.files.urls")),
-    path("api/v1/", include("keel.jobs.urls")),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
     # the social-provider OAuth handshake redirects through them (PRD §8
     # Phase 2 A.1; allauth headless installation docs).
