@@ -2,6 +2,8 @@
 invariant 7 — the cross-org meta-test walk) and directly by this app's
 own tests."""
 
+import hashlib
+
 from django.utils.crypto import get_random_string
 
 from keel.accounts.models import User
@@ -17,8 +19,10 @@ def file_upload_factory(organization: Organization) -> FileUpload:
     return FileUpload.objects.create(
         organization=organization,
         uploader=uploader,
-        key=f"{organization.pk}/{get_random_string(12)}",
+        filename="report.pdf",
+        key=f"org/{organization.pk}/{get_random_string(12)}",
         content_type="application/pdf",
         size=1,
+        checksum_sha256=hashlib.sha256(b"placeholder").hexdigest(),
         status=FileUpload.STATUS_PENDING,
     )

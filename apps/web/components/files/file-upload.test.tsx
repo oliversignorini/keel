@@ -17,14 +17,16 @@ vi.mock("@/lib/files/api", () => ({
 
 const PENDING_FILE = {
   id: "file-1",
-  key: "org/1/uuid/report.pdf",
+  filename: "report.pdf",
   content_type: "application/pdf",
   size: 100,
   status: "pending",
+  failure_reason: "",
+  completed_at: null,
   created_at: "2026-01-01T00:00:00Z",
 };
 
-const COMPLETE_FILE = { ...PENDING_FILE, status: "complete" as const };
+const COMPLETE_FILE = { ...PENDING_FILE, status: "available" as const };
 
 function selectFile() {
   const input = screen.getByLabelText("Upload file") as HTMLInputElement;
@@ -57,13 +59,9 @@ describe("<FileUpload>", () => {
     render(<FileUpload orgSlug="acme" onComplete={onComplete} />);
     selectFile();
 
-    await screen.findByText(/Uploaded: org\/1\/uuid\/report\.pdf/);
+    await screen.findByText(/Uploaded: report\.pdf/);
 
-    expect(createPresignedUploadMock).toHaveBeenCalledWith("acme", {
-      filename: "report.pdf",
-      content_type: "application/pdf",
-      size: 5,
-    });
+    expect(createPresignedUploadMock).toHaveBeenCalledWith("acme", expect.any(File));
     expect(completeUploadMock).toHaveBeenCalledWith("acme", "file-1");
     expect(onComplete).toHaveBeenCalledWith(COMPLETE_FILE);
   });

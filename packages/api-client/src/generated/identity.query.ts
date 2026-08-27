@@ -416,20 +416,31 @@ export interface ErrorResponse {
   status?: ErrorResponseStatus;
 }
 
+export interface FileDownloadUrlOut {
+  download_url: string;
+}
+
+export type FileUploadOutCompletedAt = string | null;
+
 export type FileUploadOutStatus = typeof FileUploadOutStatus[keyof typeof FileUploadOutStatus];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const FileUploadOutStatus = {
   pending: 'pending',
-  complete: 'complete',
+  available: 'available',
+  failed: 'failed',
+  expired: 'expired',
+  deleted: 'deleted',
 } as const;
 
 export interface FileUploadOut {
+  completed_at: FileUploadOutCompletedAt;
   content_type: string;
   created_at: string;
+  failure_reason: string;
+  filename: string;
   id: string;
-  key: string;
   size: number;
   status: FileUploadOutStatus;
 }
@@ -709,6 +720,16 @@ export interface PageAuditLogOut {
   results: AuditLogOut[];
 }
 
+export type PageFileUploadOutNext = string | null;
+
+export type PageFileUploadOutPrevious = string | null;
+
+export interface PageFileUploadOut {
+  next: PageFileUploadOutNext;
+  previous: PageFileUploadOutPrevious;
+  results: FileUploadOut[];
+}
+
 export type PageInvitationOutNext = string | null;
 
 export type PageInvitationOutPrevious = string | null;
@@ -827,7 +848,27 @@ export interface PlanOut {
   sort_order: number;
 }
 
+/**
+ * posd#7: the create-upload route returned a bare ``dict``
+(``response={201: dict}``), which the generated TypeScript client
+types as ``void`` — the fix the review names, ``PresignedUploadOut``,
+typed as its own schema rather than folded onto ``FileUploadOut`` so
+``upload_url`` (a one-time, expiring value, never worth persisting or
+displaying alongside a file's other fields) stays out of every other
+response that reuses ``FileUploadOut``.
+ */
+export interface PresignedUploadOut {
+  file: FileUploadOut;
+  upload_url: string;
+}
+
 export interface PresignedUploadRequest {
+  /**
+   * @minLength 64
+   * @maxLength 64
+   * @pattern ^[0-9a-fA-F]{64}$
+   */
+  checksum_sha256: string;
   /** @maxLength 255 */
   content_type: string;
   /** @maxLength 255 */
@@ -1642,7 +1683,10 @@ cursor?: string | null;
 limit?: number | null;
 };
 
-export type CreateUpload201 = { [key: string]: unknown };
+export type ListFilesParams = {
+cursor?: string | null;
+limit?: number | null;
+};
 
 export type ListInvitationsParams = {
 cursor?: string | null;
@@ -7102,10 +7146,175 @@ export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrie
 
 
 /**
+ * @summary List Files
+ */
+export type listFilesResponse200 = {
+  data: PageFileUploadOut
+  status: 200
+}
+
+export type listFilesResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listFilesResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listFilesResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listFilesResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type listFilesResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type listFilesResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listFilesResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
+    
+export type listFilesResponseSuccess = (listFilesResponse200) & {
+  headers: Headers;
+};
+export type listFilesResponseError = (listFilesResponse400 | listFilesResponse401 | listFilesResponse403 | listFilesResponse404 | listFilesResponse409 | listFilesResponse422 | listFilesResponse429) & {
+  headers: Headers;
+};
+
+export type listFilesResponse = (listFilesResponseSuccess | listFilesResponseError)
+
+export const getListFilesUrl = (orgSlug: string,
+    params?: ListFilesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/orgs/${orgSlug}/files/?${stringifiedParams}` : `/api/v1/orgs/${orgSlug}/files/`
+}
+
+export const listFiles = async (orgSlug: string,
+    params?: ListFilesParams, options?: RequestInit): Promise<listFilesResponse> => {
+  
+  return identityFetch<listFilesResponse>(getListFilesUrl(orgSlug,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getListFilesQueryKey = (orgSlug?: string,
+    params?: ListFilesParams,) => {
+    return [
+    `/api/v1/orgs/${orgSlug}/files/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListFilesQueryOptions = <TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(orgSlug: string,
+    params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFilesQueryKey(orgSlug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFiles>>> = ({ signal }) => listFiles(orgSlug,params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ListFilesQueryResult = NonNullable<Awaited<ReturnType<typeof listFiles>>>
+export type ListFilesQueryError = ErrorEnvelope
+
+
+export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    params: undefined |  ListFilesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFiles>>,
+          TError,
+          Awaited<ReturnType<typeof listFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFiles>>,
+          TError,
+          Awaited<ReturnType<typeof listFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary List Files
+ */
+
+export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getListFilesQueryOptions(orgSlug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
  * @summary Create Upload
  */
 export type createUploadResponse201 = {
-  data: CreateUpload201
+  data: PresignedUploadOut
   status: 201
 }
 
@@ -7224,8 +7433,130 @@ export const useCreateUpload = <TError = ErrorEnvelope,
     }
     
 /**
- * Scoped to ``organization`` in the same lookup as the completion
-view above — the mechanism the cross-tenant test in
+ * @summary Delete File
+ */
+export type deleteFileResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteFileResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type deleteFileResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteFileResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteFileResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteFileResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type deleteFileResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type deleteFileResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
+    
+export type deleteFileResponseSuccess = (deleteFileResponse204) & {
+  headers: Headers;
+};
+export type deleteFileResponseError = (deleteFileResponse400 | deleteFileResponse401 | deleteFileResponse403 | deleteFileResponse404 | deleteFileResponse409 | deleteFileResponse422 | deleteFileResponse429) & {
+  headers: Headers;
+};
+
+export type deleteFileResponse = (deleteFileResponseSuccess | deleteFileResponseError)
+
+export const getDeleteFileUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/orgs/${orgSlug}/files/${id}/`
+}
+
+export const deleteFile = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<deleteFileResponse> => {
+  
+  return identityFetch<deleteFileResponse>(getDeleteFileUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getDeleteFileMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{orgSlug: string;id: string}, TContext> => {
+
+const mutationKey = ['deleteFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFile>>, {orgSlug: string;id: string}> = (props) => {
+          const {orgSlug,id} = props ?? {};
+
+          return  deleteFile(orgSlug,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFile>>>
+    
+    export type DeleteFileMutationError = ErrorEnvelope
+
+    /**
+ * @summary Delete File
+ */
+export const useDeleteFile = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteFile>>,
+        TError,
+        {orgSlug: string;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteFileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Scoped to ``organization`` in the same lookup as every other
+action above — the mechanism the cross-tenant test in
 ``keel/files/tests/test_uploads.py`` exercises directly.
  * @summary Retrieve Upload
  */
@@ -7502,6 +7833,450 @@ export const useCompleteUpload = <TError = ErrorEnvelope,
       > => {
 
       const mutationOptions = getCompleteUploadMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    
+/**
+ * Returns a fresh, short-lived download URL rather than embedding
+one in every list/retrieve response — a presigned GET URL is a
+credential in its own right (PRD §4 invariant 7's "unreadable across
+tenants" applies to it too), so it's only minted for the caller who
+just proved, via ``resolve_and_authorize``, that they're allowed to
+read this row.
+ * @summary Get Download Url
+ */
+export type getFileDownloadUrlResponse200 = {
+  data: FileDownloadUrlOut
+  status: 200
+}
+
+export type getFileDownloadUrlResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type getFileDownloadUrlResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getFileDownloadUrlResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type getFileDownloadUrlResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type getFileDownloadUrlResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type getFileDownloadUrlResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type getFileDownloadUrlResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
+    
+export type getFileDownloadUrlResponseSuccess = (getFileDownloadUrlResponse200) & {
+  headers: Headers;
+};
+export type getFileDownloadUrlResponseError = (getFileDownloadUrlResponse400 | getFileDownloadUrlResponse401 | getFileDownloadUrlResponse403 | getFileDownloadUrlResponse404 | getFileDownloadUrlResponse409 | getFileDownloadUrlResponse422 | getFileDownloadUrlResponse429) & {
+  headers: Headers;
+};
+
+export type getFileDownloadUrlResponse = (getFileDownloadUrlResponseSuccess | getFileDownloadUrlResponseError)
+
+export const getGetFileDownloadUrlUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/orgs/${orgSlug}/files/${id}/download/`
+}
+
+export const getFileDownloadUrl = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<getFileDownloadUrlResponse> => {
+  
+  return identityFetch<getFileDownloadUrlResponse>(getGetFileDownloadUrlUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetFileDownloadUrlQueryKey = (orgSlug?: string,
+    id?: string,) => {
+    return [
+    `/api/v1/orgs/${orgSlug}/files/${id}/download/`
+    ] as const;
+    }
+
+    
+export const getGetFileDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFileDownloadUrlQueryKey(orgSlug,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFileDownloadUrl>>> = ({ signal }) => getFileDownloadUrl(orgSlug,id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type GetFileDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeof getFileDownloadUrl>>>
+export type GetFileDownloadUrlQueryError = ErrorEnvelope
+
+
+export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFileDownloadUrl>>,
+          TError,
+          Awaited<ReturnType<typeof getFileDownloadUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFileDownloadUrl>>,
+          TError,
+          Awaited<ReturnType<typeof getFileDownloadUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Get Download Url
+ */
+
+export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getGetFileDownloadUrlQueryOptions(orgSlug,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * @summary Local Object Download
+ */
+export type localObjectDownloadResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type localObjectDownloadResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type localObjectDownloadResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type localObjectDownloadResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type localObjectDownloadResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type localObjectDownloadResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type localObjectDownloadResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type localObjectDownloadResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
+    
+export type localObjectDownloadResponseSuccess = (localObjectDownloadResponse200) & {
+  headers: Headers;
+};
+export type localObjectDownloadResponseError = (localObjectDownloadResponse400 | localObjectDownloadResponse401 | localObjectDownloadResponse403 | localObjectDownloadResponse404 | localObjectDownloadResponse409 | localObjectDownloadResponse422 | localObjectDownloadResponse429) & {
+  headers: Headers;
+};
+
+export type localObjectDownloadResponse = (localObjectDownloadResponseSuccess | localObjectDownloadResponseError)
+
+export const getLocalObjectDownloadUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/orgs/${orgSlug}/files/${id}/local-object/`
+}
+
+export const localObjectDownload = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<localObjectDownloadResponse> => {
+  
+  return identityFetch<localObjectDownloadResponse>(getLocalObjectDownloadUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getLocalObjectDownloadQueryKey = (orgSlug?: string,
+    id?: string,) => {
+    return [
+    `/api/v1/orgs/${orgSlug}/files/${id}/local-object/`
+    ] as const;
+    }
+
+    
+export const getLocalObjectDownloadQueryOptions = <TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getLocalObjectDownloadQueryKey(orgSlug,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof localObjectDownload>>> = ({ signal }) => localObjectDownload(orgSlug,id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type LocalObjectDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof localObjectDownload>>>
+export type LocalObjectDownloadQueryError = ErrorEnvelope
+
+
+export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof localObjectDownload>>,
+          TError,
+          Awaited<ReturnType<typeof localObjectDownload>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof localObjectDownload>>,
+          TError,
+          Awaited<ReturnType<typeof localObjectDownload>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Local Object Download
+ */
+
+export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
+ orgSlug: string,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getLocalObjectDownloadQueryOptions(orgSlug,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+/**
+ * @summary Local Object Upload
+ */
+export type localObjectUploadResponse204 = {
+  data: void
+  status: 204
+}
+
+export type localObjectUploadResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type localObjectUploadResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type localObjectUploadResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type localObjectUploadResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type localObjectUploadResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type localObjectUploadResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type localObjectUploadResponse429 = {
+  data: ErrorEnvelope
+  status: 429
+}
+    
+export type localObjectUploadResponseSuccess = (localObjectUploadResponse204) & {
+  headers: Headers;
+};
+export type localObjectUploadResponseError = (localObjectUploadResponse400 | localObjectUploadResponse401 | localObjectUploadResponse403 | localObjectUploadResponse404 | localObjectUploadResponse409 | localObjectUploadResponse422 | localObjectUploadResponse429) & {
+  headers: Headers;
+};
+
+export type localObjectUploadResponse = (localObjectUploadResponseSuccess | localObjectUploadResponseError)
+
+export const getLocalObjectUploadUrl = (orgSlug: string,
+    id: string,) => {
+
+
+  
+
+  return `/api/v1/orgs/${orgSlug}/files/${id}/local-object/`
+}
+
+export const localObjectUpload = async (orgSlug: string,
+    id: string, options?: RequestInit): Promise<localObjectUploadResponse> => {
+  
+  return identityFetch<localObjectUploadResponse>(getLocalObjectUploadUrl(orgSlug,id),
+  {      
+    ...options,
+    method: 'PUT'
+    
+    
+  }
+);}
+
+
+
+
+export const getLocalObjectUploadMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof localObjectUpload>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof localObjectUpload>>, TError,{orgSlug: string;id: string}, TContext> => {
+
+const mutationKey = ['localObjectUpload'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof localObjectUpload>>, {orgSlug: string;id: string}> = (props) => {
+          const {orgSlug,id} = props ?? {};
+
+          return  localObjectUpload(orgSlug,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LocalObjectUploadMutationResult = NonNullable<Awaited<ReturnType<typeof localObjectUpload>>>
+    
+    export type LocalObjectUploadMutationError = ErrorEnvelope
+
+    /**
+ * @summary Local Object Upload
+ */
+export const useLocalObjectUpload = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof localObjectUpload>>, TError,{orgSlug: string;id: string}, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof localObjectUpload>>,
+        TError,
+        {orgSlug: string;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getLocalObjectUploadMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -37,11 +37,13 @@ QUEUE_SCHEDULED = "scheduled"
 _QUEUE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("keel.jobs.tasks.*", QUEUE_SCHEDULED),
     ("keel.jobs.runner.sweep_stuck_jobs_task", QUEUE_SCHEDULED),
+    ("keel.files.tasks.sweep_stale_uploads", QUEUE_SCHEDULED),
     ("keel.notifications.tasks.*", QUEUE_EMAIL),
     ("keel.billing.tasks.dispatch_stripe_event", QUEUE_EXTERNAL),
     ("keel.billing.tasks.sync_seat_quantity_task", QUEUE_EXTERNAL),
     ("keel.billing.tasks.sweep_unprocessed_stripe_events", QUEUE_EXTERNAL),
     ("keel.connections.tasks.*", QUEUE_EXTERNAL),
+    ("keel.files.tasks.purge_deleted_file_object_task", QUEUE_EXTERNAL),
 )
 
 

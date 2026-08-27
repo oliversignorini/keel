@@ -244,6 +244,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "keel.jobs.runner.sweep_stuck_jobs_task",
         "schedule": crontab(minute="*/15"),
     },
+    # Phase 13 (ddia#21) — expires abandoned pending uploads and retries
+    # any tombstoned row whose storage object wasn't purged yet.
+    "sweep-stale-file-uploads": {
+        "task": "keel.files.tasks.sweep_stale_uploads",
+        "schedule": crontab(minute="*/15"),
+    },
 }
 
 # --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -
@@ -313,14 +319,69 @@ RESEND_API_KEY = env("RESEND_API_KEY", default="")
 # credentials exist for this project — dev points ``R2_ENDPOINT_URL`` at
 # the MinIO container in infra/compose.dev.yml (S3-API-compatible), and
 # tests use ``moto``'s mocked S3 (keel/files/tests/test_uploads.py). Prod
-# points these at real Cloudflare R2 credentials; the client code
-# (keel.files.r2_client) is unchanged either way — R2 and MinIO both
-# speak the S3 API, so this is purely a settings swap.
+# points these at real Cloudflare R2 credentials; the adapter code
+# (keel.files.storage.S3CompatibleStorage) is unchanged either way — R2
+# and MinIO both speak the S3 API, so this is purely a settings swap.
 R2_ENDPOINT_URL = env("R2_ENDPOINT_URL", default="http://localhost:9000")
 R2_ACCESS_KEY_ID = env("R2_ACCESS_KEY_ID", default="minioadmin")
 R2_SECRET_ACCESS_KEY = env("R2_SECRET_ACCESS_KEY", default="minioadmin")
 R2_BUCKET = env("R2_BUCKET", default="keel-dev")
 R2_PUBLIC_URL = env("R2_PUBLIC_URL", default="http://localhost:9000/keel-dev")
+
+# --- Storage seam (docs/plans/phase-13.md; docs/storage.md) -----------------
+# ``STORAGES["files"]`` selects the adapter keel.files.services/views call
+# through keel.files.storage.get_storage() — never a concrete provider
+# import. Flip KEEL_FILES_STORAGE_BACKEND alone (no OPTIONS edit, no code
+# change) to move between:
+#   - keel.files.storage.S3CompatibleStorage  (MinIO / R2 / real S3 — the
+#     default; OPTIONS below point it at MinIO in dev, R2 in prod, both
+#     via the R2_* variables above)
+#   - keel.files.storage.LocalFileSystemStorage (plain disk under
+#     MEDIA_ROOT — for a developer who doesn't want to run MinIO; see
+#     that class's docstring for what its "presigned" URL actually is)
+KEEL_FILES_STORAGE_BACKEND = env(
+    "KEEL_FILES_STORAGE_BACKEND", default="keel.files.storage.S3CompatibleStorage"
+)
+STORAGES = {
+    # Django's own default — nothing in this codebase uses
+    # django.core.files.storage.default_storage (file uploads go through
+    # the "files" alias below instead), but STORAGES is an all-or-nothing
+    # setting: defining the dict at all means "default" must be present
+    # too, or FileField's default storage silently disappears.
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "files": {
+        "BACKEND": KEEL_FILES_STORAGE_BACKEND,
+        # Consumed only by S3CompatibleStorage; LocalFileSystemStorage's
+        # constructor accepts and ignores these (its own OPTIONS shape —
+        # just "root" — is unrelated), which is what makes switching the
+        # BACKEND line alone sufficient.
+        "OPTIONS": {
+            "endpoint_url": R2_ENDPOINT_URL,
+            "access_key_id": R2_ACCESS_KEY_ID,
+            "secret_access_key": R2_SECRET_ACCESS_KEY,
+            "bucket": R2_BUCKET,
+        },
+    },
+}
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Service-layer upload policy (docs/plans/phase-13.md "Enforce size and
+# content-type limits at the service layer, configurably"), checked
+# against both the client's declared values at create time and the
+# storage provider's observed HeadObject values at complete time
+# (ddia#21) — so a client can't declare a small size to pass the create
+# check and then upload something larger. Empty allowlist means "no
+# content-type restriction"; a real deployment sets this to the document
+# types it actually accepts.
+FILES_MAX_UPLOAD_SIZE_BYTES = env.int("FILES_MAX_UPLOAD_SIZE_BYTES", default=100 * 1024 * 1024)
+FILES_ALLOWED_CONTENT_TYPES = env.list("FILES_ALLOWED_CONTENT_TYPES", default=[])
+
+# keel.files.tasks.sweep_stale_uploads (ddia#21's "beat sweeper for stale
+# pending rows") expires a pending upload nobody ever completed after
+# this many seconds.
+FILES_PENDING_UPLOAD_TTL_SECONDS = env.int("FILES_PENDING_UPLOAD_TTL_SECONDS", default=60 * 60 * 24)
 
 # Audit log retention (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
 # 5.4) — keel.audit.services.purge_old_audit_logs, run weekly.
