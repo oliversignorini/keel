@@ -46,7 +46,8 @@ def test_subscription_event_captures_a_billing_event() -> None:
                 "customer": org.stripe_customer_id,
                 "status": "active",
                 "items": {"data": [{"price": {"id": price.stripe_price_id}, "quantity": 1}]},
-            }
+            },
+            None,
         )
 
     mock_capture.assert_called_once_with(
@@ -64,7 +65,7 @@ def test_invoice_paid_captures_a_billing_event() -> None:
     org = _org()
 
     with patch("keel.billing.webhooks.capture_billing_event") as mock_capture:
-        webhooks._handle_invoice_paid({"customer": org.stripe_customer_id})
+        webhooks._handle_invoice_paid({"customer": org.stripe_customer_id}, None)
 
     mock_capture.assert_called_once_with(
         distinct_id=str(org.created_by_id),
@@ -77,7 +78,7 @@ def test_invoice_payment_failed_captures_a_billing_event() -> None:
     org = _org()
 
     with patch("keel.billing.webhooks.capture_billing_event") as mock_capture:
-        webhooks._handle_invoice_payment_failed({"customer": org.stripe_customer_id})
+        webhooks._handle_invoice_payment_failed({"customer": org.stripe_customer_id}, None)
 
     mock_capture.assert_called_once_with(
         distinct_id=str(org.created_by_id),
@@ -88,6 +89,6 @@ def test_invoice_payment_failed_captures_a_billing_event() -> None:
 
 def test_invoice_paid_for_an_unknown_customer_does_not_capture() -> None:
     with patch("keel.billing.webhooks.capture_billing_event") as mock_capture:
-        webhooks._handle_invoice_paid({"customer": "cus_does_not_exist"})
+        webhooks._handle_invoice_paid({"customer": "cus_does_not_exist"}, None)
 
     mock_capture.assert_not_called()

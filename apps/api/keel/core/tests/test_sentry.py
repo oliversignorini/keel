@@ -14,7 +14,7 @@ from typing import Any
 
 import sentry_sdk
 
-from keel.core.sentry import init_sentry, report_exception
+from keel.core.sentry import init_sentry, report_exception, report_message
 from keel.core.tests.sentry_stub import CapturingTransport
 
 
@@ -62,6 +62,25 @@ def test_report_exception_tags_the_event() -> None:
     sentry_sdk.get_client().flush()
     event = transport.envelopes[0].get_event()
     assert event["tags"]["task_name"] == "keel.widgets.tasks.notify_widget_created_task"
+
+
+def test_report_message_captures_the_message_and_tags() -> None:
+    """The non-exception seam (ddia#4) — a beat task can report a fact
+    about state (e.g. credit balance drift) with no exception to attach."""
+    transport = _init_with_stub(release="abc123", environment="test")
+
+    report_message(
+        "Credit balance drift detected for organisation org-1",
+        level="warning",
+        tags={"organization_id": "org-1"},
+    )
+
+    sentry_sdk.get_client().flush()
+    assert len(transport.envelopes) == 1
+    event = transport.envelopes[0].get_event()
+    assert event["message"] == "Credit balance drift detected for organisation org-1"
+    assert event["level"] == "warning"
+    assert event["tags"]["organization_id"] == "org-1"
 
 
 def test_release_is_tied_to_the_configured_git_sha() -> None:

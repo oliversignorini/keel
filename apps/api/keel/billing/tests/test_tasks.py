@@ -3,11 +3,15 @@ B.3): atomic dispatch, unhandled event types are marked processed as a
 no-op, a raising handler records ``StripeEvent.error`` and retries, and an
 already-processed event is a no-op on redelivery."""
 
+from datetime import timedelta
+
 import pytest
 import sentry_sdk
+from django.utils import timezone
 
-from keel.billing import tasks, webhooks
-from keel.billing.models import StripeEvent
+from keel.billing import credits, tasks, webhooks
+from keel.billing.models import CreditBalance, StripeEvent
+from keel.billing.tests.factories import make_organization
 from keel.core.sentry import init_sentry
 from keel.core.tests.sentry_stub import CapturingTransport
 
@@ -37,7 +41,7 @@ def test_process_stripe_event_is_a_noop_when_already_processed(
 ) -> None:
     stripe_event = _stripe_event()
     calls = []
-    monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", lambda obj: calls.append(obj))
+    monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", lambda obj, created: calls.append(obj))
     tasks.process_stripe_event(stripe_event)
     assert calls == [{"customer": "cus_x"}]
 
@@ -54,7 +58,7 @@ def test_process_stripe_event_leaves_it_unprocessed_on_failure(
     ``dispatch_stripe_event``'s job, exercised below."""
     stripe_event = _stripe_event()
 
-    def _boom(obj):
+    def _boom(obj, created):
         raise ValueError("organisation not found")
 
     monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", _boom)
@@ -75,7 +79,7 @@ def test_dispatch_stripe_event_retries_then_gives_up_after_max_retries(
     stripe_event = _stripe_event()
     attempts = []
 
-    def _always_fails(obj):
+    def _always_fails(obj, created):
         attempts.append(1)
         raise ValueError("stripe is down")
 
@@ -101,7 +105,7 @@ def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
     settings.CELERY_TASK_EAGER_PROPAGATES = False
     stripe_event = _stripe_event(event_id="evt_sentry")
 
-    def _always_fails(obj):
+    def _always_fails(obj, created):
         raise ValueError("stripe is really down")
 
     monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", _always_fails)
@@ -118,3 +122,88 @@ def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
     event = transport.envelopes[0].get_event()
     assert event["exception"]["values"][-1]["type"] == "ValueError"
     assert event["tags"]["stripe_event_id"] == "evt_sentry"
+
+
+# --- prune_stripe_event_payloads (ddia#10) ----------------------------------
+
+
+def test_prune_nulls_the_payload_of_old_processed_events() -> None:
+    old = _stripe_event(event_id="evt_old")
+    StripeEvent.objects.filter(pk=old.pk).update(
+        processed_at=timezone.now(),
+        received_at=timezone.now() - tasks.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1),
+    )
+
+    pruned = tasks.prune_stripe_event_payloads()
+
+    old.refresh_from_db()
+    assert pruned == 1
+    assert old.payload == {}
+    assert old.type == "invoice.paid"  # the dedup key survives
+
+
+def test_prune_leaves_recent_processed_events_alone() -> None:
+    recent = _stripe_event(event_id="evt_recent")
+    StripeEvent.objects.filter(pk=recent.pk).update(processed_at=timezone.now())
+
+    pruned = tasks.prune_stripe_event_payloads()
+
+    recent.refresh_from_db()
+    assert pruned == 0
+    assert recent.payload != {}
+
+
+def test_prune_leaves_unprocessed_events_alone_regardless_of_age() -> None:
+    """An unprocessed row may still be replayed by
+    ``sweep_unprocessed_stripe_events`` or retried by
+    ``dispatch_stripe_event`` — both need the payload."""
+    unprocessed = _stripe_event(event_id="evt_unprocessed")
+    StripeEvent.objects.filter(pk=unprocessed.pk).update(
+        received_at=timezone.now() - tasks.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1)
+    )
+
+    pruned = tasks.prune_stripe_event_payloads()
+
+    unprocessed.refresh_from_db()
+    assert pruned == 0
+    assert unprocessed.payload != {}
+
+
+# --- check_credit_balances_task (ddia#4) ------------------------------------
+
+
+def test_check_credit_balances_task_reports_drift_via_sentry() -> None:
+    org = make_organization()
+    credits.grant(org, 40)
+    CreditBalance.objects.filter(organization=org).update(balance=999)
+
+    transport = CapturingTransport()
+    init_sentry(transport=transport, release="test-sha")
+    try:
+        count = tasks.check_credit_balances_task()
+        sentry_sdk.get_client().flush()
+    finally:
+        init_sentry()
+
+    assert count == 1
+    assert len(transport.envelopes) == 1
+    event = transport.envelopes[0].get_event()
+    assert str(org.id) in event["message"]
+    assert event["level"] == "warning"
+    assert CreditBalance.objects.get(organization=org).balance == 999  # never repaired
+
+
+def test_check_credit_balances_task_reports_nothing_when_no_drift() -> None:
+    org = make_organization()
+    credits.grant(org, 40)
+
+    transport = CapturingTransport()
+    init_sentry(transport=transport, release="test-sha")
+    try:
+        count = tasks.check_credit_balances_task()
+        sentry_sdk.get_client().flush()
+    finally:
+        init_sentry()
+
+    assert count == 0
+    assert transport.envelopes == []

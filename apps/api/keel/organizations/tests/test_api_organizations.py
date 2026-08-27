@@ -142,6 +142,17 @@ def test_permissions_registry_lists_registered_codes() -> None:
     assert Perm.MEMBERS_VIEW in response.json()["codes"]
 
 
+def test_permissions_registry_sets_cache_control_and_etag() -> None:
+    """api-patterns finding 13: the registry only changes on deploy, not
+    per-request."""
+    client = _client_for(_user())
+
+    response = client.get("/api/v1/permissions/")
+
+    assert response["Cache-Control"] == "public, max-age=300"
+    assert response["ETag"]
+
+
 def test_me_returns_organizations_role_and_permissions() -> None:
     org, creator = _org_with_owner()
     client = _client_for(creator)

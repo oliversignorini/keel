@@ -114,7 +114,17 @@ def requires_entitlement(feature: str) -> Callable[[Callable[..., Any]], Callabl
 def check_limit(organization: Any, resource: str, requested: int = 1) -> None:
     """Gates a quantity (docs/plans/phase-4.md B.4: "``check_limit(org,
     'widgets')`` gates quantities"). A missing or ``None`` limit for
-    ``resource`` means unlimited — see module docstring."""
+    ``resource`` means *not capped* — see module docstring.
+
+    ``resource`` must be a registered counter regardless of what the
+    plan's ``limits`` dict says (ddia#24): checking registration only
+    when ``limit is not None`` used to mean an unregistered resource
+    with no configured limit failed open — silently treated as
+    unlimited — instead of raising ``UnregisteredResource`` the way a
+    registered-but-over-limit call does. Not-capped and unknown-key are
+    now distinguishable: the former returns, the latter raises."""
+    if resource not in _resource_counters:
+        raise UnregisteredResource(resource)
     entitlements = resolve_entitlements(organization)
     limit = entitlements["limits"].get(resource)
     if limit is None:

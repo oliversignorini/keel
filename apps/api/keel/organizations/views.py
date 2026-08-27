@@ -17,12 +17,13 @@ needs org name + locked email to drive signup before there's a session).
 
 from typing import Any
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.utils import timezone
 from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
+from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.ninja_authz import (
     OrgScopedResource,
     keel_router,
@@ -321,8 +322,12 @@ def me(request: Any) -> dict:
 
 
 @me_router.get("/permissions/", response=PermissionCodesOut, operation_id="retrievePermissionCodes")
-def permissions_registry(request: Any) -> dict:
-    return {"codes": selectors.registered_permission_codes()}
+def permissions_registry(request: Any, response: HttpResponse) -> dict:
+    """A Reference Data Holder (api-patterns finding 13) — the permission
+    registry only changes on deploy, not per-request."""
+    codes = selectors.registered_permission_codes()
+    set_reference_data_cache_headers(response, sorted(codes))
+    return {"codes": codes}
 
 
 # --- /invite/<token>/: public GET, authenticated POST ----------------------

@@ -203,6 +203,7 @@ class TestAdjust:
     def test_adjust_writes_a_reasoned_actorful_row_and_updates_balance(self):
         org = make_organization()
         actor = make_user()
+        credits.grant(org, 20)
 
         entry = credits.adjust(org, -7, reason="chargeback", actor=actor)
 
@@ -210,8 +211,23 @@ class TestAdjust:
         assert entry.amount == -7
         assert entry.reason == "chargeback"
         assert entry.actor == actor
-        assert credits.get_balance(org) == -7
+        assert credits.get_balance(org) == 20 - 7
         assert _balance_row(org).balance == _ledger_sum(org)
+
+    def test_adjust_cannot_take_the_balance_below_zero(self):
+        """ddia#5/#23: unlike every other debit in this module, a
+        clawback used to have no floor at all — the database's
+        ``CHECK (balance >= 0)`` is the backstop; this is the readable
+        ``PaymentRequired`` the caller actually gets."""
+        org = make_organization()
+        actor = make_user()
+        credits.grant(org, 5)
+
+        with pytest.raises(PaymentRequired) as exc_info:
+            credits.adjust(org, -6, reason="chargeback exceeds balance", actor=actor)
+
+        assert exc_info.value.code == "adjustment_exceeds_balance"
+        assert credits.get_balance(org) == 5
 
     @pytest.mark.django_db(transaction=True)
     def test_adjust_records_an_audit_entry_on_commit(self):

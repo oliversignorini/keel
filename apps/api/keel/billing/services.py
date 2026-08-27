@@ -7,12 +7,12 @@ from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from keel.billing import stripe_client
 from keel.billing.entitlements import enforce_downgrade_limits
-from keel.billing.models import Plan, Price, Subscription
+from keel.billing.models import CreditBalance, CreditLedgerEntry, Plan, Price, Subscription
 from keel.core.audit import audited, not_audited
 from keel.core.impersonation import forbid_when_impersonating
 from keel.organizations.models import Membership, Organization
@@ -261,6 +261,48 @@ def send_trial_ending_notices() -> int:
         )
         sent += 1
     return sent
+
+
+@not_audited(
+    reason="Read-only report — nothing here mutates, and 'audited' means "
+    "recording a write, not a check. Shared by the rebuild_credit_balances "
+    "--check management command and the nightly check_credit_balances_task "
+    "beat task (ddia#4), so the comparison is written exactly once."
+)
+def check_credit_balances(*, organization_id: str | None = None) -> list[dict[str, Any]]:
+    """Compares ``CreditBalance`` against a fresh ``SUM`` over
+    ``CreditLedgerEntry`` for every organisation (or one, if
+    ``organization_id`` is given), locking the balance row before
+    aggregating (ddia#3: read skew) so nothing commits in the gap. Never
+    writes — report, don't repair (ddia#4): repair is
+    ``manage.py rebuild_credit_balances`` with no ``--check`` flag, run by
+    an operator on purpose, not by this function or its scheduled
+    caller."""
+    organizations = Organization.objects.all()
+    if organization_id:
+        organizations = organizations.filter(id=organization_id)
+
+    drifted: list[dict[str, Any]] = []
+    for organization in organizations.iterator():
+        with transaction.atomic():
+            balance_row, _ = CreditBalance.objects.select_for_update().get_or_create(
+                organization=organization
+            )
+            total = (
+                CreditLedgerEntry.objects.filter(organization=organization).aggregate(
+                    total=models.Sum("amount")
+                )["total"]
+                or 0
+            )
+            if balance_row.balance != total:
+                drifted.append(
+                    {
+                        "organization_id": str(organization.id),
+                        "ledger_total": total,
+                        "balance": balance_row.balance,
+                    }
+                )
+    return drifted
 
 
 @not_audited(

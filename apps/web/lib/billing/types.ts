@@ -8,17 +8,19 @@
  * `apps/api/keel/billing/schemas.py`), so the shapes those routes used to
  * need hand-transcribed here are now aliases onto the generated type.
  *
- * `GET /api/v1/plans/` still needs `PlanPrice`/`PlanEntitlements` below:
- * `PlanOut.prices`/`entitlements` are typed by the generated schema, but
- * only down to `Record<string, unknown>` — `Plan.entitlements` is a
- * Postgres JSONField with no schema of its own (api-patterns finding 15;
- * a real `EntitlementsOut` schema is fold-into-phase-14, not this pass).
+ * Phase 14 did the same for `Plan.entitlements` (api-patterns finding
+ * 15): it's a real `EntitlementsOut` schema now, not a `Record<string,
+ * unknown>` JSONField blob — `PlanEntitlements`/`ResolvedEntitlements`
+ * below are aliases onto the generated type, kept only so call sites
+ * don't have to import `EntitlementsOut` under two different names for
+ * the plan-catalogue and `/me/` cases.
  */
 
 import type {
   CheckoutIn,
   CheckoutSessionOut,
   CreditBalanceOut,
+  EntitlementsOut,
   PlanOut,
   SubscriptionEnvelopeOut,
   SubscriptionOut,
@@ -38,20 +40,15 @@ export interface PlanPrice {
 export type BillingInterval = "month" | "year";
 
 /** `GET /api/v1/plans/` with `prices` narrowed past the generated
- * `Record<string, unknown>`, and `entitlements` past the JSONField. */
-export interface PlanWithPrices extends Omit<PlanOut, "prices" | "entitlements"> {
+ * `Record<string, unknown>`. */
+export interface PlanWithPrices extends Omit<PlanOut, "prices"> {
   prices: PlanPrice[];
-  entitlements: PlanEntitlements;
 }
 
 /** `Plan.entitlements`' shape, per billing/entitlements.py's docstring: a
  * feature list and a per-resource limit map, where a missing key or an
  * explicit `null` means "not capped by this plan". */
-export interface PlanEntitlements {
-  features?: string[];
-  limits?: Record<string, number | null>;
-  [key: string]: unknown;
-}
+export type PlanEntitlements = EntitlementsOut;
 
 /** `plan` is the plan *code* (`SubscriptionOut.resolve_plan`), not an id. */
 export type Subscription = SubscriptionOut;
@@ -79,11 +76,7 @@ export type CheckoutBody = CheckoutIn;
 export type CreditBalanceResponse = CreditBalanceOut;
 
 /** The per-organisation entitlement blob on `GET /api/v1/me/`, resolved
- * by `billing.entitlements.resolve_entitlements`. `lib/org/types.ts`
- * types it as the opaque `Record<string, unknown>` that view's missing
- * schema forces; this is the actual shape, and lib/billing/entitlements.ts
- * is the only thing that reads it. */
-export interface ResolvedEntitlements {
-  features: string[];
-  limits: Record<string, number | null>;
-}
+ * by `billing.entitlements.resolve_entitlements` and typed by the same
+ * generated `EntitlementsOut` schema `PlanEntitlements` above aliases —
+ * `lib/billing/entitlements.ts` is the only thing that reads it. */
+export type ResolvedEntitlements = EntitlementsOut;

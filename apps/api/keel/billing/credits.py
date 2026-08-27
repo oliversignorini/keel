@@ -240,7 +240,15 @@ def adjust(organization: Any, amount: int, *, reason: str, actor: Any) -> Credit
     actor, visible in Django admin and, once Phase 8 wires
     ``set_recorder``, in the audit log via ``@audited``. ``amount`` may
     be negative (a clawback) or positive (a goodwill credit); zero and
-    a blank reason are both rejected so every adjustment is explicit."""
+    a blank reason are both rejected so every adjustment is explicit.
+
+    A clawback cannot take the balance below zero (ddia#5/#23): this
+    used to have no floor at all, unlike every other debit path in this
+    module (``_debit``'s affordability check) — the database's
+    ``CHECK (balance >= 0)`` would have caught it as an ``IntegrityError``
+    with no ``details`` for the caller to act on, so the check is made
+    here instead, as the same ``PaymentRequired`` shape every other
+    over-limit operation raises."""
     if amount == 0:
         raise ValueError("adjustment amount must be non-zero")
     if not reason:
@@ -249,6 +257,13 @@ def adjust(organization: Any, amount: int, *, reason: str, actor: Any) -> Credit
         balance_row, _ = CreditBalance.objects.select_for_update().get_or_create(
             organization=organization
         )
+        new_balance = balance_row.balance + amount
+        if new_balance < 0:
+            raise PaymentRequired(
+                code="adjustment_exceeds_balance",
+                message="This adjustment would take the balance below zero.",
+                details={"balance": balance_row.balance, "amount": amount},
+            )
         entry = CreditLedgerEntry.objects.create(
             organization=organization,
             kind=CreditLedgerEntry.KIND_ADJUSTMENT,
@@ -256,6 +271,6 @@ def adjust(organization: Any, amount: int, *, reason: str, actor: Any) -> Credit
             actor=actor,
             reason=reason,
         )
-        balance_row.balance += amount
+        balance_row.balance = new_balance
         balance_row.save(update_fields=["balance", "updated_at"])
         return entry

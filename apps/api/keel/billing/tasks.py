@@ -34,6 +34,7 @@ from keel.core.tasks import task
 MAX_RETRIES = 5
 RETRY_BACKOFF_BASE_SECONDS = 5
 STALE_EVENT_THRESHOLD = timedelta(minutes=5)
+STRIPE_EVENT_PAYLOAD_RETENTION = timedelta(days=30)
 
 
 def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
@@ -69,7 +70,7 @@ def process_stripe_event(stripe_event: StripeEvent) -> None:
             return
         handler = HANDLERS.get(stripe_event.type)
         if handler is not None:
-            handler(stripe_event.payload["data"]["object"])
+            handler(stripe_event.payload["data"]["object"], stripe_event.payload.get("created"))
         stripe_event.processed_at = timezone.now()
         stripe_event.error = ""
         stripe_event.save(update_fields=["processed_at", "error"])
@@ -110,6 +111,48 @@ def sweep_unprocessed_stripe_events() -> int:
     for event_id in stale_ids:
         dispatch_stripe_event.delay(event_id)
     return len(stale_ids)
+
+
+@shared_task(name="keel.billing.tasks.prune_stripe_event_payloads")
+def prune_stripe_event_payloads() -> int:
+    """Beat task (ddia#10): ``StripeEvent.payload`` is the write-ahead log
+    for billing state and grows monotonically with no retention — table
+    bloat, vacuum pressure on the hottest billing table, and indefinite
+    retention of whatever PII a Stripe event carries. Nulls ``payload``
+    on rows older than ``STRIPE_EVENT_PAYLOAD_RETENTION`` that have
+    already been processed, keeping id/type/timestamps — the dedup key —
+    intact. An unprocessed row is never touched: it may still be replayed
+    by ``sweep_unprocessed_stripe_events`` or retried by
+    ``dispatch_stripe_event``, both of which need the payload."""
+    threshold = timezone.now() - STRIPE_EVENT_PAYLOAD_RETENTION
+    return (
+        StripeEvent.objects.filter(processed_at__isnull=False, received_at__lt=threshold)
+        .exclude(payload={})
+        .update(payload={})
+    )
+
+
+@shared_task(name="keel.billing.tasks.check_credit_balances_task")
+def check_credit_balances_task() -> int:
+    """Beat task (ddia#4): the nightly, read-only counterpart to
+    ``manage.py rebuild_credit_balances --check`` — reports drift via
+    Sentry, never repairs it. Repair stays a manual, operator-run command
+    so a human decides before anything gets rewritten; a scheduled task
+    that both detects *and* silently repairs would erase the evidence of
+    whatever bug caused the drift in the first place."""
+    from keel.billing.services import check_credit_balances
+    from keel.core.sentry import report_message
+
+    drifted = check_credit_balances()
+    for row in drifted:
+        report_message(
+            "Credit balance drift detected for organisation "
+            f"{row['organization_id']}: ledger={row['ledger_total']} "
+            f"balance={row['balance']}",
+            level="warning",
+            tags={"organization_id": row["organization_id"]},
+        )
+    return len(drifted)
 
 
 @task
