@@ -15,7 +15,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@keel/api-client": "workspace:*",
-    "@sentry/nextjs": "^8.47.0",
+    "@sentry/nextjs": "^10.70.0",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-table": "^8.20.5",
     "next": "^15.0.3",
