@@ -216,6 +216,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "keel.jobs.tasks.cleanup_expired_sessions_task",
         "schedule": crontab(hour=1, minute=0),  # daily
     },
+    # Hardening-slice addition (ddia#7) — see keel/billing/tasks.py for why
+    # this sweep exists.
+    "sweep-unprocessed-stripe-events": {
+        "task": "keel.billing.tasks.sweep_unprocessed_stripe_events",
+        "schedule": crontab(minute="*/5"),
+    },
 }
 
 # --- Cookies, CORS, CSRF (PRD §4 "Auth architecture", §10 first named risk) -

@@ -10,6 +10,7 @@ import json
 import pytest
 import stripe
 from django.test import Client as APIClient
+from django.utils import timezone
 
 from keel.billing import tasks
 from keel.billing.models import StripeEvent
@@ -84,15 +85,57 @@ def test_webhook_accepts_correctly_signed_request(
     assert dispatched == ["evt_ok"]
 
 
-def test_webhook_replay_is_a_200_noop_and_does_not_redispatch(
+def test_webhook_replay_of_an_already_processed_event_is_a_200_noop_and_does_not_redispatch(
     settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A replay after the event has genuinely been processed (``processed_at``
+    set) must not re-enqueue — ``process_stripe_event`` would just no-op
+    on it anyway, so there's nothing to gain and no reason to add load."""
     settings.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET
     dispatched = []
     monkeypatch.setattr(
         tasks.dispatch_stripe_event, "delay", lambda event_pk: dispatched.append(event_pk)
     )
     body, header = _signed_request(_event(event_id="evt_replay"))
+    client = APIClient()
+
+    first = client.post(
+        "/api/v1/stripe/webhook/",
+        data=body,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE=header,
+    )
+    StripeEvent.objects.filter(pk="evt_replay").update(processed_at=timezone.now())
+
+    second = client.post(
+        "/api/v1/stripe/webhook/",
+        data=body,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE=header,
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert StripeEvent.objects.filter(pk="evt_replay").count() == 1
+    assert dispatched == ["evt_replay"], (
+        "a replay of an already-processed event must not re-enqueue"
+    )
+
+
+def test_webhook_replay_of_an_unprocessed_event_re_enqueues(
+    settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ddia#7: a replay whose first delivery's row committed but whose
+    ``.delay()`` never reached the broker (simulated here by never
+    actually running the mocked task) must re-enqueue on redelivery,
+    since Stripe stops retrying once it gets a 200 and nothing else
+    would ever dispatch this event again."""
+    settings.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET
+    dispatched = []
+    monkeypatch.setattr(
+        tasks.dispatch_stripe_event, "delay", lambda event_pk: dispatched.append(event_pk)
+    )
+    body, header = _signed_request(_event(event_id="evt_lost_dispatch"))
     client = APIClient()
 
     first = client.post(
@@ -110,5 +153,5 @@ def test_webhook_replay_is_a_200_noop_and_does_not_redispatch(
 
     assert first.status_code == 200
     assert second.status_code == 200
-    assert StripeEvent.objects.filter(pk="evt_replay").count() == 1
-    assert dispatched == ["evt_replay"], "a replay must not re-enqueue processing"
+    assert StripeEvent.objects.filter(pk="evt_lost_dispatch").count() == 1
+    assert dispatched == ["evt_lost_dispatch", "evt_lost_dispatch"]

@@ -20,6 +20,7 @@ shim — see its own docstring for why the two tasks in this module use
 different mechanisms.
 """
 
+from datetime import timedelta
 from typing import Any
 
 from celery import shared_task
@@ -32,6 +33,7 @@ from keel.core.tasks import task
 
 MAX_RETRIES = 5
 RETRY_BACKOFF_BASE_SECONDS = 5
+STALE_EVENT_THRESHOLD = timedelta(minutes=5)
 
 
 def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
@@ -52,12 +54,20 @@ def process_stripe_event(stripe_event: StripeEvent) -> None:
     set) is a no-op — the second line of idempotency defense behind the
     view's ``get_or_create`` (PRD §6, "Replaying an event is a no-op by
     construction"). An unhandled event type is marked processed without
-    doing anything, since PRD §6 only lists six event types as handled."""
-    stripe_event.refresh_from_db()
-    if stripe_event.processed_at is not None:
-        return
-    handler = HANDLERS.get(stripe_event.type)
+    doing anything, since PRD §6 only lists six event types as handled.
+
+    The "already processed" guard is a lock, not a plain read (ddia#8):
+    two workers processing the same event concurrently (Celery is
+    at-least-once, and the view's re-enqueue-on-replay adds a second path
+    to the same race) must not both run the handler — a
+    ``select_for_update`` inside the same transaction as the check makes
+    the second one block until the first commits, then see
+    ``processed_at`` already set."""
     with transaction.atomic():
+        stripe_event = StripeEvent.objects.select_for_update().get(pk=stripe_event.pk)
+        if stripe_event.processed_at is not None:
+            return
+        handler = HANDLERS.get(stripe_event.type)
         if handler is not None:
             handler(stripe_event.payload["data"]["object"])
         stripe_event.processed_at = timezone.now()
@@ -79,6 +89,27 @@ def dispatch_stripe_event(self: Any, event_id: str) -> None:
         raise self.retry(
             exc=exc, countdown=RETRY_BACKOFF_BASE_SECONDS * (2**self.request.retries)
         ) from exc
+
+
+@shared_task(name="keel.billing.tasks.sweep_unprocessed_stripe_events")
+def sweep_unprocessed_stripe_events() -> int:
+    """Beat sweeper (ddia#7): catches the case the view's re-enqueue can't
+    — a ``StripeEvent`` row that committed but whose ``.delay()`` never
+    reached the broker at all, so no redelivery from Stripe will ever
+    re-trigger the view's own re-enqueue path (Stripe only retries on a
+    non-200, and the view always returns 200). Re-dispatches any row
+    still unprocessed ``STALE_EVENT_THRESHOLD`` after receipt —
+    ``process_stripe_event`` is a no-op if another worker already handled
+    it in the meantime."""
+    threshold = timezone.now() - STALE_EVENT_THRESHOLD
+    stale_ids = list(
+        StripeEvent.objects.filter(
+            processed_at__isnull=True, received_at__lt=threshold
+        ).values_list("pk", flat=True)
+    )
+    for event_id in stale_ids:
+        dispatch_stripe_event.delay(event_id)
+    return len(stale_ids)
 
 
 @task

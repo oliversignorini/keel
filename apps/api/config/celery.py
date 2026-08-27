@@ -39,6 +39,7 @@ _QUEUE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("keel.notifications.tasks.*", QUEUE_EMAIL),
     ("keel.billing.tasks.dispatch_stripe_event", QUEUE_EXTERNAL),
     ("keel.billing.tasks.sync_seat_quantity_task", QUEUE_EXTERNAL),
+    ("keel.billing.tasks.sweep_unprocessed_stripe_events", QUEUE_EXTERNAL),
     ("keel.connections.tasks.*", QUEUE_EXTERNAL),
 )
 

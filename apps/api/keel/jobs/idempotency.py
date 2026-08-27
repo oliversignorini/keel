@@ -80,19 +80,29 @@ def check_and_claim(request: HttpRequest, org_slug: str) -> HttpResponse | None:
     if isinstance(cached, dict) and "body" in cached:
         return JsonResponse(cached["body"], status=cached["status"])
     if cached == _CLAIMED:
-        # A concurrent request with the same key is already in flight.
-        # No second row is created either way; asking this one to retry
-        # is simpler and just as correct as a spin-wait.
-        return JsonResponse(
-            {
-                "error": {
-                    "code": "idempotency_key_in_progress",
-                    "message": ("A request with this Idempotency-Key is already being processed."),
-                    "details": None,
-                }
-            },
-            status=409,
-        )
+        return _in_progress_response()
     if cache.add(cache_key, _CLAIMED, timeout=IDEMPOTENCY_TTL_SECONDS):
         request.idempotency_cache_key = cache_key  # type: ignore[attr-defined]
-    return None
+        return None
+    # cache.add lost the race (ddia#11): another request claimed this key
+    # between our cache.get above and this cache.add — the exact
+    # concurrent-replay case _CLAIMED above exists to catch. Falling
+    # through to None here would let this request proceed and create a
+    # second row; return the same in-progress response instead.
+    return _in_progress_response()
+
+
+def _in_progress_response() -> JsonResponse:
+    # A concurrent request with the same key is already in flight. No
+    # second row is created either way; asking this one to retry is
+    # simpler and just as correct as a spin-wait.
+    return JsonResponse(
+        {
+            "error": {
+                "code": "idempotency_key_in_progress",
+                "message": "A request with this Idempotency-Key is already being processed.",
+                "details": None,
+            }
+        },
+        status=409,
+    )

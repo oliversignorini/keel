@@ -50,31 +50,64 @@ def _backoff_seconds(retries: int) -> float:
     return base + random.uniform(0, base * JITTER_FRACTION)
 
 
+def locked_hold_entry(job: Job) -> Any:
+    """The job's most recent hold entry, locked with ``SELECT ... FOR
+    UPDATE``. Callers that settle a hold (``_settle_credits``,
+    ``keel.jobs.services.cancel_job``) must take this lock *before*
+    checking whether the hold is already settled — otherwise two
+    concurrent settlement attempts (a retried delivery and a cancel, or
+    two retried deliveries) both read "not yet settled" and both write.
+    Migration-free stand-in for a ``settles`` FK plus a unique
+    constraint (ddia#1): there is no row to key uniqueness off, so the
+    lock on the hold itself is what serialises the check."""
+    from keel.billing.models import CreditLedgerEntry
+
+    return (
+        CreditLedgerEntry.objects.select_for_update()
+        .filter(job=job, kind=CreditLedgerEntry.KIND_HOLD)
+        .order_by("-created_at")
+        .first()
+    )
+
+
+def hold_already_settled(job: Job) -> bool:
+    """Whether a ``release`` or ``refund`` entry already exists for
+    ``job`` — the "no operation id" gap ddia#1 calls out. Must only be
+    called while ``locked_hold_entry`` holds its lock, inside the same
+    transaction."""
+    from keel.billing.models import CreditLedgerEntry
+
+    return CreditLedgerEntry.objects.filter(
+        job=job, kind__in=(CreditLedgerEntry.KIND_RELEASE, CreditLedgerEntry.KIND_REFUND)
+    ).exists()
+
+
 def _settle_credits(job: Job, succeeded: int, total: int) -> None:
     """Consumes the proportion of the hold the job actually used and
     releases the rest (PRD §5.5.2: "a job that succeeds on 8 of 10 items
     surfaces its results and releases the unused credit hold"). A job
     that fails outright (no step succeeded) is a full refund rather than
-    a release — nothing was delivered."""
+    a release — nothing was delivered.
+
+    Idempotent by lock-and-check (ddia#1): the hold row is locked before
+    settlement is decided, and a hold that already has a release/refund
+    entry against it is left alone — a re-delivered ``run_job`` call
+    settles at most once."""
     if not credits.credits_enabled():
         return
-    from keel.billing.models import CreditLedgerEntry
 
-    hold_entry = (
-        CreditLedgerEntry.objects.filter(job=job, kind=CreditLedgerEntry.KIND_HOLD)
-        .order_by("-created_at")
-        .first()
-    )
-    if hold_entry is None:
-        return
-    held = -hold_entry.amount
-    if succeeded == 0:
-        credits.refund(job.organization, hold_entry, actor=job.requested_by)
-        return
-    actual_cost = round(held * succeeded / total)
-    unused = held - actual_cost
-    if unused > 0:
-        credits.release(job.organization, hold_entry, unused, actor=job.requested_by)
+    with transaction.atomic():
+        hold_entry = locked_hold_entry(job)
+        if hold_entry is None or hold_already_settled(job):
+            return
+        held = -hold_entry.amount
+        if succeeded == 0:
+            credits.refund(job.organization, hold_entry, actor=job.requested_by)
+            return
+        actual_cost = round(held * succeeded / total)
+        unused = held - actual_cost
+        if unused > 0:
+            credits.release(job.organization, hold_entry, unused, actor=job.requested_by)
 
 
 def run_job(job_id: Any) -> None:
@@ -141,14 +174,23 @@ def run_job(job_id: Any) -> None:
         publish_step_event(job, step)
 
     if succeeded == total:
-        job.status = Job.STATUS_SUCCEEDED
+        final_status = Job.STATUS_SUCCEEDED
     elif succeeded == 0:
-        job.status = Job.STATUS_FAILED
+        final_status = Job.STATUS_FAILED
     else:
-        job.status = Job.STATUS_PARTIAL
-    job.finished_at = timezone.now()
-    job.save(update_fields=["status", "finished_at"])
-    _settle_credits(job, succeeded, total)
+        final_status = Job.STATUS_PARTIAL
+
+    # Guarded compare-and-set (ddia#2): if a concurrent cancel_job already
+    # moved this job out of RUNNING (e.g. a cancel landing on the final
+    # step), this update matches zero rows and settlement is skipped
+    # entirely — cancel_job already refunded the hold, so this loop must
+    # not also release/refund it.
+    updated = Job.objects.filter(pk=job.pk, status=Job.STATUS_RUNNING).update(
+        status=final_status, finished_at=timezone.now()
+    )
+    job.refresh_from_db()
+    if updated:
+        _settle_credits(job, succeeded, total)
     publish_job_event(job)
 
 
