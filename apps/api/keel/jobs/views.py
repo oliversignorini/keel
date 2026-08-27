@@ -1,4 +1,4 @@
-"""``organizations/<org_slug>/jobs/`` (PRD §7 jobs endpoints; phase-10.md
+"""``orgs/<org_slug>/jobs/`` (PRD §7 jobs endpoints; phase-10.md
 10.C). The stream endpoint (``GET .../jobs/stream/``) lives elsewhere —
 it is served by the dedicated ASGI service, not this router; see
 ``keel/jobs/sse.py`` and ``config/urls_stream.py``. Neither ever used
@@ -28,7 +28,7 @@ class JobResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.jobs.tests.factories.job_factory"
     required_permissions = (Perm.JOBS_VIEW,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/jobs/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/jobs/{pk}/"
 
 
 router = JobResource.router

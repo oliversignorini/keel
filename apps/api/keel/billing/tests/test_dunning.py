@@ -98,7 +98,7 @@ def test_dunning_state_is_visible_but_does_not_gate_the_subscription_endpoint() 
     client = APIClient()
     client.force_login(owner)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
     assert response.json()["subscription"]["status"] == "past_due"

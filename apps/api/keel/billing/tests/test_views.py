@@ -71,7 +71,7 @@ def test_checkout_returns_url_and_persists_customer_id(monkeypatch: pytest.Monke
     )
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(price.id)},
         content_type="application/json",
     )
@@ -101,7 +101,7 @@ def test_checkout_reuses_existing_customer_id(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(stripe_client, "create_checkout_session", _create_checkout_session)
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(price.id)},
         content_type="application/json",
     )
@@ -117,7 +117,7 @@ def test_checkout_requires_billing_manage() -> None:
     price = _price()
 
     response = _client_for(member).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(price.id)},
         content_type="application/json",
     )
@@ -133,7 +133,7 @@ def test_checkout_rejects_inactive_price() -> None:
     price.save(update_fields=["is_active"])
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(price.id)},
         content_type="application/json",
     )
@@ -184,7 +184,7 @@ def test_checkout_blocks_a_downgrade_below_current_usage(monkeypatch: pytest.Mon
     monkeypatch.setattr(stripe_client, "create_checkout_session", _fail)
 
     response = _client_for(owner).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(new_price.id)},
         content_type="application/json",
     )
@@ -200,7 +200,7 @@ def test_checkout_404s_for_nonmember() -> None:
     price = _price()
 
     response = _client_for(outsider).post(
-        f"/api/v1/organizations/{org.slug}/billing/checkout/",
+        f"/api/v1/orgs/{org.slug}/billing/checkout/",
         {"price_id": str(price.id)},
         content_type="application/json",
     )
@@ -221,7 +221,7 @@ def test_portal_returns_url(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda **kw: "https://stripe.test/portal/xyz",
     )
 
-    response = _client_for(owner).post(f"/api/v1/organizations/{org.slug}/billing/portal/")
+    response = _client_for(owner).post(f"/api/v1/orgs/{org.slug}/billing/portal/")
 
     assert response.status_code == 200
     assert response.json()["url"] == "https://stripe.test/portal/xyz"
@@ -231,7 +231,7 @@ def test_portal_requires_billing_manage() -> None:
     org, _owner = _org_with_owner()
     member = _add_member(org)
 
-    response = _client_for(member).post(f"/api/v1/organizations/{org.slug}/billing/portal/")
+    response = _client_for(member).post(f"/api/v1/orgs/{org.slug}/billing/portal/")
 
     assert response.status_code == 403
 
@@ -242,7 +242,7 @@ def test_portal_requires_billing_manage() -> None:
 def test_subscription_returns_null_when_none_exists() -> None:
     org, owner = _org_with_owner()
 
-    response = _client_for(owner).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(owner).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
     assert response.json()["subscription"] is None
@@ -259,7 +259,7 @@ def test_subscription_returns_row_when_one_exists() -> None:
         status="trialing",
     )
 
-    response = _client_for(owner).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(owner).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
     assert response.json()["subscription"]["status"] == "trialing"
@@ -270,7 +270,7 @@ def test_subscription_view_is_readable_by_billing_view_alone() -> None:
     org, _owner = _org_with_owner()
     member = _add_member(org)
 
-    response = _client_for(member).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(member).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 200
 
@@ -279,6 +279,6 @@ def test_subscription_404s_for_nonmember() -> None:
     org, _owner = _org_with_owner()
     outsider = _user("outsider")
 
-    response = _client_for(outsider).get(f"/api/v1/organizations/{org.slug}/billing/subscription/")
+    response = _client_for(outsider).get(f"/api/v1/orgs/{org.slug}/billing/subscription/")
 
     assert response.status_code == 404

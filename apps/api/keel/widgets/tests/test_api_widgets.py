@@ -62,30 +62,30 @@ def test_owner_can_create_list_retrieve_update_and_delete_a_widget() -> None:
     client = _client_for(owner)
 
     response = client.post(
-        f"/api/v1/organizations/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/widgets/",
         {"name": "Sprocket"},
         content_type="application/json",
     )
     assert response.status_code == 201, response.content
     widget_id = response.json()["id"]
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/widgets/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/")
     assert response.status_code == 200
     assert [row["id"] for row in response.json()["results"]] == [widget_id]
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/widgets/{widget_id}/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/{widget_id}/")
     assert response.status_code == 200
     assert response.json()["name"] == "Sprocket"
 
     response = client.patch(
-        f"/api/v1/organizations/{org.slug}/widgets/{widget_id}/",
+        f"/api/v1/orgs/{org.slug}/widgets/{widget_id}/",
         {"status": "archived"},
         content_type="application/json",
     )
     assert response.status_code == 200
     assert response.json()["status"] == "archived"
 
-    response = client.delete(f"/api/v1/organizations/{org.slug}/widgets/{widget_id}/")
+    response = client.delete(f"/api/v1/orgs/{org.slug}/widgets/{widget_id}/")
     assert response.status_code == 204
     assert not Widget.objects.filter(pk=widget_id).exists()
 
@@ -96,7 +96,7 @@ def test_widgets_view_only_member_cannot_create() -> None:
     client = _client_for(member)
 
     response = client.post(
-        f"/api/v1/organizations/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/widgets/",
         {"name": "Sprocket"},
         content_type="application/json",
     )
@@ -110,16 +110,16 @@ def test_widgets_view_only_member_can_list_and_retrieve() -> None:
     member = _member_with_permissions(org, [Perm.WIDGETS_VIEW])
     owner_client = _client_for(owner)
     response = owner_client.post(
-        f"/api/v1/organizations/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/widgets/",
         {"name": "Sprocket"},
         content_type="application/json",
     )
     widget_id = response.json()["id"]
 
     member_client = _client_for(member)
-    response = member_client.get(f"/api/v1/organizations/{org.slug}/widgets/")
+    response = member_client.get(f"/api/v1/orgs/{org.slug}/widgets/")
     assert response.status_code == 200
-    response = member_client.get(f"/api/v1/organizations/{org.slug}/widgets/{widget_id}/")
+    response = member_client.get(f"/api/v1/orgs/{org.slug}/widgets/{widget_id}/")
     assert response.status_code == 200
 
 
@@ -128,7 +128,7 @@ def test_member_with_no_permissions_gets_403_on_list() -> None:
     member = _member_with_permissions(org, [])
     client = _client_for(member)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/widgets/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "insufficient_role"
@@ -138,7 +138,7 @@ def test_nonmember_gets_404_not_403_for_a_widget_in_another_org() -> None:
     org, owner = _org_with_owner()
     owner_client = _client_for(owner)
     response = owner_client.post(
-        f"/api/v1/organizations/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/widgets/",
         {"name": "Sprocket"},
         content_type="application/json",
     )
@@ -147,7 +147,7 @@ def test_nonmember_gets_404_not_403_for_a_widget_in_another_org() -> None:
     other_org, other_owner = _org_with_owner()
     other_client = _client_for(other_owner)
 
-    response = other_client.get(f"/api/v1/organizations/{other_org.slug}/widgets/{widget_id}/")
+    response = other_client.get(f"/api/v1/orgs/{other_org.slug}/widgets/{widget_id}/")
 
     assert response.status_code == 404
 
@@ -157,7 +157,7 @@ def test_create_rejects_a_blank_name_with_400() -> None:
     client = _client_for(owner)
 
     response = client.post(
-        f"/api/v1/organizations/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/widgets/",
         {"name": ""},
         content_type="application/json",
     )

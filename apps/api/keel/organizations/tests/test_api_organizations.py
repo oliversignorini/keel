@@ -46,14 +46,14 @@ def test_create_and_list_organizations() -> None:
     client = _client_for(creator)
 
     response = client.post(
-        "/api/v1/organizations/",
+        "/api/v1/orgs/",
         {"name": "Acme", "slug": "acme-co"},
         content_type="application/json",
     )
     assert response.status_code == 201, response.json()
     assert response.json()["slug"] == "acme-co"
 
-    response = client.get("/api/v1/organizations/")
+    response = client.get("/api/v1/orgs/")
     assert response.status_code == 200
     slugs = [row["slug"] for row in response.json()["results"]]
     assert "acme-co" in slugs
@@ -64,8 +64,8 @@ def test_organization_detail_404s_for_nonmember_and_nonexistent_slug() -> None:
     outsider = _user("outsider")
     client = _client_for(outsider)
 
-    real_response = client.get(f"/api/v1/organizations/{org.slug}/")
-    fake_response = client.get("/api/v1/organizations/does-not-exist/")
+    real_response = client.get(f"/api/v1/orgs/{org.slug}/")
+    fake_response = client.get("/api/v1/orgs/does-not-exist/")
 
     assert real_response.status_code == 404
     assert fake_response.status_code == 404
@@ -80,7 +80,7 @@ def test_member_view_403_denial_carries_reason_as_code() -> None:
     )
     client = _client_for(powerless)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/members/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/members/")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "insufficient_role"
@@ -91,7 +91,7 @@ def test_last_owner_cannot_be_removed_via_api() -> None:
     owner_membership = Membership.objects.get(organization=org, user=creator)
     client = _client_for(creator)
 
-    response = client.delete(f"/api/v1/organizations/{org.slug}/members/{owner_membership.pk}/")
+    response = client.delete(f"/api/v1/orgs/{org.slug}/members/{owner_membership.pk}/")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "cannot_remove_last_owner"
@@ -105,7 +105,7 @@ def test_last_owner_cannot_be_demoted_via_api() -> None:
     client = _client_for(creator)
 
     response = client.patch(
-        f"/api/v1/organizations/{org.slug}/members/{owner_membership.pk}/",
+        f"/api/v1/orgs/{org.slug}/members/{owner_membership.pk}/",
         {"role_id": str(member_role.pk)},
         content_type="application/json",
     )
@@ -120,14 +120,14 @@ def test_invite_list_and_role_endpoints_return_expected_shapes() -> None:
     client = _client_for(creator)
 
     invite_response = client.post(
-        f"/api/v1/organizations/{org.slug}/invitations/",
+        f"/api/v1/orgs/{org.slug}/invitations/",
         {"email": "invitee@example.com", "role_id": str(member_role.pk)},
         content_type="application/json",
     )
     assert invite_response.status_code == 201, invite_response.json()
     assert invite_response.json()["status"] == "pending"
 
-    roles_response = client.get(f"/api/v1/organizations/{org.slug}/roles/")
+    roles_response = client.get(f"/api/v1/orgs/{org.slug}/roles/")
     assert roles_response.status_code == 200
     role_names = {row["name"] for row in roles_response.json()["results"]}
     assert {PRESET_OWNER, PRESET_ADMIN, PRESET_MEMBER} <= role_names

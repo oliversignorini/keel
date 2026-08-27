@@ -22,19 +22,20 @@ from keel.organizations.views import org_router
 from keel.widgets.views import router as widgets_router
 
 # Every app's Ninja router mounts on this one shared api instance (stage
-# 10.A/10.D's note in keel/core/ninja_api.py). "/organizations" here, not
-# "/orgs" — the orgs rename is stage 10.C's job, done in one sweep with
-# every other route.
-ninja_api.add_router("/organizations", widgets_router)
-ninja_api.add_router("/organizations", audit_router)
+# 10.A/10.D's note in keel/core/ninja_api.py). "/orgs", not
+# "/organizations" — PRD §7 names the segment "orgs"; the implementation
+# used the longer form until this rename (phase-10.md's second "allowed
+# change", done in one sweep across every route here).
+ninja_api.add_router("/orgs", widgets_router)
+ninja_api.add_router("/orgs", audit_router)
 ninja_api.add_router("", audit_impersonation_router)
 ninja_api.add_router("", billing_plans_router)
-ninja_api.add_router("/organizations", billing_router)
+ninja_api.add_router("/orgs", billing_router)
 ninja_api.add_router("", billing_webhook_router)
-ninja_api.add_router("/organizations", jobs_router)
-ninja_api.add_router("/organizations", files_router)
+ninja_api.add_router("/orgs", jobs_router)
+ninja_api.add_router("/orgs", files_router)
 ninja_api.add_router("", org_router)
-ninja_api.add_router("/organizations", org_nested_router)
+ninja_api.add_router("/orgs", org_nested_router)
 ninja_api.add_router("", org_me_router)
 ninja_api.add_router("", org_invite_router)
 

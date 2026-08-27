@@ -17,7 +17,7 @@ def healthz(request: HttpRequest) -> JsonResponse:
 urlpatterns = [
     path("healthz/", healthz, name="stream-healthz"),
     path(
-        "api/v1/organizations/<slug:org_slug>/jobs/stream/",
+        "api/v1/orgs/<slug:org_slug>/jobs/stream/",
         job_stream,
         name="jobs-stream",
     ),

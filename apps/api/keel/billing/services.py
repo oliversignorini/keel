@@ -135,7 +135,7 @@ def create_checkout_session(
     cancel_url: str,
     impersonator: Any = None,
 ) -> str:
-    """``POST /organizations/<org_slug>/billing/checkout/``
+    """``POST /orgs/<org_slug>/billing/checkout/``
     (docs/plans/phase-4.md B.2). Returns the Checkout Session URL — the
     ``Subscription`` row itself is created later, by the webhook handler
     processing ``checkout.session.completed``, not here.
@@ -167,7 +167,7 @@ def create_checkout_session(
 def create_portal_session(
     *, organization: Organization, actor: Any, return_url: str, impersonator: Any = None
 ) -> str:
-    """``POST /organizations/<org_slug>/billing/portal/``
+    """``POST /orgs/<org_slug>/billing/portal/``
     (docs/plans/phase-4.md B.2). Returns the Customer Portal URL — the
     Stripe Customer Portal is where a subscription is cancelled (PRD §4
     "Billing flow"), so this is the other half of PRD §6's "start or

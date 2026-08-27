@@ -27,7 +27,7 @@ from keel.core.ninja_auth import optional_session_auth
 from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.ninja_pagination import paginate
 from keel.organizations import selectors, services
-from keel.organizations.models import Invitation, Membership, Organization, Role
+from keel.organizations.models import Invitation, Membership, Role
 from keel.organizations.permissions import Perm
 from keel.organizations.schemas import (
     InvitationCreateIn,
@@ -57,13 +57,13 @@ def _get_role_or_422(role_id: object) -> Role:
 org_router = keel_router(tags=["organizations"])
 
 
-@org_router.get("/organizations/")
+@org_router.get("/orgs/")
 def list_organizations(request: Any) -> dict:
     queryset = selectors.list_organizations_for_user(request.auth)
     return paginate(request, queryset, lambda org: OrganizationOut.from_orm(org).dict())
 
 
-@org_router.post("/organizations/", response={201: OrganizationOut})
+@org_router.post("/orgs/", response={201: OrganizationOut})
 def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
 
     slug = resolve_create_slug(payload)
@@ -73,19 +73,19 @@ def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
     return Status(201, organization)
 
 
-@org_router.get("/organizations/{org_slug}/", response=OrganizationOut)
+@org_router.get("/orgs/{org_slug}/", response=OrganizationOut)
 def organization_detail(request: Any, org_slug: str) -> Any:
     return resolve_and_authorize(request, org_slug, (Perm.ORG_VIEW,))
 
 
-@org_router.patch("/organizations/{org_slug}/", response=OrganizationOut)
+@org_router.patch("/orgs/{org_slug}/", response=OrganizationOut)
 def organization_update(request: Any, org_slug: str, payload: OrganizationUpdateIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_UPDATE,))
     fields = payload.dict(exclude_unset=True)
     return services.update_organization(organization=organization, actor=request.auth, **fields)
 
 
-@org_router.delete("/organizations/{org_slug}/", response={204: None})
+@org_router.delete("/orgs/{org_slug}/", response={204: None})
 def organization_delete(request: Any, org_slug: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_DELETE,))
@@ -97,7 +97,7 @@ def organization_delete(request: Any, org_slug: str) -> Any:
     return Status(204, None)
 
 
-@org_router.post("/organizations/{org_slug}/transfer/", response=MembershipOut)
+@org_router.post("/orgs/{org_slug}/transfer/", response=MembershipOut)
 def organization_transfer(request: Any, org_slug: str, payload: TransferIn) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_TRANSFER,))
     to_membership_id = payload.membership_id
@@ -128,7 +128,7 @@ class MembershipResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.membership_factory"
     required_permissions = (Perm.MEMBERS_VIEW,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/members/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/members/{pk}/"
 
 
 class RoleResource(OrgScopedResource):
@@ -136,7 +136,7 @@ class RoleResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.role_factory"
     required_permissions = (Perm.MEMBERS_VIEW,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/roles/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/roles/{pk}/"
 
 
 class InvitationResource(OrgScopedResource):
@@ -144,7 +144,7 @@ class InvitationResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.organizations.tests.factories.invitation_factory"
     required_permissions = (Perm.MEMBERS_INVITE,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/invitations/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/invitations/{pk}/"
 
 
 @nested_router.get("/{org_slug}/members/")

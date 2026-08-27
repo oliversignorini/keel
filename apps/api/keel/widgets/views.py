@@ -23,14 +23,14 @@ from keel.widgets.schemas import WidgetIn, WidgetOut, WidgetPatchIn
 
 
 class WidgetResource(OrgScopedResource):
-    """``/organizations/<org_slug>/widgets/`` — the reference-slice CRUD
+    """``/orgs/<org_slug>/widgets/`` — the reference-slice CRUD
     endpoint (PRD §7's demo-resource route table)."""
 
     router = keel_router(tags=["widgets"])
     organization_scoped = True
     test_factory = "keel.widgets.tests.factories.widget_factory"
     required_permissions = (Perm.WIDGETS_VIEW,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/widgets/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/widgets/{pk}/"
 
 
 router = WidgetResource.router

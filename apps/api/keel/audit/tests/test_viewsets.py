@@ -1,4 +1,4 @@
-"""``GET /api/v1/organizations/<org_slug>/audit/`` (PRD §7; docs/plans/
+"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7; docs/plans/
 phase-8.md 8.2)."""
 
 import pytest
@@ -34,7 +34,7 @@ def test_owner_can_list_the_organizations_audit_log() -> None:
     AuditLog.objects.create(organization=org, actor=owner, action="widget.created")
     AuditLog.objects.create(organization=org, actor=owner, action="widget.deleted")
 
-    response = _client_for(owner).get(f"/api/v1/organizations/{org.slug}/audit/")
+    response = _client_for(owner).get(f"/api/v1/orgs/{org.slug}/audit/")
 
     assert response.status_code == 200
     body = response.json()
@@ -52,7 +52,7 @@ def test_a_member_without_audit_view_is_denied() -> None:
         organization=org, user=member, role=no_permissions_role, status=Membership.STATUS_ACTIVE
     )
 
-    response = _client_for(member).get(f"/api/v1/organizations/{org.slug}/audit/")
+    response = _client_for(member).get(f"/api/v1/orgs/{org.slug}/audit/")
 
     assert response.status_code == 403
 
@@ -65,7 +65,7 @@ def test_rows_from_another_organization_are_not_visible() -> None:
     AuditLog.objects.create(organization=org_a, actor=owner_a, action="widget.created")
     AuditLog.objects.create(organization=org_b, actor=owner_b, action="widget.created")
 
-    response = _client_for(owner_a).get(f"/api/v1/organizations/{org_a.slug}/audit/")
+    response = _client_for(owner_a).get(f"/api/v1/orgs/{org_a.slug}/audit/")
 
     assert response.status_code == 200
     body = response.json()

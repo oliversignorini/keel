@@ -1,4 +1,4 @@
-"""``organizations/<org_slug>/jobs/`` end to end (PRD §7).
+"""``orgs/<org_slug>/jobs/`` end to end (PRD §7).
 
 ``pytest.mark.django_db`` (not ``transaction=True``) wraps each test in
 a transaction that is rolled back, never committed — which means
@@ -57,7 +57,7 @@ def test_create_job_returns_202_quickly_with_the_work_not_yet_started() -> None:
 
     started = time.perf_counter()
     response = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/",
+        f"/api/v1/orgs/{org.slug}/jobs/",
         {"type": DEMO_JOB_TYPE, "params": {"items": [1]}},
         content_type="application/json",
     )
@@ -78,13 +78,13 @@ def test_replaying_the_same_idempotency_key_over_http_returns_the_original_job()
     client = _client_for(owner)
 
     first = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/",
+        f"/api/v1/orgs/{org.slug}/jobs/",
         {"type": DEMO_JOB_TYPE},
         content_type="application/json",
         HTTP_IDEMPOTENCY_KEY="replay-key-1",
     )
     second = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/",
+        f"/api/v1/orgs/{org.slug}/jobs/",
         {"type": DEMO_JOB_TYPE},
         content_type="application/json",
         HTTP_IDEMPOTENCY_KEY="replay-key-1",
@@ -106,7 +106,7 @@ def test_list_jobs_filterable_by_status() -> None:
     )
     client = _client_for(owner)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/jobs/?status=succeeded")
+    response = client.get(f"/api/v1/orgs/{org.slug}/jobs/?status=succeeded")
 
     assert response.status_code == 200
     statuses = [row["status"] for row in response.json()["results"]]
@@ -119,7 +119,7 @@ def test_retrieve_a_job_includes_its_steps() -> None:
     job.steps.create(name="a", ordinal=0, status=Job.STATUS_SUCCEEDED)
     client = _client_for(owner)
 
-    response = client.get(f"/api/v1/organizations/{org.slug}/jobs/{job.id}/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/jobs/{job.id}/")
 
     assert response.status_code == 200
     assert len(response.json()["steps"]) == 1
@@ -130,7 +130,7 @@ def test_cancel_marks_a_queued_job_failed() -> None:
     job = Job.objects.create(organization=org, type=DEMO_JOB_TYPE, requested_by=owner)
     client = _client_for(owner)
 
-    response = client.post(f"/api/v1/organizations/{org.slug}/jobs/{job.id}/cancel/")
+    response = client.post(f"/api/v1/orgs/{org.slug}/jobs/{job.id}/cancel/")
 
     assert response.status_code == 200
     assert response.json()["status"] == Job.STATUS_FAILED
@@ -146,7 +146,7 @@ def test_a_member_without_jobs_create_is_denied_with_a_reason() -> None:
     client = _client_for(member)
 
     response = client.post(
-        f"/api/v1/organizations/{org.slug}/jobs/",
+        f"/api/v1/orgs/{org.slug}/jobs/",
         {"type": DEMO_JOB_TYPE},
         content_type="application/json",
     )
@@ -163,6 +163,6 @@ def test_cross_organization_job_access_404s() -> None:
     job = Job.objects.create(organization=org_a, type=DEMO_JOB_TYPE, requested_by=owner_a)
     client = _client_for(owner_a)
 
-    response = client.get(f"/api/v1/organizations/{org_b.slug}/jobs/{job.id}/")
+    response = client.get(f"/api/v1/orgs/{org_b.slug}/jobs/{job.id}/")
 
     assert response.status_code == 404

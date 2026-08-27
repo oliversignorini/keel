@@ -1,4 +1,4 @@
-"""``GET /organizations/<slug>/billing/credits/`` (PRD §7's credits
+"""``GET /orgs/<slug>/billing/credits/`` (PRD §7's credits
 endpoint list; docs/plans/phase-4.md Worktree C's ``<CreditMeter>``).
 
 Both flag states are covered, which is the point of A.5: with
@@ -45,7 +45,7 @@ def _client_for(user: User) -> APIClient:
 
 
 def _url(org: Organization) -> str:
-    return f"/api/v1/organizations/{org.slug}/billing/credits/"
+    return f"/api/v1/orgs/{org.slug}/billing/credits/"
 
 
 @override_settings(BILLING_CREDITS=True)

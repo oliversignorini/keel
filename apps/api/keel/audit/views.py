@@ -1,7 +1,6 @@
-"""``GET /api/v1/organizations/<org_slug>/audit/`` (PRD §7; docs/plans/
+"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7; docs/plans/
 phase-8.md 8.2; phase-10.md 10.C). Read-only, behind ``audit.view``,
-cursor-paginated. Keeps the existing URL shape: the rename to
-``/api/v1/orgs/`` happens in one sweep later in this same stage.
+cursor-paginated.
 
 ``AuditLogResource`` declares a ``detail_url_template`` even though the
 audit settings page only lists — an ``OrgScopedResource`` with no detail
@@ -32,7 +31,7 @@ class AuditLogResource(OrgScopedResource):
     organization_scoped = True
     test_factory = "keel.audit.tests.factories.audit_log_factory"
     required_permissions = (Perm.AUDIT_VIEW,)
-    detail_url_template = "/api/v1/organizations/{org_slug}/audit/{pk}/"
+    detail_url_template = "/api/v1/orgs/{org_slug}/audit/{pk}/"
 
 
 router = AuditLogResource.router
