@@ -1,0 +1,225 @@
+name: Generators
+
+# Deliberately NOT path-filtered (docs/plans/phase-19.md 19.A "CI
+# harness"). A change to keel/core/authz.py, to the permission registry,
+# or to the shape OrgScopedResource demands can break every future
+# generated slice without touching a single file under templates/ or
+# packages/cli/ — and the failure would then first appear in a downstream
+# project, months later. This job is what replaces the human review that
+# used to catch a non-conforming slice.
+on:
+  push:
+  pull_request:
+
+env:
+  PNPM_VERSION: "9.5.0"
+  NODE_VERSION: "22"
+
+jobs:
+  templates-lint:
+    # Cheap, no database: proves the ADR 0004 claim that the templates are
+    # real Python the repo's own linter reads, rather than unlintable text.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: No template engine crept in
+        run: |
+          found=$(find templates -type f \( -name '*.hbs' -o -name '*.eta' -o -name '*.j2' \
+            -o -name '*.mustache' -o -name '*.njk' -o -name '*.ejs' \) -print)
+          if [ -n "$found" ]; then
+            echo "::error::templates/ must contain only real source files. Found:"
+            echo "$found"
+            exit 1
+          fi
+          echo "templates/ contains no template-language files."
+
+      - name: ruff check (templates)
+        working-directory: apps/api
+        run: uv run ruff check --config ../../templates/ruff.toml ../../templates
+
+      - name: ruff format --check (templates)
+        working-directory: apps/api
+        run: uv run ruff format --check --config ../../templates/ruff.toml ../../templates
+
+  # The reference slice is a render of templates/resource. Regenerating it
+  # must produce exactly what is committed — the same idiom this repo
+  # already uses for openapi.merged.json and the generated TS client.
+  reference-slice-is-a-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: Regenerate apps/api/keel/widgets and diff against what is committed
+        run: |
+          # `init --demo-slice delete` (or `keep`, which moves it to
+          # docs/reference-slice/) removes the reference slice from an
+          # instantiated project, and this workflow ships to that project.
+          # With no slice to re-render there is nothing to hold in place —
+          # and generating one here would create an app the project never
+          # asked for.
+          if ! ls -d apps/api/*/widgets >/dev/null 2>&1; then
+            echo "No reference slice in this repository — nothing to re-render."
+            exit 0
+          fi
+          pnpm gen resource Widget \
+            --fields "name:str,description:text?,status:str(32)?" \
+            --permissions manage --force --no-verify
+          git diff --exit-code -- apps/api || {
+            echo "::error::apps/api/keel/widgets is no longer a faithful render of templates/resource.";
+            echo "Improvements belong in the template, not in the reference slice — regenerate and commit.";
+            exit 1;
+          }
+
+  # Generate a throwaway slice into the CI checkout and run the real
+  # invariant suite against it. Generating in place (rather than into a
+  # temp directory) is the point: it exercises the actual splices into
+  # INSTALLED_APPS, config/urls.py, the permission registry, the preset
+  # roles and the guard test table. The checkout is disposable and nothing
+  # is committed.
+  generated-slice-passes-the-invariants:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: keel
+          POSTGRES_USER: keel
+          POSTGRES_PASSWORD: keel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keel -d keel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keel:keel@localhost:5432/keel
+      REDIS_URL: redis://localhost:6379/0
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: Build email templates
+        run: pnpm --filter @keel/emails build
+        # Same reason as ci.yml's identical step: apps/api's conftest.py
+        # refuses to collect tests until packages/emails/dist exists, and
+        # it is a gitignored build artifact.
+
+      - name: gen resource — every field type, and the DB-free gates it runs itself
+        run: |
+          pnpm gen resource Gizmo --fields \
+            "name:str,code:str(32),note:text?,qty:int,price:decimal,active:bool,\
+          due_on:date,seen_at:datetime,status:choice(draft,live),owner:fk(accounts.User)?"
+        # No --no-verify: the generator runs makemigrations --check,
+        # lint-imports and check_permission_lint.py itself and exits
+        # non-zero on any of them, so this step is also the DB-free gate
+        # assertion.
+
+      - name: gen readonly-resource — the no-write-path variant
+        run: pnpm gen readonly-resource Gauge --fields "period:str(32),total:decimal"
+
+      - name: gen permission — a bespoke code on top of the generated CRUD four
+        run: pnpm gen permission gizmo.export
+
+      - name: Invariant 1 — domain purity
+        working-directory: apps/api
+        run: uv run lint-imports
+
+      - name: Invariant 2 — permission placement
+        working-directory: apps/api
+        run: uv run python ../../scripts/check_permission_lint.py
+
+      - name: Invariant 4 — schema changes are migrations
+        working-directory: apps/api
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Full lint pass over the generated slices
+        working-directory: apps/api
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy .
+
+      - name: Invariants 6 and 7 — the whole test suite, including the generated tests
+        working-directory: apps/api
+        run: uv run pytest
+        # Not just the generated app's own tests: the org-scoped meta-tests
+        # (test_meta_router_wiring, test_ninja_tenant_isolation,
+        # test_meta_guard_coverage) walk every registered resource, so a
+        # slice that is declared but unmounted, or a permission code with
+        # no guard test, fails here and nowhere else.
+
+      - name: Nothing was committed
+        run: |
+          git reset --hard HEAD
+          git clean -fd
+          git diff --exit-code

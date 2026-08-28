@@ -711,6 +711,50 @@ function deleteTemplateAuthoringDocs(): void {
   rmIfExists(path.join(REPO_ROOT, "docs", "marketing-removal.md"));
   rmIfExists(path.join(REPO_ROOT, "keel-prd.md"));
   rmIfExists(path.join(REPO_ROOT, ".github", "workflows", "template-ci.yml"));
+
+  // Deliberately NOT deleted, and this is the place someone would think to
+  // add them: `packages/cli` and `templates/`. They look like template
+  // authoring machinery and they are not — ADR 0004 decides that the
+  // generators are a product feature of the instantiated project, which
+  // keeps them forever. `.github/workflows/generators.yml` stays for the
+  // same reason: it is what keeps the generators emitting conforming
+  // slices as the project's own core code changes underneath them.
+  //
+  // They are renamed along with everything else by rewriteRepoWords()
+  // below; verifyGeneratorsRenamed() afterwards checks that it worked.
+}
+
+/**
+ * Post-condition on the word rewrite, for the two trees whose whole job is
+ * to be copied into new code later. A leftover "keel" in an Acme repo is
+ * exactly the template smell the rest of this script exists to remove —
+ * and in `templates/` it is worse than cosmetic, because every slice
+ * generated from then on inherits it as a broken import.
+ */
+function verifyGeneratorsRenamed(config: Config): void {
+  if (config.name === "keel") return;
+  const stale: string[] = [];
+  for (const dir of [path.join(REPO_ROOT, "packages", "cli"), path.join(REPO_ROOT, "templates")]) {
+    if (!exists(dir)) {
+      warn(`${path.relative(REPO_ROOT, dir)} is missing — the generators did not survive init.`);
+      continue;
+    }
+    for (const file of walkFiles(dir)) {
+      if (BINARY_EXTS.has(path.extname(file).toLowerCase())) continue;
+      if (/(^|[^a-z])keel([^a-z]|$)/i.test(readText(file))) {
+        stale.push(path.relative(REPO_ROOT, file));
+      }
+    }
+  }
+  if (stale.length > 0) {
+    warn(
+      `the word "keel" survives in ${stale.length} generator file(s), which means ` +
+        `\`pnpm gen\` will emit code referring to a project that does not exist here:\n  ` +
+        stale.join("\n  "),
+    );
+  } else {
+    log(`generators renamed: packages/cli and templates/ carry no "keel" references`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1464,6 +1508,7 @@ async function main(): Promise<void> {
   deleteTemplateAuthoringDocs();
   if (!config.marketingSite) removeMarketingSite();
   rewriteRepoWords(config);
+  verifyGeneratorsRenamed(config);
   handleDemoSlice(config);
   handleDomainLayer(config);
   handleBillingShape(config);
@@ -1476,6 +1521,11 @@ async function main(): Promise<void> {
   log("done.");
   log(
     "Next: read docs/brand-pass.md, then apps/api `uv run python manage.py migrate` and `pnpm dev`.",
+  );
+  log(
+    `This project ships its own generators — \`pnpm gen --help\`. Provision a slice with ` +
+      `\`pnpm gen resource <Name>\` rather than hand-writing one; it emits a slice that ` +
+      `already satisfies the invariants in CLAUDE.md.`,
   );
 }
 
