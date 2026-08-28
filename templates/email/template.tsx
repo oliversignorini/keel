@@ -15,14 +15,14 @@ import { Layout } from "./Layout";
  * fallback link. The body copy is judgement, left as a TODO — see
  * `packages/emails/templates/invitation.tsx` for the shape.
  */
-export function __Resource__Email(props: {
-  // keel:insert token_props
-}) {
+export function __Resource__Email(
+  // keel:insert props_param
+) {
   // keel:insert token_defaults
   return (
     <Layout
-      // keel:insert preview_prop
-      // keel:insert heading_prop
+    // keel:insert preview_prop
+    // keel:insert heading_prop
     >
       {/* TODO: write the body copy. */}
       <Text>TODO — replace this line.</Text>

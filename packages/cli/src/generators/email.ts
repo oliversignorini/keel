@@ -86,7 +86,9 @@ function buildInserts(names: Names, subject: string, tokens: string[]): Record<s
     : [];
 
   return {
-    token_props: tokens.map((t) => `  ${camelFromUpperSnake(t)}?: string;`),
+    props_param: [
+      `  props: { ${tokens.map((t) => `${camelFromUpperSnake(t)}?: string`).join("; ")} },`,
+    ],
     token_defaults: tokens.map(
       (t) => `  const ${camelFromUpperSnake(t)} = props.${camelFromUpperSnake(t)} ?? "{{${t}}}";`,
     ),
