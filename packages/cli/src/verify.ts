@@ -26,11 +26,29 @@ export interface GateResult {
   output: string;
 }
 
+/**
+ * `makemigrations` is DB-free in the sense that matters — it never needs a
+ * schema — but it is not DB-*silent*: it calls
+ * `MigrationLoader.check_consistent_history()`, which opens a connection.
+ * Django catches the `OperationalError` that follows and carries on, which
+ * is why this works at all with no database. What Django cannot catch is a
+ * connection that never resolves either way, and libpq's default connect
+ * timeout is *infinite* — so on a host where nothing answers on the
+ * database port (the cold worktree this generator is required to work in),
+ * `makemigrations` hangs rather than failing.
+ *
+ * Five seconds is far longer than a local or CI connection needs — CI's
+ * postgres service is health-checked before any step runs — and turns an
+ * indefinite hang into Django's own already-handled error path.
+ */
+const CONNECT_TIMEOUT_ENV = { PGCONNECT_TIMEOUT: "5" };
+
 function runUv(repo: Repo, args: string[]): { ok: boolean; output: string } {
   // Deliberately not `shell: true` — see the note in format.ts::ruff.
   const result = spawnSync("uv", args, {
     cwd: repo.apiDir,
     encoding: "utf8",
+    env: { ...process.env, ...CONNECT_TIMEOUT_ENV },
   });
   if (result.error) {
     return { ok: false, output: `could not run "uv ${args.join(" ")}": ${result.error.message}` };
