@@ -39,7 +39,51 @@ def _signup_and_verify(client, email: str, password: str) -> None:
         {"key": key},
         content_type="application/json",
     )
-    assert response.status_code in (200, 401), response.json()
+    # Deterministic 200, not the old (200, 401) tolerance: ACCOUNT_LOGIN_
+    # ON_EMAIL_CONFIRMATION (config/settings/base.py) means clicking the
+    # link authenticates the session as part of the same call — the
+    # client is logged in by the time this returns, which every caller
+    # below that wants a *fresh* explicit login now has to `client.logout()`
+    # first, or it gets a 409 (already authenticated) instead of 200.
+    assert response.status_code == 200, response.json()
+
+
+def test_signup_leaves_the_address_unverified_until_the_link_is_clicked() -> None:
+    """Regression test: a fresh signup's ``EmailAddress`` must come back
+    ``verified=False`` — the actual finding behind the Phase 11 report's
+    "verified=True immediately" claim turned out to be a misdiagnosis
+    (see docs/review-2026-08.md's e2e/auth-flows.spec.ts entry and this
+    fix's commit): the address genuinely starts unverified, and the
+    thing that was really broken was the frontend not decoding the
+    emailed key before sending it back (apps/web/app/(auth)/verify-email/
+    [key]/page.tsx), plus two missing ACCOUNT_LOGIN_ON_* settings. This
+    pins the one fact the original report got right so a real regression
+    here — some future signal or adapter override marking the address
+    verified up front — still fails loudly."""
+    from allauth.account.models import EmailAddress
+    from django.test import Client
+
+    client = Client()
+    response = client.post(
+        "/_allauth/browser/v1/auth/signup",
+        {"email": "ada@example.com", "password": "s3cret-pass-1"},
+        content_type="application/json",
+    )
+    assert response.status_code == 401, response.json()
+
+    address = EmailAddress.objects.get(email="ada@example.com")
+    assert address.verified is False
+
+    key = _extract_key(mail.outbox[-1].body, "verify-email")
+    verify_response = client.post(
+        "/_allauth/browser/v1/auth/email/verify",
+        {"key": key},
+        content_type="application/json",
+    )
+    assert verify_response.status_code == 200, verify_response.json()
+
+    address.refresh_from_db()
+    assert address.verified is True
 
 
 def test_signup_sends_a_verification_email() -> None:
@@ -66,6 +110,10 @@ def test_verifying_the_emailed_key_then_login_authenticates_the_session() -> Non
 
     client = Client()
     _signup_and_verify(client, "ada@example.com", "s3cret-pass-1")
+    # Verifying already authenticated this client (see _signup_and_verify) —
+    # log out so the /login call below exercises a fresh credentials-based
+    # login rather than 409ing on an already-authenticated session.
+    client.logout()
 
     response = client.post(
         "/_allauth/browser/v1/auth/login",
@@ -139,10 +187,13 @@ def test_password_reset_round_trip() -> None:
         {"key": key, "password": "new-password-1"},
         content_type="application/json",
     )
-    # 200 if the reset itself authenticates the session, 401 if it merely
-    # sets the password and leaves login as a separate step — both are
-    # valid allauth configurations; the round trip below is what matters.
-    assert reset_response.status_code in (200, 401), reset_response.json()
+    # Deterministic 200: ACCOUNT_LOGIN_ON_PASSWORD_RESET (config/settings/
+    # base.py) means a successful reset authenticates the session as part
+    # of the same call — log out before the explicit login calls below so
+    # they exercise fresh credentials instead of 409ing on an
+    # already-authenticated session.
+    assert reset_response.status_code == 200, reset_response.json()
+    client.logout()
 
     old_login = client.post(
         "/_allauth/browser/v1/auth/login",
@@ -166,6 +217,7 @@ def test_session_cookie_attributes() -> None:
 
     client = Client()
     _signup_and_verify(client, "ada@example.com", "s3cret-pass-1")
+    client.logout()  # fresh login below, not a 409 on the verify-created session
 
     response = client.post(
         "/_allauth/browser/v1/auth/login",
@@ -188,6 +240,7 @@ def test_session_cookie_is_scoped_to_the_registrable_domain_when_configured() ->
     with override_settings(SESSION_COOKIE_DOMAIN=".acme.com"):
         client = Client()
         _signup_and_verify(client, "ada@example.com", "s3cret-pass-1")
+        client.logout()  # fresh login below, not a 409 on the verify-created session
 
         response = client.post(
             "/_allauth/browser/v1/auth/login",

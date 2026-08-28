@@ -54,6 +54,11 @@ def _signup_verify_login(client: Client, email: str, password: str) -> None:
     client.post(
         "/_allauth/browser/v1/auth/email/verify", {"key": key}, content_type="application/json"
     )
+    # ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION (config/settings/base.py) means
+    # the verify call above already authenticated this client — log out
+    # so the explicit login below exercises fresh credentials instead of
+    # 409ing on an already-authenticated session.
+    client.logout()
     response = client.post(
         "/_allauth/browser/v1/auth/login",
         {"email": email, "password": password},

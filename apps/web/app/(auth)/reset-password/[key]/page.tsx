@@ -31,7 +31,10 @@ export default function ResetPasswordKeyPage() {
   async function onSubmit(values: PasswordFormValues) {
     setFormError(null);
     try {
-      await authPasswordReset({ key: params.key, password: values.password });
+      // See the analogous decode in verify-email/[key]/page.tsx: Next.js
+      // does not decode dynamic route segments, and allauth's reset key
+      // can itself contain percent-encoded characters.
+      await authPasswordReset({ key: decodeURIComponent(params.key), password: values.password });
       navigateTo(router, defaultAppUrl());
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));

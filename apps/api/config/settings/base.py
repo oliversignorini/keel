@@ -485,6 +485,20 @@ HEADLESS_FRONTEND_URLS = {
 ACCOUNT_ADAPTER = "keel.notifications.adapter.KeelAccountAdapter"
 
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# Off by default in allauth. On here: clicking the emailed verification
+# link is this app's only way to finish signup (there is no separate
+# login step in between — apps/web/app/(auth)/verify-email/[key]/page.tsx
+# redirects straight to /onboarding), so without this the link verifies
+# the address but leaves the visitor unauthenticated on a page that
+# already told them it worked.
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+# Off by default in allauth. On here: successfully resetting a password
+# is proof of inbox access — the same proof `ACCOUNT_EMAIL_VERIFICATION`
+# mandatory otherwise demands via the separate confirmation email — so a
+# reset should land the user in the app, not bounce them into a second
+# "verify your email" gate they have no way to complete without the
+# session this response is about to discard.
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_LOGIN_METHODS = {"email"}
 # "password2" (confirm-password) is a classic-form-only concept — the
 # headless API always exposes a single "password" field on the wire
