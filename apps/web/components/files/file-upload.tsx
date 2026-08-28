@@ -9,6 +9,8 @@ import {
   uploadToPresignedUrl,
 } from "@/lib/files/api";
 import type { FileUploadResource } from "@/lib/files/types";
+import { Alert, AlertDescription, Button, Progress } from "@keel/ui";
+import { CheckCircle2, FileIcon, Loader2, RefreshCw, Upload } from "lucide-react";
 
 type UploadPhase = "idle" | "presigning" | "uploading" | "completing" | "done" | "error";
 
@@ -43,6 +45,9 @@ interface FileUploadProps {
 export function FileUpload({ orgSlug, onComplete }: FileUploadProps) {
   const [state, setState] = useState<FileUploadState>(IDLE_STATE);
   const pendingFileRef = useRef<File | null>(null);
+
+  const busy =
+    state.phase === "presigning" || state.phase === "uploading" || state.phase === "completing";
 
   const runUpload = useCallback(
     async (selected: File) => {
@@ -102,46 +107,59 @@ export function FileUpload({ orgSlug, onComplete }: FileUploadProps) {
   }, [orgSlug, state.file, onComplete]);
 
   return (
-    <div data-testid="file-upload">
-      <input
-        type="file"
-        aria-label="Upload file"
-        onChange={handleFileChange}
-        disabled={
-          state.phase === "presigning" ||
-          state.phase === "uploading" ||
-          state.phase === "completing"
-        }
-      />
+    <div data-testid="file-upload" className="flex flex-col gap-3">
+      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-input px-6 py-8 text-center text-sm text-muted-foreground hover:bg-accent/50 has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50">
+        {busy ? <Loader2 className="size-6 animate-spin" /> : <Upload className="size-6" />}
+        <span>{busy ? "Uploading…" : "Click to choose a file, or drag one here"}</span>
+        <input
+          type="file"
+          aria-label="Upload file"
+          className="sr-only"
+          onChange={handleFileChange}
+          disabled={busy}
+        />
+      </label>
 
       {state.phase === "uploading" && (
-        <div
-          role="progressbar"
-          aria-valuenow={Math.round(state.progress * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          Uploading… {Math.round(state.progress * 100)}%
+        <div className="flex flex-col gap-1">
+          <Progress value={Math.round(state.progress * 100)} />
+          <span className="text-xs text-muted-foreground">
+            Uploading… {Math.round(state.progress * 100)}%
+          </span>
         </div>
       )}
 
-      {state.phase === "completing" && <div>Finishing…</div>}
+      {state.phase === "completing" && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          Finishing…
+        </p>
+      )}
 
-      {state.phase === "done" && state.file && <div>Uploaded: {state.file.filename}</div>}
+      {state.phase === "done" && state.file && (
+        <p className="flex items-center gap-2 text-sm text-foreground">
+          <CheckCircle2 className="size-4 text-success" />
+          Uploaded: {state.file.filename}
+        </p>
+      )}
 
       {state.phase === "error" && (
-        <div role="alert">
-          <span>{state.error}</span>
-          <button type="button" onClick={handleRetry}>
-            Retry
-          </button>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>{state.error}</span>
+            <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
+              <RefreshCw />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {state.file && state.file.status === "pending" && (
-        <button type="button" onClick={() => void handleReconcile()}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void handleReconcile()}>
+          <FileIcon />
           Check status
-        </button>
+        </Button>
       )}
     </div>
   );

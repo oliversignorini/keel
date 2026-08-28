@@ -1,8 +1,10 @@
 "use client";
 
 import { BillingBanners } from "@/components/billing/billing-banners";
+import { NotFound } from "@/components/org/not-found";
 import { rememberLastOrg } from "@/lib/org/last-org";
 import { useOrgContext } from "@/lib/org/org-context";
+import { Skeleton } from "@keel/ui";
 import { useEffect } from "react";
 
 /**
@@ -32,23 +34,15 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
-        Loading…
-      </p>
+      <div role="status" aria-label="Loading" className="flex flex-col gap-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24 w-full" />
+      </div>
     );
   }
 
   if (me && !currentOrg) {
-    return (
-      <div className="rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
-        <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Organisation not found
-        </h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          It doesn&apos;t exist, or you&apos;re not a member.
-        </p>
-      </div>
-    );
+    return <NotFound title="Organisation not found" />;
   }
 
   return (

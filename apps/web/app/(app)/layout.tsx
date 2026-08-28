@@ -1,5 +1,6 @@
 "use client";
 
+import { JobTray } from "@/components/jobs/job-tray";
 import { ImpersonationBannerHost } from "@/components/org/impersonation-banner";
 import { OrgSwitcher } from "@/components/org/org-switcher";
 import { toApexHost } from "@/lib/host";
@@ -7,7 +8,23 @@ import { OrgProvider, useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import { listWidgets } from "@/lib/widgets/api";
 import { authLogout } from "@keel/api-client";
-import { AppShell, CommandPalette, type CommandItem, ThemeToggleButton } from "@keel/ui";
+import {
+  AppShell,
+  Avatar,
+  AvatarFallback,
+  Button,
+  CommandPalette,
+  type CommandItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Kbd,
+  ThemeToggleButton,
+} from "@keel/ui";
+import { LogOut, Search, Settings, Shield, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -22,11 +39,6 @@ import { useEffect, useMemo, useState } from "react";
  * `<OrgProvider>` wraps the whole group (not just `/[org]/*`) so
  * `<OrgSwitcher>` has the caller's organisation list even on the bare
  * app-root redirect page, which has no `[org]` segment yet.
- *
- * Phase 5.5 (`<JobTray>`, `useJobStream`, SSE) has not landed as of this
- * phase — the slot below is reserved and renders nothing rather than a
- * placeholder, so there's no visible gap to redesign around once it
- * does.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const params = useParams<{ org?: string }>();
@@ -38,6 +50,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function accountInitials(nameOrEmail: string | undefined): string {
+  if (!nameOrEmail) return "?";
+  const letter = nameOrEmail.trim().charAt(0);
+  return letter ? letter.toUpperCase() : "?";
+}
+
 function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const params = useParams<{ org?: string }>();
   const pathname = usePathname();
@@ -47,6 +65,11 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const [widgetResults, setWidgetResults] = useState<{ id: string; name: string }[]>([]);
+  const [isMac, setIsMac] = useState(true);
+
+  useEffect(() => {
+    setIsMac(/mac/i.test(window.navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -112,12 +135,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       group: "Navigate",
       onSelect: () => router.push(item.href),
     }));
-    const orgCommands: CommandItem[] = (me?.organizations ?? []).map((org) => ({
-      id: `org-${org.slug}`,
-      label: `Switch to ${org.name}`,
-      group: "Organisations",
-      onSelect: () => router.push(`/${org.slug}`),
-    }));
+    const orgCommands: CommandItem[] = (me?.organizations ?? [])
+      .filter((org) => org.slug !== currentOrg?.slug)
+      .map((org) => ({
+        id: `org-${org.slug}`,
+        label: `Switch to ${org.name}`,
+        group: "Organisations",
+        onSelect: () => router.push(`/${org.slug}`),
+      }));
     const widgetCommands: CommandItem[] = widgetResults.map((widget) => ({
       id: `widget-${widget.id}`,
       label: widget.name,
@@ -130,7 +155,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     return all.filter(
       (item) => item.group === "Widgets" || item.label.toLowerCase().includes(query),
     );
-  }, [navItems, me, paletteQuery, router, widgetResults, params.org]);
+  }, [navItems, me, paletteQuery, router, widgetResults, params.org, currentOrg]);
 
   const nav = (
     <>
@@ -159,14 +184,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         orgSwitcher={<OrgSwitcher />}
         nav={nav}
         commandPaletteTrigger={
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setPaletteOpen(true)}
-            className="rounded-md border border-input px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+            className="hidden text-muted-foreground sm:flex"
           >
-            <span aria-hidden="true">⌘K</span>
-            <span className="sr-only">Open command palette</span>
-          </button>
+            <Search />
+            Search…
+            <Kbd className="ml-2">{isMac ? "⌘K" : "Ctrl K"}</Kbd>
+          </Button>
         }
         themeToggle={
           <ThemeToggleButton
@@ -175,24 +202,54 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           />
         }
         accountMenu={
-          <div className="flex items-center gap-3 text-sm">
-            <Link href="/account/profile" className="text-muted-foreground hover:text-foreground">
-              Account
-            </Link>
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="text-muted-foreground underline hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                aria-label="Account menu"
+              >
+                <Avatar>
+                  <AvatarFallback>
+                    {accountInitials(me?.user.name ?? me?.user.email)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                {me?.user.email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/account/profile">
+                  <User />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/security">
+                  <Shield />
+                  Security
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/account/sessions">
+                  <Settings />
+                  Sessions
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+                <LogOut />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
-        // Phase 5.5 owns <JobTray> / useJobStream / SSE — not built yet
-        // (docs/plans/phase-6.md 6.C). This is the reserved slot; it
-        // renders nothing until that worktree lands and this becomes
-        // `<JobTray orgSlug={currentOrg?.slug} />`.
-        jobTraySlot={null}
+        jobTraySlot={currentOrg ? <JobTray orgSlug={currentOrg.slug} /> : null}
       >
         {children}
       </AppShell>
