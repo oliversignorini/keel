@@ -47,7 +47,7 @@ def local_storage_settings(settings: Any) -> Iterator[None]:
 
 def _org_with_owner() -> tuple[Organization, User]:
     owner = User.objects.create_user(email="local-owner@example.com", password="s3cret-pass")
-    org = services.create_organization(name="Acme", slug="acme-local", created_by=owner)
+    org = services.create_organization(name="Acme", slug="acme-local", actor=owner)
     return org, owner
 
 

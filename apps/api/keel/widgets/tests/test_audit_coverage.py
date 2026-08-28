@@ -42,3 +42,28 @@ def test_every_mutating_service_is_audited_or_explicitly_not_audited() -> None:
         f"services in keel.widgets.services carry neither @audited nor "
         f"@not_audited(reason=...): {sorted(undecorated)}"
     )
+
+
+def test_every_audited_service_names_its_actor_parameter_actor() -> None:
+    """``keel.core.audit``'s wrapper reads the actor out of the call's
+    ``actor`` kwarg and nowhere else — a service that names the same
+    person after the model field it lands in (``created_by``) writes
+    every one of its audit rows with ``actor=NULL``, invisibly. The
+    repo-wide version of this walk lives in
+    ``keel/core/tests/service_audit_registry.py``."""
+    entries = {key: entry for key, entry in registry}
+
+    missing = []
+    for name, func in inspect.getmembers(services, inspect.isfunction):
+        if func.__module__ != services.__name__ or name.startswith("_"):
+            continue
+        entry = entries.get(f"{func.__module__}.{func.__qualname__}")
+        if entry is None or entry["kind"] != "audited":
+            continue
+        if "actor" not in inspect.signature(entry["func"]).parameters:
+            missing.append(name)
+
+    assert not missing, (
+        f"@audited services in keel.widgets.services with no `actor` parameter, so "
+        f"every audit row they write has actor=NULL: {sorted(missing)}"
+    )

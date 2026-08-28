@@ -1,13 +1,16 @@
 """Reads (PRD §4 invariant 1). Services mutate and return; this module
 queries and returns. Nothing here writes."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from django.db.models import Max, Prefetch, QuerySet
+from django.utils import timezone
 
-from keel.billing.models import Plan, Price, Subscription
+from keel.billing.models import Plan, Price, StripeEvent, Subscription
 from keel.organizations.models import Organization
+
+STALE_EVENT_THRESHOLD = timedelta(minutes=5)
 
 
 def list_active_plans() -> QuerySet[Plan]:
@@ -43,3 +46,17 @@ def get_subscription(organization: Organization) -> Subscription | None:
     """``SubscriptionOut.resolve_plan`` reads ``obj.plan.code`` — without
     ``select_related("plan")`` that is a second query on every call."""
     return Subscription.objects.filter(organization=organization).select_related("plan").first()
+
+
+def stale_unprocessed_stripe_event_ids() -> list[str]:
+    """Ids of every ``StripeEvent`` still unprocessed
+    ``STALE_EVENT_THRESHOLD`` after receipt — what the beat sweeper
+    (``keel.billing.tasks.sweep_unprocessed_stripe_events``) re-dispatches.
+    A read, so it lives here rather than in ``services.py``; the sweeper
+    task owns the enqueue direction."""
+    threshold = timezone.now() - STALE_EVENT_THRESHOLD
+    return list(
+        StripeEvent.objects.filter(
+            processed_at__isnull=True, received_at__lt=threshold
+        ).values_list("pk", flat=True)
+    )

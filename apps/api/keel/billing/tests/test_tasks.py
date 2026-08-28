@@ -1,4 +1,5 @@
-"""``dispatch_stripe_event`` / ``process_stripe_event``:
+"""``dispatch_stripe_event`` (``keel.billing.tasks``) over
+``process_stripe_event`` (``keel.billing.services``):
 atomic dispatch, unhandled event types are marked processed as a
 no-op, a raising handler records ``StripeEvent.error`` and retries, and an
 already-processed event is a no-op on redelivery."""
@@ -9,7 +10,7 @@ import pytest
 import sentry_sdk
 from django.utils import timezone
 
-from keel.billing import credits, tasks, webhooks
+from keel.billing import credits, selectors, services, tasks, webhooks
 from keel.billing.models import CreditBalance, StripeEvent
 from keel.billing.tests.factories import make_organization
 from keel.core.sentry import init_sentry
@@ -29,7 +30,7 @@ def _stripe_event(event_id: str = "evt_1", event_type: str = "invoice.paid") -> 
 def test_process_stripe_event_marks_unhandled_type_processed_as_a_noop() -> None:
     stripe_event = _stripe_event(event_type="payment_intent.succeeded")
 
-    tasks.process_stripe_event(stripe_event)
+    services.process_stripe_event(stripe_event)
 
     stripe_event.refresh_from_db()
     assert stripe_event.processed_at is not None
@@ -42,10 +43,10 @@ def test_process_stripe_event_is_a_noop_when_already_processed(
     stripe_event = _stripe_event()
     calls = []
     monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", lambda obj, created: calls.append(obj))
-    tasks.process_stripe_event(stripe_event)
+    services.process_stripe_event(stripe_event)
     assert calls == [{"customer": "cus_x"}]
 
-    tasks.process_stripe_event(stripe_event)
+    services.process_stripe_event(stripe_event)
 
     assert calls == [{"customer": "cus_x"}], "a processed event must not be handled again"
 
@@ -64,7 +65,7 @@ def test_process_stripe_event_leaves_it_unprocessed_on_failure(
     monkeypatch.setitem(webhooks.HANDLERS, "invoice.paid", _boom)
 
     with pytest.raises(ValueError):
-        tasks.process_stripe_event(stripe_event)
+        services.process_stripe_event(stripe_event)
 
     stripe_event.refresh_from_db()
     assert stripe_event.processed_at is None
@@ -124,6 +125,35 @@ def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
     assert event["tags"]["stripe_event_id"] == "evt_sentry"
 
 
+# --- sweep_unprocessed_stripe_events (ddia#7) -------------------------------
+
+
+def test_sweeper_redispatches_only_stale_unprocessed_events(monkeypatch) -> None:
+    """The stale-row query is a selector now; the task keeps only the
+    enqueue direction. Both halves are asserted here: which ids the
+    selector reports, and that the task dispatches exactly those."""
+    stale = _stripe_event(event_id="evt_stale")
+    StripeEvent.objects.filter(pk=stale.pk).update(
+        received_at=timezone.now() - selectors.STALE_EVENT_THRESHOLD - timedelta(minutes=1)
+    )
+    _stripe_event(event_id="evt_fresh")
+    processed = _stripe_event(event_id="evt_done")
+    StripeEvent.objects.filter(pk=processed.pk).update(
+        processed_at=timezone.now(),
+        received_at=timezone.now() - selectors.STALE_EVENT_THRESHOLD - timedelta(minutes=1),
+    )
+
+    assert selectors.stale_unprocessed_stripe_event_ids() == ["evt_stale"]
+
+    dispatched: list[str] = []
+    monkeypatch.setattr(
+        tasks.dispatch_stripe_event, "delay", lambda event_id: dispatched.append(event_id)
+    )
+
+    assert tasks.sweep_unprocessed_stripe_events() == 1
+    assert dispatched == ["evt_stale"]
+
+
 # --- prune_stripe_event_payloads (ddia#10) ----------------------------------
 
 
@@ -131,7 +161,7 @@ def test_prune_nulls_the_payload_of_old_processed_events() -> None:
     old = _stripe_event(event_id="evt_old")
     StripeEvent.objects.filter(pk=old.pk).update(
         processed_at=timezone.now(),
-        received_at=timezone.now() - tasks.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1),
+        received_at=timezone.now() - services.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1),
     )
 
     pruned = tasks.prune_stripe_event_payloads()
@@ -159,7 +189,7 @@ def test_prune_leaves_unprocessed_events_alone_regardless_of_age() -> None:
     ``dispatch_stripe_event`` — both need the payload."""
     unprocessed = _stripe_event(event_id="evt_unprocessed")
     StripeEvent.objects.filter(pk=unprocessed.pk).update(
-        received_at=timezone.now() - tasks.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1)
+        received_at=timezone.now() - services.STRIPE_EVENT_PAYLOAD_RETENTION - timedelta(days=1)
     )
 
     pruned = tasks.prune_stripe_event_payloads()

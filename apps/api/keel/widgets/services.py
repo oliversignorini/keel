@@ -46,8 +46,13 @@ def create_widget(
     name: str,
     description: str,
     status: str,
-    created_by: Any,
+    actor: Any,
 ) -> Widget:
+    """The person creating the widget is ``actor``, not ``created_by``:
+    ``@audited`` reads the actor out of the call's ``actor`` kwarg, so a
+    service that names it after the model field it lands in writes every
+    ``widget.created`` row with ``actor=NULL``. The model field is still
+    ``created_by`` — the rename is at the service boundary only."""
     check_limit(organization, "widgets")
     with transaction.atomic():
         widget = Widget.objects.create(
@@ -55,7 +60,7 @@ def create_widget(
             name=name,
             description=description,
             status=status,
-            created_by=created_by,
+            created_by=actor,
         )
         transaction.on_commit(lambda: _dispatch_widget_created(widget.id))
     return widget
@@ -71,6 +76,16 @@ def update_widget(*, widget: Widget, actor: Any, impersonator: Any = None, **fie
 
 
 @audited("widget.deleted")
-def delete_widget(*, widget: Widget, actor: Any, impersonator: Any = None) -> None:
+def delete_widget(*, widget: Widget, actor: Any, impersonator: Any = None) -> Widget:
+    """Returns the deleted widget so the ``widget.deleted`` audit row can
+    say *which* widget in *which* organisation was deleted: ``@audited``
+    falls back to the return value for its target, and a service
+    returning ``None`` records an empty ``target_type``/``target_id``
+    and a null ``organization``. Django's ``Model.delete()`` clears the
+    in-memory ``pk``, so it is restored on the returned instance — a
+    detached snapshot of the row that was deleted, never re-saved."""
+    pk = widget.pk
     with transaction.atomic():
         widget.delete()
+    widget.pk = pk
+    return widget

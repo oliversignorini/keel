@@ -20,7 +20,7 @@ def _client_for(user: User) -> Client:
 def test_me_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
     for i in range(3):
-        org_services.create_organization(name=f"Org {i}", slug=f"org-{i}", created_by=owner)
+        org_services.create_organization(name=f"Org {i}", slug=f"org-{i}", actor=owner)
 
     client = _client_for(owner)
 
@@ -40,7 +40,7 @@ def test_me_query_count(django_assert_num_queries: object) -> None:
 def test_list_organizations_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
     for i in range(3):
-        org_services.create_organization(name=f"Org {i}", slug=f"org-{i}", created_by=owner)
+        org_services.create_organization(name=f"Org {i}", slug=f"org-{i}", actor=owner)
 
     client = _client_for(owner)
 
@@ -54,7 +54,7 @@ def test_list_organizations_query_count(django_assert_num_queries: object) -> No
 
 def test_list_members_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
-    org = org_services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = org_services.create_organization(name="Acme", slug="acme", actor=owner)
     for _ in range(3):
         membership_factory(org)
 

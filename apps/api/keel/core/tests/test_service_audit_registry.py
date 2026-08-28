@@ -15,6 +15,8 @@ import pytest
 
 from keel.core import audit
 from keel.core.tests.service_audit_registry import (
+    ACTORLESS_AUDITED_SERVICES,
+    find_audited_services_without_actor,
     find_undecorated_services,
     iter_not_audited_reasons,
     iter_public_mutating_callables,
@@ -121,3 +123,35 @@ def test_iter_not_audited_reasons_finds_real_production_reasons() -> None:
     assert reasons, "expected at least one real @not_audited(reason=...) in the codebase"
     blank = [name for name, reason in reasons if not (reason or "").strip()]
     assert not blank, f"the following @not_audited entries have a blank reason: {blank}"
+
+
+# --- The actor contract -------------------------------------------------
+
+
+def test_every_audited_service_takes_an_actor() -> None:
+    """``@audited`` reads the actor out of ``kwargs["actor"]``. A service
+    that calls the same person something else — ``created_by``,
+    ``invited_by``, ``user`` — silently writes every one of its rows with
+    ``actor=NULL``, which no call site or row inspection reveals. A
+    deliberate exception goes in ``ACTORLESS_AUDITED_SERVICES`` with its
+    reason."""
+    gaps = find_audited_services_without_actor()
+
+    assert not gaps, (
+        "The following @audited services have no `actor` parameter, so every "
+        f"audit row they write has actor=NULL: {gaps}. Rename the parameter to "
+        "`actor` (the model field it lands in can keep its own name), or add it "
+        "to ACTORLESS_AUDITED_SERVICES with a reason."
+    )
+
+
+def test_the_actorless_allowlist_entries_are_real_and_reasoned() -> None:
+    """An allowlist entry naming a function that no longer exists silently
+    exempts nothing — and would keep exempting it after a rename."""
+    audited_keys = {key for key, entry in audit.registry if entry["kind"] == "audited"}
+
+    assert ACTORLESS_AUDITED_SERVICES, "expected at least one documented actorless service"
+    stale = [key for key in ACTORLESS_AUDITED_SERVICES if key not in audited_keys]
+    assert not stale, f"ACTORLESS_AUDITED_SERVICES names non-@audited functions: {stale}"
+    blank = [key for key, reason in ACTORLESS_AUDITED_SERVICES.items() if not reason.strip()]
+    assert not blank, f"the following actorless exemptions have a blank reason: {blank}"

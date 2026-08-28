@@ -269,6 +269,29 @@ E       assert not ['keel.jobs.services.create_job']
 
 restoring the decorator turns the test green again with no other change.
 
+Two things the decorator reads off the call it wraps, and neither is
+inferred:
+
+- **the actor is `kwargs["actor"]`, and nothing else.** A service that
+  names the same person after the model field the value lands in —
+  `created_by`, `invited_by`, `user` — writes every one of its rows with
+  `actor=NULL`, invisibly: the call site looks right and the row looks
+  like a system action. So `create_widget`, `create_organization`,
+  `create_invitation` and `accept_invitation` all take `actor=`; the
+  model fields keep their own names. `find_audited_services_without_actor`
+  (`keel/core/tests/service_audit_registry.py`) walks the registry and
+  fails on any `@audited` function whose signature has no `actor`
+  parameter; a deliberate exception — a scheduled job that genuinely has
+  no actor, like `rotate_connection_tokens` — goes in
+  `ACTORLESS_AUDITED_SERVICES` with its reason, the same shape as a
+  `@not_audited` reason.
+- **the target defaults to the return value.** A delete service that
+  returns `None` therefore records `target_type=""`, `target_id=""` and
+  `organization=NULL` — a row that can't say what was deleted, or from
+  which organisation. `delete_widget` and `remove_member` return the
+  deleted row instead, with the in-memory `pk` Django's `Model.delete()`
+  clears restored on it: a detached snapshot, never re-saved.
+
 `@audited` records **inline**, immediately after the decorated function
 returns — not deferred to `transaction.on_commit()`. `AuditLog` lives in
 the same Postgres as everything it describes, so writing the record as

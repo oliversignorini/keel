@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 
 def test_list_audit_logs_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
-    org = org_services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = org_services.create_organization(name="Acme", slug="acme", actor=owner)
     # create_organization itself writes an audit row (@audited) — three
     # more on top of that exercises the select_related with several rows.
     for _ in range(3):

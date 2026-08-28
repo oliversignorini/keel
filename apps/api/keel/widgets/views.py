@@ -55,7 +55,7 @@ def create_widget(request: Any, org_slug: str, payload: WidgetIn) -> Status[Widg
     organization = resolve_and_authorize(request, org_slug, (_CREATE,))
     widget = services.create_widget(
         organization=organization,
-        created_by=request.auth,
+        actor=request.auth,
         name=payload.name,
         description=payload.description,
         status=payload.status,

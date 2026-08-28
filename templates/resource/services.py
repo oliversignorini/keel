@@ -45,14 +45,19 @@ def create___resource__(
     *,
     organization: Organization,
     # keel:insert create_params
-    created_by: Any,
+    actor: Any,
 ) -> __Resource__:
+    """The person creating the row is ``actor``, not ``created_by``:
+    ``@audited`` reads the actor out of the call's ``actor`` kwarg, so a
+    service that names it after the model field it lands in writes every
+    ``__resource__.created`` row with ``actor=NULL``. The model field is
+    still ``created_by`` — the rename is at the service boundary only."""
     check_limit(organization, "__app__")
     with transaction.atomic():
         __resource__ = __Resource__.objects.create(
             organization=organization,
             # keel:insert create_kwargs
-            created_by=created_by,
+            created_by=actor,
         )
         transaction.on_commit(lambda: _dispatch___resource___created(__resource__.id))
     return __resource__
@@ -72,6 +77,16 @@ def update___resource__(
 @audited("__resource__.deleted")
 def delete___resource__(
     *, __resource__: __Resource__, actor: Any, impersonator: Any = None
-) -> None:
+) -> __Resource__:
+    """Returns the deleted row so the ``__resource__.deleted`` audit row
+    can say *which* row in *which* organisation was deleted: ``@audited``
+    falls back to the return value for its target, and a service
+    returning ``None`` records an empty ``target_type``/``target_id``
+    and a null ``organization``. Django's ``Model.delete()`` clears the
+    in-memory ``pk``, so it is restored on the returned instance — a
+    detached snapshot of the row that was deleted, never re-saved."""
+    pk = __resource__.pk
     with transaction.atomic():
         __resource__.delete()
+    __resource__.pk = pk
+    return __resource__

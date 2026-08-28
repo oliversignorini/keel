@@ -37,7 +37,7 @@ def _org_with_owner():
     global _counter
     _counter += 1
     creator = _user("owner")
-    org = services.create_organization(name="Acme", slug=f"acme-{_counter}", created_by=creator)
+    org = services.create_organization(name="Acme", slug=f"acme-{_counter}", actor=creator)
     return org, creator
 
 
@@ -233,7 +233,7 @@ def test_me_resolves_entitlements_from_the_current_plan() -> None:
 def _pending_invitation(org, creator, email: str = "invitee@example.com") -> Invitation:
     member_role = Role.objects.get(organization=None, name=PRESET_MEMBER)
     return services.create_invitation(
-        organization=org, email=email, role=member_role, invited_by=creator
+        organization=org, email=email, role=member_role, actor=creator
     )
 
 

@@ -12,13 +12,21 @@ from django.utils import timezone
 
 from keel.billing import stripe_client
 from keel.billing.entitlements import enforce_downgrade_limits
-from keel.billing.models import CreditBalance, CreditLedgerEntry, Plan, Price, Subscription
+from keel.billing.models import (
+    CreditBalance,
+    CreditLedgerEntry,
+    Plan,
+    Price,
+    StripeEvent,
+    Subscription,
+)
 from keel.core.audit import audited, not_audited
 from keel.core.impersonation import forbid_when_impersonating
 from keel.organizations.models import Membership, Organization
 
 CHECKOUT_TRIAL_DAYS = 14
 TRIAL_ENDING_NOTICE_WINDOW_DAYS = 3
+STRIPE_EVENT_PAYLOAD_RETENTION = timedelta(days=30)
 
 
 class MissingPlanCode(Exception):
@@ -347,3 +355,73 @@ def check_dunning() -> int:
         )
         sent += 1
     return sent
+
+
+@not_audited(
+    reason="Stripe-driven webhook processing, not a user action — no actor. The "
+    "StripeEvent row itself (id, type, payload, processed_at) is the audit trail "
+    "for what Stripe told us and when we acted on it."
+)
+def process_stripe_event(stripe_event: StripeEvent) -> None:
+    """Atomic dispatch to the handler for ``stripe_event.type``, then marks
+    it processed. A replay of an already-processed event (``processed_at``
+    set) is a no-op — the second line of idempotency defense behind the
+    view's ``get_or_create`` (PRD §6, "Replaying an event is a no-op by
+    construction"). An unhandled event type is marked processed without
+    doing anything, since PRD §6 only lists six event types as handled.
+
+    The "already processed" guard is a lock, not a plain read (ddia#8):
+    two workers processing the same event concurrently (Celery is
+    at-least-once, and the view's re-enqueue-on-replay adds a second path
+    to the same race) must not both run the handler — a
+    ``select_for_update`` inside the same transaction as the check makes
+    the second one block until the first commits, then see
+    ``processed_at`` already set.
+
+    Lives here rather than in ``tasks.py`` (CLAUDE.md invariant 1: tasks
+    are one-line delegations): the lock, the dispatch and the state
+    transition are the business rule, and ``dispatch_stripe_event`` owns
+    only the retry/backoff around it."""
+    from keel.billing.webhooks import HANDLERS
+
+    with transaction.atomic():
+        stripe_event = StripeEvent.objects.select_for_update().get(pk=stripe_event.pk)
+        if stripe_event.processed_at is not None:
+            return
+        handler = HANDLERS.get(stripe_event.type)
+        if handler is not None:
+            handler(stripe_event.payload["data"]["object"], stripe_event.payload.get("created"))
+        stripe_event.processed_at = timezone.now()
+        stripe_event.error = ""
+        stripe_event.save(update_fields=["processed_at", "error"])
+
+
+@not_audited(reason="Retry bookkeeping for a Stripe-driven event, not a user action — no actor.")
+def record_stripe_event_error(stripe_event: StripeEvent, error: str) -> None:
+    """Records why the last attempt at ``stripe_event`` failed, leaving
+    ``processed_at`` null so the sweeper and Stripe's own redelivery can
+    still pick it up."""
+    stripe_event.error = error
+    stripe_event.save(update_fields=["error"])
+
+
+@not_audited(
+    reason="Scheduled retention job (PRD §5), not a user action — no actor; it "
+    "nulls payloads, it decides nothing."
+)
+def prune_stripe_event_payloads() -> int:
+    """Beat task body (ddia#10): ``StripeEvent.payload`` is the write-ahead
+    log for billing state and grows monotonically with no retention —
+    table bloat, vacuum pressure on the hottest billing table, and
+    indefinite retention of whatever PII a Stripe event carries. Nulls
+    ``payload`` on rows older than ``STRIPE_EVENT_PAYLOAD_RETENTION``
+    that have already been processed, keeping id/type/timestamps — the
+    dedup key — intact. An unprocessed row is never touched: it may still
+    be replayed by ``sweep_unprocessed_stripe_events`` or retried by
+    ``dispatch_stripe_event``, both of which need the payload."""
+    threshold = timezone.now() - STRIPE_EVENT_PAYLOAD_RETENTION
+    return (
+        StripeEvent.objects.filter(processed_at__isnull=False, received_at__lt=threshold)
+        .exclude(payload={})
+        .update(payload={})
+    )

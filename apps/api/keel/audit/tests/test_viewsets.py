@@ -34,7 +34,7 @@ def test_owner_can_list_the_organizations_audit_log() -> None:
     # test's transactional wrapping would otherwise have silently
     # swallowed — so its own "organization.created" row is real and
     # expected here, alongside the two rows created directly below.
-    org = services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = services.create_organization(name="Acme", slug="acme", actor=owner)
     AuditLog.objects.create(organization=org, actor=owner, action="widget.created")
     AuditLog.objects.create(organization=org, actor=owner, action="widget.deleted")
 
@@ -53,7 +53,7 @@ def test_owner_can_list_the_organizations_audit_log() -> None:
 
 def test_a_member_without_audit_view_is_denied() -> None:
     owner = _user("owner2")
-    org = services.create_organization(name="Acme2", slug="acme2", created_by=owner)
+    org = services.create_organization(name="Acme2", slug="acme2", actor=owner)
     no_permissions_role = Role.objects.create(name="No permissions", permissions=[])
     member = _user("member")
     Membership.objects.create(
@@ -67,9 +67,9 @@ def test_a_member_without_audit_view_is_denied() -> None:
 
 def test_rows_from_another_organization_are_not_visible() -> None:
     owner_a = _user("owner-a")
-    org_a = services.create_organization(name="Acme A", slug="acme-a", created_by=owner_a)
+    org_a = services.create_organization(name="Acme A", slug="acme-a", actor=owner_a)
     owner_b = _user("owner-b")
-    org_b = services.create_organization(name="Acme B", slug="acme-b", created_by=owner_b)
+    org_b = services.create_organization(name="Acme B", slug="acme-b", actor=owner_b)
     AuditLog.objects.create(organization=org_a, actor=owner_a, action="widget.created")
     AuditLog.objects.create(organization=org_b, actor=owner_b, action="widget.created")
 

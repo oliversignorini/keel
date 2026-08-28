@@ -35,13 +35,23 @@ def _resolve_organization(target: Any) -> Organization | None:
     return organization if isinstance(organization, Organization) else None
 
 
+def _target_name(target: Any) -> str:
+    """``target.__class__``, not ``type(target)``: a target that reaches a
+    service straight off the request (``request.auth``) is a
+    ``SimpleLazyObject``, and ``type()`` sees the wrapper where
+    ``__class__`` is proxied through to the wrapped model — the
+    difference between a row saying ``target_type="User"`` and one saying
+    ``target_type="SimpleLazyObject"``."""
+    return str(target.__class__.__name__)
+
+
 def _target_type_and_id(target: Any) -> tuple[str, str]:
     if target is None:
         return "", ""
     pk = getattr(target, "pk", None)
     if pk is not None:
-        return type(target).__name__, str(pk)
-    return type(target).__name__, str(target)
+        return _target_name(target), str(pk)
+    return _target_name(target), str(target)
 
 
 def record_audit_event(record: AuditRecord) -> None:

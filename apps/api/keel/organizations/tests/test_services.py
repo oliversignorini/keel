@@ -26,7 +26,7 @@ def _user(email: str = "creator@example.com") -> User:
 def test_create_organization_is_atomic_org_owner_membership_and_three_preset_roles() -> None:
     creator = _user()
 
-    org = services.create_organization(name="Acme", slug="acme", created_by=creator)
+    org = services.create_organization(name="Acme", slug="acme", actor=creator)
 
     assert Organization.objects.filter(pk=org.pk).exists()
     membership = Membership.objects.get(organization=org, user=creator)
@@ -41,10 +41,10 @@ def test_create_organization_is_atomic_org_owner_membership_and_three_preset_rol
 
 def test_create_organization_fails_atomically_on_duplicate_slug() -> None:
     creator = _user()
-    services.create_organization(name="Acme", slug="acme", created_by=creator)
+    services.create_organization(name="Acme", slug="acme", actor=creator)
 
     with pytest.raises(Exception):  # noqa: B017 - IntegrityError from the unique slug constraint
-        services.create_organization(name="Acme Two", slug="acme", created_by=creator)
+        services.create_organization(name="Acme Two", slug="acme", actor=creator)
 
     # No stray membership/org left behind by the failed attempt.
     assert Organization.objects.filter(slug="acme").count() == 1
@@ -58,7 +58,7 @@ def _sole_owner_org() -> tuple[Organization, Membership]:
     global _org_counter
     _org_counter += 1
     creator = _user(f"owner-{_org_counter}@example.com")
-    org = services.create_organization(name="Acme", slug=f"acme-{_org_counter}", created_by=creator)
+    org = services.create_organization(name="Acme", slug=f"acme-{_org_counter}", actor=creator)
     membership = Membership.objects.get(organization=org, user=creator)
     return org, membership
 
@@ -162,14 +162,14 @@ def test_invitation_lifecycle_create_revoke_accept() -> None:
         organization=org,
         email="Invitee@Example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
     assert invitation.email == "invitee@example.com"
     assert invitation.expires_at > timezone.now()
     assert invitation.token
 
     invitee = _user("invitee@example.com")
-    membership = services.accept_invitation(invitation=invitation, user=invitee)
+    membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     invitation.refresh_from_db()
     assert invitation.accepted_at is not None
@@ -185,7 +185,7 @@ def test_revoke_invitation_sets_revoked_at() -> None:
         organization=org,
         email="invitee@example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
 
     services.revoke_invitation(invitation=invitation, actor=owner_membership.user)
@@ -226,12 +226,12 @@ def test_accept_invitation_denies_beyond_the_seat_entitlement() -> None:
         organization=org,
         email="invitee@example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
     invitee = _user("invitee@example.com")
 
     with pytest.raises(PaymentRequired) as exc_info:
-        services.accept_invitation(invitation=invitation, user=invitee)
+        services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert exc_info.value.code == "limit_exceeded"
     assert exc_info.value.details == {"resource": "seats", "limit": 1, "current_usage": 1}
@@ -256,11 +256,11 @@ def test_accept_invitation_reactivating_a_suspended_membership_is_checked_as_a_n
         organization=org,
         email="invitee@example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
 
     with pytest.raises(PaymentRequired):
-        services.accept_invitation(invitation=invitation, user=invitee)
+        services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert Membership.objects.get(organization=org, user=invitee).status == (
         Membership.STATUS_SUSPENDED
@@ -282,10 +282,10 @@ def test_accept_invitation_re_accepting_an_already_active_membership_is_not_rech
         organization=org,
         email="invitee@example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
 
-    membership = services.accept_invitation(invitation=invitation, user=invitee)
+    membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert membership.status == Membership.STATUS_ACTIVE
 
@@ -302,10 +302,10 @@ def test_accept_invitation_reactivates_a_suspended_membership() -> None:
         organization=org,
         email="invitee@example.com",
         role=member_role,
-        invited_by=owner_membership.user,
+        actor=owner_membership.user,
     )
 
-    membership = services.accept_invitation(invitation=invitation, user=invitee)
+    membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert membership.status == Membership.STATUS_ACTIVE
     assert membership.role_id == member_role.id
