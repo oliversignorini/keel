@@ -1,3 +1,5 @@
+export * from "./components/ui";
+
 export { AppShell } from "./app-shell";
 export { type CommandItem, CommandPalette } from "./command-palette";
 export { cn } from "./cn";

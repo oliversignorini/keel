@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@keel/ui/theme.css";
+@import "@keel/ui/animate.css";
 
 /* @keel/ui ships TSX source with no build step (next.config.ts
    transpiles it), so Tailwind's automatic content detection — which
@@ -42,5 +43,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --radius-DEFAULT: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 }
