@@ -31,6 +31,26 @@ const HOP_BY_HOP_REQUEST_HEADERS = new Set([
   "content-length",
 ]);
 
+/** Headers that describe *who the client is and how they connected*, which
+ * only a trusted proxy may assert. This proxy sits between the public
+ * internet and Django, so anything the browser sent under these names is
+ * a claim, not a fact: Django's anon rate limiting keys its bucket off
+ * `X-Forwarded-For` when configured to trust proxies
+ * (apps/api/keel/core/throttle.py) and its `SECURE_PROXY_SSL_HEADER`
+ * trusts `X-Forwarded-Proto` (apps/api/config/settings/prod.py), so a
+ * browser that sets either per request would otherwise mint itself a
+ * fresh rate-limit bucket every call and tell Django an http:// request
+ * arrived over https://. Deleted rather than rewritten — the platform's
+ * own edge and this hop's fetch set the real values on the way out. */
+const CLIENT_ASSERTED_FORWARDING_HEADERS = new Set([
+  "x-forwarded-for",
+  "x-forwarded-proto",
+  "x-forwarded-host",
+  "x-forwarded-port",
+  "x-real-ip",
+  "forwarded",
+]);
+
 const HOP_BY_HOP_RESPONSE_HEADERS = new Set([
   "connection",
   "keep-alive",
@@ -63,6 +83,9 @@ export async function proxyRequest(request: NextRequest, options: ProxyOptions):
 
   const requestHeaders = new Headers(request.headers);
   for (const name of HOP_BY_HOP_REQUEST_HEADERS) {
+    requestHeaders.delete(name);
+  }
+  for (const name of CLIENT_ASSERTED_FORWARDING_HEADERS) {
     requestHeaders.delete(name);
   }
 

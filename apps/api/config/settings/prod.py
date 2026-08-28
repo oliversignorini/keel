@@ -26,15 +26,21 @@ X_FRAME_OPTIONS = "DENY"
 # SECURE_SSL_REDIRECT above loop forever (redirect to https://, proxy
 # forwards as http://, redirect again) and reports every request as
 # insecure to SESSION_COOKIE_SECURE/CSRF_COOKIE_SECURE. Safe only because
-# Railway's proxy sets this header itself and strips/overwrites any
-# client-supplied one — see docs/deploy-railway.md's production checklist
-# for the one thing this hasn't been confirmed against: a real Railway
-# deploy inspecting the header Railway's edge actually sends.
+# every hop in front of this process sets the header itself and
+# strips/overwrites a client-supplied one. Railway's edge does; the
+# Next.js BFF (apps/web/lib/api/proxy.ts) is a *second* hop and used to
+# forward the browser's own `x-forwarded-*` verbatim — it now deletes
+# them, which is what makes trusting this header here sound. See
+# docs/deploy-railway.md's production checklist for the one thing this
+# hasn't been confirmed against: a real Railway deploy inspecting the
+# header Railway's edge actually sends.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Resend — see keel.notifications.resend_backend for why this is a
-# backend rather than a bespoke send path.
-EMAIL_BACKEND = "keel.notifications.resend_backend.ResendEmailBackend"
+# backend rather than a bespoke send path. Replaces base.py's Mailpit
+# SMTP mailer wholesale (no OPTIONS: the backend reads RESEND_API_KEY
+# from settings at send time).
+MAILERS = {"default": {"BACKEND": "keel.notifications.resend_backend.ResendEmailBackend"}}
 
 # --- Database connection pooling (docs/deploy-railway.md "Pooling") -------
 # Railway Postgres has no pooler in front of it — a long-lived

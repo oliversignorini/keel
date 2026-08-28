@@ -5,7 +5,7 @@ templated sends in ``keel.notifications.emails``, allauth's own
 them — goes through the same ``django.core.mail.send_mail`` /
 ``EmailMessage.send()`` surface regardless of environment. Dev and test
 use Django's stock SMTP/locmem backends against Mailpit (settings.py);
-this backend is wired in only for prod.
+this backend is wired in only for prod, as the ``default`` mailer.
 
 Uses ``requests`` directly against Resend's HTTP API rather than adding
 the ``resend`` SDK as a dependency — ``requests`` is already vendored
@@ -25,6 +25,15 @@ RESEND_API_URL = "https://api.resend.com/emails"
 
 
 class ResendEmailBackend(BaseEmailBackend):
+    # Django 6 moved backend construction to ``MAILERS`` (config/settings/
+    # prod.py) and deprecated ``BaseEmailBackend.fail_silently`` — reading
+    # the inherited attribute from a non-Django module raises a
+    # RemovedInDjango70Warning — so this backend owns the flag itself and
+    # takes it from the mailer's ``OPTIONS`` like any other option.
+    def __init__(self, *, fail_silently: bool = False, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.fail_silently = fail_silently
+
     def send_messages(self, email_messages: Sequence[EmailMessage]) -> int:
         api_key = settings.RESEND_API_KEY
         if not api_key:

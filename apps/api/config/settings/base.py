@@ -319,18 +319,34 @@ CORS_ALLOWED_ORIGINS = env.list("DJANGO_CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOW_CREDENTIALS = True
 
 # --- Email (Mailpit in dev, see infra/compose.dev.yml) ---------------------
-EMAIL_HOST = env("EMAIL_HOST", default="localhost")
-EMAIL_PORT = env.int("EMAIL_PORT", default=1025)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+# ``MAILERS``, not the flat ``EMAIL_*`` settings: Django 6 deprecated
+# EMAIL_BACKEND/EMAIL_HOST/EMAIL_PORT/EMAIL_HOST_USER/EMAIL_HOST_PASSWORD/
+# EMAIL_USE_TLS (RemovedInDjango70Warning) and refuses to start if any of
+# them is defined alongside MAILERS (django.conf's
+# ``DEPRECATED_EMAIL_SETTINGS`` check) — so this is an all-or-nothing
+# switch, not an additive one. The env var names are unchanged; only the
+# shape they land in moved. The base entry is the dev/CI one (Mailpit over
+# plain SMTP on :1025); config/settings/test.py and prod.py replace the
+# ``default`` mailer's BACKEND with locmem and Resend respectively.
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": env("EMAIL_HOST", default="localhost"),
+            "port": env.int("EMAIL_PORT", default=1025),
+            "username": env("EMAIL_HOST_USER", default=""),
+            "password": env("EMAIL_HOST_PASSWORD", default=""),
+            "use_tls": env.bool("EMAIL_USE_TLS", default=False),
+        },
+    }
+}
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
 
 # Resend (PRD §5). Blank in dev/test, same
 # pattern as STRIPE_SECRET_KEY above — keel.notifications.resend_backend
 # raises ImproperlyConfigured if a send is actually attempted without it.
-# Only wired as EMAIL_BACKEND in prod.py; dev/test keep sending through
-# Mailpit / locmem via the stock Django backends.
+# Only wired as the ``default`` mailer's BACKEND in prod.py; dev/test keep
+# sending through Mailpit / locmem via the stock Django backends.
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 
 # R2 presigned direct upload (PRD §5). No R2
@@ -431,6 +447,20 @@ KEEL_ENCRYPTION_KEYS = env.list("KEEL_ENCRYPTION_KEY", default=[])
 # the counters. `None` disables a throttle entirely (config/settings/test.py).
 KEEL_API_THROTTLE_USER_RATE: str | None = env("KEEL_API_THROTTLE_USER_RATE", default="300/minute")
 KEEL_API_THROTTLE_ANON_RATE: str | None = env("KEEL_API_THROTTLE_ANON_RATE", default="60/minute")
+
+# How many *trusted* proxies sit in front of this process and append to
+# ``X-Forwarded-For``. This is the throttle's client-identity rule, so it
+# is security-relevant: `X-Forwarded-For` is a client-supplied header, and
+# an anon bucket keyed off it is no bucket at all — a browser that varies
+# the header per request gets a fresh anon allowance every time. Default
+# 0: ignore the header entirely and key on ``REMOTE_ADDR``, which only the
+# socket peer can choose. Set it to the number of proxies that actually
+# rewrite/append the header on the way in (the Next.js BFF strips every
+# client-supplied `x-forwarded-*` before forwarding — apps/web/lib/api/
+# proxy.ts — so on Railway the count is the edge plus that hop) and the
+# nth-from-the-right entry, the last one a trusted proxy wrote, becomes
+# the identity. Misconfiguring it high is a bypass, so it stays opt-in.
+KEEL_API_THROTTLE_NUM_PROXIES: int = env.int("KEEL_API_THROTTLE_NUM_PROXIES", default=0)
 
 # --- allauth headless (PRD §4 "Auth architecture", §8) ---------------------
 # `HEADLESS_ONLY = True`: no allauth template-rendered account views, only
