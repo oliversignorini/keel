@@ -1,41 +1,44 @@
 Add a permission code for `$ARGUMENTS` (a `resource.action` style name,
-e.g. `invoices.approve`). This touches exactly one file's logic —
-`apps/api/keel/organizations/permissions.py` — plus its registrations.
-**Do not** add a permission check anywhere else; that is what invariant 2
-and `check_permission_lint.py` exist to catch.
+e.g. `invoices.approve`).
 
-1. Add the code as a `Perm.<NAME>` class attribute, next to the
-   resource's existing codes if there are any.
-2. Decide the guard:
-   - **Role-only** (most permissions): `_role_guard(Perm.<NAME>)` — the
-     same one-liner every existing code uses.
-   - **Subject-aware** (the check depends on the object, not just the
-     role — e.g. "can only approve invoices under $X" or a last-owner
-     style guard): write a dedicated guard function following
-     `_members_remove_guard`'s shape — takes `(user, organization,
-subject=None)`, returns a `Decision.allow()` or
-     `Decision.deny(reason, details=...)` with a specific machine-
-     readable `reason`, never a bare `Decision.deny("no")`.
-3. `registry.register(Perm.<NAME>, <guard>)` next to the other
-   registrations.
-4. Add the code to the right preset's code set in `roles.py`
-   (`_MEMBER_CODES`, or the Admin/Owner equivalents) — a code nobody's
-   role includes is unreachable and the meta-tests won't catch that, so
-   check by hand which preset should get it.
-5. Wire it onto whatever viewset(s) need it — `required_permissions` /
-   `_ACTION_PERMISSIONS`.
+## 1. Run the generator
 
-## Tests (mandatory — invariant 2's CI meta-test fails without both)
+```
+pnpm gen permission invoices.approve
+```
 
-In `organizations/tests/guard_cases.py` (or wherever the existing guard
-test cases live), add:
+This splices all four places a code has to exist to be real: the
+`Perm.<CODE>` constant, `registry.register(...)` with a role-only guard,
+the right preset in `roles.py`'s `_MEMBER_CODES`, and the allow/deny pair
+in `organizations/tests/test_permissions.py`'s guard table — all
+idempotent, so re-running it is a no-op if the code is already fully
+wired. **Do not** add a permission check anywhere else by hand; that is
+what invariant 2 and `check_permission_lint.py` exist to catch.
 
-- One **allow** case: the right role, granted.
-- One **deny** case: wrong role, denied, asserting the specific `reason`
-  string — not just that `allowed is False`.
+## 2. Do the judgement work
 
-Run `cd apps/api && uv run pytest keel/organizations/tests/test_meta_guard_coverage.py -v`
-to confirm the registry meta-test now sees both cases for this code.
+- If this permission's rule depends on the _object_, not just the actor's
+  role (e.g. "can only approve invoices under $X", or a last-owner style
+  guard), replace the generated `_role_guard(Perm.<CODE>)` registration
+  with a subject-aware guard — `templates/permission/subject_guard.py` is
+  the shape to copy: takes `(user, organization, subject=None)`, returns
+  `Decision.allow()` or `Decision.deny(reason, details=...)` with a
+  specific machine-readable `reason`, never a bare `Decision.deny("no")`.
+- Check by hand whether the generator put the code in the right preset —
+  it always adds to `_MEMBER_CODES`; if this code should be Admin/Owner-
+  only instead, move it.
+- Wire it onto whatever route(s) need it (`_ACTION_PERMISSIONS`).
+
+## 3. Tests (mandatory — invariant 2's CI meta-test fails without both)
+
+The generator adds the code to the guard test table with a role-only
+guard already covered by an allow/deny pair. If you replaced it with a
+subject-aware guard in step 2, add matching allow/deny cases for the new
+guard by hand (in `organizations/tests/guard_cases.py` or wherever this
+project's guard test cases live), asserting the specific `reason` string
+— not just that `allowed is False`. Run
+`cd apps/api && uv run pytest keel/organizations/tests/test_meta_guard_coverage.py -v`
+to confirm the registry meta-test sees both cases.
 
 ## Finish
 

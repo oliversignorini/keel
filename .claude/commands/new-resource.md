@@ -1,81 +1,65 @@
 Generate a full CRUD vertical slice for the resource named in `$ARGUMENTS`
-(a singular PascalCase model name, e.g. `Invoice`). Copy the shape of
-`apps/api/keel/widgets/` — the reference slice — file for file. Do not
-invent a different structure.
+(a singular PascalCase model name, e.g. `Invoice`), then do the judgement
+work the generator deliberately leaves undone (ADR 0004,
+`docs/plans/phase-19.md`).
 
-If `apps/api/keel/widgets/` doesn't exist (this project ran `init
---demo-slice delete`), check `docs/reference-slice/` instead — `init
---demo-slice keep` moves it there rather than deleting it. If neither
-exists, follow the seven-file shape in this repo's `CLAUDE.md` ("Per-app
-file shape") and use another already-migrated app (e.g.
-`apps/api/keel/organizations/`) as the closest live example of the
-pattern.
+**Ask first** if the app name (the CLI derives it as the lowercase plural
+of the resource, e.g. `invoices`) isn't right for this resource, or if you
+don't have a field list yet — get `--fields` before generating, since a
+re-run over an existing app needs `--force` and overwrites hand-written
+domain logic.
 
-**Ask first** if the app name (usually the lowercase plural of the
-resource, e.g. `invoices`) isn't obvious from `$ARGUMENTS`, or if the
-resource needs fields beyond `name`/`description`/`status` — get the field
-list before generating.
+## 1. Run the generator
 
-## Backend (`apps/api/keel/<app>/`)
+```
+pnpm gen resource __Resource__ --fields "name:str,description:text?,status:choice(draft,live)"
+```
 
-1. `models.py` — the model, `organization` FK required, data shape only.
-2. `migrations/0001_initial.py` — `makemigrations`, don't hand-write it.
-3. `selectors.py` — `list_<resource>s(organization)`, `get_<resource>(organization, id)`. Reads only.
-4. `services.py` — `create_<resource>`, `update_<resource>`, `delete_<resource>`.
-   Each mutating function is `@audited("<resource>.created")` etc. (import
-   from `keel.core.audit`). One `transaction.atomic()` per function,
-   opened here. Follow `widgets/services.py`'s pattern for a Tier-1
-   dispatch on `transaction.on_commit()` if the resource needs one.
-5. `serializers.py` — a read `<Resource>Serializer`, a write
-   `<Resource>WriteSerializer`, an update `<Resource>UpdateSerializer`.
-6. `views.py` — `<Resource>ViewSet(mixins..., OrgScopedViewSet)` from
-   `keel.core.authz`. Set `organization_scoped = True` and
-   `test_factory = "keel.<app>.tests.factories.<resource>_factory"`.
-   Declare `_ACTION_PERMISSIONS` per action, thin methods that call
-   `selectors`/`services` only.
-7. `urls.py` — register on the org-scoped router, matching
-   `widgets/urls.py`'s pattern.
-8. `tasks.py` — one-line delegations only, if the service dispatches one.
-9. `admin.py` — register the model.
+Field DSL: `str`, `str(N)`, `text`, `int`, `decimal`, `bool`, `date`,
+`datetime`, `choice(a,b,c)`, `fk(<app>.<Model>)`. A trailing `?` makes a
+field optional. Run `pnpm gen --help` for the full reference. Pass
+`--permissions manage` instead of the default `crud` if the resource wants
+the coarser `<resources>.view`/`.manage` pair rather than four separate
+CRUD codes.
 
-## Permissions (`apps/api/keel/organizations/permissions.py` — the only
+This emits the model, migration, selectors, services, schemas, views,
+tasks, admin, factory and tests; wires `INSTALLED_APPS` and the org-scoped
+router; emits the four CRUD permission codes; and runs the DB-free gates
+(`makemigrations --check`, `lint-imports`, `check_permission_lint.py`),
+failing loudly if any of them don't pass. The command's own output tells
+you exactly which files were written and which anchors were spliced —
+trust that list over re-reading the tree.
 
-file allowed to add these)
+If the command reports `--ui is not implemented in this slice`, drop
+`--ui` — see `/plan-feature` if this resource also needs frontend pages
+this session doesn't have a generator for yet.
 
-- Add `<RESOURCE>_VIEW` and `<RESOURCE>_MANAGE` codes to `Perm`.
-- `registry.register(Perm.<RESOURCE>_VIEW, _role_guard(Perm.<RESOURCE>_VIEW))`
-  and the `_MANAGE` equivalent, next to the existing domain-resource
-  entries (`WIDGETS_*` if the demo slice is still present, otherwise
-  next to whatever resource's codes were added most recently).
-- Add both codes to `_MEMBER_CODES` in `roles.py` (Member gets view +
-  manage on domain resources, per the comment there) unless told otherwise.
+## 2. Do the judgement work the generator left as insertion points
 
-## Tests (`apps/api/keel/<app>/tests/`)
+- Fill in `services.py`'s business rules — the generator writes create/
+  update/delete with the transaction boundary and `@audited` decorators
+  already in place; what's missing is anything domain-specific (extra
+  validation, side effects beyond the Tier-1 notify hook).
+- Add any bespoke permission code (e.g. `invoice.export`) with
+  `pnpm gen permission <code>` — the generator only emits the four CRUD
+  codes.
+- If this resource dispatches async work beyond the generated Tier-1
+  notify task, or needs a Tier-2 job, run `/new-job`.
+- Add fields' `Meta`, indexes, and cross-field validation the DSL doesn't
+  express — the generator leaves a marked insertion point in `models.py`
+  for exactly this.
 
-- `factories.py` — a `factory_boy` factory, exported as
-  `<resource>_factory` (the string the viewset's `test_factory` points at).
-- `test_models.py`, `test_services.py` — allow and failure paths.
-- `test_api_<app>.py` — one allow-path test and one deny-path test per
-  action, asserting the `Decision.reason` on denial per invariant 2's
-  coverage rule, not just the status code.
-- Do **not** hand-write a cross-org test — `test_meta_router_wiring.py`
-  and `test_tenant_isolation.py` already walk every viewset that declares
-  `test_factory`.
+## 3. Sync the client
 
-## Frontend (`apps/web/app/(app)/app/[org]/<app>/`)
+`pnpm gen sync-client` in whichever worktree owns the generated client
+this wave (`docs/plans/WORKTREES.md` rule 3) — the resource generator
+never regenerates it itself.
 
-- `page.tsx` (list), `new/page.tsx` (create), `[id]/page.tsx` (detail),
-  matching `widgets/`'s three files (or `docs/reference-slice/web-widgets-pages/`
-  if the demo slice was moved there, or another resource's pages if it
-  was deleted outright). Use the generated client from `packages/api-client`
-  — call `/sync-client` first if the OpenAPI spec needs regenerating to
-  pick up the new endpoints.
+## 4. Finish
 
-## Finish
-
-1. Run `cd apps/api && uv run python manage.py makemigrations` for the
-   model, then `makemigrations --check --dry-run` to confirm it's clean.
-2. Run `/sync-client` to regenerate the TS client against the new routes.
-3. Run `/check-invariants` and fix anything it reports before considering
-   this done — an output that fails `/check-invariants` is not a finished
-   `/new-resource` run.
+`/check-invariants` — fix anything it reports before considering this
+done. Once the feature (backend and, if this project has `--ui`,
+frontend) is actually finished, `pnpm gen e2e __Resource__` is the ship
+gate: it writes a Playwright spec for the happy CRUD path and runs the
+full `/check-invariants` suite including `pytest`. An output that fails
+either is not a finished `/new-resource` run.
