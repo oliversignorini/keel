@@ -5,12 +5,14 @@ import pytest
 from keel.accounts.models import User
 from keel.billing import entitlements
 from keel.billing.entitlements import (
+    ENTITLING_STATUSES,
     UnregisteredResource,
     check_feature,
     check_limit,
     enforce_downgrade_limits,
     requires_entitlement,
     resolve_entitlements,
+    resolve_entitlements_bulk,
 )
 from keel.billing.models import Plan, Price, Subscription
 from keel.core.exceptions import Conflict, PaymentRequired
@@ -32,20 +34,20 @@ def _plan_with_entitlements(entitlements: dict, code: str = "starter") -> Plan:
     )
 
 
-def _subscribe(org: Organization, plan: Plan) -> Subscription:
+def _subscribe(org: Organization, plan: Plan, status: str = "active") -> Subscription:
     price = Price.objects.create(
         plan=plan,
-        stripe_price_id=f"price_{plan.code}",
+        stripe_price_id=f"price_{plan.code}-{org.pk}",
         interval=Price.INTERVAL_MONTH,
         unit_amount=1900,
         currency="AUD",
     )
     return Subscription.objects.create(
         organization=org,
-        stripe_subscription_id=f"sub_{plan.code}",
+        stripe_subscription_id=f"sub_{plan.code}-{org.pk}",
         plan=plan,
         price=price,
-        status="active",
+        status=status,
     )
 
 
@@ -64,6 +66,78 @@ def test_resolve_entitlements_reads_the_current_plan() -> None:
     _subscribe(org, plan)
 
     assert resolve_entitlements(org) == {"features": ["api_access"], "limits": {"seats": 5}}
+
+
+# --- status filtering (ENTITLING_STATUSES) --------------------------------
+
+
+@pytest.mark.parametrize("status", ["canceled", "incomplete", "incomplete_expired", "unpaid"])
+def test_a_non_entitling_status_resolves_to_no_entitlements(status: str) -> None:
+    """``customer.subscription.deleted`` keeps the row (and its plan) so a
+    resubscribe reuses it — so the row's existence can't be what grants
+    entitlements. A cancelled or never-paid organisation resolves exactly
+    like one that never subscribed."""
+    org = _org()
+    plan = _plan_with_entitlements({"features": ["api_access"], "limits": {"seats": 5}})
+    _subscribe(org, plan, status=status)
+
+    assert resolve_entitlements(org) == {"features": [], "limits": {}}
+
+
+@pytest.mark.parametrize("status", sorted(ENTITLING_STATUSES))
+def test_an_entitling_status_resolves_to_the_plans_entitlements(status: str) -> None:
+    """``past_due`` is in here on purpose: dunning is a warning, not a
+    lockout (``docs/plans/phase-4.md`` §B.6) — see also
+    ``test_dunning.py``."""
+    org = _org()
+    plan = _plan_with_entitlements({"features": ["api_access"], "limits": {"seats": 5}})
+    _subscribe(org, plan, status=status)
+
+    assert resolve_entitlements(org) == {"features": ["api_access"], "limits": {"seats": 5}}
+
+
+def test_check_feature_denies_a_cancelled_subscription() -> None:
+    org = _org()
+    plan = _plan_with_entitlements({"features": ["api_access"]})
+    _subscribe(org, plan, status="canceled")
+
+    with pytest.raises(PaymentRequired) as exc_info:
+        check_feature(org, "api_access")
+
+    assert exc_info.value.code == "feature_not_entitled"
+
+
+def test_requires_entitlement_denies_an_incomplete_subscription() -> None:
+    org = _org()
+    plan = _plan_with_entitlements({"features": ["api_access"]})
+    _subscribe(org, plan, status="incomplete")
+
+    @requires_entitlement("api_access")
+    def call_api(*, organization):
+        return "ok"
+
+    with pytest.raises(PaymentRequired):
+        call_api(organization=org)
+
+
+def test_bulk_resolution_applies_the_same_status_filter() -> None:
+    """``GET /me/`` reads the bulk path — it must not report a paid
+    feature set for an organisation ``resolve_entitlements`` would deny."""
+    entitled_org = _org()
+    cancelled_org = Organization.objects.create(
+        name="Beta",
+        slug="beta-ent",
+        created_by=entitled_org.created_by,
+        stripe_customer_id="cus_ent_cancelled",
+    )
+    plan = _plan_with_entitlements({"features": ["api_access"], "limits": {"seats": 5}})
+    _subscribe(entitled_org, plan)
+    _subscribe(cancelled_org, plan, status="canceled")
+
+    bulk = resolve_entitlements_bulk([entitled_org, cancelled_org])
+
+    assert bulk[entitled_org.id] == {"features": ["api_access"], "limits": {"seats": 5}}
+    assert bulk[cancelled_org.id] == {"features": [], "limits": {}}
 
 
 # --- check_feature / requires_entitlement --------------------------------

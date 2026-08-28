@@ -95,6 +95,50 @@ def _handle_subscription_event(subscription: dict[str, Any], event_created: int 
     )
 
 
+def _apply_invoice_status_transition(
+    customer_id: str, *, from_statuses: set[str], to_status: str, event_created: int | None
+) -> None:
+    """Shared body of both invoice handlers: move an organisation's
+    subscription to ``to_status``, but only from a status the transition
+    actually makes sense from, and only when this event is newer than the
+    one that last wrote the row.
+
+    Both halves exist for the same reason the subscription handler has
+    them (ddia#9). Stripe guarantees neither delivery order nor
+    at-most-once delivery, so an unconditional ``.update()`` lets a late
+    or replayed invoice event overwrite a terminal status written by a
+    newer ``customer.subscription.deleted`` — resurrecting a cancelled
+    organisation and, since ``entitlements.ENTITLING_STATUSES`` reads
+    that status, handing its paid features back. The ``from_statuses``
+    filter and the ``stripe_updated_at`` LWW guard are the same two
+    mechanisms the subscription handler uses, applied here so all three
+    handlers agree on what a stale delivery means.
+
+    ``event_created`` is only absent for a hand-built payload (a test
+    fixture), never a real Stripe delivery — the guard is a no-op then,
+    matching ``_handle_subscription_event``."""
+    incoming_updated_at = _parse_timestamp(event_created)
+    subscription = (
+        Subscription.objects.select_for_update()
+        .filter(organization__stripe_customer_id=customer_id)
+        .first()
+    )
+    if subscription is None or subscription.status not in from_statuses:
+        return
+    if (
+        subscription.stripe_updated_at is not None
+        and incoming_updated_at is not None
+        and incoming_updated_at <= subscription.stripe_updated_at
+    ):
+        return  # stale/out-of-order delivery: a newer event already applied
+    subscription.status = to_status
+    update_fields = ["status"]
+    if incoming_updated_at is not None:
+        subscription.stripe_updated_at = incoming_updated_at
+        update_fields.append("stripe_updated_at")
+    subscription.save(update_fields=update_fields)
+
+
 def _handle_invoice_paid(invoice: dict[str, Any], event_created: int | None) -> None:
     """Clears dunning: a paid invoice means the
     organisation is no longer past due. No-op if there's no local
@@ -106,9 +150,12 @@ def _handle_invoice_paid(invoice: dict[str, Any], event_created: int | None) -> 
     the customer — ``canceled``, ``trialing``, ``incomplete`` alike. A
     cancelled organisation that receives a late ``invoice.paid`` must not
     become ``active`` and get its plan entitlements back."""
-    Subscription.objects.filter(
-        organization__stripe_customer_id=invoice["customer"], status="past_due"
-    ).update(status="active")
+    _apply_invoice_status_transition(
+        invoice["customer"],
+        from_statuses={"past_due"},
+        to_status="active",
+        event_created=event_created,
+    )
     organization = Organization.objects.filter(stripe_customer_id=invoice["customer"]).first()
     if organization is not None:
         capture_billing_event(
@@ -121,9 +168,21 @@ def _handle_invoice_paid(invoice: dict[str, Any], event_created: int | None) -> 
 def _handle_invoice_payment_failed(invoice: dict[str, Any], event_created: int | None) -> None:
     """Puts the organisation into a dunning state. This is the state the
     banner reads, and access is deliberately *not* revoked here — a failed
-    payment degrades to a warning, not a lockout."""
-    Subscription.objects.filter(organization__stripe_customer_id=invoice["customer"]).update(
-        status="past_due"
+    payment degrades to a warning, not a lockout, and ``past_due`` stays
+    in ``entitlements.ENTITLING_STATUSES`` for that reason.
+
+    Only transitions from a status a payment failure can meaningfully
+    follow — ``active``, ``trialing``, ``past_due`` (the last so a repeat
+    failure is a no-op rather than a resurrection). The previous
+    unconditional ``.update(status="past_due")`` had exactly the bug
+    ``_handle_invoice_paid`` above already fixed in the other direction:
+    a late or replayed failure after cancellation flipped ``canceled``
+    back to ``past_due``, re-entitling the organisation."""
+    _apply_invoice_status_transition(
+        invoice["customer"],
+        from_statuses={"active", "trialing", "past_due"},
+        to_status="past_due",
+        event_created=event_created,
     )
     organization = Organization.objects.filter(stripe_customer_id=invoice["customer"]).first()
     if organization is not None:

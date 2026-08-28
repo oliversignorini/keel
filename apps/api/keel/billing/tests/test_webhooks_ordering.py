@@ -118,3 +118,103 @@ def test_invoice_paid_does_transition_past_due_to_active() -> None:
     webhooks._handle_invoice_paid({"customer": "cus_order"}, LATE)
 
     assert Subscription.objects.get().status == "active"
+
+
+def _existing_subscription(org: Organization, price: Price, status: str) -> Subscription:
+    return Subscription.objects.create(
+        organization=org,
+        stripe_subscription_id="sub_order",
+        plan=price.plan,
+        price=price,
+        status=status,
+    )
+
+
+def test_invoice_payment_failed_does_not_resurrect_a_cancelled_subscription() -> None:
+    """A late or replayed `invoice.payment_failed` arriving after
+    cancellation must not flip `canceled` to `past_due` — `past_due` is an
+    entitling status, so that would hand the org its paid features back."""
+    org = _org()
+    price = _price()
+    _existing_subscription(org, price, status="canceled")
+
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, LATE)
+
+    assert Subscription.objects.get().status == "canceled"
+
+
+@pytest.mark.parametrize("status", ["incomplete", "incomplete_expired", "unpaid"])
+def test_invoice_payment_failed_leaves_other_terminal_statuses_alone(status: str) -> None:
+    org = _org()
+    price = _price()
+    _existing_subscription(org, price, status=status)
+
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, LATE)
+
+    assert Subscription.objects.get().status == status
+
+
+@pytest.mark.parametrize("status", ["active", "trialing", "past_due"])
+def test_invoice_payment_failed_still_starts_dunning_from_a_live_status(status: str) -> None:
+    org = _org()
+    price = _price()
+    _existing_subscription(org, price, status=status)
+
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, LATE)
+
+    assert Subscription.objects.get().status == "past_due"
+
+
+def test_invoice_payment_failed_with_no_subscription_row_is_a_no_op() -> None:
+    _org()
+    _price()
+
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, LATE)
+
+    assert not Subscription.objects.exists()
+
+
+def test_a_late_invoice_payment_failed_loses_to_a_newer_subscription_event() -> None:
+    """The LWW guard the subscription handler uses now covers the invoice
+    handlers too: an older event can't overwrite what a newer one wrote."""
+    _org()
+    _price()
+
+    webhooks._handle_subscription_event(_subscription_object("active"), LATE)
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, EARLY)
+
+    assert Subscription.objects.get().status == "active"
+
+
+def test_a_late_invoice_paid_loses_to_a_newer_subscription_event() -> None:
+    _org()
+    _price()
+
+    webhooks._handle_subscription_event(_subscription_object("past_due"), LATE)
+    webhooks._handle_invoice_paid({"customer": "cus_order"}, EARLY)
+
+    assert Subscription.objects.get().status == "past_due"
+
+
+def test_a_newer_invoice_event_applies_over_an_older_subscription_event() -> None:
+    _org()
+    _price()
+
+    webhooks._handle_subscription_event(_subscription_object("active"), EARLY)
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, LATE)
+
+    subscription = Subscription.objects.get()
+    assert subscription.status == "past_due"
+    assert subscription.stripe_updated_at is not None
+
+
+def test_invoice_events_with_no_event_created_timestamp_still_apply() -> None:
+    """Same escape hatch the subscription handler has: a hand-built
+    payload with no `created` isn't dropped by the guard."""
+    org = _org()
+    price = _price()
+    _existing_subscription(org, price, status="active")
+
+    webhooks._handle_invoice_payment_failed({"customer": "cus_order"}, None)
+
+    assert Subscription.objects.get().status == "past_due"

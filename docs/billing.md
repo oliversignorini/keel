@@ -86,6 +86,22 @@ an unknown top-level key or a non-integer limit value raises
 `ValidationError` immediately, in the admin or from a script, rather than
 silently doing nothing the first time something reads it.
 
+## Which subscription statuses grant entitlements
+
+`entitlements.ENTITLING_STATUSES` — `active`, `trialing`, `past_due` —
+is the whole answer, and resolution consults it before reading the
+plan. The presence of a `Subscription` row proves nothing:
+`customer.subscription.deleted` deliberately keeps the row (with its
+plan and price) so a resubscribe reuses it, so a cancelled organisation
+still has one. `canceled`, `incomplete`, `incomplete_expired` and
+`unpaid` resolve to the same empty `{"features": [], "limits": {}}` an
+organisation with no subscription at all gets.
+
+`past_due` is entitling on purpose: dunning is a warning, not a lockout
+(`docs/plans/phase-4.md` §B.6 — "access is not immediately revoked").
+That is what makes the webhook status transitions load-bearing rather
+than cosmetic — see Hardening below.
+
 ## Gating a feature
 
 ```python
@@ -194,7 +210,13 @@ rebuild_credit_balances --check` (and the nightly
   newer `customer.subscription.deleted` already cancelled.
   `invoice.paid` now only transitions `past_due` → `active`, never
   clobbers `canceled`/`trialing`/`incomplete` the way an unconditional
-  update used to (`keel/billing/tests/test_webhooks_ordering.py`).
+  update used to. `invoice.payment_failed` is narrowed the same way —
+  it only starts dunning from `active`/`trialing`/`past_due`, so a late
+  or replayed failure after cancellation can't flip `canceled` back to
+  an entitling status — and both invoice handlers now run the same
+  `stripe_updated_at` LWW guard as the subscription handler instead of
+  accepting `event_created` and ignoring it
+  (`keel/billing/tests/test_webhooks_ordering.py`).
 - **`StripeEvent.payload` doesn't grow forever** — a weekly beat task
   nulls the payload (keeping the id/type/timestamps that make it a
   usable dedup key) on processed events past a 30-day retention window.
