@@ -193,7 +193,7 @@ with Phase 9 (`init`).
 
 ## Static files
 
-The Django admin (and drf-spectacular's schema UI) need their CSS/JS
+The Django admin (and Ninja's own `/api/v1/docs` schema UI) need their CSS/JS
 served somehow in production; `DEBUG=True` serves `STATIC_ROOT` directly
 in dev, which stops working the moment `prod.py` sets `DEBUG = False`.
 `apps/api/config/settings/prod.py` adds `whitenoise.middleware.

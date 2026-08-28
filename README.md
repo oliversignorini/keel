@@ -25,6 +25,10 @@ project grows past the person who made them.
   groups on separate subdomains, sharing one session
 - **A generated, typed API client** — one OpenAPI spec merged from Django
   Ninja and allauth, consumed by the frontend with nothing hand-written
+- **A generator CLI** — `pnpm gen resource <Name>` scaffolds a full CRUD
+  vertical slice (model, migration, selectors, services, schemas, views,
+  tasks, permissions, tests) wired into the router in one command; see
+  "Commands" below
 - **`scripts/init.ts`** — renames the project, strips the parts you don't
   want (marketing site, demo resource, a billing shape), and resets git
   history for a clean instantiation
@@ -45,15 +49,15 @@ hold the codebase together, and four of them are enforced by CI rather
 than by convention — `docs/architecture.md` and `keel-prd.md` §4 have the
 full detail, this is the short version:
 
-| Invariant                                                                                                                                         | Enforced by                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Domain logic lives only in `services.py` (writes) / `selectors.py` (reads)                                                                        | Code review; `keel/domain/`, if used, is walled off by an `import-linter` contract                                                  |
-| Authorization is expressed only in `organizations/permissions.py`, as `Decision`, never a bare bool                                               | `scripts/check_permission_lint.py`; a CI meta-test requires an allow **and** a deny test, asserted on the _reason_, for every guard |
-| One `transaction.atomic()` per service, opened in the service; Stripe calls happen on `transaction.on_commit()`                                   | Code review                                                                                                                         |
-| Schema changes are Django migrations only                                                                                                         | `manage.py makemigrations --check --dry-run` in CI                                                                                  |
-| Async work is Tier 1 (`keel/core/tasks.py` shim, fire-and-forget) or Tier 2 (`keel/jobs/`, resumable) — never blurred                             | Code review                                                                                                                         |
-| Every viewset declares `organization_scoped = True` + a `test_factory`, or `= False` + a `GLOBAL_JUSTIFICATION`; cross-org access is 404, not 403 | `__init_subclass__` fails at import without one; `test_meta_router_wiring.py` and `tenant_isolation.py` walk every route            |
-| Every mutating service is `@audited(...)` or `@not_audited(reason=...)`, and coverage is gated per directory                                      | An audit meta-test; `scripts/check_coverage.py` reads per-path floors from `pyproject.toml`                                         |
+| Invariant                                                                                                                                                | Enforced by                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Domain logic lives only in `services.py` (writes) / `selectors.py` (reads)                                                                               | Code review; `keel/domain/`, if used, is walled off by an `import-linter` contract                                                  |
+| Authorization is expressed only in `organizations/permissions.py`, as `Decision`, never a bare bool                                                      | `scripts/check_permission_lint.py`; a CI meta-test requires an allow **and** a deny test, asserted on the _reason_, for every guard |
+| One `transaction.atomic()` per service, opened in the service; Stripe calls happen on `transaction.on_commit()`                                          | Code review                                                                                                                         |
+| Schema changes are Django migrations only                                                                                                                | `manage.py makemigrations --check --dry-run` in CI                                                                                  |
+| Async work is Tier 1 (`keel/core/tasks.py` shim, fire-and-forget) or Tier 2 (`keel/jobs/`, resumable) — never blurred                                    | Code review                                                                                                                         |
+| Every Ninja resource declares `organization_scoped = True` + a `test_factory`, or `= False` + a `GLOBAL_JUSTIFICATION`; cross-org access is 404, not 403 | `__init_subclass__` fails at import without one; `test_meta_router_wiring.py` and `test_ninja_tenant_isolation.py` walk every route |
+| Every mutating service is `@audited(...)` or `@not_audited(reason=...)`, and coverage is gated per directory                                             | An audit meta-test; `scripts/check_coverage.py` reads per-path floors from `pyproject.toml`                                         |
 
 Run `/check-invariants` (a Claude Code slash command shipped in this repo)
 to execute every one of these gates locally before opening a PR.
@@ -167,11 +171,24 @@ pnpm lint           # ruff + eslint + prettier
 pnpm typecheck      # mypy + tsc
 pnpm test           # pytest (with the coverage gate) + vitest
 
+pnpm gen resource <Name> --fields "..." --ui|--no-ui   # full CRUD vertical slice
+pnpm gen readonly-resource <Name> --fields "..."       # read-only vertical slice
+pnpm gen permission <resource.action>                  # one permission code
+pnpm gen job <Name> --tier 1|2                         # a job type
+pnpm gen email <Name> --subject "..."                  # a transactional email
+pnpm gen sync-client                                   # regenerate the TS API client
+pnpm gen e2e <Resource>                                # ship gate: e2e spec + invariant suite
+
 cd apps/api
 uv run pytest                       # needs the email templates built first
 uv run lint-imports                 # the keel/domain and keel/core contracts
 uv run python manage.py makemigrations --check --dry-run
 ```
+
+`pnpm gen --help` documents every flag; CLAUDE.md's generator catalogue
+maps each command to the slash command (`/new-resource`, etc.) that
+drives the judgement work a generator deliberately leaves at a marked
+insertion point.
 
 `pnpm --filter @keel/emails build` before running the API suite — a root
 `conftest.py` will remind you if you forget.
@@ -196,7 +213,7 @@ scripts/        init.ts, coverage gate, permission lint, OpenAPI merge
 ```
 
 Every Django app under `apps/api/keel/` shares the same seven-file shape:
-`models.py` `services.py` `selectors.py` `permissions.py` `serializers.py`
+`models.py` `services.py` `selectors.py` `permissions.py` `schemas.py`
 `views.py` `tasks.py` plus `tests/`. `pnpm gen resource` (or
 `pnpm gen readonly-resource`) generates a new one following that shape,
 reading from `templates/` — `.claude/commands/new-resource.md` is a thin

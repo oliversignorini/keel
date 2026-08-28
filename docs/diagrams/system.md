@@ -19,7 +19,7 @@ flowchart TB
     posthog["PostHog"]
 
     subgraph railway["Railway"]
-        api["Django 6 + DRF (sync)<br/>gunicorn — request/response only"]
+        api["Django 6 + Ninja (sync)<br/>gunicorn — request/response only"]
         sse["Django ASGI (async)<br/>uvicorn — SSE only, same image<br/>separate service, proxy buffering off"]
         postgres[("Postgres 17")]
         redis[("Redis 7<br/>broker + cache")]

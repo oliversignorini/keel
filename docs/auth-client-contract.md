@@ -108,7 +108,7 @@ you're calling Django directly (tests, `curl`, a future non-browser
 client) — it just isn't something `apps/web`'s own code has to branch on
 any more.
 
-### `/api/v1/…` (DRF, this project's own endpoints)
+### `/api/v1/…` (Django Ninja, this project's own endpoints)
 
 ```json
 { "error": { "code": "SEAT_LIMIT_EXCEEDED", "message": "...", "details": [...] } }
@@ -140,8 +140,9 @@ uses this shape, not allauth's.
   not as a field-level validation error.
 - **429** — rate limited (`ACCOUNT_RATE_LIMITS`, base.py). Standard
   `Retry-After` header semantics are not guaranteed by allauth the way
-  they are by `/api/v1/`'s DRF throttling — poll `data.flows` / retry
-  after a client-chosen backoff rather than relying on a header.
+  they are by `/api/v1/`'s own throttling (`keel/core/throttle.py`) —
+  poll `data.flows` / retry after a client-chosen backoff rather than
+  relying on a header.
 
 `/api/v1/…` 401/403 follow the PRD §7 table exactly (401 = no/expired
 session, 403 = authenticated but denied, `code` = `Decision.reason`).

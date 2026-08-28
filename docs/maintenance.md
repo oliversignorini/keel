@@ -24,7 +24,7 @@ the boundary the upgrade checklist below exists for.
 - **Python/Node patch and minor releases** — apply opportunistically, no
   fixed schedule. Neither has broken this codebase across a minor bump
   historically.
-- **Django and DRF** — check for a new minor release monthly; Django's own
+- **Django and django-ninja** — check for a new minor release monthly; Django's own
   security-release calendar (published ahead of time on
   [djangoproject.com](https://www.djangoproject.com/download/)) takes
   priority over the monthly cadence — apply a security release within the
@@ -53,9 +53,8 @@ notes for removed features before starting.
    features" sections.
 2. Bump `django~=X.Y` in `apps/api/pyproject.toml`, run `uv lock`, and let
    `uv sync` resolve the rest of the dependency graph (`django-allauth`,
-   `djangorestframework`, `drf-spectacular`, `django-stubs` all pin ranges
-   against Django — a resolver conflict here is the checklist doing its
-   job, not a bug).
+   `django-ninja`, `django-stubs` all pin ranges against Django — a
+   resolver conflict here is the checklist doing its job, not a bug).
 3. Run the full test suite locally (`uv run pytest` from `apps/api`) before
    touching CI — this repo's coverage floors (`[tool.keel.coverage]` in
    `pyproject.toml`) mean a version bump that changes ORM behavior under
@@ -66,8 +65,8 @@ notes for removed features before starting.
    required env vars) — a new Django release occasionally adds a new
    deploy check.
 5. Regenerate the OpenAPI schema and the TS client
-   (`scripts/merge_openapi.py`, then orval) — a Django/DRF/drf-spectacular
-   bump can change generated schema shape even with no application code
+   (`scripts/merge_openapi.py`, then orval) — a Django/django-ninja bump
+   can change generated schema shape even with no application code
    changes. The `api-client-generation` CI job fails on drift; do this
    locally first so the diff is reviewable instead of a surprise.
 6. Read `apps/api/keel/**/migrations/` for anything the new Django version

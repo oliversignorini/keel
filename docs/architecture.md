@@ -13,7 +13,7 @@ file is meant to stay a faithful restatement, not a second source of truth.
 
 ### 1. Domain logic lives in `services.py` and `selectors.py`
 
-Views, serializers, Celery tasks, Django admin, management commands,
+Views, schemas, Celery tasks, Django admin, management commands,
 database triggers, and the Next.js client hold no business rules. A view
 parses, calls a service, serializes, returns. A Celery task body is a
 single call into a service.
@@ -37,11 +37,13 @@ correct by construction for anything provisioned with `pnpm gen`.
 
 A registry of named permission codes plus one function,
 `has_perm(user, organization, code, subject=None)`, returning a
-`Decision(allowed, reason, details)` — never a bare bool. DRF viewsets
-declare `required_permissions`; `HasOrgPermission` calls `has_perm`.
-Permission logic must not appear in views, serializers, querysets,
-templates, or the client — the client's `/me` permission list is for
-deciding what to render, never for enforcement.
+`Decision(allowed, reason, details)` — never a bare bool. A Ninja
+resource declares `required_permissions`; its route function calls
+`resolve_and_authorize` (`keel/core/authz.py`), which resolves the
+organisation and runs `has_perm` for each required code before the
+handler body executes. Permission logic must not appear in views,
+schemas, querysets, templates, or the client — the client's `/me`
+permission list is for deciding what to render, never for enforcement.
 
 The `Decision` dataclass, the `Guard` protocol, and the registry object
 live in `keel/core/authz.py` (a dependency-ordering split: `keel/core`
@@ -106,16 +108,17 @@ static check — a Tier 2 job written against the Tier 1 shim would pass CI.
 
 ### 6. Validation has two mandatory layers
 
-DRF serializers validate shape at the HTTP edge and reject malformed
-input with 400. Services enforce invariants and raise typed domain
-exceptions (`keel/core/exceptions.py`'s `DomainError` hierarchy) that map
-to 409 or 422. Client-side Zod validation exists for UX responsiveness
-only and is never enforcement — the Zod schemas are generated from the
-same OpenAPI spec as the rest of the client, so they cannot drift from
-the server's shape contract.
+Ninja `Schema` classes (`schemas.py`, Pydantic-native) validate shape at
+the HTTP edge and reject malformed input with 400. Services enforce
+invariants and raise typed domain exceptions (`keel/core/exceptions.py`'s
+`DomainError` hierarchy) that map to 409 or 422. Client-side Zod
+validation exists for UX responsiveness only and is never enforcement —
+the Zod schemas are generated from the same OpenAPI spec as the rest of
+the client, so they cannot drift from the server's shape contract.
 
-**Enforced by:** `keel/core/exceptions.py`'s DRF exception handler, which
-is the single place the `{ "error": { "code", "message", "details" } }`
+**Enforced by:** `keel/core/error_handlers.py`'s Ninja exception handlers
+(registered once on the shared `NinjaAPI` instance, `keel/core/api.py`),
+the single place the `{ "error": { "code", "message", "details" } }`
 envelope is built — a service that raises a plain `Exception` instead of
 a `DomainError` subclass surfaces as an unhandled 500, which is itself
 the signal that the boundary was skipped.
@@ -129,22 +132,23 @@ every path that missed (with actual vs. required) and fails on a glob
 that matches nothing (a directory renamed or deleted with its obligation
 left behind).
 
-Tenant scoping is declared, never inferred — every viewset states
+Tenant scoping is declared, never inferred — every Ninja resource states
 `organization_scoped = True` with a `test_factory`, or `organization_scoped
 = False` with a `GLOBAL_JUSTIFICATION` paragraph, checked at import time
-by `__init_subclass__` on `GlobalViewSet` / `OrgScopedViewSet`
+by `__init_subclass__` on `GlobalResource` / `OrgScopedResource`
 (`keel/core/authz.py`). A meta-test
-(`keel/organizations/tests/test_meta_router_wiring.py`) walks the DRF
-router so a scoped viewset cannot go unwired, and
-`keel/organizations/tests/tenant_isolation.py` builds a row in
+(`keel/organizations/tests/test_meta_router_wiring.py`) walks the live
+URLconf so a scoped resource cannot go unwired, and
+`keel/organizations/tests/test_ninja_tenant_isolation.py` builds a row in
 organisation A, gives an org-B member every required permission, and
 asserts **404, not 403** — existence is not disclosed across a tenant
 boundary.
 
 **Enforced by:** `scripts/check_coverage.py` (coverage floors),
-`test_meta_router_wiring.py` and `tenant_isolation.py` (tenant scoping),
-and the `contracts` CI job, which re-derives `openapi.merged.json` and
-fails on drift against the checked-in generated client.
+`test_meta_router_wiring.py` and `test_ninja_tenant_isolation.py` (tenant
+scoping), and the `contracts` CI job, which re-derives
+`openapi.merged.json` and fails on drift against the checked-in generated
+client.
 
 ---
 
@@ -158,14 +162,14 @@ browser
 Next.js 15 (App Router) — (marketing) (auth) (app) route groups
   │  cross-origin call to the API host; see "Note on the pipeline" below
   ▼
-Django 6 + DRF — sync, gunicorn
+Django 6 + Ninja — sync, gunicorn
   │
   ├─ SessionMiddleware / CSRF middleware       → resolves the session
-  ├─ HasOrgPermission (DRF permission class)   → calls has_perm() (invariant 2)
-  ├─ viewset.get_queryset()                    → keel/<app>/selectors.py (reads)
-  ├─ viewset action                            → keel/<app>/services.py (writes,
+  ├─ resolve_and_authorize()                   → calls has_perm() (invariant 2)
+  ├─ route function                            → keel/<app>/selectors.py (reads)
+  ├─ route function                            → keel/<app>/services.py (writes,
   │                                                transaction.atomic() per call)
-  └─ serializer                                → shape validation, response body
+  └─ Ninja Schema (schemas.py)                 → shape validation, response body
   │
   ▼
 Postgres 17            Redis 7 (broker + cache)
@@ -227,10 +231,10 @@ Every domain app under `keel/` shares one file shape:
 ├── models.py         # data shape only
 ├── services.py       # ORM, transactions, side effects — all writes
 ├── selectors.py       # all reads
-├── permissions.py     # required permission codes for each action
-├── serializers.py     # shape validation at the edge
-├── views.py            # thin: parse, call service, serialize, return
-├── tasks.py             # one-line delegations to services
+├── permissions.py     # required permission codes (organizations app only)
+├── schemas.py          # shape validation at the edge (Ninja Schema / Pydantic)
+├── views.py             # thin: parse, call service, serialize, return
+├── tasks.py              # one-line delegations to services
 ├── admin.py
 └── tests/
 ```
@@ -285,10 +289,10 @@ on every push and PR like `ci.yml` does.
 
 ---
 
-## Type synchronisation pipeline (today)
+## Type synchronisation pipeline
 
 ```
-Django views + drf-spectacular  ──▶  OpenAPI (DRF surface)
+Django Ninja (native OpenAPI, keel/core/api.py)  ──▶  OpenAPI (/api/v1/openapi.json)
                                             │
 allauth headless                 ──▶  OpenAPI (/_allauth/openapi.json)
                                             │
@@ -315,13 +319,11 @@ the build on any diff against what is checked in — this is what makes
 "the generated client is never stale" an enforced property rather than a
 hope.
 
-**This pipeline is about to change.** ADR 0001
-(`docs/adr/0001-django-ninja-over-drf.md`) replaces drf-spectacular's half
-of this diagram with Django Ninja's native OpenAPI generation in Phase 10.
-The merge step, `openapi.merged.json`, and everything downstream of it are
-expected to survive unchanged — only the left-hand source of the DRF-side
-spec moves. This document describes today's pipeline; do not take it as a
-description of the post-Phase-10 state.
+**ADR 0001** (`docs/adr/0001-django-ninja-over-drf.md`) replaced
+drf-spectacular's half of this diagram with Django Ninja's native OpenAPI
+generation in Phase 10. The merge step, `openapi.merged.json`, and
+everything downstream of it survived unchanged — only the left-hand
+source of the Django-side spec moved.
 
 ---
 
