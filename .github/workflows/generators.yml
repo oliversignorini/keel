@@ -97,7 +97,7 @@ jobs:
             exit 0
           fi
           pnpm gen resource Widget \
-            --fields "name:str,description:text?,status:str(32)?" \
+            --fields "name:str,description:text?,status:choice(draft,active,paused)?" \
             --permissions manage --force --ui --no-verify
           git diff --exit-code -- apps/api apps/web || {
             echo "::error::apps/api/keel/widgets or apps/web/.../widgets is no longer a faithful render of templates/resource and templates/ui.";

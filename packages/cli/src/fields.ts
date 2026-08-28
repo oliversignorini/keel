@@ -333,7 +333,11 @@ function outType(field: Field): string {
 export function renderOutFields(fields: Field[]): string[] {
   const lines: string[] = [];
   for (const field of fields) {
-    const optional = field.optional && field.kind !== "str" && field.kind !== "text";
+    // str, text and choice all render an optional field as `blank=True,
+    // default=""` (never a nullable column, per renderModelField) — the
+    // read schema must not claim `| None` for a value that is never None.
+    const optional =
+      field.optional && field.kind !== "str" && field.kind !== "text" && field.kind !== "choice";
     lines.push(`    ${field.name}: ${outType(field)}${optional ? " | None" : ""}`);
   }
   for (const field of fields) {
@@ -410,7 +414,11 @@ export function renderCreateParams(fields: Field[]): string[] {
 function serviceParamType(field: Field): string {
   if (field.kind === "fk") return "Any";
   const type = outType(field);
-  const optional = field.optional && field.kind !== "str" && field.kind !== "text";
+  // Same rule as renderOutFields: str/text/choice all pass through as
+  // `blank=True, default=""` — the value handed to `Model.objects.create`
+  // is never None, so the service signature must not claim it can be.
+  const optional =
+    field.optional && field.kind !== "str" && field.kind !== "text" && field.kind !== "choice";
   return optional ? `${type} | None` : type;
 }
 

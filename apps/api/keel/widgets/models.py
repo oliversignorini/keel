@@ -16,7 +16,12 @@ from keel.core.models import OrgScopedModel
 class Widget(OrgScopedModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
-    status = models.CharField(max_length=32, blank=True, default="")
+    STATUS_CHOICES = (
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("paused", "Paused"),
+    )
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, blank=True, default="")
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.PROTECT, related_name="widgets_created"
     )
