@@ -4,6 +4,16 @@ PRD §3 NFR "Performance": API p95 under 300ms for list endpoints at 10k
 rows per organisation. docs/plans/phase-8.md 8.7: "100 rps on the widget
 list, p95 under 300ms."
 
+**This test targets the demo `widgets` resource** (`GET
+/api/v1/orgs/<slug>/widgets/`). `init --demo-slice delete` removes that
+endpoint along with the rest of the demo slice, which leaves this
+directory with nothing to smoke — `init` does not delete it for you. If
+your project ran `init` that way, either delete `infra/k6/` or repoint
+`widget-list-smoke.js` at one of your own list endpoints (swap the URL
+and the seed script's model below for yours; the rate-limit and VU/duration
+mechanics carry over unchanged). If you kept the demo slice (`init
+--demo-slice keep`), this still runs as-is.
+
 ## Seed an organisation and a pool of sessions
 
 100 rps from a _single_ session trips Phase 8.6's per-user rate limit

@@ -1,9 +1,9 @@
 # Contributing
 
-Keel is a solo-maintained SaaS template, currently mid-build (Phases 0–8 are
-merged; `docs/review-2026-08.md` has the state of everything else). External
-contributions are welcome, but the invariants below are not up for
-discussion in a PR — they are load-bearing and mostly enforced by CI.
+Keel is a solo-maintained SaaS template (`CHANGELOG.md` has the full phase
+history). External contributions are welcome, but the invariants below are
+not up for discussion in a PR — they are load-bearing and mostly enforced
+by CI.
 
 ## Getting the dev environment up
 
@@ -38,7 +38,7 @@ has the full explanation and the file that enforces each one.
    serializers, Celery tasks, admin, and management commands call into
    services — they don't contain business rules.
 2. **Authorization lives in `organizations/permissions.py`, and nowhere
-   else.** A new viewset declares `required_permissions` and either
+   else.** A new viewset declares its `_ACTION_PERMISSIONS` and either
    `organization_scoped = True` plus a `test_factory`, or a
    `GLOBAL_JUSTIFICATION` paragraph. Every guard needs an allow test and a
    deny test, and the deny test must assert the `reason`, not just that
