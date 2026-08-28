@@ -215,8 +215,11 @@ async function resolveConfig(): Promise<Config> {
         merged.stripePublishableKey,
       );
       merged.marketingSite =
-        (await prompt(rl, "Keep the marketing site? (yes/no)", merged.marketingSite ? "yes" : "no")) !==
-        "no";
+        (await prompt(
+          rl,
+          "Keep the marketing site? (yes/no)",
+          merged.marketingSite ? "yes" : "no",
+        )) !== "no";
       merged.billing = (await prompt(
         rl,
         "Billing shape (seats/credits/both/neither)",
@@ -234,7 +237,11 @@ async function resolveConfig(): Promise<Config> {
           merged.domainLayer ? "yes" : "no",
         )) === "yes";
       if (!merged.yes) {
-        const ok = await prompt(rl, "This rewrites the whole repo and resets git history. Continue? (yes/no)", "yes");
+        const ok = await prompt(
+          rl,
+          "This rewrites the whole repo and resets git history. Continue? (yes/no)",
+          "yes",
+        );
         if (ok !== "yes") {
           console.log("Aborted.");
           process.exit(1);
@@ -261,7 +268,9 @@ function validateConfig(c: Config): void {
     );
   }
   if (!slug.test(c.tenantNoun)) {
-    throw new Error(`--tenant-noun must be a single lowercase alphanumeric word (got "${c.tenantNoun}").`);
+    throw new Error(
+      `--tenant-noun must be a single lowercase alphanumeric word (got "${c.tenantNoun}").`,
+    );
   }
   if (c.name === c.tenantNoun) {
     throw new Error(`--name and --tenant-noun must differ.`);
@@ -271,7 +280,8 @@ function validateConfig(c: Config): void {
     ["--marketing-domain", c.marketingDomain],
     ["--api-domain", c.apiDomain],
   ] as const) {
-    if (!value) throw new Error(`${flag} is required — init refuses to complete without all three domains.`);
+    if (!value)
+      throw new Error(`${flag} is required — init refuses to complete without all three domains.`);
   }
   if (!["seats", "credits", "both", "neither"].includes(c.billing)) {
     throw new Error(`--billing must be one of seats|credits|both|neither (got "${c.billing}").`);
@@ -333,7 +343,8 @@ function writeText(p: string, content: string): void {
  * cosmetic edit should not abort the whole run. */
 function removeSnippet(file: string, snippet: string, opts: { required?: boolean } = {}): void {
   if (!exists(file)) {
-    if (opts.required) warn(`${path.relative(REPO_ROOT, file)} not found — cannot remove a snippet from it.`);
+    if (opts.required)
+      warn(`${path.relative(REPO_ROOT, file)} not found — cannot remove a snippet from it.`);
     return;
   }
   const content = readText(file);
@@ -347,11 +358,18 @@ function removeSnippet(file: string, snippet: string, opts: { required?: boolean
   writeText(file, content.replace(snippet, ""));
 }
 
-function replaceSnippet(file: string, from: string, to: string, opts: { required?: boolean } = {}): void {
+function replaceSnippet(
+  file: string,
+  from: string,
+  to: string,
+  opts: { required?: boolean } = {},
+): void {
   if (!exists(file)) return;
   const content = readText(file);
   if (!content.includes(from)) {
-    warn(`Expected snippet not found in ${path.relative(REPO_ROOT, file)} — skipping a targeted edit.`);
+    warn(
+      `Expected snippet not found in ${path.relative(REPO_ROOT, file)} — skipping a targeted edit.`,
+    );
     return;
   }
   writeText(file, content.replace(from, to));
@@ -507,7 +525,11 @@ function validBoundaryBefore(charBefore: string | undefined, matchFirstChar: str
   return isLower(charBefore!) && isUpper(matchFirstChar);
 }
 
-function validBoundaryAfter(matchLastChar: string, charAfter: string | undefined, allowUpperUpperAfter: boolean): boolean {
+function validBoundaryAfter(
+  matchLastChar: string,
+  charAfter: string | undefined,
+  allowUpperUpperAfter: boolean,
+): boolean {
   if (!isLetter(charAfter)) return true; // end of string, or non-letter (incl. "_")
   if (isLower(matchLastChar) && isUpper(charAfter!)) return true; // PascalCase boundary: "Org|Scoped"
   if (isUpper(matchLastChar) && isUpper(charAfter!)) return allowUpperUpperAfter;
@@ -844,7 +866,14 @@ function handleDemoSlice(config: Config): void {
   const apiDir = path.join(REPO_ROOT, "apps", "api", config.name);
   const webDir = path.join(REPO_ROOT, "apps", "web");
   const widgetsApiDir = path.join(apiDir, "widgets");
-  const widgetsWebPagesDir = path.join(webDir, "app", "(app)", "app", `[${config.tenantNoun}]`, "widgets");
+  const widgetsWebPagesDir = path.join(
+    webDir,
+    "app",
+    "(app)",
+    "app",
+    `[${config.tenantNoun}]`,
+    "widgets",
+  );
   const widgetsWebLibDir = path.join(webDir, "lib", "widgets");
 
   // --- Backend wiring -------------------------------------------------
@@ -853,7 +882,10 @@ function handleDemoSlice(config: Config): void {
 
   const urlsPath = path.join(REPO_ROOT, "apps", "api", "config", "urls.py");
   removeSnippet(urlsPath, `from ${config.name}.widgets.views import router as widgets_router\n`);
-  removeSnippet(urlsPath, `ninja_api.add_router("/${pluralize(config.tenantNoun)}", widgets_router)\n`);
+  removeSnippet(
+    urlsPath,
+    `ninja_api.add_router("/${pluralize(config.tenantNoun)}", widgets_router)\n`,
+  );
 
   const pyprojectPath = path.join(REPO_ROOT, "apps", "api", "pyproject.toml");
   removeSnippet(pyprojectPath, `    "${config.name}.widgets",\n`);
@@ -1057,7 +1089,8 @@ function handleDemoSlice(config: Config): void {
     if (exists(widgetsApiDir)) fs.renameSync(widgetsApiDir, path.join(refDir, "api-widgets"));
     if (exists(widgetsWebPagesDir))
       fs.renameSync(widgetsWebPagesDir, path.join(refDir, "web-widgets-pages"));
-    if (exists(widgetsWebLibDir)) fs.renameSync(widgetsWebLibDir, path.join(refDir, "web-widgets-lib"));
+    if (exists(widgetsWebLibDir))
+      fs.renameSync(widgetsWebLibDir, path.join(refDir, "web-widgets-lib"));
     writeText(
       path.join(refDir, "README.md"),
       [
@@ -1129,7 +1162,10 @@ function handleBillingShape(config: Config): void {
   let content = readText(envExamplePath);
   content = content.replace(/^BILLING_CREDITS=.*$/m, `BILLING_CREDITS=${credits}`);
   content = content.replace(/^BILLING_SEAT_PRICING=.*$/m, `BILLING_SEAT_PRICING=${seats}`);
-  content = content.replace(/^NEXT_PUBLIC_BILLING_CREDITS=.*$/m, `NEXT_PUBLIC_BILLING_CREDITS=${credits}`);
+  content = content.replace(
+    /^NEXT_PUBLIC_BILLING_CREDITS=.*$/m,
+    `NEXT_PUBLIC_BILLING_CREDITS=${credits}`,
+  );
   writeText(envExamplePath, content);
   log(`billing shape: seats=${seats} credits=${credits}`);
 }
@@ -1181,7 +1217,10 @@ function applyDomainsAndSecrets(config: Config): void {
         `STRIPE_WEBHOOK_SECRET=\n` +
         `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${config.stripePublishableKey}\n`;
     } else {
-      content = content.replace(/^STRIPE_SECRET_KEY=.*$/m, `STRIPE_SECRET_KEY=${config.stripeSecretKey}`);
+      content = content.replace(
+        /^STRIPE_SECRET_KEY=.*$/m,
+        `STRIPE_SECRET_KEY=${config.stripeSecretKey}`,
+      );
       content = content.replace(
         /^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=.*$/m,
         `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${config.stripePublishableKey}`,
@@ -1208,26 +1247,24 @@ function regenerateDocs(config: Config): void {
     // in the file already reflects it. Leaving the note in would tell an
     // agent working on a fresh project to go read an ADR about a migration
     // that finished before the project existed.
-    content = content.replace(
-      /- \*\*ADR 0001 replaces DRF with Ninja[^\n]*\n(?:  [^\n]*\n)*/,
-      "",
-    );
-    content = content.replace(
-      /- No migrations outside a phase that declares one[^\n]*\n/,
-      "",
-    );
+    content = content.replace(/- \*\*ADR 0001 replaces DRF with Ninja[^\n]*\n(?:  [^\n]*\n)*/, "");
+    content = content.replace(/- No migrations outside a phase that declares one[^\n]*\n/, "");
     // keel-prd.md was the template-authoring spec — deleted by
     // deleteTemplateAuthoringDocs(), so this project's CLAUDE.md can't
     // point an agent at it any more.
     content = content.replace(new RegExp(` and \`${config.name}-prd\\.md\` §4;`), ";");
     if (config.demoSlice === "delete") {
       content = content.replace(
-        new RegExp(`\`apps/api/${config.name}/widgets/\` is the reference slice — copy its shape, not its\\ncontent\\.\\n`),
+        new RegExp(
+          `\`apps/api/${config.name}/widgets/\` is the reference slice — copy its shape, not its\\ncontent\\.\\n`,
+        ),
         `There is no reference slice in this project — the demo resource was\nremoved at instantiation (\`init --demo-slice delete\`).\n`,
       );
     } else {
       content = content.replace(
-        new RegExp(`\`apps/api/${config.name}/widgets/\` is the reference slice — copy its shape, not its\\ncontent\\.`),
+        new RegExp(
+          `\`apps/api/${config.name}/widgets/\` is the reference slice — copy its shape, not its\\ncontent\\.`,
+        ),
         "The demo resource was moved to `docs/reference-slice/` at instantiation " +
           "— copy its shape, not its content.",
       );
@@ -1243,7 +1280,9 @@ function regenerateDocs(config: Config): void {
   if (exists(readmePath)) {
     let content = readText(readmePath);
     content = content.replace(
-      new RegExp(`\`${config.name}-prd\\.md\` is the specification and the reasoning behind it\\. This file is how to run the thing\\.`),
+      new RegExp(
+        `\`${config.name}-prd\\.md\` is the specification and the reasoning behind it\\. This file is how to run the thing\\.`,
+      ),
       "This file is how to run the thing.",
     );
     content = content.replace(
@@ -1270,7 +1309,7 @@ function regenerateDocs(config: Config): void {
       "- [ ] Pick real fonts and a color palette in `packages/ui/theme.css`",
       "      (still the generic template defaults).",
       "- [ ] Write real marketing copy for the pages under `apps/web/app/(marketing)/`" +
-        (config.marketingSite ? "" : " — skip, the marketing site was declined.") ,
+        (config.marketingSite ? "" : " — skip, the marketing site was declined."),
       "- [ ] Fill in `STRIPE_WEBHOOK_SECRET` in `.env` once a webhook endpoint",
       "      exists in the Stripe dashboard for this project.",
       "- [ ] Point DNS at the three domains chosen during `init`:",
@@ -1290,14 +1329,19 @@ function regenerateDocs(config: Config): void {
 
 function regenerate(config: Config): void {
   if (config.skipRegenerate) {
-    warn("--skip-regenerate set — lockfiles/OpenAPI/client are stale until you regenerate them by hand.");
+    warn(
+      "--skip-regenerate set — lockfiles/OpenAPI/client are stale until you regenerate them by hand.",
+    );
     return;
   }
   const apiDir = path.join(REPO_ROOT, "apps", "api");
   // A relative path here, not an absolute one: an absolute REPO_ROOT can
   // contain spaces, and execFileSync's Windows shell mode does not
   // reliably re-quote an argument that already contains them.
-  const mergeOpenapiRel = path.relative(apiDir, path.join(REPO_ROOT, "scripts", "merge_openapi.py"));
+  const mergeOpenapiRel = path.relative(
+    apiDir,
+    path.join(REPO_ROOT, "scripts", "merge_openapi.py"),
+  );
   run("uv", ["lock"], apiDir);
   run("uv", ["sync", "--all-extras"], apiDir);
 
@@ -1408,7 +1452,9 @@ async function main(): Promise<void> {
   selfDelete(config);
 
   log("done.");
-  log("Next: read docs/brand-pass.md, then apps/api `uv run python manage.py migrate` and `pnpm dev`.");
+  log(
+    "Next: read docs/brand-pass.md, then apps/api `uv run python manage.py migrate` and `pnpm dev`.",
+  );
 }
 
 main().catch((err) => {
