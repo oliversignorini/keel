@@ -1209,8 +1209,8 @@ function handleDemoSlice(config: Config): void {
     recorderTestPath,
     [
       `def test_audited_service_records_the_impersonator(django_capture_on_commit_callbacks) -> None:`,
-      `    """Proves the recorder's impersonator handling (docs/plans/phase-8.md`,
-      `    8.1) against a service the PRD §6 restrictions don't cover — widget`,
+      `    """Proves the recorder's impersonator handling against a service the`,
+      `    PRD §6 restrictions don't cover — widget`,
       `    CRUD isn't one of the four restricted actions, so an impersonated`,
       `    session performing it is exactly the case PRD §6 says must still be`,
       `    recorded ("every subsequent AuditLog row carries impersonator")."""`,
