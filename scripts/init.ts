@@ -1020,8 +1020,8 @@ function handleDemoSlice(config: Config): void {
   );
   replaceSnippet(
     appLayoutPath,
-    `}, [navItems, me, paletteQuery, router, widgetResults, params.${config.tenantNoun}]);`,
-    `}, [navItems, me, paletteQuery, router, params.${config.tenantNoun}]);`,
+    `}, [navItems, me, paletteQuery, router, widgetResults, params.${config.tenantNoun}, current${Tenant}]);`,
+    `}, [navItems, me, paletteQuery, router, params.${config.tenantNoun}, current${Tenant}]);`,
   );
   // Perm.WIDGETS_VIEW was the only use of this import in the layout.
   removeSnippet(appLayoutPath, `import { Perm } from "@/lib/${config.tenantNoun}/permissions";\n`);
@@ -1034,18 +1034,152 @@ function handleDemoSlice(config: Config): void {
     `[${config.tenantNoun}]`,
     "page.tsx",
   );
-  if (exists(dashboardPagePath)) {
-    let content = readText(dashboardPagePath);
-    content = content.replace(
-      /\s*<Link\s+href=\{`\/\$\{current[A-Za-z]+\.slug\}\/widgets`\}[\s\S]*?<\/Link>\n/,
-      "\n",
-    );
-    // That was the dashboard page's only use of <Link>.
-    if (!content.includes("<Link")) {
-      content = content.replace(/import Link from "next\/link";\n/, "");
-    }
-    writeText(dashboardPagePath, content);
-  }
+  // The dashboard is a card grid over four data sources, one of which is
+  // the demo resource: a stat card, a "Recent widgets" list, and the
+  // state and fetching behind both. Removed snippet by snippet rather
+  // than by one broad regex — a regex that matches less than it should
+  // leaves a half-removed page that only `tsc` notices, and it notices
+  // in the instantiated project rather than here.
+  //
+  // <Link>, <Badge>, <Skeleton>, ArrowRight, FileClock and Users all
+  // survive: the audit, members and plan cards still use them. `Box` is
+  // the one import the widgets card had to itself.
+  removeSnippet(dashboardPagePath, `import { listWidgets } from "@/lib/widgets/api";\n`);
+  removeSnippet(
+    dashboardPagePath,
+    `import type { WidgetOut } from "@${config.name}/api-client";\n`,
+  );
+  replaceSnippet(
+    dashboardPagePath,
+    `import { ArrowRight, Box, FileClock, Users } from "lucide-react";`,
+    `import { ArrowRight, FileClock, Users } from "lucide-react";`,
+  );
+  removeSnippet(
+    dashboardPagePath,
+    [
+      `const WIDGET_STATUS_VARIANT: Record<string, "default" | "secondary" | "outline"> = {`,
+      `  active: "default",`,
+      `  draft: "secondary",`,
+      `  paused: "outline",`,
+      `};`,
+      ``,
+      ``,
+    ].join("\n"),
+  );
+  replaceSnippet(
+    dashboardPagePath,
+    [
+      ` * \`<Card>\` grid over the four data sources already fetched elsewhere in`,
+      ` * the product (finding 28), rather than the single "View widgets →"`,
+      ` * link this route shipped with. */`,
+    ].join("\n"),
+    [
+      ` * \`<Card>\` grid over the data sources already fetched elsewhere in`,
+      ` * the product (finding 28). */`,
+    ].join("\n"),
+  );
+  removeSnippet(
+    dashboardPagePath,
+    [
+      `  const [widgets, setWidgets] = useState<WidgetOut[] | null>(null);`,
+      `  const [widgetCount, setWidgetCount] = useState<number | null>(null);`,
+      ``,
+    ].join("\n"),
+  );
+  removeSnippet(
+    dashboardPagePath,
+    `  const canViewWidgets = current${Tenant}?.permissions.includes(Perm.WIDGETS_VIEW) ?? false;\n`,
+  );
+  removeSnippet(
+    dashboardPagePath,
+    [
+      `  useEffect(() => {`,
+      `    if (!${config.tenantNoun}Slug || !canViewWidgets) return;`,
+      `    let cancelled = false;`,
+      `    listWidgets(${config.tenantNoun}Slug).then((page) => {`,
+      `      if (cancelled) return;`,
+      `      setWidgets(page.results.slice(0, 5));`,
+      `      setWidgetCount(page.results.length);`,
+      `    });`,
+      `    return () => {`,
+      `      cancelled = true;`,
+      `    };`,
+      `  }, [${config.tenantNoun}Slug, canViewWidgets]);`,
+      ``,
+      ``,
+    ].join("\n"),
+  );
+  removeSnippet(
+    dashboardPagePath,
+    [
+      `        <Card>`,
+      `          <CardHeader>`,
+      `            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">`,
+      `              <Box className="size-4" />`,
+      `              Widgets`,
+      `            </CardTitle>`,
+      `          </CardHeader>`,
+      `          <CardContent>`,
+      `            {!canViewWidgets ? (`,
+      `              <p className="text-sm text-muted-foreground">No access.</p>`,
+      `            ) : widgetCount === null ? (`,
+      `              <Skeleton className="h-8 w-12" />`,
+      `            ) : (`,
+      `              <p className="text-2xl font-semibold">{widgetCount}</p>`,
+      `            )}`,
+      `          </CardContent>`,
+      `        </Card>`,
+      ``,
+      ``,
+    ].join("\n"),
+  );
+  removeSnippet(
+    dashboardPagePath,
+    [
+      `      {canViewWidgets && (`,
+      `        <Card>`,
+      `          <CardHeader className="flex flex-row items-center justify-between">`,
+      `            <CardTitle>Recent widgets</CardTitle>`,
+      `            <Link`,
+      `              href={\`/\${current${Tenant}.slug}/widgets\`}`,
+      `              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"`,
+      `            >`,
+      `              View all`,
+      `              <ArrowRight className="size-4" />`,
+      `            </Link>`,
+      `          </CardHeader>`,
+      `          <CardContent>`,
+      `            {widgets === null ? (`,
+      `              <div className="flex flex-col gap-2">`,
+      `                <Skeleton className="h-6 w-full" />`,
+      `                <Skeleton className="h-6 w-full" />`,
+      `              </div>`,
+      `            ) : widgets.length === 0 ? (`,
+      `              <p className="text-sm text-muted-foreground">No widgets yet.</p>`,
+      `            ) : (`,
+      `              <ul className="flex flex-col gap-2">`,
+      `                {widgets.map((widget) => (`,
+      `                  <li key={widget.id} className="flex items-center justify-between text-sm">`,
+      `                    <Link`,
+      `                      href={\`/\${current${Tenant}.slug}/widgets/\${widget.id}\`}`,
+      `                      className="text-foreground hover:underline"`,
+      `                    >`,
+      `                      {widget.name}`,
+      `                    </Link>`,
+      `                    <Badge variant={WIDGET_STATUS_VARIANT[widget.status] ?? "outline"}>`,
+      `                      {widget.status}`,
+      `                    </Badge>`,
+      `                  </li>`,
+      `                ))}`,
+      `              </ul>`,
+      `            )}`,
+      `          </CardContent>`,
+      `        </Card>`,
+      `      )}`,
+      ``,
+      ``,
+    ].join("\n"),
+  );
 
   const permissionsPath = path.join(webDir, "lib", config.tenantNoun, "permissions.ts");
   removeSnippet(permissionsPath, `  WIDGETS_VIEW: "widgets.view",\n`);
