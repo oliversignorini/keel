@@ -7,11 +7,36 @@ import { Perm } from "@/lib/org/permissions";
 import { deleteWidget, getWidget, updateWidget } from "@/lib/widgets/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { WidgetOut } from "@keel/api-client";
-import { FormField, PageHeader, ResourceForm } from "@keel/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  Button,
+  FormField,
+  PageHeader,
+  ResourceForm,
+} from "@keel/ui";
+import { Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+
+import { WidgetFormSkeleton } from "../_components/widget-form-skeleton";
+import { WidgetStatusField } from "../_components/widget-status-field";
 
 const widgetFormSchema = z.object({
   name: z.string().min(1, "Name is required.").max(255),
@@ -29,7 +54,9 @@ export default function WidgetDetailPage() {
   const [widget, setWidget] = useState<WidgetOut | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const {
+    control,
     register,
     handleSubmit,
     setError,
@@ -58,48 +85,73 @@ export default function WidgetDetailPage() {
 
   if (!currentOrg) return null;
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link href={`/${currentOrg.slug}/widgets`}>Widgets</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{widget?.name ?? "…"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   if (notFound) {
     return (
-      <div className="rounded-lg border border-border p-6">
-        <h1 className="mb-2 text-lg font-semibold text-foreground">Widget not found</h1>
-        <p className="text-sm text-muted-foreground">
-          It doesn&apos;t exist, or it belongs to a different organisation.
-        </p>
+      <div>
+        <PageHeader breadcrumb={breadcrumb} title="Widget not found" />
+        <div className="rounded-lg border border-border p-6">
+          <p className="text-sm text-muted-foreground">
+            It doesn&apos;t exist, or it belongs to a different organisation.
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (!widget) return null;
+  if (!widget) {
+    return (
+      <div className="max-w-lg">
+        <PageHeader breadcrumb={breadcrumb} title="…" />
+        <WidgetFormSkeleton />
+      </div>
+    );
+  }
 
   async function onSubmit(values: WidgetFormValues) {
     setFormError(null);
     try {
       const updated = await updateWidget(currentOrg!.slug, params.id, values);
       setWidget(updated);
+      toast.success("Widget saved");
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));
     }
   }
 
-  async function onDelete() {
-    if (!window.confirm(`Delete ${widget!.name}? This cannot be undone.`)) return;
+  async function onConfirmDelete() {
     await deleteWidget(currentOrg!.slug, params.id);
+    setDeleteOpen(false);
+    toast.success(`${widget!.name} deleted`);
     router.push(`/${currentOrg!.slug}/widgets`);
   }
 
   return (
     <div className="max-w-lg">
       <PageHeader
+        breadcrumb={breadcrumb}
         title={widget.name}
         actions={
           <Can code={Perm.WIDGETS_MANAGE}>
-            <button
-              type="button"
-              onClick={() => void onDelete()}
-              className="rounded-md border border-destructive px-3 py-2 text-sm font-medium text-destructive"
-            >
+            <Button variant="outline" onClick={() => setDeleteOpen(true)}>
+              <Trash2 />
               Delete
-            </button>
+            </Button>
           </Can>
         }
       />
@@ -111,12 +163,7 @@ export default function WidgetDetailPage() {
         isSubmitting={isSubmitting}
       >
         <FormField label="Name" id="name" error={errors.name?.message} {...register("name")} />
-        <FormField
-          label="Status"
-          id="status"
-          error={errors.status?.message}
-          {...register("status")}
-        />
+        <WidgetStatusField control={control} error={errors.status} />
         <FormField
           label="Description"
           id="description"
@@ -124,6 +171,26 @@ export default function WidgetDetailPage() {
           {...register("description")}
         />
       </ResourceForm>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {widget.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. The widget will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void onConfirmDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
