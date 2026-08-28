@@ -19,7 +19,10 @@ export default defineConfig({
     command: "next dev -p 3100",
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    // 30s stopped being enough once the shadcn/radix dependency graph
+    // landed (UX overhaul) — a cold `next dev` compile on a CI runner
+    // now takes ~40-60s before the first byte.
+    timeout: 120_000,
   },
   projects: [
     {
