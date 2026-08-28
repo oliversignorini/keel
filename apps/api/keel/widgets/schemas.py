@@ -7,19 +7,16 @@ from datetime import datetime
 from ninja import Schema
 from pydantic import Field
 
+from keel.core.schemas import KeelSchema
 
-class WidgetOut(Schema):
-    id: str
+
+class WidgetOut(KeelSchema):
     name: str
     description: str
     status: str
     created_by: str
     created_at: datetime
     updated_at: datetime
-
-    @staticmethod
-    def resolve_id(obj: object) -> str:
-        return str(obj.id)  # type: ignore[attr-defined]
 
     @staticmethod
     def resolve_created_by(obj: object) -> str:

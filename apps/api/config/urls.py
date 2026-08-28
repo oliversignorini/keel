@@ -11,7 +11,7 @@ from keel.audit.views import router as audit_router
 from keel.billing.views import plans_router as billing_plans_router
 from keel.billing.views import router as billing_router
 from keel.billing.views import webhook_router as billing_webhook_router
-from keel.core.ninja_api import api as ninja_api
+from keel.core.api import api as ninja_api
 from keel.files.views import router as files_router
 from keel.jobs.views import router as jobs_router
 from keel.organizations.views import invite_router as org_invite_router
@@ -21,7 +21,7 @@ from keel.organizations.views import org_router
 from keel.widgets.views import router as widgets_router
 
 # Every app's Ninja router mounts on this one shared api instance (stage
-# 10.A/10.D's note in keel/core/ninja_api.py). "/orgs", not
+# 10.A/10.D's note in keel/core/api.py). "/orgs", not
 # "/organizations" — PRD §7 names the segment "orgs"; the implementation
 # used the longer form until this rename (phase-10.md's second "allowed
 # change", done in one sweep across every route here).

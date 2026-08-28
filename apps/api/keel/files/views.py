@@ -16,9 +16,9 @@ from typing import Any
 from django.http import FileResponse, Http404
 from ninja import Status
 
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.idempotency import idempotent
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.pagination import Page, paginate
 from keel.files import selectors, services, storage
 from keel.files.models import FileUpload
 from keel.files.schemas import (
@@ -39,13 +39,6 @@ class FileUploadResource(OrgScopedResource):
 
 
 router = FileUploadResource.router
-
-
-def _get_upload_or_404(organization: Any, id: str) -> FileUpload:
-    file_upload = selectors.get_file(organization, id)
-    if file_upload is None:
-        raise Http404
-    return file_upload
 
 
 @router.get("/{org_slug}/files/", response=Page[FileUploadOut], operation_id="listFiles")
@@ -80,7 +73,7 @@ def create_upload(request: Any, org_slug: str, payload: PresignedUploadRequest) 
 )
 def complete_upload(request: Any, org_slug: str, id: str) -> FileUpload:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
-    file_upload = _get_upload_or_404(organization, id)
+    file_upload = selectors.get_upload_or_404(organization, id)
     return services.complete_upload(file_upload=file_upload)
 
 
@@ -90,7 +83,7 @@ def retrieve_upload(request: Any, org_slug: str, id: str) -> FileUpload:
     action above — the mechanism the cross-tenant test in
     ``keel/files/tests/test_uploads.py`` exercises directly."""
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_VIEW,))
-    return _get_upload_or_404(organization, id)
+    return selectors.get_upload_or_404(organization, id)
 
 
 @router.get(
@@ -106,7 +99,7 @@ def get_download_url(request: Any, org_slug: str, id: str) -> Any:
     just proved, via ``resolve_and_authorize``, that they're allowed to
     read this row."""
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_VIEW,))
-    file_upload = _get_upload_or_404(organization, id)
+    file_upload = selectors.get_upload_or_404(organization, id)
     if file_upload.status != FileUpload.STATUS_AVAILABLE:
         raise Http404
     adapter = storage.get_storage()
@@ -119,7 +112,7 @@ def get_download_url(request: Any, org_slug: str, id: str) -> Any:
 @router.delete("/{org_slug}/files/{id}/", response={204: None}, operation_id="deleteFile")
 def delete_file(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
-    file_upload = _get_upload_or_404(organization, id)
+    file_upload = selectors.get_upload_or_404(organization, id)
     services.delete_file(file_upload=file_upload, actor=request.auth)
     return Status(204, None)
 
@@ -136,7 +129,7 @@ def delete_file(request: Any, org_slug: str, id: str) -> Status[None]:
 )
 def local_object_upload(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_MANAGE,))
-    file_upload = _get_upload_or_404(organization, id)
+    file_upload = selectors.get_upload_or_404(organization, id)
     adapter = storage.get_storage()
     if not isinstance(adapter, storage.LocalFileSystemStorage):
         raise Http404
@@ -150,7 +143,7 @@ def local_object_upload(request: Any, org_slug: str, id: str) -> Status[None]:
 @router.get("/{org_slug}/files/{id}/local-object/", operation_id="localObjectDownload")
 def local_object_download(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.FILES_VIEW,))
-    file_upload = _get_upload_or_404(organization, id)
+    file_upload = selectors.get_upload_or_404(organization, id)
     adapter = storage.get_storage()
     if not isinstance(adapter, storage.LocalFileSystemStorage):
         raise Http404

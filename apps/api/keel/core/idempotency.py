@@ -105,7 +105,7 @@ def _in_progress_conflict() -> Conflict:
     # A concurrent request with the same key is already in flight. No
     # second row is created either way; asking this one to retry is
     # simpler and just as correct as a spin-wait. Raised, not
-    # hand-returned, so it goes through keel.core.ninja_exceptions like
+    # hand-returned, so it goes through keel.core.error_handlers like
     # every other domain error (api-patterns finding 11) instead of a
     # second, untested copy of the envelope shape.
     return Conflict(

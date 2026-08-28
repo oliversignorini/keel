@@ -16,25 +16,27 @@ needs org name + locked email to drive signup before there's a session).
 """
 
 from typing import Any
+from uuid import UUID
 
 from django.db import IntegrityError
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.utils import timezone
 from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements_bulk
-from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
-from keel.core.http_caching import set_reference_data_cache_headers
-from keel.core.idempotency import idempotent
-from keel.core.ninja_authz import (
+from keel.core.authz import (
     OrgScopedResource,
     keel_router,
     optional_auth_router,
     resolve_and_authorize,
 )
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
+from keel.core.http_caching import set_reference_data_cache_headers
+from keel.core.idempotency import idempotent
+from keel.core.pagination import Page, paginate
+from keel.core.selectors import get_scoped_or_404
 from keel.organizations import selectors, services
-from keel.organizations.models import Invitation, Membership, Role
+from keel.organizations.models import Invitation, Role
 from keel.organizations.permissions import Perm, registered_denial_reasons
 from keel.organizations.schemas import (
     InvitationCreateIn,
@@ -53,8 +55,8 @@ from keel.organizations.schemas import (
 )
 
 
-def _get_role_or_422(role_id: object) -> Role:
-    role = Role.objects.filter(pk=str(role_id)).first()
+def _get_role_or_422(role_id: str | UUID) -> Role:
+    role = selectors.get_role(role_id)
     if role is None:
         raise UnprocessableEntity(code="role_not_found", message="Unknown role.")
     return role
@@ -127,11 +129,7 @@ def organization_transfer(request: Any, org_slug: str, payload: TransferIn) -> A
     organization = resolve_and_authorize(request, org_slug, (Perm.ORG_TRANSFER,))
     to_membership_id = payload.membership_id
     from_membership = selectors.get_membership(user=request.auth, organization=organization)
-    to_membership = (
-        Membership.objects.filter(organization=organization, pk=to_membership_id)
-        .select_related("role")
-        .first()
-    )
+    to_membership = selectors.get_membership_by_id(organization, to_membership_id)
     if to_membership is None or from_membership is None:
         raise Conflict(code="membership_not_found", message="Target membership not found.")
     services.transfer_ownership(
@@ -177,7 +175,7 @@ def list_members(
     request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
 ) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
-    queryset = Membership.objects.select_related("user", "role").for_organization(organization)
+    queryset = selectors.list_members(organization)
     return paginate(request, queryset)
 
 
@@ -186,15 +184,7 @@ def list_members(
 )
 def retrieve_member(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
-    membership = (
-        Membership.objects.select_related("user", "role")
-        .for_organization(organization)
-        .filter(pk=id)
-        .first()
-    )
-    if membership is None:
-        raise Http404
-    return membership
+    return get_scoped_or_404(selectors.list_members(organization), id)
 
 
 # PATCH only â€” same reasoning as keel.widgets.views.update_widget.
@@ -207,9 +197,7 @@ def update_member_role(
     request: Any, org_slug: str, id: str, payload: MembershipRoleUpdateIn
 ) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_CHANGE_ROLE,))
-    membership = Membership.objects.for_organization(organization).filter(pk=id).first()
-    if membership is None:
-        raise Http404
+    membership = get_scoped_or_404(selectors.list_members(organization), id)
     role = _get_role_or_422(payload.role_id)
     return services.change_member_role(membership=membership, role=role, actor=request.auth)
 
@@ -220,9 +208,7 @@ def update_member_role(
 def remove_member(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_REMOVE,))
-    membership = Membership.objects.for_organization(organization).filter(pk=id).first()
-    if membership is None:
-        raise Http404
+    membership = get_scoped_or_404(selectors.list_members(organization), id)
     services.remove_member(membership=membership, actor=request.auth)
     return Status(204, None)
 
@@ -239,10 +225,7 @@ def list_roles(
 @nested_router.get("/{org_slug}/roles/{id}/", response=RoleOut, operation_id="retrieveRole")
 def retrieve_role(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_VIEW,))
-    role = selectors.list_roles_for_organization(organization).filter(pk=id).first()
-    if role is None:
-        raise Http404
-    return role
+    return get_scoped_or_404(selectors.list_roles_for_organization(organization), id)
 
 
 @nested_router.get(
@@ -252,9 +235,7 @@ def list_invitations(
     request: Any, org_slug: str, cursor: str | None = None, limit: int | None = None
 ) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
-    queryset = Invitation.objects.select_related("role", "invited_by").for_organization(
-        organization
-    )
+    queryset = selectors.list_invitations(organization)
     return paginate(request, queryset)
 
 
@@ -282,15 +263,7 @@ def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) 
 )
 def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
-    invitation = (
-        Invitation.objects.select_related("role", "invited_by")
-        .for_organization(organization)
-        .filter(pk=id)
-        .first()
-    )
-    if invitation is None:
-        raise Http404
-    return invitation
+    return get_scoped_or_404(selectors.list_invitations(organization), id)
 
 
 @nested_router.delete(
@@ -299,9 +272,7 @@ def retrieve_invitation(request: Any, org_slug: str, id: str) -> Any:
 def revoke_invitation(request: Any, org_slug: str, id: str) -> Any:
 
     organization = resolve_and_authorize(request, org_slug, (Perm.MEMBERS_INVITE,))
-    invitation = Invitation.objects.for_organization(organization).filter(pk=id).first()
-    if invitation is None:
-        raise Http404
+    invitation = get_scoped_or_404(selectors.list_invitations(organization), id)
     services.revoke_invitation(invitation=invitation, actor=request.auth)
     return Status(204, None)
 

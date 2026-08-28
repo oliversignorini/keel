@@ -5,7 +5,7 @@ Two halves. The first drives a fixture Ninja API (mounted on a test-only
 URLconf, the same trick
 ``keel/organizations/tests/ninja_tenant_isolation_fixtures.py`` uses) so
 the envelope is asserted as it actually reaches a client, through
-``keel.core.ninja_exceptions``. The second asserts the exception classes'
+``keel.core.error_handlers``. The second asserts the exception classes'
 own ``status_code`` / ``code`` / ``message`` vocabulary directly, since
 that is what every call site constructs.
 """
@@ -17,8 +17,8 @@ from django.http import Http404
 from django.urls import path
 from ninja import NinjaAPI, Schema
 
+from keel.core import error_handlers
 from keel.core import exceptions as keel_exceptions
-from keel.core import ninja_exceptions
 from keel.core.exceptions import (
     AuthenticationFailed,
     Conflict,
@@ -33,7 +33,7 @@ from keel.core.exceptions import (
 # --- Fixture API: the envelope as a client actually receives it ----------
 
 fixture_api = NinjaAPI(title="Keel API (error-envelope fixture)", version="fixture")
-ninja_exceptions.register(fixture_api)
+error_handlers.register(fixture_api)
 
 
 class _Payload(Schema):
@@ -192,7 +192,7 @@ def test_keel_authentication_failed_shape() -> None:
 def test_domain_error_is_a_plain_exception_carrying_its_message() -> None:
     """No DRF ``APIException`` underneath any more (phase-10 DRF removal):
     a ``DomainError`` is an ordinary exception whose ``str()`` is its
-    human message, and ``keel.core.ninja_exceptions`` is the only thing
+    human message, and ``keel.core.error_handlers`` is the only thing
     that turns it into a response."""
     exc = Conflict(code="already_accepted", message="Invitation already accepted.")
 
@@ -201,7 +201,7 @@ def test_domain_error_is_a_plain_exception_carrying_its_message() -> None:
 
 
 def test_keel_throttled_without_a_wait_uses_the_default_message() -> None:
-    """keel.core.ninja_throttle only ever raises with wait= set; this
+    """keel.core.throttle only ever raises with wait= set; this
     proves the no-wait branch still produces a sane envelope."""
     exc = keel_exceptions.Throttled()
 

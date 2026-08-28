@@ -52,7 +52,7 @@ class Perm:
 class DenialReason:
     """The full vocabulary of ``Decision.deny(...)`` reason codes this
     module raises — becomes the error envelope's ``code`` on a 403
-    (``keel.core.ninja_authz.resolve_and_authorize``). Enumerated here,
+    (``keel.core.authz.resolve_and_authorize``). Enumerated here,
     not just used as inline string literals, so
     ``registered_denial_reasons`` below can publish the set through
     ``GET /api/v1/permissions/`` instead of a client having to learn it by

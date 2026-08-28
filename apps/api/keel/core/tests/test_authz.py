@@ -1,10 +1,9 @@
 """The authorization *vocabulary* (PRD §4 invariant 2): ``Decision``, the
-registry, ``has_perm``, and the membership-resolution seam.
-
-The base class a resource declares against, and its import-time checks,
-moved to ``keel/core/ninja_authz.py`` when DRF was removed — those are
-tested in ``test_ninja_authz.py``. What is left here is framework-free and
-is what every guard and every route ultimately runs through.
+registry, ``has_perm``, and the membership-resolution seam — the part of
+``keel/core/authz.py`` every guard and every route ultimately runs
+through. The Ninja resource base classes and router constructors that
+live in the same module are tested separately in
+``test_ninja_authz.py``.
 """
 
 from dataclasses import FrozenInstanceError

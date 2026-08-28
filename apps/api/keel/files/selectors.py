@@ -12,6 +12,7 @@ it vanish from the list."""
 
 from django.db.models import QuerySet
 
+from keel.core.selectors import get_scoped_or_404
 from keel.files.models import FileUpload
 from keel.organizations.models import Organization
 
@@ -25,5 +26,12 @@ def list_files(organization: Organization) -> QuerySet[FileUpload]:
     )
 
 
-def get_file(organization: Organization, file_id: str) -> FileUpload | None:
-    return FileUpload.objects.for_organization(organization).filter(pk=file_id).first()
+def files_for_organization(organization: Organization) -> QuerySet[FileUpload]:
+    """Every row, including deleted ones — the scope ``get_upload_or_404``
+    narrows to a single pk needs to reach a row ``list_files`` excludes
+    (e.g. a deleted upload's own detail/download-URL/delete routes)."""
+    return FileUpload.objects.for_organization(organization)
+
+
+def get_upload_or_404(organization: Organization, file_id: str) -> FileUpload:
+    return get_scoped_or_404(files_for_organization(organization), file_id)

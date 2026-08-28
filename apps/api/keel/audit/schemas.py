@@ -6,6 +6,8 @@ from typing import Any
 
 from ninja import Schema
 
+from keel.core.schemas import KeelSchema
+
 
 class AuditActorOut(Schema):
     id: str
@@ -13,8 +15,7 @@ class AuditActorOut(Schema):
     name: str
 
 
-class AuditLogOut(Schema):
-    id: str
+class AuditLogOut(KeelSchema):
     action: str
     actor: AuditActorOut | None
     impersonator: AuditActorOut | None
@@ -23,10 +24,6 @@ class AuditLogOut(Schema):
     metadata: dict[str, Any]
     ip: str | None
     created_at: datetime
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
     @staticmethod
     def resolve_actor(obj: Any) -> dict[str, Any] | None:

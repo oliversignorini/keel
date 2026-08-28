@@ -6,7 +6,7 @@ import { CSRF_HEADER_NAME, isUnsafeMethod, readCsrfCookie } from "./csrf";
 /**
  * Every generated operation's response type is a union of its success
  * variant(s) and one member per declared error status (400/401/403/404/
- * 409/422/429 — `keel.core.ninja_authz`'s router-level default, added so
+ * 409/422/429 — `keel.core.authz`'s router-level default, added so
  * the OpenAPI document publishes the error envelope; api-patterns finding
  * 3). `identityFetch` below never actually returns one of those error
  * members — it throws instead — so this strips them from `T` structurally

@@ -3,6 +3,8 @@
  * Do not edit manually.
  * Keel API
  * Keel — Django + Next.js SaaS template.
+
+Rate limiting: every request is throttled per-user (authenticated) or per-IP (anonymous); a throttled-scope response — 200 or 429 — carries X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset so a client can pace itself before being rejected. A 429 additionally carries Retry-After. See docs/adr/0003-api-lifecycle-guarantee.md for this API's versioning and stability commitment.
  * OpenAPI spec version: 1.0.0
  */
 import * as zod from 'zod';
@@ -1254,7 +1256,7 @@ export const createOrganizationBodySlugMaxOne = 255;
 export const createOrganizationBody = zod.object({
   "name": zod.string().max(createOrganizationBodyNameMax),
   "slug": zod.union([zod.string().max(createOrganizationBodySlugMaxOne),zod.null()]).optional()
-})
+}).describe('Shape only (docs\/boundary-guardrails.md \"Validation boundary\"):\nslug uniqueness used to be enforced here via a ``field_validator`` that\nqueried ``Organization`` directly — an ORM read outside\n``selectors.py`` (invariant 1) and a check-then-act race outside the\nservice\'s transaction (the DB could accept a second identical slug\nbetween this validator running and ``create_organization``\'s insert).\nThe view now lets the ``slug`` column\'s own ``unique=True`` constraint\nbe the single source of truth and translates the resulting\n``IntegrityError`` into a 409.')
 
 export const createOrganizationResponse = zod.object({
   "created_at": zod.string().datetime({}),
@@ -1397,8 +1399,9 @@ export const createCheckoutSessionResponse = zod.object({
 
 /**
  * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
-a **404**, not a zero balance — see the DRF-era docstring this
-replaces for the full reasoning; unchanged here.
+a **404**, not a zero balance — a disabled feature has no balance to
+report, and a zero balance is a real, distinguishable state once the
+feature is on.
  * @summary Get Credit Balance
  */
 export const retrieveCreditBalanceParams = zod.object({
@@ -2131,11 +2134,15 @@ export const updateWidgetResponse = zod.object({
 
 /**
  * A Reference Data Holder (api-patterns finding 13) â€” the permission
-registry only changes on deploy, not per-request.
+registry only changes on deploy, not per-request. Also publishes the
+enumerable 403 denial reason codes (api-patterns finding 18), so a
+client can branch on ``error.code`` without having read the Python
+that raises it.
  * @summary Permissions Registry
  */
 export const retrievePermissionCodesResponse = zod.object({
-  "codes": zod.array(zod.string())
+  "codes": zod.array(zod.string()),
+  "denial_reasons": zod.array(zod.string())
 })
 
 

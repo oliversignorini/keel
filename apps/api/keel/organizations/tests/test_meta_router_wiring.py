@@ -1,7 +1,7 @@
 """Meta-test 2's missing half (PRD §4 invariant 7): a scoped resource must
 be *reachable* by the tenant-isolation walk, not merely well-formed.
 
-``keel.core.ninja_authz.registered_scoped_resources()`` records every
+``keel.core.authz.registered_scoped_resources()`` records every
 well-formed ``OrgScopedResource`` subclass unconditionally, via
 ``__init_subclass__`` — a scoped resource cannot be defined without landing
 there. If one is declared but its router is never mounted in
@@ -18,7 +18,7 @@ URLconf.
 
 from django.urls import get_resolver
 
-from keel.core.ninja_authz import OrgScopedResource
+from keel.core.authz import OrgScopedResource
 from keel.organizations.tests.ninja_tenant_isolation import (
     production_scoped_resources,
     resource_route_is_wired,

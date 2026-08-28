@@ -1,4 +1,4 @@
-"""``keel.core.ninja_auth`` — the deny-by-default session auth every
+"""``keel.core.auth`` — the deny-by-default session auth every
 ``KeelAPI`` operation declares (PRD §4 task 1.12, PRD §7's error table).
 
 The two rules worth proving, and the reason this file exists rather than
@@ -17,8 +17,8 @@ import pytest
 from django.test import Client, RequestFactory
 
 from keel.accounts.models import User
+from keel.core.auth import enforce_csrf, optional_session_auth, session_auth
 from keel.core.exceptions import AuthenticationFailed, NotAuthenticated
-from keel.core.ninja_auth import enforce_csrf, optional_session_auth, session_auth
 
 pytestmark = pytest.mark.django_db
 

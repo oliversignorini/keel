@@ -17,11 +17,10 @@ unpaginated collection PRD §7 calls out as a deviation.
 from typing import Any
 
 import stripe
-from django.db.models import Max, Prefetch
 from django.http import Http404, HttpRequest, HttpResponse
 
-from keel.billing import credits, services, stripe_client, tasks
-from keel.billing.models import Plan, Price, StripeEvent, Subscription
+from keel.billing import credits, selectors, services, stripe_client, tasks
+from keel.billing.models import StripeEvent
 from keel.billing.schemas import (
     BillingPortalOut,
     CheckoutIn,
@@ -30,11 +29,11 @@ from keel.billing.schemas import (
     PlanOut,
     SubscriptionEnvelopeOut,
 )
+from keel.core.authz import GlobalResource, keel_router, public_router, resolve_and_authorize
 from keel.core.exceptions import UnprocessableEntity
 from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
-from keel.core.ninja_authz import GlobalResource, keel_router, public_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.pagination import Page, paginate
 from keel.organizations.permissions import Perm
 
 # --- Plans: public, no auth ------------------------------------------------
@@ -79,26 +78,14 @@ def list_plans(
     cursor: str | None = None,
     limit: int | None = None,
 ) -> dict:
-    active_prices = Prefetch(
-        "prices",
-        queryset=Price.objects.filter(is_active=True).order_by("interval"),
-        to_attr="active_prices",
-    )
-    queryset = (
-        Plan.objects.filter(is_active=True)
-        .order_by("sort_order", "code")
-        .prefetch_related(active_prices)
-    )
+    queryset = selectors.list_active_plans()
     # api-patterns finding 13: a Reference Data Holder — catalogue data,
     # unauthenticated, long-lived. The ETag covers both plans and prices
     # (a price change doesn't touch Plan.updated_at) plus the page the
     # caller asked for, since a cursor/limit change is a different
     # representation.
-    plan_agg = Plan.objects.filter(is_active=True).aggregate(latest=Max("updated_at"))
-    price_agg = Price.objects.filter(is_active=True).aggregate(latest=Max("updated_at"))
-    set_reference_data_cache_headers(
-        response, plan_agg["latest"], price_agg["latest"], request.GET.urlencode()
-    )
+    plan_latest, price_latest = selectors.latest_catalogue_update()
+    set_reference_data_cache_headers(response, plan_latest, price_latest, request.GET.urlencode())
     return paginate(request, queryset, ordering=("sort_order", "code"))
 
 
@@ -122,7 +109,7 @@ def _frontend_base() -> str:
 @idempotent
 def create_checkout_session(request: Any, org_slug: str, payload: CheckoutIn) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_MANAGE,))
-    price = Price.objects.filter(pk=str(payload.price_id), is_active=True).first()
+    price = selectors.get_active_price(payload.price_id)
     if price is None:
         raise UnprocessableEntity(code="price_not_found", message="Unknown or inactive price.")
     url = services.create_checkout_session(
@@ -159,8 +146,7 @@ def create_billing_portal_session(request: Any, org_slug: str) -> dict:
 )
 def get_subscription(request: Any, org_slug: str) -> dict:
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
-    subscription = Subscription.objects.filter(organization=organization).first()
-    return {"subscription": subscription}
+    return {"subscription": selectors.get_subscription(organization)}
 
 
 @router.get(
@@ -168,8 +154,9 @@ def get_subscription(request: Any, org_slug: str) -> dict:
 )
 def get_credit_balance(request: Any, org_slug: str) -> dict:
     """Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
-    a **404**, not a zero balance — see the DRF-era docstring this
-    replaces for the full reasoning; unchanged here."""
+    a **404**, not a zero balance — a disabled feature has no balance to
+    report, and a zero balance is a real, distinguishable state once the
+    feature is on."""
     if not credits.credits_enabled():
         raise Http404
     organization = resolve_and_authorize(request, org_slug, (Perm.BILLING_VIEW,))
@@ -178,9 +165,9 @@ def get_credit_balance(request: Any, org_slug: str) -> dict:
 
 # --- Stripe webhook: public, signature-verified, CSRF-exempt --------------
 # django-ninja views are always csrf_exempt at the Django middleware level
-# (see keel/core/ninja_api.py's module docstring) — this router's `auth=None`
-# is what keeps it session-independent, matching DRF's own
-# `authentication_classes = ()` + `permission_classes = (AllowAny,)`.
+# (see keel/core/api.py's module docstring) — this router's `auth=None`
+# is what keeps it session-independent: Stripe authenticates itself via the
+# signature check below, not a session.
 
 webhook_router = public_router()
 

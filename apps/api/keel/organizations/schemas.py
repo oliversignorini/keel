@@ -11,6 +11,7 @@ from ninja import Schema
 from pydantic import Field
 
 from keel.billing.schemas import EntitlementsOut
+from keel.core.schemas import KeelSchema
 from keel.organizations.models import Membership, Organization
 
 # api-patterns finding 14: a published vocabulary, not a bare `str` — must
@@ -24,26 +25,16 @@ assert set(MembershipStatus.__args__) == {choice for choice, _ in Membership.STA
 InvitationStatus = Literal["pending", "accepted", "revoked", "expired"]
 
 
-class UserSummaryOut(Schema):
-    id: str
+class UserSummaryOut(KeelSchema):
     email: str
     name: str
 
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
-
-class OrganizationOut(Schema):
-    id: str
+class OrganizationOut(KeelSchema):
     name: str
     slug: str
     created_at: datetime
     updated_at: datetime
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
 
 class OrganizationCreateIn(Schema):
@@ -79,35 +70,24 @@ class OrganizationUpdateIn(Schema):
     name: str | None = Field(default=None, max_length=255)
 
 
-class RoleOut(Schema):
-    id: str
+class RoleOut(KeelSchema):
     name: str
     permissions: list[str]
     is_preset: bool
 
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
-
-class MembershipOut(Schema):
-    id: str
+class MembershipOut(KeelSchema):
     user: UserSummaryOut
     role: RoleOut
     status: MembershipStatus
     joined_at: datetime | None
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
 
 class MembershipRoleUpdateIn(Schema):
     role_id: UUID
 
 
-class InvitationOut(Schema):
-    id: str
+class InvitationOut(KeelSchema):
     email: str
     role: RoleOut
     invited_by: UserSummaryOut | None
@@ -116,10 +96,6 @@ class InvitationOut(Schema):
     revoked_at: datetime | None
     status: InvitationStatus
     created_at: datetime
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
     @staticmethod
     def resolve_status(obj: Any) -> InvitationStatus:

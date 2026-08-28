@@ -1,11 +1,9 @@
-"""Proves ``keel.core.ninja_pagination.CursorPaginator`` carries over the
-same tie-safe guarantee as the DRF cursor paginator it was ported from
-(see ``keel/core/ninja_pagination.py``'s module docstring and
-``keel/core/tests/test_pagination.py`` for the DRF-side proof this was
-ported from). ADR 0001 / phase-10.md 10.A: "a hand-rolled 'cursor = last
-id seen' will pass a naive test and fail this one" — so this uses ≥60
-rows sharing a single tied sort value and walks every page end to end,
-which a naive implementation cannot survive.
+"""Proves ``keel.core.pagination.CursorPaginator`` carries the tie-safe
+guarantee its module docstring describes (see ``keel/core/pagination.py``).
+ADR 0001 / phase-10.md 10.A: "a hand-rolled 'cursor = last id seen' will
+pass a naive test and fail this one" — so this uses ≥60 rows sharing a
+single tied sort value and walks every page end to end, which a naive
+implementation cannot survive.
 
 Uses an ``isolate_apps`` fixture model, the same pattern
 ``test_pagination.py`` uses, rather than a real app's model — ``keel.core``
@@ -21,7 +19,7 @@ from django.db import connection, models
 from django.test import RequestFactory
 from django.test.utils import isolate_apps
 
-from keel.core.ninja_pagination import CursorPaginator, InvalidPagination, _positive_int
+from keel.core.pagination import CursorPaginator, InvalidPagination, _positive_int
 
 
 def _paginate_all(paginator_cls, queryset, page_size):

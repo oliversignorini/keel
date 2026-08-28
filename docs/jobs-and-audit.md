@@ -68,7 +68,7 @@ it can duplicate a job). Two layers, cheapest first:
    Redis cache slot and proceeds; a replay with the same key while the
    first is still in flight gets a `409 Conflict`
    (`idempotency_key_in_progress`) raised through the normal
-   `keel.core.exceptions` → `keel.core.ninja_exceptions` envelope
+   `keel.core.exceptions` → `keel.core.error_handlers` envelope
    machinery, not a hand-built response; a replay after the first
    completed gets the cached response replayed verbatim, without the
    view running again. `@idempotent` scopes the cache key by the
@@ -309,7 +309,7 @@ no separate tiebreaker (it's already unique), unlike the default
 `(-created_at, id)` ordering most other list endpoints use.
 
 Both `listJobs` and `listAuditLogs` are declared through
-`keel.core.ninja_pagination.paginated` — a decorator that states the
+`keel.core.pagination.paginated` — a decorator that states the
 response schema (`Page[X]`) and the ordering once, at the route
 declaration, instead of splitting them across a `response=` kwarg, a
 bare `paginate(request, queryset)` call in the body, and (whenever the

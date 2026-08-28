@@ -130,7 +130,7 @@ def merge(base: dict, extra: dict, extra_label: str) -> dict:
 # api-patterns finding 5: how a caller authenticates was published nowhere
 # machine-readable — django-ninja itself never emits `security`/
 # `securitySchemes`, regardless of a route's real `auth=` callable
-# (keel.core.ninja_auth.session_auth / optional_session_auth / none).
+# (keel.core.auth.session_auth / optional_session_auth / none).
 # These paths are exactly the ones built with `public_router()` — see
 # posd finding 2 — so hand-listing them here, rather than trying to
 # introspect Ninja's operation objects, stays honest about what's
@@ -281,7 +281,7 @@ def _add_job_stream_path(spec: dict) -> None:
 
 
 def build_ninja_spec() -> dict:
-    from keel.core.ninja_api import api
+    from keel.core.api import api
 
     # NinjaAPI.get_openapi_schema() returns an OpenAPISchema (a dict
     # subclass with extra behaviour) — coerce to a plain dict so the rest

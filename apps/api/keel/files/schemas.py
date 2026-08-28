@@ -2,11 +2,12 @@
 phase-5.md 5.6; docs/plans/phase-13.md)."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from ninja import Schema
 from pydantic import Field
 
+from keel.core.schemas import KeelSchema
 from keel.files.models import FileUpload
 
 # api-patterns finding 14: a published vocabulary, not a bare `str` — must
@@ -22,8 +23,7 @@ class PresignedUploadRequest(Schema):
     checksum_sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]{64}$")
 
 
-class FileUploadOut(Schema):
-    id: str
+class FileUploadOut(KeelSchema):
     filename: str
     content_type: str
     size: int
@@ -31,10 +31,6 @@ class FileUploadOut(Schema):
     failure_reason: str
     created_at: datetime
     completed_at: datetime | None
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
 
 class PresignedUploadOut(Schema):

@@ -3,6 +3,8 @@
  * Do not edit manually.
  * Keel API
  * Keel — Django + Next.js SaaS template.
+
+Rate limiting: every request is throttled per-user (authenticated) or per-IP (anonymous); a throttled-scope response — 200 or 429 — carries X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset so a client can pace itself before being rejected. A 429 additionally carries Retry-After. See docs/adr/0003-api-lifecycle-guarantee.md for this API's versioning and stability commitment.
  * OpenAPI spec version: 1.0.0
  */
 import {
@@ -387,15 +389,24 @@ export interface EntitlementsOut {
   limits?: EntitlementsOutLimits;
 }
 
+export type ErrorBodyOutDenialAnyOf = { [key: string]: unknown };
+
+export type ErrorBodyOutDenial = ErrorBodyOutDenialAnyOf | null;
+
+export type ErrorBodyOutDetailsAnyOfItem = { [key: string]: unknown };
+
+export type ErrorBodyOutDetails = ErrorBodyOutDetailsAnyOfItem[] | null;
+
 export interface ErrorBodyOut {
   code: string;
-  details?: unknown;
+  denial?: ErrorBodyOutDenial;
+  details?: ErrorBodyOutDetails;
   message: string;
 }
 
 /**
  * PRD §7's error shape as a published Ninja schema — the response
-every ``keel.core.ninja_authz`` router constructor attaches to the
+every ``keel.core.authz`` router constructor attaches to the
 project's default error-response set ({400, 401, 403, 404, 409, 422,
 429}) on every operation, so the OpenAPI document (and the generated
 TypeScript client) describes the envelope this module actually
@@ -728,6 +739,17 @@ export type OptionalTimestamp = Timestamp | null;
 
 export type OrganizationCreateInSlug = string | null;
 
+/**
+ * Shape only (docs/boundary-guardrails.md "Validation boundary"):
+slug uniqueness used to be enforced here via a ``field_validator`` that
+queried ``Organization`` directly — an ORM read outside
+``selectors.py`` (invariant 1) and a check-then-act race outside the
+service's transaction (the DB could accept a second identical slug
+between this validator running and ``create_organization``'s insert).
+The view now lets the ``slug`` column's own ``unique=True`` constraint
+be the single source of truth and translates the resulting
+``IntegrityError`` into a 409.
+ */
 export interface OrganizationCreateIn {
   /** @maxLength 255 */
   name: string;
@@ -848,6 +870,7 @@ export type Password = string;
 
 export interface PermissionCodesOut {
   codes: string[];
+  denial_reasons: string[];
 }
 
 /**
@@ -1773,7 +1796,7 @@ export type emailRemoveResponse400 = {
   data: ErrorResponse
   status: 400
 }
-    
+
 export type emailRemoveResponseSuccess = (emailRemoveResponse200) & {
   headers: Headers;
 };
@@ -1786,15 +1809,15 @@ export type emailRemoveResponse = (emailRemoveResponseSuccess | emailRemoveRespo
 export const getEmailRemoveUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/email`
 }
 
 export const emailRemove = async (emailBody: EmailBody, options?: RequestInit): Promise<emailRemoveResponse> => {
-  
+
   return identityFetch<emailRemoveResponse>(getEmailRemoveUrl(),
-  {      
+  {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1817,7 +1840,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailRemove>>, {data: EmailBody}> = (props) => {
@@ -1826,7 +1849,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  emailRemove(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1851,7 +1874,7 @@ export const useEmailRemove = <TError = ErrorResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Retrieves the list of email addresses of the account.
 
@@ -1866,7 +1889,7 @@ export type emailListResponse401 = {
   data: AuthenticationResponse
   status: 401
 }
-    
+
 export type emailListResponseSuccess = (emailListResponse200) & {
   headers: Headers;
 };
@@ -1879,19 +1902,19 @@ export type emailListResponse = (emailListResponseSuccess | emailListResponseErr
 export const getEmailListUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/email`
 }
 
 export const emailList = async ( options?: RequestInit): Promise<emailListResponse> => {
-  
+
   return identityFetch<emailListResponse>(getEmailListUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -1905,7 +1928,7 @@ export const getEmailListQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getEmailListQueryOptions = <TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -1913,13 +1936,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEmailListQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof emailList>>> = ({ signal }) => emailList({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -1958,7 +1981,7 @@ export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TErr
 
 export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getEmailListQueryOptions(options)
@@ -1989,7 +2012,7 @@ export type emailRequestVerificationResponse400 = {
   data: ErrorResponse
   status: 400
 }
-    
+
 export type emailRequestVerificationResponseSuccess = (emailRequestVerificationResponse200) & {
   headers: Headers;
 };
@@ -2002,15 +2025,15 @@ export type emailRequestVerificationResponse = (emailRequestVerificationResponse
 export const getEmailRequestVerificationUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/email`
 }
 
 export const emailRequestVerification = async (markPrimaryEmailBody: MarkPrimaryEmailBody, options?: RequestInit): Promise<emailRequestVerificationResponse> => {
-  
+
   return identityFetch<emailRequestVerificationResponse>(getEmailRequestVerificationUrl(),
-  {      
+  {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2033,7 +2056,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailRequestVerification>>, {data: MarkPrimaryEmailBody}> = (props) => {
@@ -2042,7 +2065,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  emailRequestVerification(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2067,7 +2090,7 @@ export const useEmailRequestVerification = <TError = ErrorResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * The following functionality is available:
 
@@ -2099,7 +2122,7 @@ export type emailAddResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type emailAddResponseSuccess = (emailAddResponse200) & {
   headers: Headers;
 };
@@ -2112,15 +2135,15 @@ export type emailAddResponse = (emailAddResponseSuccess | emailAddResponseError)
 export const getEmailAddUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/email`
 }
 
 export const emailAdd = async (emailBody: EmailBody, options?: RequestInit): Promise<emailAddResponse> => {
-  
+
   return identityFetch<emailAddResponse>(getEmailAddUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2143,7 +2166,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailAdd>>, {data: EmailBody}> = (props) => {
@@ -2152,7 +2175,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  emailAdd(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2178,7 +2201,7 @@ export const useEmailAdd = <TError = ErrorResponse | AuthenticationOrReauthentic
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Requests for (another) email verification email to be sent. Note that
 sending emails is rate limited, so when you send too many requests the
@@ -2200,7 +2223,7 @@ export type emailChangePrimaryResponse403 = {
   data: ForbiddenResponse
   status: 403
 }
-    
+
 export type emailChangePrimaryResponseSuccess = (emailChangePrimaryResponse200) & {
   headers: Headers;
 };
@@ -2213,15 +2236,15 @@ export type emailChangePrimaryResponse = (emailChangePrimaryResponseSuccess | em
 export const getEmailChangePrimaryUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/email`
 }
 
 export const emailChangePrimary = async (emailBody: EmailBody, options?: RequestInit): Promise<emailChangePrimaryResponse> => {
-  
+
   return identityFetch<emailChangePrimaryResponse>(getEmailChangePrimaryUrl(),
-  {      
+  {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2244,7 +2267,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailChangePrimary>>, {data: EmailBody}> = (props) => {
@@ -2253,7 +2276,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  emailChangePrimary(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2278,7 +2301,7 @@ export const useEmailChangePrimary = <TError = ErrorResponse | ForbiddenResponse
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * In order to change the password of an account, the current and new
 password must be provider.  However, accounts that were created by
@@ -2296,7 +2319,7 @@ export type accountPasswordChangeResponse401 = {
   data: AuthenticationResponse
   status: 401
 }
-    
+
 ;
 export type accountPasswordChangeResponseError = (accountPasswordChangeResponse400 | accountPasswordChangeResponse401) & {
   headers: Headers;
@@ -2307,15 +2330,15 @@ export type accountPasswordChangeResponse = (accountPasswordChangeResponseError)
 export const getAccountPasswordChangeUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/password/change`
 }
 
 export const accountPasswordChange = async (changePasswordBody: ChangePasswordBody, options?: RequestInit): Promise<accountPasswordChangeResponse> => {
-  
+
   return identityFetch<accountPasswordChangeResponse>(getAccountPasswordChangeUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2338,7 +2361,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof accountPasswordChange>>, {data: ChangePasswordBody}> = (props) => {
@@ -2347,7 +2370,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  accountPasswordChange(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2372,7 +2395,7 @@ export const useAccountPasswordChange = <TError = ErrorResponse | Authentication
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Retrieves the phone number of the account, if any. Note that while the
 endpoint returns a list of phone numbers, at most one entry is returned.
@@ -2388,7 +2411,7 @@ export type phoneGetResponse401 = {
   data: AuthenticationResponse
   status: 401
 }
-    
+
 export type phoneGetResponseSuccess = (phoneGetResponse200) & {
   headers: Headers;
 };
@@ -2401,19 +2424,19 @@ export type phoneGetResponse = (phoneGetResponseSuccess | phoneGetResponseError)
 export const getPhoneGetUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/phone`
 }
 
 export const phoneGet = async ( options?: RequestInit): Promise<phoneGetResponse> => {
-  
+
   return identityFetch<phoneGetResponse>(getPhoneGetUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -2427,7 +2450,7 @@ export const getPhoneGetQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getPhoneGetQueryOptions = <TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -2435,13 +2458,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getPhoneGetQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof phoneGet>>> = ({ signal }) => phoneGet({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -2480,7 +2503,7 @@ export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError
 
 export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getPhoneGetQueryOptions(options)
@@ -2530,7 +2553,7 @@ export type phoneChangeResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type phoneChangeResponseSuccess = (phoneChangeResponse202) & {
   headers: Headers;
 };
@@ -2543,15 +2566,15 @@ export type phoneChangeResponse = (phoneChangeResponseSuccess | phoneChangeRespo
 export const getPhoneChangeUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/phone`
 }
 
 export const phoneChange = async (phoneBody: PhoneBody, options?: RequestInit): Promise<phoneChangeResponse> => {
-  
+
   return identityFetch<phoneChangeResponse>(getPhoneChangeUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2574,7 +2597,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof phoneChange>>, {data: PhoneBody}> = (props) => {
@@ -2583,7 +2606,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  phoneChange(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2609,7 +2632,7 @@ export const usePhoneChange = <TError = ErrorResponse | AuthenticationOrReauthen
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Disconnect a third-party provider account, returning the remaining
 accounts that are still connected. The disconnect is not allowed if it
@@ -2628,7 +2651,7 @@ export type providersDisconnectResponse400 = {
   data: ErrorResponse
   status: 400
 }
-    
+
 export type providersDisconnectResponseSuccess = (providersDisconnectResponse200) & {
   headers: Headers;
 };
@@ -2641,15 +2664,15 @@ export type providersDisconnectResponse = (providersDisconnectResponseSuccess | 
 export const getProvidersDisconnectUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/providers`
 }
 
 export const providersDisconnect = async (providerAccountBody: ProviderAccountBody, options?: RequestInit): Promise<providersDisconnectResponse> => {
-  
+
   return identityFetch<providersDisconnectResponse>(getProvidersDisconnectUrl(),
-  {      
+  {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2672,7 +2695,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof providersDisconnect>>, {data: ProviderAccountBody}> = (props) => {
@@ -2681,7 +2704,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  providersDisconnect(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2707,7 +2730,7 @@ export const useProvidersDisconnect = <TError = ErrorResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List the connected third-party provider accounts
  */
@@ -2715,7 +2738,7 @@ export type providersListResponse200 = {
   data: ProviderAccountsResponse
   status: 200
 }
-    
+
 export type providersListResponseSuccess = (providersListResponse200) & {
   headers: Headers;
 };
@@ -2726,19 +2749,19 @@ export type providersListResponse = (providersListResponseSuccess)
 export const getProvidersListUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/account/providers`
 }
 
 export const providersList = async ( options?: RequestInit): Promise<providersListResponse> => {
-  
+
   return identityFetch<providersListResponse>(getProvidersListUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -2752,7 +2775,7 @@ export const getProvidersListQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getProvidersListQueryOptions = <TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -2760,13 +2783,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getProvidersListQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof providersList>>> = ({ signal }) => providersList({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -2805,7 +2828,7 @@ export function useProvidersList<TData = Awaited<ReturnType<typeof providersList
 
 export function useProvidersList<TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getProvidersListQueryOptions(options)
@@ -2845,7 +2868,7 @@ export type authCodeConfirmResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authCodeConfirmResponseSuccess = (authCodeConfirmResponse200) & {
   headers: Headers;
 };
@@ -2858,15 +2881,15 @@ export type authCodeConfirmResponse = (authCodeConfirmResponseSuccess | authCode
 export const getAuthCodeConfirmUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/code/confirm`
 }
 
 export const authCodeConfirm = async (confirmLoginCodeBody: ConfirmLoginCodeBody, options?: RequestInit): Promise<authCodeConfirmResponse> => {
-  
+
   return identityFetch<authCodeConfirmResponse>(getAuthCodeConfirmUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -2889,7 +2912,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authCodeConfirm>>, {data: ConfirmLoginCodeBody}> = (props) => {
@@ -2898,7 +2921,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authCodeConfirm(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2923,7 +2946,7 @@ export const useAuthCodeConfirm = <TError = ErrorResponse | AuthenticationRespon
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Obtain email verification information, given the token that was sent to
 the user by email.
@@ -2944,7 +2967,7 @@ export type authEmailVerifyInfoResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authEmailVerifyInfoResponseSuccess = (authEmailVerifyInfoResponse200) & {
   headers: Headers;
 };
@@ -2957,19 +2980,19 @@ export type authEmailVerifyInfoResponse = (authEmailVerifyInfoResponseSuccess | 
 export const getAuthEmailVerifyInfoUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/email/verify`
 }
 
 export const authEmailVerifyInfo = async ( options?: RequestInit): Promise<authEmailVerifyInfoResponse> => {
-  
+
   return identityFetch<authEmailVerifyInfoResponse>(getAuthEmailVerifyInfoUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -2983,7 +3006,7 @@ export const getAuthEmailVerifyInfoQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getAuthEmailVerifyInfoQueryOptions = <TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -2991,13 +3014,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthEmailVerifyInfoQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof authEmailVerifyInfo>>> = ({ signal }) => authEmailVerifyInfo({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -3036,7 +3059,7 @@ export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEma
 
 export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getAuthEmailVerifyInfoQueryOptions(options)
@@ -3085,7 +3108,7 @@ export type authEmailVerifyResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authEmailVerifyResponseSuccess = (authEmailVerifyResponse200) & {
   headers: Headers;
 };
@@ -3098,15 +3121,15 @@ export type authEmailVerifyResponse = (authEmailVerifyResponseSuccess | authEmai
 export const getAuthEmailVerifyUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/email/verify`
 }
 
 export const authEmailVerify = async (verifyEmailBody: VerifyEmailBody, options?: RequestInit): Promise<authEmailVerifyResponse> => {
-  
+
   return identityFetch<authEmailVerifyResponse>(getAuthEmailVerifyUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3129,7 +3152,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authEmailVerify>>, {data: VerifyEmailBody}> = (props) => {
@@ -3138,7 +3161,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authEmailVerify(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3163,7 +3186,7 @@ export const useAuthEmailVerify = <TError = ErrorResponse | UnauthenticatedRespo
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Requests a new email verification code.
 Requires `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True`.
@@ -3184,7 +3207,7 @@ export type authEmailVerifyResendResponse429 = {
   data: TooManyRequestsResponse
   status: 429
 }
-    
+
 export type authEmailVerifyResendResponseSuccess = (authEmailVerifyResendResponse200) & {
   headers: Headers;
 };
@@ -3197,19 +3220,19 @@ export type authEmailVerifyResendResponse = (authEmailVerifyResendResponseSucces
 export const getAuthEmailVerifyResendUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/email/verify/resend`
 }
 
 export const authEmailVerifyResend = async ( options?: RequestInit): Promise<authEmailVerifyResendResponse> => {
-  
+
   return identityFetch<authEmailVerifyResendResponse>(getAuthEmailVerifyResendUrl(),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -3227,22 +3250,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authEmailVerifyResend>>, void> = () => {
-          
+
 
           return  authEmailVerifyResend(requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type AuthEmailVerifyResendMutationResult = NonNullable<Awaited<ReturnType<typeof authEmailVerifyResend>>>
-    
+
     export type AuthEmailVerifyResendMutationError = ConflictResponse | TooManyRequestsResponse
 
     /**
@@ -3261,7 +3284,7 @@ export const useAuthEmailVerifyResend = <TError = ConflictResponse | TooManyRequ
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Login using a username-password or email-password combination.
 
@@ -3286,7 +3309,7 @@ export type authLoginResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authLoginResponseSuccess = (authLoginResponse200) & {
   headers: Headers;
 };
@@ -3299,15 +3322,15 @@ export type authLoginResponse = (authLoginResponseSuccess | authLoginResponseErr
 export const getAuthLoginUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/login`
 }
 
 export const authLogin = async (loginBody: LoginBody, options?: RequestInit): Promise<authLoginResponse> => {
-  
+
   return identityFetch<authLoginResponse>(getAuthLoginUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3330,7 +3353,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLogin>>, {data: LoginBody}> = (props) => {
@@ -3339,7 +3362,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authLogin(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3364,7 +3387,7 @@ export const useAuthLogin = <TError = ErrorResponse | AuthenticationResponse | C
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Initiates the password reset procedure. Depending on whether or not
 `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED` is `True`, the procedure is
@@ -3394,7 +3417,7 @@ export type authPasswordRequestResponse401 = {
   data: AuthenticationResponse
   status: 401
 }
-    
+
 export type authPasswordRequestResponseSuccess = (authPasswordRequestResponse200) & {
   headers: Headers;
 };
@@ -3407,15 +3430,15 @@ export type authPasswordRequestResponse = (authPasswordRequestResponseSuccess | 
 export const getAuthPasswordRequestUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/password/request`
 }
 
 export const authPasswordRequest = async (requestPasswordBody: RequestPasswordBody, options?: RequestInit): Promise<authPasswordRequestResponse> => {
-  
+
   return identityFetch<authPasswordRequestResponse>(getAuthPasswordRequestUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3438,7 +3461,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordRequest>>, {data: RequestPasswordBody}> = (props) => {
@@ -3447,7 +3470,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authPasswordRequest(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3472,7 +3495,7 @@ export const useAuthPasswordRequest = <TError = ErrorResponse | AuthenticationRe
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Used to obtain information on and validate a password reset key.  The
 key passed is either the key encoded in the password reset URL that the
@@ -3497,7 +3520,7 @@ export type authPasswordResetInfoResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authPasswordResetInfoResponseSuccess = (authPasswordResetInfoResponse200) & {
   headers: Headers;
 };
@@ -3510,19 +3533,19 @@ export type authPasswordResetInfoResponse = (authPasswordResetInfoResponseSucces
 export const getAuthPasswordResetInfoUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/password/reset`
 }
 
 export const authPasswordResetInfo = async ( options?: RequestInit): Promise<authPasswordResetInfoResponse> => {
-  
+
   return identityFetch<authPasswordResetInfoResponse>(getAuthPasswordResetInfoUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -3536,7 +3559,7 @@ export const getAuthPasswordResetInfoQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getAuthPasswordResetInfoQueryOptions = <TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -3544,13 +3567,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthPasswordResetInfoQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof authPasswordResetInfo>>> = ({ signal }) => authPasswordResetInfo({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -3589,7 +3612,7 @@ export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authP
 
 export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getAuthPasswordResetInfoQueryOptions(options)
@@ -3634,7 +3657,7 @@ export type authPasswordResetResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authPasswordResetResponseSuccess = (authPasswordResetResponse200) & {
   headers: Headers;
 };
@@ -3647,15 +3670,15 @@ export type authPasswordResetResponse = (authPasswordResetResponseSuccess | auth
 export const getAuthPasswordResetUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/password/reset`
 }
 
 export const authPasswordReset = async (resetPasswordBody: ResetPasswordBody, options?: RequestInit): Promise<authPasswordResetResponse> => {
-  
+
   return identityFetch<authPasswordResetResponse>(getAuthPasswordResetUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3678,7 +3701,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordReset>>, {data: ResetPasswordBody}> = (props) => {
@@ -3687,7 +3710,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authPasswordReset(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3712,7 +3735,7 @@ export const useAuthPasswordReset = <TError = ErrorResponse | AuthenticationResp
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Complete the phone number verification process. Note that a status code
 of 401 does not imply failure. It merely indicates that the phone number
@@ -3739,7 +3762,7 @@ export type authPhoneVerifyResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authPhoneVerifyResponseSuccess = (authPhoneVerifyResponse200) & {
   headers: Headers;
 };
@@ -3752,15 +3775,15 @@ export type authPhoneVerifyResponse = (authPhoneVerifyResponseSuccess | authPhon
 export const getAuthPhoneVerifyUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/phone/verify`
 }
 
 export const authPhoneVerify = async (verifyPhoneBody: VerifyPhoneBody, options?: RequestInit): Promise<authPhoneVerifyResponse> => {
-  
+
   return identityFetch<authPhoneVerifyResponse>(getAuthPhoneVerifyUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -3783,7 +3806,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPhoneVerify>>, {data: VerifyPhoneBody}> = (props) => {
@@ -3792,7 +3815,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authPhoneVerify(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3817,7 +3840,7 @@ export const useAuthPhoneVerify = <TError = ErrorResponse | UnauthenticatedRespo
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Requests a new phone number verification code.
 Requires `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_RESEND = True`.
@@ -3838,7 +3861,7 @@ export type authPhoneVerifyResendResponse429 = {
   data: TooManyRequestsResponse
   status: 429
 }
-    
+
 export type authPhoneVerifyResendResponseSuccess = (authPhoneVerifyResendResponse200) & {
   headers: Headers;
 };
@@ -3851,19 +3874,19 @@ export type authPhoneVerifyResendResponse = (authPhoneVerifyResendResponseSucces
 export const getAuthPhoneVerifyResendUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/phone/verify/resend`
 }
 
 export const authPhoneVerifyResend = async ( options?: RequestInit): Promise<authPhoneVerifyResendResponse> => {
-  
+
   return identityFetch<authPhoneVerifyResendResponse>(getAuthPhoneVerifyResendUrl(),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -3881,22 +3904,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPhoneVerifyResend>>, void> = () => {
-          
+
 
           return  authPhoneVerifyResend(requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type AuthPhoneVerifyResendMutationResult = NonNullable<Awaited<ReturnType<typeof authPhoneVerifyResend>>>
-    
+
     export type AuthPhoneVerifyResendMutationError = ConflictResponse | TooManyRequestsResponse
 
     /**
@@ -3915,7 +3938,7 @@ export const useAuthPhoneVerifyResend = <TError = ConflictResponse | TooManyRequ
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Initiates the third-party provider authentication redirect flow. As calling
 this endpoint results in a user facing redirect (302), this call is only
@@ -3928,7 +3951,7 @@ export type authProviderRedirectResponse302 = {
   data: void
   status: 302
 }
-    
+
 ;
 export type authProviderRedirectResponseError = (authProviderRedirectResponse302) & {
   headers: Headers;
@@ -3939,7 +3962,7 @@ export type authProviderRedirectResponse = (authProviderRedirectResponseError)
 export const getAuthProviderRedirectUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/provider/redirect`
 }
@@ -3951,11 +3974,11 @@ formUrlEncoded.append(`process`, providerRedirectBody.process)
 formUrlEncoded.append(`provider`, providerRedirectBody.provider)
 
   return identityFetch<authProviderRedirectResponse>(getAuthProviderRedirectUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...options?.headers },
-    body: 
+    body:
       formUrlEncoded,
   }
 );}
@@ -3974,7 +3997,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authProviderRedirect>>, {data: ProviderRedirectBody}> = (props) => {
@@ -3983,7 +4006,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authProviderRedirect(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4008,7 +4031,7 @@ export const useAuthProviderRedirect = <TError = void,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * If, while signing up using a third-party provider account, there is
 insufficient information received from the provider to automatically
@@ -4028,7 +4051,7 @@ export type authProviderSignupInfoResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authProviderSignupInfoResponseSuccess = (authProviderSignupInfoResponse200) & {
   headers: Headers;
 };
@@ -4041,19 +4064,19 @@ export type authProviderSignupInfoResponse = (authProviderSignupInfoResponseSucc
 export const getAuthProviderSignupInfoUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/provider/signup`
 }
 
 export const authProviderSignupInfo = async ( options?: RequestInit): Promise<authProviderSignupInfoResponse> => {
-  
+
   return identityFetch<authProviderSignupInfoResponse>(getAuthProviderSignupInfoUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -4067,7 +4090,7 @@ export const getAuthProviderSignupInfoQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getAuthProviderSignupInfoQueryOptions = <TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -4075,13 +4098,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthProviderSignupInfoQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof authProviderSignupInfo>>> = ({ signal }) => authProviderSignupInfo({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -4120,7 +4143,7 @@ export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof auth
 
 export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getAuthProviderSignupInfoQueryOptions(options)
@@ -4168,7 +4191,7 @@ export type authProviderSignupResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authProviderSignupResponseSuccess = (authProviderSignupResponse200) & {
   headers: Headers;
 };
@@ -4181,15 +4204,15 @@ export type authProviderSignupResponse = (authProviderSignupResponseSuccess | au
 export const getAuthProviderSignupUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/provider/signup`
 }
 
 export const authProviderSignup = async (providerSignupBody: ProviderSignupBody, options?: RequestInit): Promise<authProviderSignupResponse> => {
-  
+
   return identityFetch<authProviderSignupResponse>(getAuthProviderSignupUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4212,7 +4235,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authProviderSignup>>, {data: ProviderSignupBody}> = (props) => {
@@ -4221,7 +4244,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authProviderSignup(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4246,7 +4269,7 @@ export const useAuthProviderSignup = <TError = ErrorResponse | AuthenticationRes
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Authenticates with a third-party provider using provider tokens received
 by other means. For example, in case of a mobile app, the authentication
@@ -4276,7 +4299,7 @@ export type authProviderTokenResponse403 = {
   data: ForbiddenResponse
   status: 403
 }
-    
+
 export type authProviderTokenResponseSuccess = (authProviderTokenResponse200) & {
   headers: Headers;
 };
@@ -4289,15 +4312,15 @@ export type authProviderTokenResponse = (authProviderTokenResponseSuccess | auth
 export const getAuthProviderTokenUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/provider/token`
 }
 
 export const authProviderToken = async (providerTokenBody: ProviderTokenBody, options?: RequestInit): Promise<authProviderTokenResponse> => {
-  
+
   return identityFetch<authProviderTokenResponse>(getAuthProviderTokenUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4320,7 +4343,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authProviderToken>>, {data: ProviderTokenBody}> = (props) => {
@@ -4329,7 +4352,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authProviderToken(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4354,7 +4377,7 @@ export const useAuthProviderToken = <TError = ErrorResponse | AuthenticationResp
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * In order to safeguard the account, some actions require the user to be
 recently authenticated.  If you try to perform such an action without
@@ -4374,7 +4397,7 @@ export type authReauthenticateResponse400 = {
   data: ErrorResponse
   status: 400
 }
-    
+
 export type authReauthenticateResponseSuccess = (authReauthenticateResponse200) & {
   headers: Headers;
 };
@@ -4387,15 +4410,15 @@ export type authReauthenticateResponse = (authReauthenticateResponseSuccess | au
 export const getAuthReauthenticateUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/reauthenticate`
 }
 
 export const authReauthenticate = async (reauthenticateBody: ReauthenticateBody, options?: RequestInit): Promise<authReauthenticateResponse> => {
-  
+
   return identityFetch<authReauthenticateResponse>(getAuthReauthenticateUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4418,7 +4441,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authReauthenticate>>, {data: ReauthenticateBody}> = (props) => {
@@ -4427,7 +4450,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authReauthenticate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4452,7 +4475,7 @@ export const useAuthReauthenticate = <TError = ErrorResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Logs out the user from the current session.
 
@@ -4462,7 +4485,7 @@ export type authLogoutResponse401 = {
   data: UnauthenticatedResponse
   status: 401
 }
-    
+
 ;
 export type authLogoutResponseError = (authLogoutResponse401) & {
   headers: Headers;
@@ -4473,19 +4496,19 @@ export type authLogoutResponse = (authLogoutResponseError)
 export const getAuthLogoutUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/session`
 }
 
 export const authLogout = async ( options?: RequestInit): Promise<authLogoutResponse> => {
-  
+
   return identityFetch<authLogoutResponse>(getAuthLogoutUrl(),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -4503,22 +4526,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLogout>>, void> = () => {
-          
+
 
           return  authLogout(requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof authLogout>>>
-    
+
     export type AuthLogoutMutationError = UnauthenticatedResponse
 
     /**
@@ -4537,7 +4560,7 @@ export const useAuthLogout = <TError = UnauthenticatedResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Retrieve information about the authentication status for the current
 session.
@@ -4559,7 +4582,7 @@ export type authGetSessionResponse410 = {
   data: SessionGoneResponse
   status: 410
 }
-    
+
 export type authGetSessionResponseSuccess = (authGetSessionResponse200) & {
   headers: Headers;
 };
@@ -4572,19 +4595,19 @@ export type authGetSessionResponse = (authGetSessionResponseSuccess | authGetSes
 export const getAuthGetSessionUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/session`
 }
 
 export const authGetSession = async ( options?: RequestInit): Promise<authGetSessionResponse> => {
-  
+
   return identityFetch<authGetSessionResponse>(getAuthGetSessionUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -4598,7 +4621,7 @@ export const getAuthGetSessionQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getAuthGetSessionQueryOptions = <TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -4606,13 +4629,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthGetSessionQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof authGetSession>>> = ({ signal }) => authGetSession({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -4652,7 +4675,7 @@ export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSessi
 
 export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getAuthGetSessionQueryOptions(options)
@@ -4680,7 +4703,7 @@ export type sessionsRevokeResponse401 = {
   data: AuthenticationResponse
   status: 401
 }
-    
+
 export type sessionsRevokeResponseSuccess = (sessionsRevokeResponse200) & {
   headers: Headers;
 };
@@ -4693,15 +4716,15 @@ export type sessionsRevokeResponse = (sessionsRevokeResponseSuccess | sessionsRe
 export const getSessionsRevokeUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/sessions`
 }
 
 export const sessionsRevoke = async (endSessionsBody: EndSessionsBody, options?: RequestInit): Promise<sessionsRevokeResponse> => {
-  
+
   return identityFetch<sessionsRevokeResponse>(getSessionsRevokeUrl(),
-  {      
+  {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4724,7 +4747,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof sessionsRevoke>>, {data: EndSessionsBody}> = (props) => {
@@ -4733,7 +4756,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  sessionsRevoke(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4758,7 +4781,7 @@ export const useSessionsRevoke = <TError = AuthenticationResponse,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List sessions
  */
@@ -4766,7 +4789,7 @@ export type sessionsListResponse200 = {
   data: SessionsResponse
   status: 200
 }
-    
+
 export type sessionsListResponseSuccess = (sessionsListResponse200) & {
   headers: Headers;
 };
@@ -4777,19 +4800,19 @@ export type sessionsListResponse = (sessionsListResponseSuccess)
 export const getSessionsListUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/sessions`
 }
 
 export const sessionsList = async ( options?: RequestInit): Promise<sessionsListResponse> => {
-  
+
   return identityFetch<sessionsListResponse>(getSessionsListUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -4803,7 +4826,7 @@ export const getSessionsListQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getSessionsListQueryOptions = <TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -4811,13 +4834,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getSessionsListQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof sessionsList>>> = ({ signal }) => sessionsList({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -4856,7 +4879,7 @@ export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>
 
 export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getSessionsListQueryOptions(options)
@@ -4904,7 +4927,7 @@ export type authSignupResponse409 = {
   data: ConflictResponse
   status: 409
 }
-    
+
 export type authSignupResponseSuccess = (authSignupResponse200) & {
   headers: Headers;
 };
@@ -4917,15 +4940,15 @@ export type authSignupResponse = (authSignupResponseSuccess | authSignupResponse
 export const getAuthSignupUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/auth/signup`
 }
 
 export const authSignup = async (signupBody: SignupBody, options?: RequestInit): Promise<authSignupResponse> => {
-  
+
   return identityFetch<authSignupResponse>(getAuthSignupUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -4948,7 +4971,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authSignup>>, {data: SignupBody}> = (props) => {
@@ -4957,7 +4980,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  authSignup(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4982,7 +5005,7 @@ export const useAuthSignup = <TError = ErrorResponse | AuthenticationResponse | 
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * There are many configuration options that alter the functionality
 and behavior of django-allauth, some of which can also impact the
@@ -4997,7 +5020,7 @@ export type authConfigResponse200 = {
   data: ConfigurationResponse
   status: 200
 }
-    
+
 export type authConfigResponseSuccess = (authConfigResponse200) & {
   headers: Headers;
 };
@@ -5008,19 +5031,19 @@ export type authConfigResponse = (authConfigResponseSuccess)
 export const getAuthConfigUrl = () => {
 
 
-  
+
 
   return `/_allauth/browser/v1/config`
 }
 
 export const authConfig = async ( options?: RequestInit): Promise<authConfigResponse> => {
-  
+
   return identityFetch<authConfigResponse>(getAuthConfigUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -5034,7 +5057,7 @@ export const getAuthConfigQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getAuthConfigQueryOptions = <TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5042,13 +5065,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthConfigQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof authConfig>>> = ({ signal }) => authConfig({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -5087,7 +5110,7 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
 
 export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getAuthConfigQueryOptions(options)
@@ -5145,7 +5168,7 @@ export type exitImpersonationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type exitImpersonationResponseSuccess = (exitImpersonationResponse204) & {
   headers: Headers;
 };
@@ -5158,19 +5181,19 @@ export type exitImpersonationResponse = (exitImpersonationResponseSuccess | exit
 export const getExitImpersonationUrl = () => {
 
 
-  
+
 
   return `/api/v1/impersonation/exit/`
 }
 
 export const exitImpersonation = async ( options?: RequestInit): Promise<exitImpersonationResponse> => {
-  
+
   return identityFetch<exitImpersonationResponse>(getExitImpersonationUrl(),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -5188,22 +5211,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof exitImpersonation>>, void> = () => {
-          
+
 
           return  exitImpersonation(requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type ExitImpersonationMutationResult = NonNullable<Awaited<ReturnType<typeof exitImpersonation>>>
-    
+
     export type ExitImpersonationMutationError = ErrorEnvelope
 
     /**
@@ -5222,7 +5245,7 @@ export const useExitImpersonation = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Invite Detail
  */
@@ -5265,7 +5288,7 @@ export type retrieveInviteResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveInviteResponseSuccess = (retrieveInviteResponse200) & {
   headers: Headers;
 };
@@ -5278,19 +5301,19 @@ export type retrieveInviteResponse = (retrieveInviteResponseSuccess | retrieveIn
 export const getRetrieveInviteUrl = (token: string,) => {
 
 
-  
+
 
   return `/api/v1/invite/${token}/`
 }
 
 export const retrieveInvite = async (token: string, options?: RequestInit): Promise<retrieveInviteResponse> => {
-  
+
   return identityFetch<retrieveInviteResponse>(getRetrieveInviteUrl(token),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -5304,7 +5327,7 @@ export const getRetrieveInviteQueryKey = (token?: string,) => {
     ] as const;
     }
 
-    
+
 export const getRetrieveInviteQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5312,13 +5335,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveInviteQueryKey(token);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveInvite>>> = ({ signal }) => retrieveInvite(token, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -5357,7 +5380,7 @@ export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvi
 
 export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
  token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveInviteQueryOptions(token,options)
@@ -5415,7 +5438,7 @@ export type acceptInviteResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type acceptInviteResponseSuccess = (acceptInviteResponse200) & {
   headers: Headers;
 };
@@ -5428,19 +5451,19 @@ export type acceptInviteResponse = (acceptInviteResponseSuccess | acceptInviteRe
 export const getAcceptInviteUrl = (token: string,) => {
 
 
-  
+
 
   return `/api/v1/invite/${token}/`
 }
 
 export const acceptInvite = async (token: string, options?: RequestInit): Promise<acceptInviteResponse> => {
-  
+
   return identityFetch<acceptInviteResponse>(getAcceptInviteUrl(token),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -5458,7 +5481,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvite>>, {token: string}> = (props) => {
@@ -5467,13 +5490,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  acceptInvite(token,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type AcceptInviteMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvite>>>
-    
+
     export type AcceptInviteMutationError = ErrorEnvelope
 
     /**
@@ -5492,7 +5515,7 @@ export const useAcceptInvite = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Three queries total regardless of how many organisations the user
 belongs to (api-patterns finding 12 — this used to be 2N+1: one
@@ -5539,7 +5562,7 @@ export type retrieveMeResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveMeResponseSuccess = (retrieveMeResponse200) & {
   headers: Headers;
 };
@@ -5552,19 +5575,19 @@ export type retrieveMeResponse = (retrieveMeResponseSuccess | retrieveMeResponse
 export const getRetrieveMeUrl = () => {
 
 
-  
+
 
   return `/api/v1/me/`
 }
 
 export const retrieveMe = async ( options?: RequestInit): Promise<retrieveMeResponse> => {
-  
+
   return identityFetch<retrieveMeResponse>(getRetrieveMeUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -5578,7 +5601,7 @@ export const getRetrieveMeQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getRetrieveMeQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5586,13 +5609,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveMeQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveMe>>> = ({ signal }) => retrieveMe({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -5631,7 +5654,7 @@ export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TE
 
 export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveMeQueryOptions(options)
@@ -5689,7 +5712,7 @@ export type listOrganizationsResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listOrganizationsResponseSuccess = (listOrganizationsResponse200) & {
   headers: Headers;
 };
@@ -5703,7 +5726,7 @@ export const getListOrganizationsUrl = (params?: ListOrganizationsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -5715,13 +5738,13 @@ export const getListOrganizationsUrl = (params?: ListOrganizationsParams,) => {
 }
 
 export const listOrganizations = async (params?: ListOrganizationsParams, options?: RequestInit): Promise<listOrganizationsResponse> => {
-  
+
   return identityFetch<listOrganizationsResponse>(getListOrganizationsUrl(params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -5735,7 +5758,7 @@ export const getListOrganizationsQueryKey = (params?: ListOrganizationsParams,) 
     ] as const;
     }
 
-    
+
 export const getListOrganizationsQueryOptions = <TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -5743,13 +5766,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListOrganizationsQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listOrganizations>>> = ({ signal }) => listOrganizations(params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -5788,7 +5811,7 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
 
 export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListOrganizationsQueryOptions(params,options)
@@ -5851,7 +5874,7 @@ export type createOrganizationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createOrganizationResponseSuccess = (createOrganizationResponse200 | createOrganizationResponse201) & {
   headers: Headers;
 };
@@ -5864,15 +5887,15 @@ export type createOrganizationResponse = (createOrganizationResponseSuccess | cr
 export const getCreateOrganizationUrl = () => {
 
 
-  
+
 
   return `/api/v1/orgs/`
 }
 
 export const createOrganization = async (organizationCreateIn: OrganizationCreateIn, options?: RequestInit): Promise<createOrganizationResponse> => {
-  
+
   return identityFetch<createOrganizationResponse>(getCreateOrganizationUrl(),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -5895,7 +5918,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrganization>>, {data: OrganizationCreateIn}> = (props) => {
@@ -5904,7 +5927,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createOrganization(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -5929,7 +5952,7 @@ export const useCreateOrganization = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Organization Delete
  */
@@ -5972,7 +5995,7 @@ export type deleteOrganizationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type deleteOrganizationResponseSuccess = (deleteOrganizationResponse204) & {
   headers: Headers;
 };
@@ -5985,19 +6008,19 @@ export type deleteOrganizationResponse = (deleteOrganizationResponseSuccess | de
 export const getDeleteOrganizationUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/`
 }
 
 export const deleteOrganization = async (orgSlug: string, options?: RequestInit): Promise<deleteOrganizationResponse> => {
-  
+
   return identityFetch<deleteOrganizationResponse>(getDeleteOrganizationUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -6015,7 +6038,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganization>>, {orgSlug: string}> = (props) => {
@@ -6024,13 +6047,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteOrganization(orgSlug,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOrganization>>>
-    
+
     export type DeleteOrganizationMutationError = ErrorEnvelope
 
     /**
@@ -6049,7 +6072,7 @@ export const useDeleteOrganization = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Organization Detail
  */
@@ -6092,7 +6115,7 @@ export type retrieveOrganizationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveOrganizationResponseSuccess = (retrieveOrganizationResponse200) & {
   headers: Headers;
 };
@@ -6105,19 +6128,19 @@ export type retrieveOrganizationResponse = (retrieveOrganizationResponseSuccess 
 export const getRetrieveOrganizationUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/`
 }
 
 export const retrieveOrganization = async (orgSlug: string, options?: RequestInit): Promise<retrieveOrganizationResponse> => {
-  
+
   return identityFetch<retrieveOrganizationResponse>(getRetrieveOrganizationUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -6131,7 +6154,7 @@ export const getRetrieveOrganizationQueryKey = (orgSlug?: string,) => {
     ] as const;
     }
 
-    
+
 export const getRetrieveOrganizationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -6139,13 +6162,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveOrganizationQueryKey(orgSlug);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveOrganization>>> = ({ signal }) => retrieveOrganization(orgSlug, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -6184,7 +6207,7 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
 
 export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveOrganizationQueryOptions(orgSlug,options)
@@ -6242,7 +6265,7 @@ export type updateOrganizationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type updateOrganizationResponseSuccess = (updateOrganizationResponse200) & {
   headers: Headers;
 };
@@ -6255,16 +6278,16 @@ export type updateOrganizationResponse = (updateOrganizationResponseSuccess | up
 export const getUpdateOrganizationUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/`
 }
 
 export const updateOrganization = async (orgSlug: string,
     organizationUpdateIn: OrganizationUpdateIn, options?: RequestInit): Promise<updateOrganizationResponse> => {
-  
+
   return identityFetch<updateOrganizationResponse>(getUpdateOrganizationUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -6287,7 +6310,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrganization>>, {orgSlug: string;data: OrganizationUpdateIn}> = (props) => {
@@ -6296,7 +6319,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  updateOrganization(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -6321,7 +6344,7 @@ export const useUpdateOrganization = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List Audit Logs
  */
@@ -6364,7 +6387,7 @@ export type listAuditLogsResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listAuditLogsResponseSuccess = (listAuditLogsResponse200) & {
   headers: Headers;
 };
@@ -6379,7 +6402,7 @@ export const getListAuditLogsUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -6392,13 +6415,13 @@ export const getListAuditLogsUrl = (orgSlug: string,
 
 export const listAuditLogs = async (orgSlug: string,
     params?: ListAuditLogsParams, options?: RequestInit): Promise<listAuditLogsResponse> => {
-  
+
   return identityFetch<listAuditLogsResponse>(getListAuditLogsUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -6413,7 +6436,7 @@ export const getListAuditLogsQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -6422,13 +6445,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListAuditLogsQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLogs>>> = ({ signal }) => listAuditLogs(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -6471,7 +6494,7 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
 export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListAuditLogsQueryOptions(orgSlug,params,options)
@@ -6529,7 +6552,7 @@ export type retrieveAuditLogResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveAuditLogResponseSuccess = (retrieveAuditLogResponse200) & {
   headers: Headers;
 };
@@ -6543,20 +6566,20 @@ export const getRetrieveAuditLogUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/audit/${id}/`
 }
 
 export const retrieveAuditLog = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveAuditLogResponse> => {
-  
+
   return identityFetch<retrieveAuditLogResponse>(getRetrieveAuditLogUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -6571,7 +6594,7 @@ export const getRetrieveAuditLogQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -6580,13 +6603,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveAuditLogQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveAuditLog>>> = ({ signal }) => retrieveAuditLog(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -6629,7 +6652,7 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
 export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveAuditLogQueryOptions(orgSlug,id,options)
@@ -6687,7 +6710,7 @@ export type createCheckoutSessionResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createCheckoutSessionResponseSuccess = (createCheckoutSessionResponse200) & {
   headers: Headers;
 };
@@ -6700,16 +6723,16 @@ export type createCheckoutSessionResponse = (createCheckoutSessionResponseSucces
 export const getCreateCheckoutSessionUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/billing/checkout/`
 }
 
 export const createCheckoutSession = async (orgSlug: string,
     checkoutIn: CheckoutIn, options?: RequestInit): Promise<createCheckoutSessionResponse> => {
-  
+
   return identityFetch<createCheckoutSessionResponse>(getCreateCheckoutSessionUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -6732,7 +6755,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCheckoutSession>>, {orgSlug: string;data: CheckoutIn}> = (props) => {
@@ -6741,7 +6764,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createCheckoutSession(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -6766,11 +6789,12 @@ export const useCreateCheckoutSession = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
-a **404**, not a zero balance — see the DRF-era docstring this
-replaces for the full reasoning; unchanged here.
+a **404**, not a zero balance — a disabled feature has no balance to
+report, and a zero balance is a real, distinguishable state once the
+feature is on.
  * @summary Get Credit Balance
  */
 export type retrieveCreditBalanceResponse200 = {
@@ -6812,7 +6836,7 @@ export type retrieveCreditBalanceResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveCreditBalanceResponseSuccess = (retrieveCreditBalanceResponse200) & {
   headers: Headers;
 };
@@ -6825,19 +6849,19 @@ export type retrieveCreditBalanceResponse = (retrieveCreditBalanceResponseSucces
 export const getRetrieveCreditBalanceUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/billing/credits/`
 }
 
 export const retrieveCreditBalance = async (orgSlug: string, options?: RequestInit): Promise<retrieveCreditBalanceResponse> => {
-  
+
   return identityFetch<retrieveCreditBalanceResponse>(getRetrieveCreditBalanceUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -6851,7 +6875,7 @@ export const getRetrieveCreditBalanceQueryKey = (orgSlug?: string,) => {
     ] as const;
     }
 
-    
+
 export const getRetrieveCreditBalanceQueryOptions = <TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -6859,13 +6883,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveCreditBalanceQueryKey(orgSlug);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveCreditBalance>>> = ({ signal }) => retrieveCreditBalance(orgSlug, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -6904,7 +6928,7 @@ export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retri
 
 export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveCreditBalanceQueryOptions(orgSlug,options)
@@ -6962,7 +6986,7 @@ export type createBillingPortalSessionResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createBillingPortalSessionResponseSuccess = (createBillingPortalSessionResponse200) & {
   headers: Headers;
 };
@@ -6975,19 +6999,19 @@ export type createBillingPortalSessionResponse = (createBillingPortalSessionResp
 export const getCreateBillingPortalSessionUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/billing/portal/`
 }
 
 export const createBillingPortalSession = async (orgSlug: string, options?: RequestInit): Promise<createBillingPortalSessionResponse> => {
-  
+
   return identityFetch<createBillingPortalSessionResponse>(getCreateBillingPortalSessionUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -7005,7 +7029,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBillingPortalSession>>, {orgSlug: string}> = (props) => {
@@ -7014,13 +7038,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createBillingPortalSession(orgSlug,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateBillingPortalSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createBillingPortalSession>>>
-    
+
     export type CreateBillingPortalSessionMutationError = ErrorEnvelope
 
     /**
@@ -7039,7 +7063,7 @@ export const useCreateBillingPortalSession = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Get Subscription
  */
@@ -7082,7 +7106,7 @@ export type retrieveSubscriptionResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveSubscriptionResponseSuccess = (retrieveSubscriptionResponse200) & {
   headers: Headers;
 };
@@ -7095,19 +7119,19 @@ export type retrieveSubscriptionResponse = (retrieveSubscriptionResponseSuccess 
 export const getRetrieveSubscriptionUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/billing/subscription/`
 }
 
 export const retrieveSubscription = async (orgSlug: string, options?: RequestInit): Promise<retrieveSubscriptionResponse> => {
-  
+
   return identityFetch<retrieveSubscriptionResponse>(getRetrieveSubscriptionUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -7121,7 +7145,7 @@ export const getRetrieveSubscriptionQueryKey = (orgSlug?: string,) => {
     ] as const;
     }
 
-    
+
 export const getRetrieveSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -7129,13 +7153,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveSubscriptionQueryKey(orgSlug);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveSubscription>>> = ({ signal }) => retrieveSubscription(orgSlug, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -7174,7 +7198,7 @@ export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrie
 
 export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveSubscriptionQueryOptions(orgSlug,options)
@@ -7232,7 +7256,7 @@ export type listFilesResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listFilesResponseSuccess = (listFilesResponse200) & {
   headers: Headers;
 };
@@ -7247,7 +7271,7 @@ export const getListFilesUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -7260,13 +7284,13 @@ export const getListFilesUrl = (orgSlug: string,
 
 export const listFiles = async (orgSlug: string,
     params?: ListFilesParams, options?: RequestInit): Promise<listFilesResponse> => {
-  
+
   return identityFetch<listFilesResponse>(getListFilesUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -7281,7 +7305,7 @@ export const getListFilesQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListFilesQueryOptions = <TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -7290,13 +7314,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListFilesQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listFiles>>> = ({ signal }) => listFiles(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -7339,7 +7363,7 @@ export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TErr
 export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListFilesQueryOptions(orgSlug,params,options)
@@ -7402,7 +7426,7 @@ export type createUploadResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createUploadResponseSuccess = (createUploadResponse200 | createUploadResponse201) & {
   headers: Headers;
 };
@@ -7415,16 +7439,16 @@ export type createUploadResponse = (createUploadResponseSuccess | createUploadRe
 export const getCreateUploadUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/`
 }
 
 export const createUpload = async (orgSlug: string,
     presignedUploadRequest: PresignedUploadRequest, options?: RequestInit): Promise<createUploadResponse> => {
-  
+
   return identityFetch<createUploadResponse>(getCreateUploadUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -7447,7 +7471,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUpload>>, {orgSlug: string;data: PresignedUploadRequest}> = (props) => {
@@ -7456,7 +7480,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createUpload(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -7481,7 +7505,7 @@ export const useCreateUpload = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Delete File
  */
@@ -7524,7 +7548,7 @@ export type deleteFileResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type deleteFileResponseSuccess = (deleteFileResponse204) & {
   headers: Headers;
 };
@@ -7538,20 +7562,20 @@ export const getDeleteFileUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/`
 }
 
 export const deleteFile = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<deleteFileResponse> => {
-  
+
   return identityFetch<deleteFileResponse>(getDeleteFileUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -7569,7 +7593,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFile>>, {orgSlug: string;id: string}> = (props) => {
@@ -7578,13 +7602,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteFile(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFile>>>
-    
+
     export type DeleteFileMutationError = ErrorEnvelope
 
     /**
@@ -7603,7 +7627,7 @@ export const useDeleteFile = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Scoped to ``organization`` in the same lookup as every other
 action above — the mechanism the cross-tenant test in
@@ -7649,7 +7673,7 @@ export type retrieveUploadResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveUploadResponseSuccess = (retrieveUploadResponse200) & {
   headers: Headers;
 };
@@ -7663,20 +7687,20 @@ export const getRetrieveUploadUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/`
 }
 
 export const retrieveUpload = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveUploadResponse> => {
-  
+
   return identityFetch<retrieveUploadResponse>(getRetrieveUploadUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -7691,7 +7715,7 @@ export const getRetrieveUploadQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveUploadQueryOptions = <TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -7700,13 +7724,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveUploadQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveUpload>>> = ({ signal }) => retrieveUpload(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -7749,7 +7773,7 @@ export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUplo
 export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveUploadQueryOptions(orgSlug,id,options)
@@ -7807,7 +7831,7 @@ export type completeUploadResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type completeUploadResponseSuccess = (completeUploadResponse200) & {
   headers: Headers;
 };
@@ -7821,20 +7845,20 @@ export const getCompleteUploadUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/complete/`
 }
 
 export const completeUpload = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<completeUploadResponse> => {
-  
+
   return identityFetch<completeUploadResponse>(getCompleteUploadUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -7852,7 +7876,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeUpload>>, {orgSlug: string;id: string}> = (props) => {
@@ -7861,13 +7885,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  completeUpload(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeUpload>>>
-    
+
     export type CompleteUploadMutationError = ErrorEnvelope
 
     /**
@@ -7886,7 +7910,7 @@ export const useCompleteUpload = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Returns a fresh, short-lived download URL rather than embedding
 one in every list/retrieve response — a presigned GET URL is a
@@ -7935,7 +7959,7 @@ export type getFileDownloadUrlResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type getFileDownloadUrlResponseSuccess = (getFileDownloadUrlResponse200) & {
   headers: Headers;
 };
@@ -7949,20 +7973,20 @@ export const getGetFileDownloadUrlUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/download/`
 }
 
 export const getFileDownloadUrl = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<getFileDownloadUrlResponse> => {
-  
+
   return identityFetch<getFileDownloadUrlResponse>(getGetFileDownloadUrlUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -7977,7 +8001,7 @@ export const getGetFileDownloadUrlQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getGetFileDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -7986,13 +8010,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetFileDownloadUrlQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof getFileDownloadUrl>>> = ({ signal }) => getFileDownloadUrl(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -8035,7 +8059,7 @@ export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileD
 export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getGetFileDownloadUrlQueryOptions(orgSlug,id,options)
@@ -8093,7 +8117,7 @@ export type localObjectDownloadResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type localObjectDownloadResponseSuccess = (localObjectDownloadResponse200) & {
   headers: Headers;
 };
@@ -8107,20 +8131,20 @@ export const getLocalObjectDownloadUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/local-object/`
 }
 
 export const localObjectDownload = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<localObjectDownloadResponse> => {
-  
+
   return identityFetch<localObjectDownloadResponse>(getLocalObjectDownloadUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -8135,7 +8159,7 @@ export const getLocalObjectDownloadQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getLocalObjectDownloadQueryOptions = <TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -8144,13 +8168,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getLocalObjectDownloadQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof localObjectDownload>>> = ({ signal }) => localObjectDownload(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -8193,7 +8217,7 @@ export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localOb
 export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getLocalObjectDownloadQueryOptions(orgSlug,id,options)
@@ -8251,7 +8275,7 @@ export type localObjectUploadResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type localObjectUploadResponseSuccess = (localObjectUploadResponse204) & {
   headers: Headers;
 };
@@ -8265,20 +8289,20 @@ export const getLocalObjectUploadUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/files/${id}/local-object/`
 }
 
 export const localObjectUpload = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<localObjectUploadResponse> => {
-  
+
   return identityFetch<localObjectUploadResponse>(getLocalObjectUploadUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'PUT'
-    
-    
+
+
   }
 );}
 
@@ -8296,7 +8320,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof localObjectUpload>>, {orgSlug: string;id: string}> = (props) => {
@@ -8305,13 +8329,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  localObjectUpload(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type LocalObjectUploadMutationResult = NonNullable<Awaited<ReturnType<typeof localObjectUpload>>>
-    
+
     export type LocalObjectUploadMutationError = ErrorEnvelope
 
     /**
@@ -8330,7 +8354,7 @@ export const useLocalObjectUpload = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List Invitations
  */
@@ -8373,7 +8397,7 @@ export type listInvitationsResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listInvitationsResponseSuccess = (listInvitationsResponse200) & {
   headers: Headers;
 };
@@ -8388,7 +8412,7 @@ export const getListInvitationsUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -8401,13 +8425,13 @@ export const getListInvitationsUrl = (orgSlug: string,
 
 export const listInvitations = async (orgSlug: string,
     params?: ListInvitationsParams, options?: RequestInit): Promise<listInvitationsResponse> => {
-  
+
   return identityFetch<listInvitationsResponse>(getListInvitationsUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -8422,7 +8446,7 @@ export const getListInvitationsQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -8431,13 +8455,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListInvitationsQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listInvitations>>> = ({ signal }) => listInvitations(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -8480,7 +8504,7 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
 export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListInvitationsQueryOptions(orgSlug,params,options)
@@ -8543,7 +8567,7 @@ export type createInvitationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createInvitationResponseSuccess = (createInvitationResponse200 | createInvitationResponse201) & {
   headers: Headers;
 };
@@ -8556,16 +8580,16 @@ export type createInvitationResponse = (createInvitationResponseSuccess | create
 export const getCreateInvitationUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/invitations/`
 }
 
 export const createInvitation = async (orgSlug: string,
     invitationCreateIn: InvitationCreateIn, options?: RequestInit): Promise<createInvitationResponse> => {
-  
+
   return identityFetch<createInvitationResponse>(getCreateInvitationUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -8588,7 +8612,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createInvitation>>, {orgSlug: string;data: InvitationCreateIn}> = (props) => {
@@ -8597,7 +8621,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createInvitation(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -8622,7 +8646,7 @@ export const useCreateInvitation = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Revoke Invitation
  */
@@ -8665,7 +8689,7 @@ export type deleteInvitationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type deleteInvitationResponseSuccess = (deleteInvitationResponse204) & {
   headers: Headers;
 };
@@ -8679,20 +8703,20 @@ export const getDeleteInvitationUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/invitations/${id}/`
 }
 
 export const deleteInvitation = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<deleteInvitationResponse> => {
-  
+
   return identityFetch<deleteInvitationResponse>(getDeleteInvitationUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -8710,7 +8734,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteInvitation>>, {orgSlug: string;id: string}> = (props) => {
@@ -8719,13 +8743,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteInvitation(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteInvitation>>>
-    
+
     export type DeleteInvitationMutationError = ErrorEnvelope
 
     /**
@@ -8744,7 +8768,7 @@ export const useDeleteInvitation = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Retrieve Invitation
  */
@@ -8787,7 +8811,7 @@ export type retrieveInvitationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveInvitationResponseSuccess = (retrieveInvitationResponse200) & {
   headers: Headers;
 };
@@ -8801,20 +8825,20 @@ export const getRetrieveInvitationUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/invitations/${id}/`
 }
 
 export const retrieveInvitation = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveInvitationResponse> => {
-  
+
   return identityFetch<retrieveInvitationResponse>(getRetrieveInvitationUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -8829,7 +8853,7 @@ export const getRetrieveInvitationQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveInvitationQueryOptions = <TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -8838,13 +8862,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveInvitationQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveInvitation>>> = ({ signal }) => retrieveInvitation(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -8887,7 +8911,7 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
 export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveInvitationQueryOptions(orgSlug,id,options)
@@ -8945,7 +8969,7 @@ export type listJobsResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listJobsResponseSuccess = (listJobsResponse200) & {
   headers: Headers;
 };
@@ -8960,7 +8984,7 @@ export const getListJobsUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -8973,13 +8997,13 @@ export const getListJobsUrl = (orgSlug: string,
 
 export const listJobs = async (orgSlug: string,
     params?: ListJobsParams, options?: RequestInit): Promise<listJobsResponse> => {
-  
+
   return identityFetch<listJobsResponse>(getListJobsUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -8994,7 +9018,7 @@ export const getListJobsQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListJobsQueryOptions = <TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -9003,13 +9027,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListJobsQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listJobs>>> = ({ signal }) => listJobs(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -9052,7 +9076,7 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
 export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListJobsQueryOptions(orgSlug,params,options)
@@ -9115,7 +9139,7 @@ export type createJobResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createJobResponseSuccess = (createJobResponse200 | createJobResponse202) & {
   headers: Headers;
 };
@@ -9128,16 +9152,16 @@ export type createJobResponse = (createJobResponseSuccess | createJobResponseErr
 export const getCreateJobUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/jobs/`
 }
 
 export const createJob = async (orgSlug: string,
     jobCreateIn: JobCreateIn, options?: RequestInit): Promise<createJobResponse> => {
-  
+
   return identityFetch<createJobResponse>(getCreateJobUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -9160,7 +9184,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJob>>, {orgSlug: string;data: JobCreateIn}> = (props) => {
@@ -9169,7 +9193,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createJob(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -9194,7 +9218,7 @@ export const useCreateJob = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
  * @summary Live job/step events for the organisation (SSE)
@@ -9213,7 +9237,7 @@ export type streamJobsResponse404 = {
   data: void
   status: 404
 }
-    
+
 export type streamJobsResponseSuccess = (streamJobsResponse200) & {
   headers: Headers;
 };
@@ -9226,19 +9250,19 @@ export type streamJobsResponse = (streamJobsResponseSuccess | streamJobsResponse
 export const getStreamJobsUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/jobs/stream/`
 }
 
 export const streamJobs = async (orgSlug: string, options?: RequestInit): Promise<streamJobsResponse> => {
-  
+
   return identityFetch<streamJobsResponse>(getStreamJobsUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -9252,7 +9276,7 @@ export const getStreamJobsQueryKey = (orgSlug?: string,) => {
     ] as const;
     }
 
-    
+
 export const getStreamJobsQueryOptions = <TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -9260,13 +9284,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getStreamJobsQueryKey(orgSlug);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof streamJobs>>> = ({ signal }) => streamJobs(orgSlug, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -9305,7 +9329,7 @@ export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TE
 
 export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getStreamJobsQueryOptions(orgSlug,options)
@@ -9363,7 +9387,7 @@ export type retrieveJobResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveJobResponseSuccess = (retrieveJobResponse200) & {
   headers: Headers;
 };
@@ -9377,20 +9401,20 @@ export const getRetrieveJobUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/jobs/${id}/`
 }
 
 export const retrieveJob = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveJobResponse> => {
-  
+
   return identityFetch<retrieveJobResponse>(getRetrieveJobUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -9405,7 +9429,7 @@ export const getRetrieveJobQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveJobQueryOptions = <TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -9414,13 +9438,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveJobQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveJob>>> = ({ signal }) => retrieveJob(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -9463,7 +9487,7 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
 export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveJobQueryOptions(orgSlug,id,options)
@@ -9521,7 +9545,7 @@ export type cancelJobResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type cancelJobResponseSuccess = (cancelJobResponse200) & {
   headers: Headers;
 };
@@ -9535,20 +9559,20 @@ export const getCancelJobUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/jobs/${id}/cancel/`
 }
 
 export const cancelJob = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<cancelJobResponse> => {
-  
+
   return identityFetch<cancelJobResponse>(getCancelJobUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -9566,7 +9590,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelJob>>, {orgSlug: string;id: string}> = (props) => {
@@ -9575,13 +9599,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  cancelJob(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof cancelJob>>>
-    
+
     export type CancelJobMutationError = ErrorEnvelope
 
     /**
@@ -9600,7 +9624,7 @@ export const useCancelJob = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List Members
  */
@@ -9643,7 +9667,7 @@ export type listMembersResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listMembersResponseSuccess = (listMembersResponse200) & {
   headers: Headers;
 };
@@ -9658,7 +9682,7 @@ export const getListMembersUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -9671,13 +9695,13 @@ export const getListMembersUrl = (orgSlug: string,
 
 export const listMembers = async (orgSlug: string,
     params?: ListMembersParams, options?: RequestInit): Promise<listMembersResponse> => {
-  
+
   return identityFetch<listMembersResponse>(getListMembersUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -9692,7 +9716,7 @@ export const getListMembersQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListMembersQueryOptions = <TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -9701,13 +9725,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListMembersQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listMembers>>> = ({ signal }) => listMembers(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -9750,7 +9774,7 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
 export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListMembersQueryOptions(orgSlug,params,options)
@@ -9808,7 +9832,7 @@ export type deleteMemberResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type deleteMemberResponseSuccess = (deleteMemberResponse204) & {
   headers: Headers;
 };
@@ -9822,20 +9846,20 @@ export const getDeleteMemberUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
 export const deleteMember = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<deleteMemberResponse> => {
-  
+
   return identityFetch<deleteMemberResponse>(getDeleteMemberUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -9853,7 +9877,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMember>>, {orgSlug: string;id: string}> = (props) => {
@@ -9862,13 +9886,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteMember(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteMemberMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMember>>>
-    
+
     export type DeleteMemberMutationError = ErrorEnvelope
 
     /**
@@ -9887,7 +9911,7 @@ export const useDeleteMember = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Retrieve Member
  */
@@ -9930,7 +9954,7 @@ export type retrieveMemberResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveMemberResponseSuccess = (retrieveMemberResponse200) & {
   headers: Headers;
 };
@@ -9944,20 +9968,20 @@ export const getRetrieveMemberUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
 
 export const retrieveMember = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveMemberResponse> => {
-  
+
   return identityFetch<retrieveMemberResponse>(getRetrieveMemberUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -9972,7 +9996,7 @@ export const getRetrieveMemberQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveMemberQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -9981,13 +10005,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveMemberQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveMember>>> = ({ signal }) => retrieveMember(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -10030,7 +10054,7 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
 export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveMemberQueryOptions(orgSlug,id,options)
@@ -10088,7 +10112,7 @@ export type updateMemberRoleResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type updateMemberRoleResponseSuccess = (updateMemberRoleResponse200) & {
   headers: Headers;
 };
@@ -10102,7 +10126,7 @@ export const getUpdateMemberRoleUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/members/${id}/`
 }
@@ -10110,9 +10134,9 @@ export const getUpdateMemberRoleUrl = (orgSlug: string,
 export const updateMemberRole = async (orgSlug: string,
     id: string,
     membershipRoleUpdateIn: MembershipRoleUpdateIn, options?: RequestInit): Promise<updateMemberRoleResponse> => {
-  
+
   return identityFetch<updateMemberRoleResponse>(getUpdateMemberRoleUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -10135,7 +10159,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMemberRole>>, {orgSlug: string;id: string;data: MembershipRoleUpdateIn}> = (props) => {
@@ -10144,7 +10168,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  updateMemberRole(orgSlug,id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -10169,7 +10193,7 @@ export const useUpdateMemberRole = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List Roles
  */
@@ -10212,7 +10236,7 @@ export type listRolesResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listRolesResponseSuccess = (listRolesResponse200) & {
   headers: Headers;
 };
@@ -10227,7 +10251,7 @@ export const getListRolesUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -10240,13 +10264,13 @@ export const getListRolesUrl = (orgSlug: string,
 
 export const listRoles = async (orgSlug: string,
     params?: ListRolesParams, options?: RequestInit): Promise<listRolesResponse> => {
-  
+
   return identityFetch<listRolesResponse>(getListRolesUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -10261,7 +10285,7 @@ export const getListRolesQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListRolesQueryOptions = <TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -10270,13 +10294,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListRolesQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoles>>> = ({ signal }) => listRoles(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -10319,7 +10343,7 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
 export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListRolesQueryOptions(orgSlug,params,options)
@@ -10377,7 +10401,7 @@ export type retrieveRoleResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveRoleResponseSuccess = (retrieveRoleResponse200) & {
   headers: Headers;
 };
@@ -10391,20 +10415,20 @@ export const getRetrieveRoleUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/roles/${id}/`
 }
 
 export const retrieveRole = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveRoleResponse> => {
-  
+
   return identityFetch<retrieveRoleResponse>(getRetrieveRoleUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -10419,7 +10443,7 @@ export const getRetrieveRoleQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveRoleQueryOptions = <TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -10428,13 +10452,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveRoleQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveRole>>> = ({ signal }) => retrieveRole(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -10477,7 +10501,7 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
 export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveRoleQueryOptions(orgSlug,id,options)
@@ -10535,7 +10559,7 @@ export type transferOrganizationResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type transferOrganizationResponseSuccess = (transferOrganizationResponse200) & {
   headers: Headers;
 };
@@ -10548,16 +10572,16 @@ export type transferOrganizationResponse = (transferOrganizationResponseSuccess 
 export const getTransferOrganizationUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/transfer/`
 }
 
 export const transferOrganization = async (orgSlug: string,
     transferIn: TransferIn, options?: RequestInit): Promise<transferOrganizationResponse> => {
-  
+
   return identityFetch<transferOrganizationResponse>(getTransferOrganizationUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -10580,7 +10604,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof transferOrganization>>, {orgSlug: string;data: TransferIn}> = (props) => {
@@ -10589,7 +10613,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  transferOrganization(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -10614,7 +10638,7 @@ export const useTransferOrganization = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary List Widgets
  */
@@ -10657,7 +10681,7 @@ export type listWidgetsResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listWidgetsResponseSuccess = (listWidgetsResponse200) & {
   headers: Headers;
 };
@@ -10672,7 +10696,7 @@ export const getListWidgetsUrl = (orgSlug: string,
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -10685,13 +10709,13 @@ export const getListWidgetsUrl = (orgSlug: string,
 
 export const listWidgets = async (orgSlug: string,
     params?: ListWidgetsParams, options?: RequestInit): Promise<listWidgetsResponse> => {
-  
+
   return identityFetch<listWidgetsResponse>(getListWidgetsUrl(orgSlug,params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -10706,7 +10730,7 @@ export const getListWidgetsQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getListWidgetsQueryOptions = <TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -10715,13 +10739,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListWidgetsQueryKey(orgSlug,params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listWidgets>>> = ({ signal }) => listWidgets(orgSlug,params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -10764,7 +10788,7 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
 export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListWidgetsQueryOptions(orgSlug,params,options)
@@ -10822,7 +10846,7 @@ export type createWidgetResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type createWidgetResponseSuccess = (createWidgetResponse201) & {
   headers: Headers;
 };
@@ -10835,16 +10859,16 @@ export type createWidgetResponse = (createWidgetResponseSuccess | createWidgetRe
 export const getCreateWidgetUrl = (orgSlug: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/widgets/`
 }
 
 export const createWidget = async (orgSlug: string,
     widgetIn: WidgetIn, options?: RequestInit): Promise<createWidgetResponse> => {
-  
+
   return identityFetch<createWidgetResponse>(getCreateWidgetUrl(orgSlug),
-  {      
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -10867,7 +10891,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createWidget>>, {orgSlug: string;data: WidgetIn}> = (props) => {
@@ -10876,7 +10900,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createWidget(orgSlug,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -10901,7 +10925,7 @@ export const useCreateWidget = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Destroy Widget
  */
@@ -10944,7 +10968,7 @@ export type deleteWidgetResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type deleteWidgetResponseSuccess = (deleteWidgetResponse204) & {
   headers: Headers;
 };
@@ -10958,20 +10982,20 @@ export const getDeleteWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
 export const deleteWidget = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<deleteWidgetResponse> => {
-  
+
   return identityFetch<deleteWidgetResponse>(getDeleteWidgetUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'DELETE'
-    
-    
+
+
   }
 );}
 
@@ -10989,7 +11013,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteWidget>>, {orgSlug: string;id: string}> = (props) => {
@@ -10998,13 +11022,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteWidget(orgSlug,id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteWidgetMutationResult = NonNullable<Awaited<ReturnType<typeof deleteWidget>>>
-    
+
     export type DeleteWidgetMutationError = ErrorEnvelope
 
     /**
@@ -11023,7 +11047,7 @@ export const useDeleteWidget = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * @summary Retrieve Widget
  */
@@ -11066,7 +11090,7 @@ export type retrieveWidgetResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrieveWidgetResponseSuccess = (retrieveWidgetResponse200) & {
   headers: Headers;
 };
@@ -11080,20 +11104,20 @@ export const getRetrieveWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
 
 export const retrieveWidget = async (orgSlug: string,
     id: string, options?: RequestInit): Promise<retrieveWidgetResponse> => {
-  
+
   return identityFetch<retrieveWidgetResponse>(getRetrieveWidgetUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -11108,7 +11132,7 @@ export const getRetrieveWidgetQueryKey = (orgSlug?: string,
     ] as const;
     }
 
-    
+
 export const getRetrieveWidgetQueryOptions = <TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
@@ -11117,13 +11141,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrieveWidgetQueryKey(orgSlug,id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveWidget>>> = ({ signal }) => retrieveWidget(orgSlug,id, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(orgSlug && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -11166,7 +11190,7 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
 export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrieveWidgetQueryOptions(orgSlug,id,options)
@@ -11224,7 +11248,7 @@ export type updateWidgetResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type updateWidgetResponseSuccess = (updateWidgetResponse200) & {
   headers: Headers;
 };
@@ -11238,7 +11262,7 @@ export const getUpdateWidgetUrl = (orgSlug: string,
     id: string,) => {
 
 
-  
+
 
   return `/api/v1/orgs/${orgSlug}/widgets/${id}/`
 }
@@ -11246,9 +11270,9 @@ export const getUpdateWidgetUrl = (orgSlug: string,
 export const updateWidget = async (orgSlug: string,
     id: string,
     widgetPatchIn: WidgetPatchIn, options?: RequestInit): Promise<updateWidgetResponse> => {
-  
+
   return identityFetch<updateWidgetResponse>(getUpdateWidgetUrl(orgSlug,id),
-  {      
+  {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -11271,7 +11295,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWidget>>, {orgSlug: string;id: string;data: WidgetPatchIn}> = (props) => {
@@ -11280,7 +11304,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  updateWidget(orgSlug,id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -11305,10 +11329,13 @@ export const useUpdateWidget = <TError = ErrorEnvelope,
 
       return useMutation(mutationOptions, queryClient);
     }
-    
+
 /**
  * A Reference Data Holder (api-patterns finding 13) â€” the permission
-registry only changes on deploy, not per-request.
+registry only changes on deploy, not per-request. Also publishes the
+enumerable 403 denial reason codes (api-patterns finding 18), so a
+client can branch on ``error.code`` without having read the Python
+that raises it.
  * @summary Permissions Registry
  */
 export type retrievePermissionCodesResponse200 = {
@@ -11350,7 +11377,7 @@ export type retrievePermissionCodesResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type retrievePermissionCodesResponseSuccess = (retrievePermissionCodesResponse200) & {
   headers: Headers;
 };
@@ -11363,19 +11390,19 @@ export type retrievePermissionCodesResponse = (retrievePermissionCodesResponseSu
 export const getRetrievePermissionCodesUrl = () => {
 
 
-  
+
 
   return `/api/v1/permissions/`
 }
 
 export const retrievePermissionCodes = async ( options?: RequestInit): Promise<retrievePermissionCodesResponse> => {
-  
+
   return identityFetch<retrievePermissionCodesResponse>(getRetrievePermissionCodesUrl(),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -11389,7 +11416,7 @@ export const getRetrievePermissionCodesQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getRetrievePermissionCodesQueryOptions = <TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -11397,13 +11424,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getRetrievePermissionCodesQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof retrievePermissionCodes>>> = ({ signal }) => retrievePermissionCodes({ signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -11442,7 +11469,7 @@ export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof ret
 
 export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getRetrievePermissionCodesQueryOptions(options)
@@ -11500,7 +11527,7 @@ export type listPlansResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type listPlansResponseSuccess = (listPlansResponse200) & {
   headers: Headers;
 };
@@ -11514,7 +11541,7 @@ export const getListPlansUrl = (params?: ListPlansParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
@@ -11526,13 +11553,13 @@ export const getListPlansUrl = (params?: ListPlansParams,) => {
 }
 
 export const listPlans = async (params?: ListPlansParams, options?: RequestInit): Promise<listPlansResponse> => {
-  
+
   return identityFetch<listPlansResponse>(getListPlansUrl(params),
-  {      
+  {
     ...options,
     method: 'GET'
-    
-    
+
+
   }
 );}
 
@@ -11546,7 +11573,7 @@ export const getListPlansQueryKey = (params?: ListPlansParams,) => {
     ] as const;
     }
 
-    
+
 export const getListPlansQueryOptions = <TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
 ) => {
 
@@ -11554,13 +11581,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListPlansQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlans>>> = ({ signal }) => listPlans(params, { signal, ...requestOptions });
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
 }
@@ -11599,7 +11626,7 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
 
 export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
 
   const queryOptions = getListPlansQueryOptions(params,options)
@@ -11660,7 +11687,7 @@ export type receiveStripeWebhookResponse429 = {
   data: ErrorEnvelope
   status: 429
 }
-    
+
 export type receiveStripeWebhookResponseSuccess = (receiveStripeWebhookResponse200) & {
   headers: Headers;
 };
@@ -11673,19 +11700,19 @@ export type receiveStripeWebhookResponse = (receiveStripeWebhookResponseSuccess 
 export const getReceiveStripeWebhookUrl = () => {
 
 
-  
+
 
   return `/api/v1/stripe/webhook/`
 }
 
 export const receiveStripeWebhook = async ( options?: RequestInit): Promise<receiveStripeWebhookResponse> => {
-  
+
   return identityFetch<receiveStripeWebhookResponse>(getReceiveStripeWebhookUrl(),
-  {      
+  {
     ...options,
     method: 'POST'
-    
-    
+
+
   }
 );}
 
@@ -11703,22 +11730,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveStripeWebhook>>, void> = () => {
-          
+
 
           return  receiveStripeWebhook(requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type ReceiveStripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveStripeWebhook>>>
-    
+
     export type ReceiveStripeWebhookMutationError = ErrorEnvelope
 
     /**

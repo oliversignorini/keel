@@ -1,7 +1,7 @@
-# ADR 0003 — `/api/v1` is an Experimental Preview, not a versioning promise
+﻿# ADR 0003 â€” `/api/v1` is an Experimental Preview, not a versioning promise
 
-**Status:** Accepted — 2026-08-28
-**Decides:** api-patterns finding 20 — `/api/v1/` signals a version but
+**Status:** Accepted â€” 2026-08-28
+**Decides:** api-patterns finding 20 â€” `/api/v1/` signals a version but
 publishes no life-cycle guarantee.
 **Depends on:** ADR 0001 (Django Ninja), ADR 0002 (auth BFF shape).
 
@@ -10,29 +10,29 @@ publishes no life-cycle guarantee.
 ## Context
 
 `keel/core/ninja_api.py` sets `info.version: "1.0.0"` and every route lives
-under a `v1` path prefix (`config/urls.py`) — a Version Identifier, and a
+under a `v1` path prefix (`config/urls.py`) â€” a Version Identifier, and a
 correct one. But nothing states what `v1` _commits to_. There is no
 deprecation policy, no `Deprecation` / `Sunset` header, no stated
 "Two in Production" support window, no SLA, and `docs/adr/` held only the
 Ninja-over-DRF decision before this one.
 
 _Patterns for API Design_ is explicit that this must be published
-_before_ first release, and that "no commitment" — **Experimental
-Preview** — is one of four legitimate, _recorded_ choices (the others
+_before_ first release, and that "no commitment" â€” **Experimental
+Preview** â€” is one of four legitimate, _recorded_ choices (the others
 being Aggressive Obsolescence, Prolonged Blossoming, and Renaming). Silence
 is not a fifth option: it just means every consumer independently guesses,
 and guesses the strongest reading by default.
 
-Keel is not a product with users — **it is a template**. Every project
+Keel is not a product with users â€” **it is a template**. Every project
 instantiated from it inherits whatever `v1` means here, on day one, before
 that project has decided anything about its own API's life cycle. Two
 readings were on the table:
 
-1. **Experimental Preview.** `v1` means "not yet stable" — breaking
+1. **Experimental Preview.** `v1` means "not yet stable" â€” breaking
    changes can ship without a version bump, consumers should expect churn,
    and the guarantee is explicitly _revisited_ once a real project
    forks this template and ships its first paying integration.
-2. **Aggressive Obsolescence.** `v1` is load-bearing from the start —
+2. **Aggressive Obsolescence.** `v1` is load-bearing from the start â€”
    breaking changes require a `v2` prefix, `v1` gets a stated deprecation
    window, and `Deprecation`/`Sunset` headers are wired in from this
    commit.
@@ -41,7 +41,7 @@ readings were on the table:
 
 **Experimental Preview**, for the template as it ships today.
 
-- `/api/v1/` is the correct prefix to keep — a Version Identifier should
+- `/api/v1/` is the correct prefix to keep â€” a Version Identifier should
   exist from the first release, and removing it later would be its own
   breaking change to every consumer. What Experimental Preview changes is
   the _promise_, not the _path_.
@@ -51,16 +51,16 @@ readings were on the table:
   infrastructure every project forked from this template has to either
   keep working or rip out.
 - `scripts/check_openapi_compat.py` (ADR 0002, ddia finding 25) still
-  enforces additive-only changes to the _merged_ spec run-to-run — that
+  enforces additive-only changes to the _merged_ spec run-to-run â€” that
   check is about catching accidental breakage during this template's own
   development, not a life-cycle promise to external consumers. It is
   compatible with, and stays useful under, either reading in this ADR:
   tightening it into a real backward-compatibility gate is exactly the
   first thing a project should do the moment it flips to Aggressive
   Obsolescence.
-- `keel.core.ninja_api.api`'s `description` now states the rate-limiting
+- `keel.core.api.api`'s `description` now states the rate-limiting
   policy (api-patterns finding 7) and points at this ADR, so a reader of
-  the OpenAPI document — not just this file — can find the life-cycle
+  the OpenAPI document â€” not just this file â€” can find the life-cycle
   commitment.
 
 ### The "accepting that" clauses
@@ -75,19 +75,19 @@ consequences the pattern names:
   protecting).
 - **The generated TypeScript client
   (`packages/api-client/src/generated`) is the only compatibility net**
-  most consumers will actually feel — a breaking schema change fails the
+  most consumers will actually feel â€” a breaking schema change fails the
   client-regeneration CI job loudly, at build time, before it fails a
   real caller at runtime. This is a weaker guarantee than a published
   deprecation window, and is accepted as such.
 - **`scripts/check_openapi_compat.py`'s additive-only check is a
-  development-time guardrail, not this ADR's guarantee** — it can catch
+  development-time guardrail, not this ADR's guarantee** â€” it can catch
   an accidental break; it cannot substitute for a real project's own
   decision about what `v1` means once it has users.
 
 ## Why not the other two
 
 **Prolonged Blossoming** (support every version indefinitely) is wrong
-for a template with a single, small, actively-changing API surface —
+for a template with a single, small, actively-changing API surface â€”
 there is nothing yet worth the operational cost of running multiple
 versions in parallel.
 
@@ -100,12 +100,12 @@ nothing in this codebase needs yet.
 
 ## What this settles from the review findings
 
-- **api-patterns finding 20**: recorded here — `v1` is Experimental
+- **api-patterns finding 20**: recorded here â€” `v1` is Experimental
   Preview, not silence.
 - **api-patterns finding 7** (rate limits invisible until hit): the
   `X-RateLimit-Limit` / `-Remaining` / `-Reset` headers `keel.core.
 ninja_throttle` now emits, and the policy note in `ninja_api.api`'s
-  `description`, are the "stated policy" half of that finding — filed
+  `description`, are the "stated policy" half of that finding â€” filed
   here because both are, in the end, part of what a consumer needs
   published about this API's contract.
 
@@ -117,5 +117,5 @@ ninja_throttle` now emits, and the policy note in `ninja_api.api`'s
   fits) and build the `Deprecation`/`Sunset` header machinery this phase
   deliberately did not.
 - **No code changed to implement this ADR** beyond the `ninja_api.api`
-  description note above — the decision itself, and its "accepting that"
+  description note above â€” the decision itself, and its "accepting that"
   clauses, are the deliverable.

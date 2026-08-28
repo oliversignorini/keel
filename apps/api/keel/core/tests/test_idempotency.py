@@ -53,7 +53,7 @@ def test_first_claim_proceeds_and_sets_the_cache_key() -> None:
 
 def test_a_concurrent_claim_raises_conflict_not_a_hand_built_response() -> None:
     """api-patterns finding 11: this must go through
-    keel.core.ninja_exceptions like every other domain error, not a
+    keel.core.error_handlers like every other domain error, not a
     second, untested copy of the envelope."""
     key = _key()
     request = _request(headers={"Idempotency-Key": key})

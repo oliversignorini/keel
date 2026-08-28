@@ -2373,7 +2373,31 @@
             "title": "Code",
             "type": "string"
           },
+          "denial": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Denial"
+          },
           "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Details"
           },
           "message": {
@@ -2389,7 +2413,7 @@
         "type": "object"
       },
       "ErrorEnvelope": {
-        "description": "PRD \u00a77's error shape as a published Ninja schema \u2014 the response\nevery ``keel.core.ninja_authz`` router constructor attaches to the\nproject's default error-response set ({400, 401, 403, 404, 409, 422,\n429}) on every operation, so the OpenAPI document (and the generated\nTypeScript client) describes the envelope this module actually\nproduces instead of leaving every error typed ``unknown``.",
+        "description": "PRD \u00a77's error shape as a published Ninja schema \u2014 the response\nevery ``keel.core.authz`` router constructor attaches to the\nproject's default error-response set ({400, 401, 403, 404, 409, 422,\n429}) on every operation, so the OpenAPI document (and the generated\nTypeScript client) describes the envelope this module actually\nproduces instead of leaving every error typed ``unknown``.",
         "properties": {
           "error": {
             "$ref": "#/components/schemas/ErrorBodyOut"
@@ -3197,6 +3221,7 @@
         ]
       },
       "OrganizationCreateIn": {
+        "description": "Shape only (docs/boundary-guardrails.md \"Validation boundary\"):\nslug uniqueness used to be enforced here via a ``field_validator`` that\nqueried ``Organization`` directly \u2014 an ORM read outside\n``selectors.py`` (invariant 1) and a check-then-act race outside the\nservice's transaction (the DB could accept a second identical slug\nbetween this validator running and ``create_organization``'s insert).\nThe view now lets the ``slug`` column's own ``unique=True`` constraint\nbe the single source of truth and translates the resulting\n``IntegrityError`` into a 409.",
         "properties": {
           "name": {
             "maxLength": 255,
@@ -3655,10 +3680,18 @@
             },
             "title": "Codes",
             "type": "array"
+          },
+          "denial_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Denial Reasons",
+            "type": "array"
           }
         },
         "required": [
-          "codes"
+          "codes",
+          "denial_reasons"
         ],
         "title": "PermissionCodesOut",
         "type": "object"
@@ -4763,7 +4796,7 @@
     }
   },
   "info": {
-    "description": "Keel \u2014 Django + Next.js SaaS template.",
+    "description": "Keel \u2014 Django + Next.js SaaS template.\n\nRate limiting: every request is throttled per-user (authenticated) or per-IP (anonymous); a throttled-scope response \u2014 200 or 429 \u2014 carries X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset so a client can pace itself before being rejected. A 429 additionally carries Retry-After. See docs/adr/0003-api-lifecycle-guarantee.md for this API's versioning and stability commitment.",
     "title": "Keel API",
     "version": "1.0.0"
   },
@@ -7382,7 +7415,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/credits/": {
       "get": {
-        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 see the DRF-era docstring this\nreplaces for the full reasoning; unchanged here.",
+        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 a disabled feature has no balance to\nreport, and a zero balance is a real, distinguishable state once the\nfeature is on.",
         "operationId": "retrieveCreditBalance",
         "parameters": [
           {
@@ -11081,7 +11114,7 @@
     },
     "/api/v1/permissions/": {
       "get": {
-        "description": "A Reference Data Holder (api-patterns finding 13) \u00e2\u20ac\u201d the permission\nregistry only changes on deploy, not per-request.",
+        "description": "A Reference Data Holder (api-patterns finding 13) \u00e2\u20ac\u201d the permission\nregistry only changes on deploy, not per-request. Also publishes the\nenumerable 403 denial reason codes (api-patterns finding 18), so a\nclient can branch on ``error.code`` without having read the Python\nthat raises it.",
         "operationId": "retrievePermissionCodes",
         "parameters": [],
         "responses": {

@@ -4,18 +4,18 @@ parse, call service, serialize, return. ``WidgetResource`` declares
 and ``detail_url_template`` — the tenant-isolation meta-test then walks
 this resource automatically (PRD §4 invariant 7).
 
-Ninja has no per-action ``required_permissions`` dispatch the way DRF's
-``initial()`` hook gave ``WidgetViewSet`` — each route calls
-``resolve_and_authorize`` with the permission code its own action needs.
+Each route calls ``resolve_and_authorize`` with the permission code its
+own action needs — there is no per-action permission dispatch above the
+route bodies.
 """
 
 from typing import Any
 
-from django.http import Http404
 from ninja import Status
 
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
+from keel.core.pagination import Page, paginate
+from keel.core.selectors import get_scoped_or_404
 from keel.organizations.permissions import Perm
 from keel.widgets import selectors, services
 from keel.widgets.models import Widget
@@ -34,13 +34,6 @@ class WidgetResource(OrgScopedResource):
 
 
 router = WidgetResource.router
-
-
-def _get_widget_or_404(organization: Any, id: str) -> Widget:
-    widget = selectors.list_widgets(organization).filter(pk=id).first()
-    if widget is None:
-        raise Http404
-    return widget
 
 
 @router.get("/{org_slug}/widgets/", response=Page[WidgetOut], operation_id="listWidgets")
@@ -68,7 +61,7 @@ def create_widget(request: Any, org_slug: str, payload: WidgetIn) -> Status[Widg
 @router.get("/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="retrieveWidget")
 def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_VIEW,))
-    return _get_widget_or_404(organization, id)
+    return get_scoped_or_404(selectors.list_widgets(organization), id)
 
 
 # PATCH only — every field is optional and only the fields present in the
@@ -81,7 +74,7 @@ def retrieve_widget(request: Any, org_slug: str, id: str) -> Widget:
 @router.patch("/{org_slug}/widgets/{id}/", response=WidgetOut, operation_id="updateWidget")
 def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) -> Widget:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
-    widget = _get_widget_or_404(organization, id)
+    widget = get_scoped_or_404(selectors.list_widgets(organization), id)
     fields = payload.dict(exclude_unset=True)
     return services.update_widget(
         widget=widget,
@@ -94,7 +87,7 @@ def update_widget(request: Any, org_slug: str, id: str, payload: WidgetPatchIn) 
 @router.delete("/{org_slug}/widgets/{id}/", response={204: None}, operation_id="deleteWidget")
 def destroy_widget(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (Perm.WIDGETS_MANAGE,))
-    widget = _get_widget_or_404(organization, id)
+    widget = get_scoped_or_404(selectors.list_widgets(organization), id)
     services.delete_widget(
         widget=widget, actor=request.auth, impersonator=getattr(request, "impersonator", None)
     )

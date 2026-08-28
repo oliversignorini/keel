@@ -20,9 +20,10 @@ from ninja import Status
 from keel.audit import selectors
 from keel.audit.models import AuditLog
 from keel.audit.schemas import AuditLogOut
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.impersonation import end_impersonation, get_impersonator_id
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import paginated
+from keel.core.pagination import paginated
+from keel.core.selectors import get_scoped_or_404
 from keel.organizations.permissions import Perm
 
 
@@ -66,10 +67,7 @@ def list_audit_logs(
 @router.get("/{org_slug}/audit/{id}/", response=AuditLogOut, operation_id="retrieveAuditLog")
 def retrieve_audit_log(request: Any, org_slug: str, id: str) -> AuditLog:
     organization = resolve_and_authorize(request, org_slug, AuditLogResource.required_permissions)
-    row = selectors.list_audit_logs_for_organization(organization).filter(pk=id).first()
-    if row is None:
-        raise Http404
-    return row
+    return get_scoped_or_404(selectors.list_audit_logs_for_organization(organization), id)
 
 
 @impersonation_router.post(
