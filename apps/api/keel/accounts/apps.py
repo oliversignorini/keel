@@ -14,3 +14,7 @@ class AccountsConfig(AppConfig):
             from keel.accounts import mfa_guard
 
             mfa_guard.connect()
+
+        from keel.accounts import password_reset_verification
+
+        password_reset_verification.connect()

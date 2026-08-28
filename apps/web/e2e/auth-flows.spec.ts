@@ -85,10 +85,14 @@ test("login with valid credentials establishes a session and logout ends it", as
   const detail = await (await request.get(`${MAILPIT_API}/message/${message.ID}`)).json();
   const key = extractKeyFromEmail(detail.Text ?? detail.HTML ?? "", "verify-email");
   await page.goto(`/verify-email/${encodeURIComponent(key)}`);
-  // Verifying doesn't itself establish a session (confirmed against the
-  // live server), so this lands back on /onboarding only if it did — it
-  // won't here, and the explicit login below is the actual subject of
-  // this test either way.
+  // ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION (apps/api config/settings/base.py)
+  // means clicking the link above already established a session — this
+  // test's actual subject is the *explicit* credentials-based login
+  // below, so drop that session first rather than hitting /login while
+  // already authenticated (allauth's headless login endpoint 409s on an
+  // authenticated session instead of re-authenticating it).
+  await expect(page).toHaveURL(/\/onboarding/);
+  await page.context().clearCookies();
 
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);

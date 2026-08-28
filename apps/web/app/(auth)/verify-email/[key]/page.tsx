@@ -29,7 +29,13 @@ export default function VerifyEmailKeyPage() {
 
     if (startedKey.current !== params.key) {
       startedKey.current = params.key;
-      authEmailVerify({ key: params.key })
+      // The `[key]` dynamic segment carries allauth's activation key
+      // verbatim from the emailed link, which is percent-encoded (it
+      // contains ":") — Next.js does not decode dynamic segments, so
+      // params.key here is still e.g. "MTU%3A1wyu…". Decode before
+      // sending it on; the raw encoded string fails allauth's HMAC
+      // signature check and comes back "invalid_or_expired_key".
+      authEmailVerify({ key: decodeURIComponent(params.key) })
         .then(() => {
           if (cancelledRef.current) return;
           setStatus("success");

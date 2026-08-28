@@ -404,44 +404,8 @@ jobs:
         run: pnpm exec playwright test e2e/accessibility.spec.ts
 
       - name: Signup, login, logout, and password reset against the live API
-        id: auth_flows
         working-directory: apps/web
-        continue-on-error: true
         run: pnpm exec playwright test e2e/auth-flows.spec.ts
-        # Still non-blocking after Phase 11 (Auth BFF hardening) — but for
-        # a different reason than before. The BFF proxy itself (the
-        # thing this phase built) is verified working end to end against
-        # this exact stack: signup/login/config all reach Django through
-        # apps/web/app/api/v1/[...path] and .../api/internal/allauth/
-        # [...path], CSRF and cookie relay both check out, and the
-        # cross-host apex<->app redirect and the pending-session /login
-        # ping-pong (lib/auth/route-guard.ts) are both fixed. What still
-        # blocks all 3 tests is upstream of the BFF entirely: a fresh
-        # `EmailAddress` row comes back `verified=True` immediately after
-        # signup even though `ACCOUNT_EMAIL_VERIFICATION="mandatory"` —
-        # confirmed directly in a Django shell, no HTTP layer involved —
-        # so the emailed confirmation key's own `EmailConfirmationHMAC.
-        # from_key()` correctly refuses to re-verify an already-verified
-        # address and reports "invalid or expired". The existing backend
-        # test (`keel/accounts/tests/test_auth_flows.py::_signup_and_verify`)
-        # already tolerates exactly this ambiguity — it asserts the verify
-        # call's status is `in (200, 401)` rather than requiring 200 —
-        # which reads as this having been a known, unexplained flake
-        # before this phase, not something Phase 11 introduced. Allauth/
-        # email-verification internals are explicitly out of this phase's
-        # ownership (docs/plans/phase-11.md's Boundary table) — flagging
-        # for whoever owns that surface next, see the Phase 11 report.
-
-      - name: Annotate auth-flows failure
-        if: steps.auth_flows.outcome == 'failure'
-        run: |
-          echo "e2e/auth-flows.spec.ts failed (non-blocking — see the previous step's comment for the known upstream cause)." >> "$GITHUB_STEP_SUMMARY"
-          echo "::warning title=auth-flows.spec.ts failed::e2e/auth-flows.spec.ts failed — non-blocking, see the 'Signup, login, logout, and password reset against the live API' step's comment for the known cause."
-        # A step-level annotation, not a new job (docs/plans/phase-16.md
-        # 16.D) — continue-on-error keeps this job green even when the
-        # spec fails, which is exactly what made the finding invisible
-        # before; this puts it on the run summary and PR annotations tab
-        # without spending any more Actions minutes on it.
 
   contracts:
     runs-on: ubuntu-latest
