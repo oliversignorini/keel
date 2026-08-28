@@ -7,6 +7,26 @@ import { listAuditLogs } from "@/lib/org/api";
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import { ApiError, type AuditLogOut } from "@keel/api-client";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@keel/ui";
+import { Loader2 } from "lucide-react";
 
 /**
  * `/app/[org]/settings/audit` (PRD §5 Routes; PRD §7's audit endpoint;
@@ -65,75 +85,102 @@ export default function AuditSettingsPage() {
     <Can
       code={Perm.AUDIT_VIEW}
       fallback={
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="text-sm text-muted-foreground">
           You do not have permission to view this organisation&apos;s audit log.
         </p>
       }
     >
-      <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-            Audit log
-          </h2>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+      <Card>
+        <CardHeader>
+          <CardTitle>Audit log</CardTitle>
+          <CardDescription>
             Every action taken in this organisation, most recent first.
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-
-        {loading ? (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading…</p>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-neutral-500 dark:text-neutral-500">
-            No activity recorded yet.
-          </p>
-        ) : (
-          <>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-                  <th className="py-2 font-medium">Action</th>
-                  <th className="py-2 font-medium">Actor</th>
-                  <th className="py-2 font-medium">Target</th>
-                  <th className="py-2 font-medium">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className="border-b border-neutral-100 dark:border-neutral-900">
-                    <td className="py-2 text-neutral-900 dark:text-neutral-100">{row.action}</td>
-                    <td className="py-2 text-neutral-700 dark:text-neutral-300">
-                      {row.actor ? row.actor.name || row.actor.email : "System"}
-                      {row.impersonator ? (
-                        <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
-                          (impersonated by {row.impersonator.name || row.impersonator.email})
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="py-2 text-neutral-500 dark:text-neutral-500">
-                      {row.target_type ? `${row.target_type} ${row.target_id}` : "—"}
-                    </td>
-                    <td className="py-2 text-neutral-500 dark:text-neutral-500">
-                      {new Date(row.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {nextCursor ? (
-              <button
-                type="button"
-                onClick={() => void loadMore()}
-                disabled={loadingMore}
-                className="self-start rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-neutral-700"
-              >
-                {loadingMore ? "Loading…" : "Load more"}
-              </button>
-            ) : null}
-          </>
-        )}
-      </div>
+          {loading ? (
+            <div className="flex flex-col gap-3" role="status" aria-label="Loading audit log">
+              {[0, 1, 2, 3, 4].map((row) => (
+                <Skeleton key={row} className="h-6 w-full" />
+              ))}
+            </div>
+          ) : rows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Actor</TableHead>
+                    <TableHead>Target</TableHead>
+                    <TableHead>When</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <Badge variant={actionVariant(row.action)}>{row.action}</Badge>
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {row.actor ? row.actor.name || row.actor.email : "System"}
+                        {row.impersonator ? (
+                          <span className="ml-1 text-xs text-warning">
+                            (impersonated by {row.impersonator.name || row.impersonator.email})
+                          </span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {row.target_type ? `${row.target_type} ${row.target_id}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <time dateTime={row.created_at}>
+                              {new Date(row.created_at).toLocaleString()}
+                            </time>
+                          </TooltipTrigger>
+                          <TooltipContent>{new Date(row.created_at).toISOString()}</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {nextCursor ? (
+                <Button
+                  variant="outline"
+                  onClick={() => void loadMore()}
+                  disabled={loadingMore}
+                  className="self-start"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    "Load more"
+                  )}
+                </Button>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </Can>
   );
+}
+
+/** Audit actions are `resource.verb`; the verb is the only part that
+ * carries a severity worth colouring. */
+function actionVariant(action: string): "secondary" | "destructive" | "success" {
+  if (action.endsWith(".deleted") || action.endsWith(".removed") || action.endsWith(".revoked")) {
+    return "destructive";
+  }
+  if (action.endsWith(".created")) return "success";
+  return "secondary";
 }

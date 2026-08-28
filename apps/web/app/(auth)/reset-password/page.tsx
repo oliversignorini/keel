@@ -2,27 +2,34 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError, authPasswordRequest, identitySchemas } from "@keel/api-client";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  RHFFormField,
+} from "@keel/ui";
+import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-
-import { FormError } from "../_components/form-error";
-import { FormField } from "../_components/form-field";
-import { SubmitButton } from "../_components/submit-button";
 
 type RequestFormValues = z.infer<typeof identitySchemas.authPasswordRequestBody>;
 
 export default function ResetPasswordRequestPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<RequestFormValues>({
+  const form = useForm<RequestFormValues>({
     resolver: zodResolver(identitySchemas.authPasswordRequestBody),
+    defaultValues: { email: "" },
   });
+  const { isSubmitting } = form.formState;
 
   async function onSubmit(values: RequestFormValues) {
     setFormError(null);
@@ -38,7 +45,7 @@ export default function ResetPasswordRequestPage() {
 
   if (sent) {
     return (
-      <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
+      <p role="status" className="text-sm text-muted-foreground">
         If an account exists for that email, a reset link is on its way.
       </p>
     );
@@ -46,24 +53,35 @@ export default function ResetPasswordRequestPage() {
 
   return (
     <>
-      <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Reset your password
-      </h1>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        <FormError message={formError} />
-        <FormField
-          label="Email"
-          id="email"
-          type="email"
-          autoComplete="email"
-          error={errors.email?.message}
-          {...register("email")}
-        />
-        <SubmitButton disabled={isSubmitting}>
-          {isSubmitting ? "Sending…" : "Send reset link"}
-        </SubmitButton>
-      </form>
-      <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
+      <h1 className="mb-6 text-lg font-semibold text-foreground">Reset your password</h1>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertCircle />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <RHFFormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" autoComplete="email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : null}
+            {isSubmitting ? "Sending…" : "Send reset link"}
+          </Button>
+        </form>
+      </Form>
+      <p className="mt-4 text-sm text-muted-foreground">
         <Link href="/login" className="underline">
           Back to login
         </Link>

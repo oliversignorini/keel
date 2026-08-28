@@ -1,6 +1,8 @@
 "use client";
 
 import { PaymentRequiredError } from "@keel/api-client";
+import { Alert, AlertDescription, AlertTitle, Button } from "@keel/ui";
+import { Sparkles } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { listPlans } from "@/lib/billing/api";
@@ -141,22 +143,23 @@ function UpgradePrompt({ feature }: { feature: string }) {
 
   const requiredPlan = plans ? cheapestPlanWithFeature(plans, feature) : null;
 
+  // `role="note"` rather than <Alert>'s default `role="alert"`: this
+  // renders as part of the page's normal content, not as an interruption.
   return (
-    <div
-      role="note"
-      className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950"
-    >
-      <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+    <Alert variant="warning" role="note">
+      <Sparkles />
+      <AlertTitle>
         {requiredPlan ? `Available on the ${requiredPlan.name} plan.` : "Available on a paid plan."}
-      </p>
+      </AlertTitle>
       {currentOrg ? (
-        <a
-          href={`/${currentOrg.slug}/settings/billing`}
-          className="mt-2 inline-block text-sm font-medium text-amber-900 underline dark:text-amber-200"
-        >
-          {requiredPlan ? `Upgrade to ${requiredPlan.name}` : "View plans"}
-        </a>
+        <AlertDescription>
+          <Button asChild variant="outline" size="sm">
+            <a href={`/${currentOrg.slug}/settings/billing`}>
+              {requiredPlan ? `Upgrade to ${requiredPlan.name}` : "View plans"}
+            </a>
+          </Button>
+        </AlertDescription>
       ) : null}
-    </div>
+    </Alert>
   );
 }

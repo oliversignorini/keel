@@ -11,6 +11,31 @@ import {
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import type { MembershipOut } from "@keel/api-client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  buttonVariants,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@keel/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -54,68 +79,56 @@ export default function GeneralSettingsPage() {
     }
   }
 
-  async function onDelete() {
-    if (!window.confirm(`Delete ${currentOrg!.name}? This cannot be undone.`)) return;
-    await deleteOrganization(currentOrg!.slug);
-    router.push("/");
-  }
-
   return (
-    <div className="flex flex-col gap-10">
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Organisation name
-        </h2>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex max-w-sm flex-col gap-3">
-          {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
-          {saved ? <p className="text-sm text-green-700 dark:text-green-400">Saved.</p> : null}
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="name"
-              className="text-sm font-medium text-neutral-900 dark:text-neutral-100"
-            >
-              Name
-            </label>
-            <input
-              id="name"
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-              disabled={!currentOrg.permissions.includes(Perm.ORG_UPDATE)}
-              {...register("name", { required: "Name is required." })}
-            />
-            {errors.name ? (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
-            ) : null}
-          </div>
-          <Can code={Perm.ORG_UPDATE}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-            >
-              {isSubmitting ? "Saving…" : "Save"}
-            </button>
-          </Can>
-        </form>
-      </section>
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Organisation name</CardTitle>
+          <CardDescription>
+            The name teammates see in the organisation switcher and in invitations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="flex max-w-sm flex-col gap-3"
+          >
+            {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
+            {saved ? <p className="text-sm text-success">Saved.</p> : null}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                aria-invalid={errors.name ? true : undefined}
+                disabled={!currentOrg.permissions.includes(Perm.ORG_UPDATE)}
+                {...register("name", { required: "Name is required." })}
+              />
+              {errors.name ? (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              ) : null}
+            </div>
+            <Can code={Perm.ORG_UPDATE}>
+              <Button type="submit" disabled={isSubmitting} className="self-start">
+                {isSubmitting ? "Saving…" : "Save"}
+              </Button>
+            </Can>
+          </form>
+        </CardContent>
+      </Card>
 
       <Can code={Perm.ORG_TRANSFER}>
         <TransferSection orgSlug={currentOrg.slug} onTransferred={refetch} />
       </Can>
 
       <Can code={Perm.ORG_DELETE}>
-        <section className="rounded-lg border border-red-200 p-4 dark:border-red-900">
-          <h2 className="mb-1 text-sm font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
-          <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-            Deleting an organisation removes all its data. This cannot be undone.
-          </p>
-          <button
-            type="button"
-            onClick={() => void onDelete()}
-            className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 dark:border-red-800 dark:text-red-400"
-          >
-            Delete organisation
-          </button>
-        </section>
+        <DangerZone
+          orgName={currentOrg.name}
+          onDelete={async () => {
+            await deleteOrganization(currentOrg.slug);
+            router.push("/");
+          }}
+        />
       </Can>
     </div>
   );
@@ -143,9 +156,10 @@ function TransferSection({
     };
   }, [orgSlug]);
 
+  const target = members.find((member) => member.id === targetId);
+
   async function transfer() {
     if (!targetId) return;
-    if (!window.confirm("Transfer ownership? You will become an Admin.")) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -159,33 +173,138 @@ function TransferSection({
   }
 
   return (
-    <section>
-      <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Transfer ownership
-      </h2>
-      {error ? <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      <div className="flex max-w-sm gap-2">
-        <select
-          value={targetId}
-          onChange={(event) => setTargetId(event.target.value)}
-          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-        >
-          <option value="">Select a member…</option>
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.user.name || member.user.email}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => void transfer()}
-          disabled={!targetId || submitting}
-          className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-neutral-700"
-        >
-          Transfer
-        </button>
-      </div>
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>Transfer ownership</CardTitle>
+        <CardDescription>
+          Hand this organisation to another member. You stay on as an Admin.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
+        <div className="flex max-w-sm gap-2">
+          <Label htmlFor="transfer-target" className="sr-only">
+            New owner
+          </Label>
+          <Select value={targetId} onValueChange={setTargetId}>
+            <SelectTrigger id="transfer-target" className="flex-1">
+              <SelectValue placeholder="Select a member…" />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.user.name || member.user.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" disabled={!targetId || submitting}>
+                Transfer
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Transfer ownership?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {target ? target.user.name || target.user.email : "This member"} becomes the Owner
+                  of this organisation, and you become an Admin.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void transfer()}>
+                  Transfer ownership
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Deleting an organisation is irreversible and was one `window.confirm()`
+ * OK-click away (finding 2). The confirm button stays disabled until the
+ * organisation's name is typed exactly, which is the standard guard for a
+ * destructive action with no undo.
+ */
+function DangerZone({ orgName, onDelete }: { orgName: string; onDelete: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setTyped("");
+  }
+
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await onDelete();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Card className="border-destructive">
+      <CardHeader>
+        <CardTitle className="text-destructive">Danger zone</CardTitle>
+        <CardDescription>
+          Deleting an organisation removes all its data. This cannot be undone.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Delete organisation</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {orgName}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently removes the organisation and all of its data — members,
+                invitations, and everything created inside it. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirm-org-name">
+                Type <span className="font-semibold text-foreground">{orgName}</span> to confirm
+              </Label>
+              <Input
+                id="confirm-org-name"
+                autoComplete="off"
+                value={typed}
+                onChange={(event) => setTyped(event.target.value)}
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className={buttonVariants({ variant: "destructive" })}
+                disabled={typed !== orgName || deleting}
+                onClick={(event) => {
+                  // Radix closes the dialog on action click; the delete is
+                  // async and navigates on success, so let it close and let
+                  // the router take over.
+                  if (typed !== orgName) {
+                    event.preventDefault();
+                    return;
+                  }
+                  void confirmDelete();
+                }}
+              >
+                {deleting ? "Deleting…" : "Delete organisation"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   );
 }

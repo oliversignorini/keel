@@ -3,13 +3,34 @@
 import { getPermissionsRegistry, listRoles } from "@/lib/org/api";
 import { useOrgContext } from "@/lib/org/org-context";
 import type { RoleWithPermissions } from "@/lib/org/types";
-import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@keel/ui";
+import { Check, Minus } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 /**
  * `/app/[org]/settings/roles` (PRD §5 Routes). Read-only: the three
  * preset roles (Owner/Admin/Member — organizations/roles.py) and the
- * codes each holds, plus the full registry codes each role does NOT hold
- * so the permission surface is legible at a glance.
+ * codes each holds, as a matrix — one row per permission, one column per
+ * role (finding 19). The previous wall of 54 chips could not answer the
+ * question the page exists to answer ("what does an Admin have that a
+ * Member doesn't?") without scanning three ragged blocks; a matrix
+ * answers it by reading across one line.
  *
  * Custom roles are a per-project feature flag, off by default (PRD §4
  * "Tenancy and permissions"; phase-3.md A.4) — `organizations/viewsets.py`
@@ -40,41 +61,112 @@ export default function RolesSettingsPage() {
     };
   }, [currentOrg]);
 
+  // `resource.action` codes group cleanly by their resource half, which
+  // turns a flat list of ~18 codes into a handful of labelled blocks.
+  const groups = useMemo(() => grouped(allCodes), [allCodes]);
+
   if (!currentOrg) return null;
 
   return (
-    <div>
-      <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
-        Custom roles aren&apos;t enabled for this project. Roles are the three built-in presets
-        below.
-      </p>
-      {loading ? (
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading…</p>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {roles.map((role) => (
-            <section key={role.id}>
-              <h2 className="mb-2 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                {role.name}
-              </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {allCodes.map((code) => (
-                  <span
-                    key={code}
-                    className={
-                      role.permissions.includes(code)
-                        ? "rounded-full bg-neutral-900 px-2 py-0.5 text-xs text-white dark:bg-neutral-100 dark:text-neutral-900"
-                        : "rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-400 dark:bg-neutral-900 dark:text-neutral-600"
-                    }
-                  >
-                    {code}
-                  </span>
+    <Card>
+      <CardHeader>
+        <CardTitle>Roles</CardTitle>
+        <CardDescription>
+          Custom roles aren&apos;t enabled for this project. Roles are the three built-in presets
+          below.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex flex-col gap-3" role="status" aria-label="Loading roles">
+            {[0, 1, 2, 3, 4, 5].map((row) => (
+              <Skeleton key={row} className="h-6 w-full" />
+            ))}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Permission</TableHead>
+                {roles.map((role) => (
+                  <TableHead key={role.id} className="text-center">
+                    {role.name}
+                  </TableHead>
                 ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-    </div>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {groups.map(([resource, codes]) => (
+                <Fragment key={resource}>
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell
+                      colSpan={roles.length + 1}
+                      className="bg-muted/50 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                    >
+                      {humanise(resource)}
+                    </TableCell>
+                  </TableRow>
+                  {codes.map((code) => (
+                    <TableRow key={code}>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-foreground">{actionLabel(code)}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <code>{code}</code>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      {roles.map((role) => {
+                        const held = role.permissions.includes(code);
+                        return (
+                          <TableCell key={role.id} className="text-center">
+                            {held ? (
+                              <Check
+                                className="mx-auto size-4 text-foreground"
+                                aria-label={`${role.name} has ${code}`}
+                              />
+                            ) : (
+                              <Minus
+                                className="mx-auto size-4 text-muted-foreground"
+                                aria-label={`${role.name} does not have ${code}`}
+                              />
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
+}
+
+/** `["members.invite", "members.remove", "billing.view"]` →
+ * `[["members", [...]], ["billing", [...]]]`, each group in first-seen
+ * order so the registry's own ordering survives. */
+function grouped(codes: string[]): [string, string[]][] {
+  const byResource = new Map<string, string[]>();
+  for (const code of codes) {
+    const resource = code.includes(".") ? code.slice(0, code.indexOf(".")) : code;
+    const existing = byResource.get(resource);
+    if (existing) existing.push(code);
+    else byResource.set(resource, [code]);
+  }
+  return [...byResource.entries()];
+}
+
+function actionLabel(code: string): string {
+  return humanise(code.includes(".") ? code.slice(code.indexOf(".") + 1) : code);
+}
+
+function humanise(segment: string): string {
+  const words = segment.replace(/[._]/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

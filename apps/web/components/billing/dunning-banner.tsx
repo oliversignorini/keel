@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 
+import { Alert, AlertDescription, AlertTitle, Button } from "@keel/ui";
+import { AlertTriangle } from "lucide-react";
+
 import { Can } from "@/components/org/can";
 import type { Subscription } from "@/lib/billing/types";
 import { Perm } from "@/lib/org/permissions";
@@ -28,17 +31,17 @@ export function DunningBanner({
   if (!subscription || subscription.status !== "past_due") return null;
 
   return (
-    <div
-      role="alert"
-      className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
-    >
-      We couldn&apos;t take payment for your last invoice. Your organisation keeps working — update
-      your payment details to avoid interruption.{" "}
-      <Can code={Perm.BILLING_MANAGE}>
-        <Link href={`/${orgSlug}/settings/billing`} className="font-medium underline">
-          Update payment details
-        </Link>
-      </Can>
-    </div>
+    <Alert variant="destructive">
+      <AlertTriangle />
+      <AlertTitle>We couldn&apos;t take payment for your last invoice.</AlertTitle>
+      <AlertDescription>
+        <p>Your organisation keeps working — update your payment details to avoid interruption.</p>
+        <Can code={Perm.BILLING_MANAGE}>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/${orgSlug}/settings/billing`}>Update payment details</Link>
+          </Button>
+        </Can>
+      </AlertDescription>
+    </Alert>
   );
 }

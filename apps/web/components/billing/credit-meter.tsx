@@ -2,6 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
+import { Badge, Progress, Skeleton } from "@keel/ui";
+import { Coins } from "lucide-react";
+
 import { getCreditBalance } from "@/lib/billing/api";
 import { creditsEnabled } from "@/lib/billing/credits-flag";
 
@@ -96,28 +99,39 @@ export function CreditMeter({ orgSlug, estimate, children }: CreditMeterProps) {
 
   if (loading || balance === null) {
     return (
-      <p role="status" className="text-sm text-neutral-500 dark:text-neutral-400">
-        Loading credits…
-      </p>
+      <div role="status" aria-label="Loading credits">
+        <Skeleton className="h-5 w-32 rounded-full" />
+      </div>
     );
   }
 
+  if (estimate === undefined) {
+    return (
+      <Badge variant="outline">
+        <Coins />
+        Credits: {balance.toLocaleString()}
+      </Badge>
+    );
+  }
+
+  // How much of the balance this action would consume. Capped at 100 so an
+  // estimate larger than the balance reads as a full bar rather than
+  // overflowing it — `insufficient` is what carries "and then some".
+  const consumed = balance > 0 ? Math.min(100, (estimate / balance) * 100) : 100;
+
   return (
-    <p
-      className={
-        state.insufficient
-          ? "text-sm font-medium text-red-700 dark:text-red-400"
-          : "text-sm text-neutral-600 dark:text-neutral-400"
-      }
-    >
-      {estimate === undefined ? (
-        <>Credits: {balance.toLocaleString()}</>
-      ) : (
-        <>
-          This will use {estimate.toLocaleString()} of your {balance.toLocaleString()} credits
-          {state.insufficient ? " — not enough credits" : ""}
-        </>
-      )}
-    </p>
+    <div className="flex max-w-xs flex-col gap-2">
+      <p
+        className={
+          state.insufficient
+            ? "text-sm font-medium text-destructive"
+            : "text-sm text-muted-foreground"
+        }
+      >
+        This will use {estimate.toLocaleString()} of your {balance.toLocaleString()} credits
+        {state.insufficient ? " — not enough credits" : ""}
+      </p>
+      <Progress value={consumed} aria-label="Share of your credit balance this action would use" />
+    </div>
   );
 }

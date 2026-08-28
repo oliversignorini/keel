@@ -39,12 +39,12 @@ export default async function PricingPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">Pricing</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1 className="text-3xl font-semibold text-foreground">Pricing</h1>
+      <p className="mt-2 text-muted-foreground">
         Every plan includes a 14-day trial. No card required to start.
       </p>
       {failed ? (
-        <p className="mt-8 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mt-8 text-sm text-muted-foreground">
           Plans are temporarily unavailable. Please try again shortly.
         </p>
       ) : (

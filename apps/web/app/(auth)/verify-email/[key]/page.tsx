@@ -1,6 +1,8 @@
 "use client";
 
 import { ApiError, authEmailVerify } from "@keel/api-client";
+import { Alert, AlertDescription } from "@keel/ui";
+import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -57,7 +59,8 @@ export default function VerifyEmailKeyPage() {
 
   if (status === "verifying") {
     return (
-      <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
+      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
         Verifying your email…
       </p>
     );
@@ -65,7 +68,7 @@ export default function VerifyEmailKeyPage() {
 
   if (status === "success") {
     return (
-      <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
+      <p role="status" className="text-sm text-muted-foreground">
         Email verified. Redirecting…
       </p>
     );
@@ -73,12 +76,11 @@ export default function VerifyEmailKeyPage() {
 
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Verification failed
-      </h1>
-      <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
-        {message}
-      </p>
+      <h1 className="mb-2 text-lg font-semibold text-foreground">Verification failed</h1>
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle />
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
       <Link href="/login" className="text-sm underline">
         Back to login
       </Link>
