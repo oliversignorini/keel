@@ -4,7 +4,8 @@
 int | None}}``. A missing key in ``limits`` means that resource isn't
 capped by this plan at all (unlimited) — the same as an explicit ``None``.
 An organisation with no ``Subscription`` row (billing not wired up on this
-project, or the org simply hasn't checked out yet) resolves to
+project, or the org simply hasn't checked out yet) — or one whose row is
+in a non-entitling status (see ``ENTITLING_STATUSES``) — resolves to
 ``{"features": [], "limits": {}}``: no *feature* is granted without an
 explicit plan, but no *limit* is imposed either. That asymmetry is
 deliberate — feature-gating is opt-in per feature, but a project that
@@ -32,6 +33,24 @@ from typing import Any
 
 from keel.billing.models import Subscription
 from keel.core.exceptions import Conflict, PaymentRequired
+
+#: The ``Subscription.status`` values that actually grant a plan's
+#: entitlements. Stripe keeps a subscription row alive through states that
+#: are emphatically *not* paid-up, and ``customer.subscription.deleted``
+#: leaves the local row in place with ``status="canceled"`` on purpose
+#: (``webhooks._handle_subscription_event`` — a resubscribe must reuse the
+#: same row rather than violate the one-subscription-per-organization
+#: constraint). Resolution therefore has to filter on status; the presence
+#: of a row proves nothing.
+#:
+#: ``past_due`` is entitling by design, not by oversight: dunning
+#: "puts the organisation into a dunning state. The banner appears.
+#: **Access is not immediately revoked.**" (``docs/plans/phase-4.md``
+#: §B.6, restated in ``keel-prd.md`` §14's phase-4 checklist) — a failed
+#: payment is a warning, not a lockout. ``canceled``, ``incomplete``,
+#: ``incomplete_expired`` and ``unpaid`` all resolve to the same empty
+#: entitlements an organisation with no subscription at all gets.
+ENTITLING_STATUSES = frozenset({"active", "trialing", "past_due"})
 
 _resource_counters: dict[str, Callable[[Any], int]] = {}
 
@@ -92,7 +111,7 @@ def resolve_entitlements_bulk(organizations: Any) -> dict[Any, dict[str, Any]]:
 
 
 def _entitlements_from_subscription(subscription: Any) -> dict[str, Any]:
-    if subscription is None:
+    if subscription is None or subscription.status not in ENTITLING_STATUSES:
         return {"features": [], "limits": {}}
     entitlements: dict[str, Any] = subscription.plan.entitlements or {}
     return {"features": entitlements.get("features", []), "limits": entitlements.get("limits", {})}
