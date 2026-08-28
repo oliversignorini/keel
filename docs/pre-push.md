@@ -55,7 +55,7 @@ was built on:
 5. `eslint` (`pnpm --filter web lint`)
 6. `prettier --check`
 7. build email templates (pytest dependency, same as CI's `test-api` job)
-8. `pytest --no-cov -q` (apps/api) — the *fast subset* of CI's `test-api`
+8. `pytest --no-cov -q` (apps/api) — the _fast subset_ of CI's `test-api`
    job, see below
 9. `merge_openapi.py`, diffed against the committed `openapi.merged.json`
 10. `pnpm --filter @keel/api-client generate`, diffed against the
@@ -78,7 +78,7 @@ for.
 ## What's deliberately excluded entirely
 
 - `manage.py makemigrations --check --dry-run` and `manage.py check
-  --deploy` — not named in 16.D's gate list, and `check --deploy` needs
+--deploy` — not named in 16.D's gate list, and `check --deploy` needs
   `config.settings.prod` plus placeholder env vars CI sets explicitly
   (see `ci.yml`'s `test-api` job); wiring that locally for a check that
   only matters at merge time isn't worth the noise.
