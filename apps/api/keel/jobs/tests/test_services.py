@@ -13,7 +13,22 @@ from keel.jobs import services
 from keel.jobs.demo import DEMO_JOB_TYPE
 from keel.jobs.models import Job
 
-pytestmark = pytest.mark.django_db
+# BILLING_CREDITS pinned off, not inherited from the environment: these
+# are tests of the generic job machinery, and they only ever passed with
+# credits enabled by coincidence of the shipped .env.example default —
+# an instantiation that turns credits on (scripts/init.ts billing=both)
+# surfaced that as 402s from unfunded organisations (template-ci run,
+# 28 Aug 2026). The credit-integration tests below opt back in per-test
+# via `settings.BILLING_CREDITS = True` and fund a balance explicitly.
+pytestmark = [
+    pytest.mark.django_db,
+    pytest.mark.usefixtures("credits_disabled"),
+]
+
+
+@pytest.fixture
+def credits_disabled(settings) -> None:
+    settings.BILLING_CREDITS = False
 
 
 def test_create_job_creates_a_queued_job_and_does_not_run_it_inline(

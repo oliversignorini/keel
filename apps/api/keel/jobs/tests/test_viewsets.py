@@ -22,7 +22,20 @@ from keel.organizations import services
 from keel.organizations.models import Membership, Role
 from keel.organizations.permissions import Perm
 
-pytestmark = pytest.mark.django_db
+# BILLING_CREDITS pinned off for the same reason as test_services.py's
+# identical mark: these exercise the generic jobs endpoints, and relying
+# on the environment default broke under a credits-on instantiation
+# (template-ci, 28 Aug 2026).
+pytestmark = [
+    pytest.mark.django_db,
+    pytest.mark.usefixtures("credits_disabled"),
+]
+
+
+@pytest.fixture
+def credits_disabled(settings) -> None:
+    settings.BILLING_CREDITS = False
+
 
 _counter = 0
 
