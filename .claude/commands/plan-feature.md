@@ -41,8 +41,8 @@ that either precede the resource or are cleaned up right after it; a
 resource an `fk` field targets must exist (or already exist in the
 codebase) before the resource that references it; `gen sync-client` comes
 after every backend generator that changed a route, and only once per
-worktree holding the client-generation lock (`docs/plans/WORKTREES.md`
-rule 3) — don't plan two worktrees regenerating it in the same wave.
+worktree holding the client-generation lock (see CLAUDE.md) — don't plan
+two worktrees regenerating it in the same wave.
 `gen e2e` is last, per resource, once its slice (backend, and frontend if
 `--ui`) is actually finished.
 
@@ -63,13 +63,12 @@ of commands, e.g.:
 **A feature spanning several generators or worktrees** (e.g. a resource,
 an export permission, a rollup job, and a settings page): write
 `docs/plans/<feature>.md` instead — the artifact a second agent picks up
-without re-deriving the plan from the original brief. Use an existing
-plan under `docs/plans/` as the shape to copy: what this is, scope
-boundary (paths in/out), the ordered steps above broken into waves if
-more than one worktree is involved, and an acceptance checklist. A plan
-file for `gen resource Invoice --ui` alone is ceremony; a plan file for
-invoicing plus an export permission plus a rollup job plus a settings
-page is what keeps a multi-worktree effort coherent.
+without re-deriving the plan from the original brief. Give it: what this
+is, scope boundary (paths in/out), the ordered steps above broken into
+waves if more than one worktree is involved, and an acceptance checklist.
+A plan file for `gen resource Invoice --ui` alone is ceremony; a plan
+file for invoicing plus an export permission plus a rollup job plus a
+settings page is what keeps a multi-worktree effort coherent.
 
 ## Finish
 

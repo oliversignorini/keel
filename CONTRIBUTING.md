@@ -49,9 +49,9 @@ reject drift between it and `templates/resource`.
 
 ## Invariants a PR must not break
 
-These are `keel-prd.md` §4's seven architecture invariants, restated as
-things a reviewer (human or CI) will actually check. `docs/architecture.md`
-has the full explanation and the file that enforces each one.
+These are the seven architecture invariants from `docs/architecture.md`,
+restated as things a reviewer (human or CI) will actually check. That
+file has the full explanation and names what enforces each one.
 
 1. **Domain logic lives in `services.py` / `selectors.py`.** Views,
    serializers, Celery tasks, admin, and management commands call into

@@ -5,7 +5,7 @@
 ## Checklist
 
 - [ ] Tests cover both the **allow path and the deny path** — not just the
-      happy path (`keel-prd.md` §4 invariant 7; see `CONTRIBUTING.md`)
+      happy path (invariant 7; see `CONTRIBUTING.md`)
 - [ ] No new migration, or the migration is expected by the phase/plan this
       PR implements — the schema is one baseline migration otherwise
 - [ ] If a viewset was added or changed: it declares `required_permissions`

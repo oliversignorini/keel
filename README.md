@@ -46,7 +46,7 @@ it.
 Most boilerplates are a pile of features. This one is a pile of features
 plus a build that fails when you break the tenant boundary. Seven rules
 hold the codebase together, and four of them are enforced by CI rather
-than by convention — `docs/architecture.md` and `keel-prd.md` §4 have the
+than by convention — `docs/architecture.md` has the
 full detail, this is the short version:
 
 | Invariant                                                                                                                                                | Enforced by                                                                                                                         |

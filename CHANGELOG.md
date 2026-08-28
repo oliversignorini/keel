@@ -3,8 +3,8 @@
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Entries are grouped by the phase they landed in. Phase numbers and plans
-are in `docs/plans/`.
+Entries are grouped by the phase they landed in during this template's
+build.
 
 ## [Unreleased]
 

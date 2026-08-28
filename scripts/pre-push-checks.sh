@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Local mirror of the blocking CI gates (docs/plans/phase-16.md 16.D),
-# run by the `pre-push-gates` hook in .pre-commit-config.yaml. The repo
+# Local mirror of the blocking CI gates, run by the `pre-push-gates` hook
+# in .pre-commit-config.yaml. The repo
 # runs on a free GitHub Actions plan, so catching a failure here — before
 # it burns Actions minutes — is the whole point.
 #

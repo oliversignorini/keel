@@ -2,9 +2,9 @@ import http from "k6/http";
 import { check } from "k6";
 
 /**
- * k6 smoke test (PRD §3 NFR "Performance": "API p95 under 300ms for
- * list endpoints at 10k rows per organisation"; docs/plans/phase-8.md
- * 8.7): 100 rps on the widget list, p95 under 300ms.
+ * k6 smoke test. Performance target: API p95 under 300ms for
+ * list endpoints at 10k rows per organisation, at 100 rps on the widget
+ * list.
  *
  * Needs a pre-seeded organisation, an authenticated session cookie, and
  * a matching CSRF token — see infra/k6/README.md for how to produce

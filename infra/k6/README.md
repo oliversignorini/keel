@@ -1,8 +1,7 @@
 # k6 smoke test — widget list
 
-PRD §3 NFR "Performance": API p95 under 300ms for list endpoints at 10k
-rows per organisation. docs/plans/phase-8.md 8.7: "100 rps on the widget
-list, p95 under 300ms."
+Performance target: API p95 under 300ms for list endpoints at 10k
+rows per organisation, at 100 rps on the widget list.
 
 **This test targets the demo `widgets` resource** (`GET
 /api/v1/orgs/<slug>/widgets/`). `init --demo-slice delete` removes that

@@ -467,8 +467,7 @@ documented under "Postgres provider neutrality."
 ## Vercel (frontend)
 
 Frontend deployment (`apps/web`, Vercel project settings) is separate
-from this doc's Railway focus — see `docs/review-2026-08.md` on the BFF
-gap this repo currently has — but is part of "deploy it, for real." What's
+from this doc's Railway focus, but is part of "deploy it, for real." What's
 needed,
 documented here since `docs/deploy-railway.md` is where the cross-service
 auth-cookie constraint already lives:

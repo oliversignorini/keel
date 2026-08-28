@@ -10,7 +10,6 @@ apps/api/
 
 # Not ours to reformat
 docs/plans/
-keel-prd.md
 
 # orval output — reformatting it would just be reverted on the next
 # `pnpm generate` (packages/api-client/package.json)

@@ -8,7 +8,8 @@ pnpm gen sync-client
 ```
 
 This is the _only_ command allowed to touch `openapi.merged.json` or
-`packages/api-client/src/generated` (`docs/plans/WORKTREES.md` rule 3) —
+`packages/api-client/src/generated` (see CLAUDE.md — only one worktree at
+a time may write those paths) —
 it takes a lock in the shared `.git` directory (worktrees share it) and
 refuses to run if another worktree already holds it, rather than relying
 on remembering the rule.

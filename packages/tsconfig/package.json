@@ -2,7 +2,7 @@
   "name": "@keel/tsconfig",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "base.json",
     "nextjs.json",

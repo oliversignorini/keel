@@ -52,7 +52,8 @@ thin `apps/web/lib/<resources>/api.ts` wrapper. Not supported yet on
 ## 3. Sync the client
 
 `pnpm gen sync-client` in whichever worktree owns the generated client
-lock (`docs/plans/WORKTREES.md` rule 3) — the resource generator
+lock (see CLAUDE.md — only one worktree at a time may write
+`openapi.merged.json` or the generated client) — the resource generator
 never regenerates it itself.
 
 ## 4. Finish
