@@ -29,7 +29,7 @@ class ErrorBodyOut(Schema):
 
 
 class ErrorEnvelope(Schema):
-    """The API's error shape as a published Ninja schema — the response
+    """PRD §7's error shape as a published Ninja schema — the response
     every ``keel.core.authz`` router constructor attaches to the
     project's default error-response set ({400, 401, 403, 404, 409, 422,
     429}) on every operation, so the OpenAPI document (and the generated
