@@ -158,3 +158,56 @@ def test_disabled_throttle_returns_no_headers() -> None:
         )
         is None
     )
+
+
+def test_anon_bucket_ignores_client_supplied_x_forwarded_for_by_default() -> None:
+    """The blocker this file's `_get_ident` guard exists for: with the
+    default `KEEL_API_THROTTLE_NUM_PROXIES = 0`, a caller that varies
+    `X-Forwarded-For` per request must NOT get a fresh anon bucket — the
+    header is a claim, not a fact, and the BFF in front of Django strips
+    any client-supplied one anyway (apps/web/lib/api/proxy.ts)."""
+    throttle = AnonRateThrottle(rate="1/min")
+    factory = RequestFactory()
+
+    throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="1.2.3.4"))
+
+    with pytest.raises(Throttled):
+        throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="5.6.7.8"))
+
+
+def test_x_forwarded_for_is_honored_when_proxies_are_configured(settings) -> None:
+    """One trusted proxy in front: the rightmost XFF entry is the address
+    that proxy observed, so two genuinely different clients behind it get
+    two buckets."""
+    settings.KEEL_API_THROTTLE_NUM_PROXIES = 1
+    throttle = AnonRateThrottle(rate="1/min")
+    factory = RequestFactory()
+
+    throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="1.2.3.4"))
+    throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="5.6.7.8"))
+
+    with pytest.raises(Throttled):
+        throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="1.2.3.4"))
+
+
+def test_configured_proxy_count_reads_past_client_supplied_xff_entries(settings) -> None:
+    """With one trusted proxy, only the last entry is trustworthy — a
+    client that prepends its own entries can't shift the identity."""
+    settings.KEEL_API_THROTTLE_NUM_PROXIES = 1
+    throttle = AnonRateThrottle(rate="1/min")
+    factory = RequestFactory()
+
+    throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="9.9.9.9, 1.2.3.4"))
+
+    with pytest.raises(Throttled):
+        throttle.check(factory.get("/api/v1/fixture/", HTTP_X_FORWARDED_FOR="8.8.8.8, 1.2.3.4"))
+
+
+def test_configured_proxies_fall_back_to_remote_addr_without_the_header(settings) -> None:
+    settings.KEEL_API_THROTTLE_NUM_PROXIES = 1
+    throttle = AnonRateThrottle(rate="1/min")
+
+    throttle.check(_anon_request())
+
+    with pytest.raises(Throttled):
+        throttle.check(_anon_request())

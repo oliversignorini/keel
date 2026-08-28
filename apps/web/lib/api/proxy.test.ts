@@ -80,6 +80,44 @@ describe("proxyRequest", () => {
     expect(headers.has("Host")).toBe(false);
   });
 
+  it("strips client-asserted X-Forwarded-* headers so a browser cannot spoof its own identity", async () => {
+    // Django's anon rate limiting can be configured to key its bucket off
+    // X-Forwarded-For, and prod's SECURE_PROXY_SSL_HEADER trusts
+    // X-Forwarded-Proto — both would be caller-controlled if this proxy
+    // forwarded what the browser sent.
+    fetchSpy.mockResolvedValue(upstreamJson(200, { ok: true }));
+    const request = new NextRequest("http://app.lvh.me:3000/api/v1/me/", {
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": "evil.example.com",
+        "X-Forwarded-Port": "443",
+        "X-Real-IP": "1.2.3.4",
+        Forwarded: "for=1.2.3.4;proto=https",
+        Cookie: "sessionid=abc",
+      },
+    });
+
+    await proxyRequest(request, {
+      upstreamOrigin: "http://api.lvh.me:8000",
+      upstreamPath: "/api/v1/me/",
+    });
+
+    const headers = fetchSpy.mock.calls[0]![1].headers as Headers;
+    for (const name of [
+      "x-forwarded-for",
+      "x-forwarded-proto",
+      "x-forwarded-host",
+      "x-forwarded-port",
+      "x-real-ip",
+      "forwarded",
+    ]) {
+      expect(headers.has(name)).toBe(false);
+    }
+    // Everything else still rides along.
+    expect(headers.get("Cookie")).toBe("sessionid=abc");
+  });
+
   it("relays every Set-Cookie header individually — Django often sets two in one response", async () => {
     const upstream = upstreamJson(200, { ok: true });
     upstream.headers.append("Set-Cookie", "sessionid=new; Path=/; HttpOnly");

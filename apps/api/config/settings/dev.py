@@ -15,4 +15,5 @@ DEBUG = True
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# Email: base.py's ``MAILERS["default"]`` is already the SMTP backend
+# pointed at Mailpit (infra/compose.dev.yml), so dev overrides nothing.

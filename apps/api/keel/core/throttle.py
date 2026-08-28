@@ -39,17 +39,29 @@ def _parse_rate(rate: str | None) -> tuple[int, int] | None:
 
 
 def _get_ident(request: HttpRequest) -> str:
-    xff = request.headers.get("x-forwarded-for")
+    """The anon/unauthenticated throttle bucket's identity.
+
+    ``REMOTE_ADDR`` unless ``KEEL_API_THROTTLE_NUM_PROXIES`` says
+    otherwise (config/settings/base.py documents the trust model).
+    ``X-Forwarded-For`` is attacker-controlled on any hop that doesn't
+    rewrite it, and keying an anon bucket on a header the caller picks
+    means every request can claim a fresh allowance — i.e. no anon rate
+    limit at all, on exactly the unauthenticated surfaces (``GET
+    /plans/``, allauth login/signup) the limit exists to protect. So the
+    header is ignored by default and only consulted for the
+    nth-from-the-right entry once a deployment states how many trusted
+    proxies append to it.
+    """
     remote_addr: str = request.META.get("REMOTE_ADDR") or ""
-    num_proxies = getattr(settings, "KEEL_API_THROTTLE_NUM_PROXIES", None)
+    num_proxies: int = settings.KEEL_API_THROTTLE_NUM_PROXIES
+    if num_proxies <= 0:
+        return remote_addr
 
-    if num_proxies is not None:
-        if num_proxies == 0 or xff is None:
-            return remote_addr
-        addrs = xff.split(",")
-        return addrs[-min(num_proxies, len(addrs))].strip()  # type: ignore[no-any-return]
-
-    return "".join(xff.split()) if xff else remote_addr
+    xff = request.headers.get("x-forwarded-for")
+    if not xff:
+        return remote_addr
+    addrs = xff.split(",")
+    return addrs[-min(num_proxies, len(addrs))].strip()
 
 
 class RateThrottle:
