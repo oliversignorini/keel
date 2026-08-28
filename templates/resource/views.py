@@ -61,9 +61,7 @@ def list___resources__(
 
 
 @router.post(
-    "/{org_slug}/__resources__/",
-    response={201: __Resource__Out},
-    operation_id="create__Resource__"
+    "/{org_slug}/__resources__/", response={201: __Resource__Out}, operation_id="create__Resource__"
 )
 def create___resource__(
     request: Any, org_slug: str, payload: __Resource__In
@@ -78,9 +76,7 @@ def create___resource__(
 
 
 @router.get(
-    "/{org_slug}/__resources__/{id}/",
-    response=__Resource__Out,
-    operation_id="retrieve__Resource__"
+    "/{org_slug}/__resources__/{id}/", response=__Resource__Out, operation_id="retrieve__Resource__"
 )
 def retrieve___resource__(request: Any, org_slug: str, id: str) -> __Resource__:
     organization = resolve_and_authorize(request, org_slug, (_VIEW,))
@@ -95,9 +91,7 @@ def retrieve___resource__(request: Any, org_slug: str, id: str) -> __Resource__:
 # generated TypeScript client (orval keeps whichever method it resolves
 # the collision to).
 @router.patch(
-    "/{org_slug}/__resources__/{id}/",
-    response=__Resource__Out,
-    operation_id="update__Resource__"
+    "/{org_slug}/__resources__/{id}/", response=__Resource__Out, operation_id="update__Resource__"
 )
 def update___resource__(
     request: Any, org_slug: str, id: str, payload: __Resource__PatchIn
@@ -122,6 +116,6 @@ def destroy___resource__(request: Any, org_slug: str, id: str) -> Status[None]:
     services.delete___resource__(
         __resource__=__resource__,
         actor=request.auth,
-        impersonator=getattr(request, "impersonator", None)
+        impersonator=getattr(request, "impersonator", None),
     )
     return Status(204, None)

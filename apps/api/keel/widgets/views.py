@@ -94,6 +94,8 @@ def destroy_widget(request: Any, org_slug: str, id: str) -> Status[None]:
     organization = resolve_and_authorize(request, org_slug, (_DELETE,))
     widget = get_scoped_or_404(selectors.list_widgets(organization), id)
     services.delete_widget(
-        widget=widget, actor=request.auth, impersonator=getattr(request, "impersonator", None)
+        widget=widget,
+        actor=request.auth,
+        impersonator=getattr(request, "impersonator", None),
     )
     return Status(204, None)

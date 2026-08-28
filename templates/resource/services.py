@@ -12,7 +12,6 @@ transaction.
 from __future__ import annotations
 
 # keel:insert service_imports
-
 from typing import Any
 
 from django.db import transaction
@@ -46,7 +45,7 @@ def create___resource__(
     *,
     organization: Organization,
     # keel:insert create_params
-    created_by: Any
+    created_by: Any,
 ) -> __Resource__:
     check_limit(organization, "__app__")
     with transaction.atomic():

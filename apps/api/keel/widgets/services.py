@@ -41,7 +41,12 @@ def _dispatch_widget_created(widget_id: Any) -> None:
 
 @audited("widget.created")
 def create_widget(
-    *, organization: Organization, name: str, description: str, status: str, created_by: Any
+    *,
+    organization: Organization,
+    name: str,
+    description: str,
+    status: str,
+    created_by: Any,
 ) -> Widget:
     check_limit(organization, "widgets")
     with transaction.atomic():
