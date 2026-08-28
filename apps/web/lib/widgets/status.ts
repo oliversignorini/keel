@@ -14,12 +14,7 @@ const WIDGET_STATUS_LABELS: Record<string, string> = {
 };
 
 export type WidgetStatusBadgeVariant =
-  | "default"
-  | "secondary"
-  | "destructive"
-  | "outline"
-  | "success"
-  | "warning";
+  "default" | "secondary" | "destructive" | "outline" | "success" | "warning";
 
 const WIDGET_STATUS_BADGE_VARIANTS: Record<string, WidgetStatusBadgeVariant> = {
   draft: "outline",

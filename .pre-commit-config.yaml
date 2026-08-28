@@ -43,16 +43,18 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-  # rbubley's fork, not upstream pre-commit/mirrors-prettier: upstream
-  # stopped tagging releases after v3.1.0 (last real tag before its
-  # v4.0.0-alpha.* series), so v3.3.3 — pinned here since Phase 0 — has
-  # never existed there and fails every `pre-commit run` with "pathspec
-  # 'v3.3.3' did not match any file(s)". rbubley/mirrors-prettier is the
-  # community continuation that still tags real prettier releases.
-  - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.3.3
+  # local, not a prettier mirror: the workspace resolves prettier ^3.3.3
+  # to whatever's current (3.9.6 today), and a mirror pinned to a
+  # different version formats some constructs differently (e.g. 3.9
+  # collapses a union type 3.3 expands) — the hook and `pnpm exec
+  # prettier --check` then fight each other and every commit touching
+  # such a file aborts. One prettier, the repo's own, everywhere.
+  - repo: local
     hooks:
       - id: prettier
+        name: prettier
+        entry: pnpm exec prettier --write --ignore-unknown
+        language: system
         files: ^(apps/web|packages)/
         stages: [pre-commit]
 
