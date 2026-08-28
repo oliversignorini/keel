@@ -45,15 +45,15 @@ hold the codebase together, and four of them are enforced by CI rather
 than by convention — `docs/architecture.md` and `keel-prd.md` §4 have the
 full detail, this is the short version:
 
-| Invariant                                                            | Enforced by                                                                                 |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Domain logic lives only in `services.py` (writes) / `selectors.py` (reads) | Code review; `keel/domain/`, if used, is walled off by an `import-linter` contract          |
-| Authorization is expressed only in `organizations/permissions.py`, as `Decision`, never a bare bool | `scripts/check_permission_lint.py`; a CI meta-test requires an allow **and** a deny test, asserted on the *reason*, for every guard |
-| One `transaction.atomic()` per service, opened in the service; Stripe calls happen on `transaction.on_commit()` | Code review                                                                                  |
-| Schema changes are Django migrations only                             | `manage.py makemigrations --check --dry-run` in CI                                          |
-| Async work is Tier 1 (`keel/core/tasks.py` shim, fire-and-forget) or Tier 2 (`keel/jobs/`, resumable) — never blurred | Code review                                                                                  |
-| Every viewset declares `organization_scoped = True` + a `test_factory`, or `= False` + a `GLOBAL_JUSTIFICATION`; cross-org access is 404, not 403 | `__init_subclass__` fails at import without one; `test_meta_router_wiring.py` and `tenant_isolation.py` walk every route |
-| Every mutating service is `@audited(...)` or `@not_audited(reason=...)`, and coverage is gated per directory | An audit meta-test; `scripts/check_coverage.py` reads per-path floors from `pyproject.toml` |
+| Invariant                                                                                                                                         | Enforced by                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Domain logic lives only in `services.py` (writes) / `selectors.py` (reads)                                                                        | Code review; `keel/domain/`, if used, is walled off by an `import-linter` contract                                                  |
+| Authorization is expressed only in `organizations/permissions.py`, as `Decision`, never a bare bool                                               | `scripts/check_permission_lint.py`; a CI meta-test requires an allow **and** a deny test, asserted on the _reason_, for every guard |
+| One `transaction.atomic()` per service, opened in the service; Stripe calls happen on `transaction.on_commit()`                                   | Code review                                                                                                                         |
+| Schema changes are Django migrations only                                                                                                         | `manage.py makemigrations --check --dry-run` in CI                                                                                  |
+| Async work is Tier 1 (`keel/core/tasks.py` shim, fire-and-forget) or Tier 2 (`keel/jobs/`, resumable) — never blurred                             | Code review                                                                                                                         |
+| Every viewset declares `organization_scoped = True` + a `test_factory`, or `= False` + a `GLOBAL_JUSTIFICATION`; cross-org access is 404, not 403 | `__init_subclass__` fails at import without one; `test_meta_router_wiring.py` and `tenant_isolation.py` walk every route            |
+| Every mutating service is `@audited(...)` or `@not_audited(reason=...)`, and coverage is gated per directory                                      | An audit meta-test; `scripts/check_coverage.py` reads per-path floors from `pyproject.toml`                                         |
 
 Run `/check-invariants` (a Claude Code slash command shipped in this repo)
 to execute every one of these gates locally before opening a PR.
@@ -100,12 +100,12 @@ live in `docs/architecture.md` and `docs/diagrams/system.md`.
 
 ## Screenshots
 
-| | |
-| --- | --- |
+|                                                      |                                                      |
+| ---------------------------------------------------- | ---------------------------------------------------- |
 | ![Application shell](docs/screenshots/app-shell.png) | ![Resource list](docs/screenshots/resource-list.png) |
-| Application shell | A resource list (organisation-scoped, paginated) |
-| ![Jobs tray](docs/screenshots/jobs-tray.png) | ![Settings](docs/screenshots/settings.png) |
-| The job tray, streamed over SSE | Organisation settings |
+| Application shell                                    | A resource list (organisation-scoped, paginated)     |
+| ![Jobs tray](docs/screenshots/jobs-tray.png)         | ![Settings](docs/screenshots/settings.png)           |
+| The job tray, streamed over SSE                      | Organisation settings                                |
 
 ## Quick start
 
