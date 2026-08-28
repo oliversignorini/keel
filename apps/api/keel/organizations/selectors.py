@@ -41,7 +41,7 @@ def get_active_memberships_by_organization(
     """One query for every organisation's membership, keyed by
     ``organization_id`` — the bulk counterpart to ``get_membership``.
 
-    ``GET /api/v1/me/`` (api-patterns finding 12) used to call
+    ``GET /api/v1/me/`` would otherwise call
     ``get_membership`` once per organisation in a Python loop, an N+1 that
     scales with how many organisations a user belongs to. A single
     ``organization__in`` query plus a dict lookup replaces the whole loop.

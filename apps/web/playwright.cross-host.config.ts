@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Plan 6.A's acceptance is behavioural and cross-host, which the default
+ * Cross-host login is behavioural and spans two hosts, which the default
  * playwright.config.ts's single localhost:3100 webServer can't exercise
  * (CORS_ALLOWED_ORIGINS / CSRF_TRUSTED_ORIGINS / SESSION_COOKIE_DOMAIN
  * are all configured for the lvh.me:3000 / api.lvh.me:8000 topology in
@@ -17,8 +17,8 @@ export default defineConfig({
   reporter: "list",
   use: {
     // Overridable for a dev machine where :3000 is already taken by
-    // another worktree's server (docs/plans/phase-8.md verification) —
-    // defaults to the documented topology (docs/dev-setup.md).
+    // another worktree's server — defaults to the documented topology
+    // (docs/dev-setup.md).
     baseURL: process.env.E2E_LVH_BASE_URL ?? "http://lvh.me:3000",
     trace: "on-first-retry",
   },

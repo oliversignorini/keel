@@ -1,4 +1,4 @@
-"""AuditLog (PRD §4 "Data model"). organization and actor are both
+"""AuditLog. organization and actor are both
 nullable — some entries are system actions with no org or no user in the
 loop; impersonator is nullable too, for an entry with no impersonator."""
 
@@ -41,9 +41,9 @@ class AuditLog(UUIDv7PrimaryKeyModel):
     class Meta:
         indexes = (
             models.Index(fields=["organization", "created_at"]),
-            # ``GET .../audit/`` pages on ``ordering=("-id",)`` (ddia#18 —
-            # id is UUIDv7, monotonic and already unique, unlike
-            # created_at), not on created_at — this index backs that
+            # ``GET .../audit/`` pages on ``ordering=("-id",)`` (id is
+            # UUIDv7, monotonic and already unique, unlike created_at),
+            # not on created_at — this index backs that
             # cursor query; the created_at one above backs nothing it
             # currently pages on but is left in place for any future
             # date-range read.

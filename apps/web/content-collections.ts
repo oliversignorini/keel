@@ -4,8 +4,8 @@ import { compileMDX } from "@content-collections/mdx";
 import { postFrontmatterSchema } from "./lib/blog/post-schema";
 
 /**
- * MDX blog posts (phase-7.md 7.4; PRD §5 "MDX via content-collections for
- * type-safe frontmatter"). Posts are files under content/blog, not a CMS
+ * MDX blog posts, compiled by content-collections so frontmatter is
+ * type-safe. Posts are files under content/blog, not a CMS
  * — a CMS is a per-project decision.
  *
  * A post with a missing or wrong-typed frontmatter field fails the build

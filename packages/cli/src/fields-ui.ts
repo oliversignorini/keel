@@ -1,5 +1,5 @@
 /**
- * TypeScript-side renderers for `--ui` (docs/plans/phase-19.md 19.C).
+ * TypeScript-side renderers for `--ui`.
  *
  * `fields.ts` owns the `--fields` DSL and its Python renderers; this module
  * is the same idea for the four TSX files `templates/ui` writes. Each

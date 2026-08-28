@@ -1,6 +1,6 @@
 /**
- * `gen job <Name>` (docs/plans/phase-19.md 19.B) — ports the mechanical
- * half of `.claude/commands/new-job.md`.
+ * `gen job <Name>` — ports the mechanical half of
+ * `.claude/commands/new-job.md`.
  *
  * CLAUDE.md invariant 5 splits async work into two tiers, and the split
  * is a judgement call the generator does not make for the caller: `--tier`

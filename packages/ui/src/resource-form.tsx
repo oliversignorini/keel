@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "./components/ui/card";
 import { cn } from "./cn";
 
 /** `<ResourceForm>` — the CRUD-form chrome every generated resource form
- * shares (PRD §5 component inventory; docs/plans/phase-6.md 6.C): a
+ * shares: a
  * top-level error banner (for a 400 field error the caller's `setError`
  * couldn't map to a specific field — see
  * apps/web/lib/api/form-error-mapper.ts), the fields themselves (the

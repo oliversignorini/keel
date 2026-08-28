@@ -4,8 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 import { buildContentSecurityPolicy } from "./lib/csp";
 
-// Release tied to the git SHA (PRD §4 Integration points; docs/plans/
-// phase-8.md 8.4) — same source as the backend's SENTRY_RELEASE
+// Release tied to the git SHA — same source as the backend's SENTRY_RELEASE
 // (config/settings/base.py). NEXT_PUBLIC_ vars are inlined at build
 // time, so this has to be set here rather than read at runtime in the
 // browser bundle (sentry.client.config.ts).
@@ -30,7 +29,7 @@ const nextConfig: NextConfig = {
   // infinite loop.
   skipTrailingSlashRedirect: true,
 
-  // Security headers (PRD §3 NFR "Security"; docs/plans/phase-8.md 8.6).
+  // Security headers.
   // HSTS only over HTTPS — a plain-HTTP dev server would otherwise pin
   // itself into HTTPS-only in the browser, which is exactly the kind of
   // header that "only fails in production" cuts both ways on. next dev
@@ -56,9 +55,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Wires apps/web/content-collections.ts into the Next.js build (phase-7.md
-// 7.4). Removing the marketing route group (PRD §8 Phase 9) means dropping
-// this wrapper too — see docs/marketing-removal.md.
+// Wires apps/web/content-collections.ts into the Next.js build. Removing
+// the marketing route group means dropping this wrapper too — see
+// docs/marketing-removal.md.
 //
 // withContentCollections returns a config object with several of
 // nextConfig's own keys silently absent rather than merged through —
@@ -73,8 +72,7 @@ const configWithContentCollections: NextConfig = {
   skipTrailingSlashRedirect: nextConfig.skipTrailingSlashRedirect,
 };
 
-// Source-map upload (PRD §4: "source maps uploaded"; docs/plans/
-// phase-8.md 8.4) needs SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT —
+// Source-map upload needs SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT —
 // none exist for this project (.env.example). withSentryConfig degrades
 // gracefully without them: the build still succeeds, just without
 // resolved stack frames in Sentry — it does not fail the build or

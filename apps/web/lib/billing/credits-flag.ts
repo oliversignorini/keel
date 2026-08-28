@@ -1,10 +1,9 @@
 /**
- * The client-side mirror of Django's `BILLING_CREDITS` (phase-4.md A.5,
- * off by default).
+ * The client-side mirror of Django's `BILLING_CREDITS`, off by default.
  *
- * phase-4.md Worktree C requires `<CreditMeter>` to be "rendered **only
- * when credits are enabled**", and A.5's "no endpoints, no meter, no
- * cost" means *no request either* — a meter that has to call the API to
+ * `<CreditMeter>` renders only when credits are enabled, and with the
+ * flag off there are no endpoints, no meter, and no cost — which means
+ * *no request either* — a meter that has to call the API to
  * discover the feature is off has already paid the cost the flag exists
  * to avoid, once per page, for every organisation on a deployment that
  * will never turn credits on.

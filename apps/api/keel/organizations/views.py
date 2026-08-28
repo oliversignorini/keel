@@ -285,9 +285,9 @@ me_router = keel_router(tags=["me"])
 @me_router.get("/me/", response=MeOut, operation_id="retrieveMe")
 def me(request: Any) -> dict:
     """Three queries total regardless of how many organisations the user
-    belongs to (api-patterns finding 12 — this used to be 2N+1: one
-    membership lookup and one subscription lookup per organisation, in a
-    Python loop)."""
+    belongs to — the bulk selectors below replace what would otherwise be
+    2N+1: one membership lookup and one subscription lookup per
+    organisation, in a Python loop."""
     user = request.auth
     org_list = list(selectors.list_organizations_for_user(user))
     memberships = selectors.get_active_memberships_by_organization(
@@ -324,9 +324,9 @@ def me(request: Any) -> dict:
 
 @me_router.get("/permissions/", response=PermissionCodesOut, operation_id="retrievePermissionCodes")
 def permissions_registry(request: Any, response: HttpResponse) -> dict:
-    """A Reference Data Holder (api-patterns finding 13) â€” the permission
+    """A Reference Data Holder â€” the permission
     registry only changes on deploy, not per-request. Also publishes the
-    enumerable 403 denial reason codes (api-patterns finding 18), so a
+    enumerable 403 denial reason codes, so a
     client can branch on ``error.code`` without having read the Python
     that raises it."""
     codes = selectors.registered_permission_codes()

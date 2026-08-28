@@ -227,8 +227,8 @@ def test_limit_query_param_overrides_the_default_page_size() -> None:
         assert len(ids) == 3
 
         # A junk or non-positive limit is the client's error, not a silent
-        # fallback (api-patterns finding 8) — same 422 the malformed-cursor
-        # test below asserts, and the same code.
+        # fallback — same 422 the malformed-cursor test below asserts,
+        # and the same code.
         for bad_limit in ("not-a-number", "0", "-1"):
             paginator = LimitPaginator()
             paginator.page_size = 5
@@ -246,8 +246,8 @@ def test_limit_query_param_overrides_the_default_page_size() -> None:
 @isolate_apps("keel.core")
 def test_limit_above_the_maximum_is_capped_not_rejected() -> None:
     """Unlike a malformed limit, an *oversized* one is still a valid
-    request — it is simply capped at ``max_page_size`` (api-patterns
-    finding 9 / ddia finding 26) rather than answering the full table."""
+    request — it is simply capped at ``max_page_size`` rather than
+    answering the full table."""
 
     class CappedRow(models.Model):
         rank = models.IntegerField()
@@ -312,8 +312,8 @@ def test_a_single_string_ordering_is_accepted() -> None:
 
 def test_a_malformed_cursor_is_422_invalid_pagination() -> None:
     """A tampered or truncated cursor is the client's error, not a 500 —
-    PRD §7's 422 row (``keel.core.exceptions.UnprocessableEntity``), and
-    the same code a malformed ``limit`` raises (api-patterns finding 8)."""
+    a 422 (``keel.core.exceptions.UnprocessableEntity``), and
+    the same code a malformed ``limit`` raises."""
     paginator = CursorPaginator()
     request = RequestFactory().get("/fake/things/", {"cursor": "bz1ub3QtYS1udW1iZXI="})
 

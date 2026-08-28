@@ -1,8 +1,8 @@
 /**
  * Thin, typed wrappers around the generated files client — the same
  * shape, and for the same reasons, as lib/billing/api.ts. Uses the
- * generated request/response types directly now (posd#7) rather than
- * casting through a hand-written shadow of them.
+ * generated request/response types directly rather than casting through
+ * a hand-written shadow of them.
  */
 
 import {
@@ -16,8 +16,8 @@ import type { FileUploadResource, PresignedUploadResponse } from "./types";
 
 /** SHA-256 of `file`'s bytes, hex-encoded — the server verifies this
  * against what actually lands in storage before an upload can reach
- * `available` (apps/api/keel/files/services.py's `complete_upload`;
- * docs/plans/phase-13.md, ddia#21). Computed client-side via
+ * `available` (apps/api/keel/files/services.py's `complete_upload`).
+ * Computed client-side via
  * `SubtleCrypto` so the declaration travels with the create-upload
  * request rather than needing a second round trip. */
 async function sha256Hex(file: File): Promise<string> {
@@ -44,7 +44,7 @@ export async function createPresignedUpload(
 }
 
 /** The browser's direct upload to storage — never proxied through
- * Django (PRD §5, "the browser uploads straight to storage"). Reports
+ * Django — the browser uploads straight to storage. Reports
  * progress via `XMLHttpRequest` (unlike `fetch`, it exposes upload
  * progress events), which is why this isn't just a
  * `fetch(uploadUrl, { method: "PUT" })`. */

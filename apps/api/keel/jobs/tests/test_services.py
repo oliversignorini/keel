@@ -162,7 +162,7 @@ def test_cancel_job_is_a_no_op_on_an_already_terminal_job() -> None:
 
 
 def test_the_database_constraint_rejects_a_duplicate_key_even_with_no_application_guard() -> None:
-    """ddia#11: the ``UniqueConstraint`` itself, independent of
+    """The ``UniqueConstraint`` itself, independent of
     ``create_job``'s own guards — proves the database, not just the
     service, refuses two rows for one (organization, idempotency_key)."""
     org = make_organization()
@@ -188,7 +188,7 @@ def test_two_jobs_with_no_idempotency_key_do_not_collide() -> None:
 def test_create_job_survives_a_race_the_select_for_update_guard_misses(
     django_capture_on_commit_callbacks,
 ) -> None:
-    """ddia#11: ``select_for_update`` inside ``create_job`` locks a row
+    """``select_for_update`` inside ``create_job`` locks a row
     that doesn't exist yet when two requests both read ``None`` for the
     same key — it cannot stop both from proceeding to
     ``Job.objects.create``. This simulates exactly that race (patching the
@@ -217,7 +217,7 @@ def test_create_job_survives_a_race_the_select_for_update_guard_misses(
 def test_create_job_pins_step_count_from_the_registry_at_creation(
     django_capture_on_commit_callbacks,
 ) -> None:
-    """ddia#24: ``Job.step_count`` is stamped once, at creation, from
+    """``Job.step_count`` is stamped once, at creation, from
     the registry's step list — the runner totals against this column,
     never a live re-read of the registry (see
     ``keel.jobs.runner.run_job``)."""
@@ -228,7 +228,7 @@ def test_create_job_pins_step_count_from_the_registry_at_creation(
 
 
 def test_create_job_stamps_a_params_version(django_capture_on_commit_callbacks) -> None:
-    """ddia#24: every job's params carry a version tag so a resumed job
+    """Every job's params carry a version tag so a resumed job
     (or a future migration of the params shape) can tell which shape it
     was written against."""
     org = make_organization()

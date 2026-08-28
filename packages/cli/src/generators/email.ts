@@ -1,5 +1,5 @@
 /**
- * `gen email <Name>` (docs/plans/phase-19.md 19.C) — ports
+ * `gen email <Name>` — ports
  * `.claude/commands/new-email.md`'s mechanical half: the react-email
  * template (props, `{{TOKEN}}` defaults, and — when one token is a URL —
  * the button and its plain-text fallback link) and the Python sender in

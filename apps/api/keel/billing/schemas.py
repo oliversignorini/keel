@@ -1,4 +1,4 @@
-"""Billing schemas (PRD §7)."""
+"""Billing schemas."""
 
 from datetime import datetime
 from typing import Any, Literal
@@ -10,8 +10,8 @@ from pydantic import Field
 from keel.billing.models import Price
 from keel.core.schemas import KeelSchema
 
-# api-patterns finding 14: a published vocabulary, not a bare `str` — must
-# match Price.INTERVAL_CHOICES (keel/billing/models.py).
+# A published vocabulary, not a bare `str` — must match
+# Price.INTERVAL_CHOICES (keel/billing/models.py).
 PriceInterval = Literal["month", "year"]
 assert set(PriceInterval.__args__) == {choice for choice, _ in Price.INTERVAL_CHOICES}  # type: ignore[attr-defined]
 
@@ -82,7 +82,7 @@ class CheckoutIn(Schema):
 
 
 # --- Response shapes for the routes that used to return a bare dict -------
-# (api-patterns finding 4: the generated client typed each of these `void`.)
+# (without them the generated client typed each of these `void`.)
 
 
 class CheckoutSessionOut(Schema):

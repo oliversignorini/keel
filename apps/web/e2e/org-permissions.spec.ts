@@ -3,8 +3,8 @@ import path from "node:path";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
 /**
- * The load-bearing proof phase-3.md Worktree C asks for: "`<Can>` hides
- * actions; removing it client-side still yields 403 from the API." A
+ * The load-bearing proof that `<Can>` only hides actions: removing it
+ * client-side still yields 403 from the API. A
  * client-side gate can only ever decide what renders — it cannot affect
  * what a network request does, so the only real way to prove enforcement
  * lives on the server is to skip the client entirely: call the API
@@ -87,9 +87,10 @@ async function signUpAndVerify(request: APIRequestContext, email: string, passwo
 /**
  * `Invitation.token` is signed and never returned by any API response
  * (InvitationSerializer excludes it deliberately) — only the emailed link
- * carries it, and invitation emails aren't sent yet (Resend integration is
- * Phase 5). Reading it straight from the dev database is test-only
- * plumbing to drive the accept step; nothing under apps/api changes.
+ * carries it, and invitation emails aren't sent yet (the Resend
+ * integration isn't wired up). Reading it straight from the dev database
+ * is test-only plumbing to drive the accept step; nothing under apps/api
+ * changes.
  */
 function readInvitationTokenFromDb(email: string): string {
   const apiDir = path.resolve(__dirname, "../../api");
@@ -120,8 +121,8 @@ test("a Member session gets 403 insufficient_role calling the API directly — <
   await signUpAndVerify(ownerContext, ownerEmail, password);
   await signUpAndVerify(memberContext, memberEmail, password);
 
-  // Atomic org creation (phase-3.md acceptance) also seeds the three
-  // preset roles — B.1's create_organization service.
+  // Atomic org creation also seeds the three preset roles — see the
+  // create_organization service.
   const createOrgResponse = await unsafePost(ownerContext, `${API}/api/v1/orgs/`, {
     name: `Permissions Test ${Date.now()}`,
   });

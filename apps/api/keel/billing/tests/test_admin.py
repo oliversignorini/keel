@@ -90,7 +90,7 @@ def test_adjust_form_rejects_a_zero_amount():
 
 
 def test_adjust_form_rejects_a_clawback_exceeding_the_balance():
-    """ddia#5/#23: the CHECK(balance >= 0) constraint's readable
+    """The CHECK(balance >= 0) constraint's readable
     counterpart at the admin seam — a 500 would be the wrong outcome for
     an operator typo."""
     client, _ = _staff_client()

@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * PostHog, client-side (PRD §4 Integration points: "Client-side, with a
- * server-side capture helper for billing events"; docs/plans/phase-8.md
- * 8.5). No project key exists for this project yet —
+ * PostHog, client-side, with a server-side capture helper for billing
+ * events. No project key exists for this project yet —
  * `posthog.init()` without an API key never fires a network request
  * (posthog-js's own documented behaviour: it queues locally and drops),
  * so mounting the provider unconditionally is safe either way. The

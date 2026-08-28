@@ -26,8 +26,8 @@ import {
 import { ExternalLink } from "lucide-react";
 
 /**
- * `/app/[org]/settings/billing` (PRD §5 Routes; phase-4.md Worktree C:
- * "current plan, subscription state, portal link, invoice access").
+ * `/app/[org]/settings/billing` — current plan, subscription state,
+ * portal link, and invoice access.
  *
  * Invoice access is the portal link: `BillingPortalView` returns a Stripe
  * Customer Portal URL, and invoice history lives there — this API has no

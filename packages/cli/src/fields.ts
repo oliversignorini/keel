@@ -1,12 +1,12 @@
 /**
- * The `--fields` DSL (docs/plans/phase-19.md 19.A "gen resource").
+ * The `--fields` DSL for `gen resource`.
  *
  * Deliberately minimal, and deliberately not growing toward Django's field
  * API. Constraints, indexes, `Meta`, validators and cross-field rules are
  * judgement: the templates leave a marked insertion point and the slash
  * command drives an agent through filling it.
  *
- * Two additions beyond the plan's literal list, both forced by
+ * Two additions beyond that bare minimum, both forced by
  * `apps/api/keel/widgets/` having to regenerate from these templates
  * without a schema change (invariant 4 — no migration in this repo):
  *

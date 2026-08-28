@@ -1,5 +1,5 @@
 /*
- * Keel token contract (PRD §5).
+ * Keel token contract.
  *
  * A per-project brand pass (docs/brand-pass.md) replaces the values in this
  * file and nothing else. Tokens are declared on a nestable selector, not
@@ -90,5 +90,5 @@
 
 [data-surface="marketing"] {
   /* Per-surface overrides land here as projects need them. Empty by
-     default — Phase 0 ships the contract, not a marketing surface. */
+     default — the template ships the contract, not a marketing surface. */
 }

@@ -157,7 +157,7 @@ def test_permissions_registry_lists_registered_codes() -> None:
 
 
 def test_permissions_registry_publishes_denial_reason_codes() -> None:
-    """api-patterns finding 18: a client can enumerate every 403 ``code``
+    """A client can enumerate every 403 ``code``
     a denial can answer with, the same way it already enumerates
     permission codes."""
     client = _client_for(_user())
@@ -170,7 +170,7 @@ def test_permissions_registry_publishes_denial_reason_codes() -> None:
 
 
 def test_permissions_registry_sets_cache_control_and_etag() -> None:
-    """api-patterns finding 13: the registry only changes on deploy, not
+    """The registry only changes on deploy, not
     per-request."""
     client = _client_for(_user())
 

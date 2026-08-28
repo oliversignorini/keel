@@ -1,6 +1,5 @@
-"""Authorization: the vocabulary and the Ninja binding layer over it
-(PRD §4 invariant 2, "Where is authorization expressed?", and invariant
-7). One module, not split by framework (posd#13) — Django Ninja is the
+"""Authorization: the vocabulary and the Ninja binding layer over it.
+One module, not split by framework — Django Ninja is the
 only framework in this tree, so a `ninja_` prefix named nothing.
 
 **The vocabulary**: ``Decision``, the ``Guard`` protocol, the registry,
@@ -21,8 +20,8 @@ delegated to a settings-configured dotted path,
 ``keel/organizations/resolvers.py`` supplies (backed by a ``Membership``
 lookup). Returning ``None`` means "this
 slug doesn't resolve, or it does and the requester isn't an active member
-of it" — deliberately the same outcome for both, because PRD §4 invariant
-7's tenant-isolation meta-test requires cross-org access to answer 404,
+of it" — deliberately the same outcome for both, because the
+tenant-isolation meta-test requires cross-org access to answer 404,
 not 403 (a 403 would confirm the organisation exists to someone who isn't
 in it).
 
@@ -42,8 +41,8 @@ operation. The tenant-isolation meta-test (``ninja_tenant_isolation.py``)
 formats real values into that template and drives it with Django's test
 client against the live URLconf — closer to the truth than introspecting
 Ninja's ``path_operations`` would be, and it is what actually proves the
-route is wired, not merely declared (PRD §4 invariant 7's "the exemption
-list is where leaks hide" applies exactly as much to an unmounted router).
+route is wired, not merely declared (the exemption list is where leaks
+hide, and that applies exactly as much to an unmounted router).
 """
 
 from collections.abc import Iterator
@@ -64,9 +63,9 @@ from keel.core.exceptions import PermissionDeniedWithReason
 
 @dataclass(frozen=True)
 class Decision:
-    """The result of an authorization check. Not a bool — PRD §4 invariant 2
-    explains why: a denial needs a machine-readable reason (it becomes the
-    error envelope's ``code``) and structured details the caller can act on.
+    """The result of an authorization check. Not a bool: a denial needs a
+    machine-readable reason (it becomes the error envelope's ``code``) and
+    structured details the caller can act on.
     """
 
     allowed: bool
@@ -103,8 +102,8 @@ class PermissionRegistry:
     """A registry of permission codes to guards.
 
     Iteration order is insertion order and is part of the contract —
-    the guard-coverage meta-test (PRD §4 invariant 2: "every registered
-    guard has a unit test with one allow case and one deny case") walks
+    the guard-coverage meta-test (every registered guard needs a unit
+    test with one allow case and one deny case) walks
     it, so it must
     stay a stable, inspectable surface rather than a dict comprehension
     buried in a closure.
@@ -258,7 +257,7 @@ def resolve_and_authorize(
 # {400, 401, 403, 404, 409, 422, 429}: the status set the codebase's own
 # DomainError subclasses (keel.core.exceptions) actually raise across the
 # six migrated apps. Attached to every operation built through _KeelRouter
-# below (api-patterns finding 3) so the OpenAPI document — and the
+# below so the OpenAPI document — and the
 # generated TypeScript client — describes the envelope the exception
 # handlers (keel.core.error_handlers) actually produce, instead of
 # leaving every error typed ``unknown``.
@@ -318,14 +317,13 @@ def _router(*, auth: Any, **kwargs: Any) -> Router:
     can't silently miss one of the three named cases. Rate limiting is not
     wired here — it is a request-layer concern
     (``keel.core.throttle.ThrottleMiddleware``) applied uniformly ahead of
-    routing, regardless of which of these a route is mounted with (PRD §3
-    NFR "Security")."""
+    routing, regardless of which of these a route is mounted with."""
     return _KeelRouter(auth=auth, **kwargs)
 
 
 def keel_router(**kwargs: Any) -> Router:
     """A Ninja ``Router`` pre-wired with this project's deny-by-default
-    auth (PRD §4 task 1.12) — every operation goes through
+    auth — every operation goes through
     ``session_auth``."""
     return _router(auth=session_auth, **kwargs)
 
@@ -341,7 +339,8 @@ def public_router(**kwargs: Any) -> Router:
 
 def optional_auth_router(**kwargs: Any) -> Router:
     """Works signed in or signed out — every operation goes through
-    ``optional_session_auth`` (PRD §6 "Invitation"). ``request.auth`` may
+    ``optional_session_auth`` (used by the invitation flow).
+    ``request.auth`` may
     be an ``AnonymousUser``; an authenticated write still gets the CSRF
     check."""
     return _router(auth=optional_session_auth, **kwargs)

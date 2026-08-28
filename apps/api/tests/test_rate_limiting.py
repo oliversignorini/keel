@@ -1,5 +1,5 @@
-"""General API rate limiting (PRD §3 NFR "Security"): "Rate limits return
-429 with Retry-After" in the standard error envelope. allauth's own
+"""General API rate limiting: rate limits return 429 with Retry-After in
+the standard error envelope. allauth's own
 limiter covers /_allauth/*; this is the general path every
 ``/api/v1/`` request runs through — ``keel.core.throttle``'s
 ``UserRateThrottle`` / ``AnonRateThrottle``, applied by
@@ -90,8 +90,8 @@ def test_two_different_users_do_not_share_a_throttle_bucket() -> None:
 
 
 def test_check_returns_rate_limit_headers_on_success() -> None:
-    """api-patterns finding 7: a successful request under a throttled
-    scope still learns the policy, not only a request that gets 429'd."""
+    """A successful request under a throttled scope still learns the
+    policy, not only a request that gets 429'd."""
     throttle = UserRateThrottle(rate="5/min")
     user = User.objects.create_user(email="paced@example.com", password="s3cret-pass")
 

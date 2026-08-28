@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='subscription',
             name='stripe_updated_at',
-            field=models.DateTimeField(blank=True, help_text="The originating Stripe event's `created` timestamp (ddia#9) — an LWW version guard. A webhook write only applies when its event is newer than the one that wrote this row last, so an out-of-order redelivery can't resurrect a stale status.", null=True),
+            field=models.DateTimeField(blank=True, help_text="The originating Stripe event's `created` timestamp — an LWW version guard. A webhook write only applies when its event is newer than the one that wrote this row last, so an out-of-order redelivery can't resurrect a stale status.", null=True),
         ),
         migrations.AlterField(
             model_name='creditledgerentry',

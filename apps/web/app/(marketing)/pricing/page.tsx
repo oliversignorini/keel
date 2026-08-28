@@ -9,16 +9,16 @@ export const metadata: Metadata = {
 };
 
 /**
- * Incrementally regenerated rather than client-fetched: phase-4.md
- * Worktree C asks for the pricing page to be "static where it can be, so
- * PRD Phase 7's Lighthouse gate stays reachable", and a `useEffect` fetch
+ * Incrementally regenerated rather than client-fetched: the pricing page
+ * has to be static where it can be, so the Lighthouse gate stays
+ * reachable, and a `useEffect` fetch
  * would put the page's entire reason for existing behind a spinner and a
  * round trip. `GET /api/v1/plans/` is public (`PlanViewSet` is AllowAny),
  * so the render needs no session and no cookie — the one property that
  * makes this cacheable at all.
  *
  * An hour is well inside "Stripe is the source of truth, local rows are a
- * cache refreshed nightly" (phase-4.md B.1) — the page can never be more
+ * cache refreshed nightly" — the page can never be more
  * stale than the table it reads.
  */
 export const revalidate = 3600;

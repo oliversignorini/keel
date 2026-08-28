@@ -10,9 +10,9 @@ import { useOrgContext } from "@/lib/org/org-context";
 import { Button, Input, Popover, PopoverContent, PopoverTrigger, Skeleton } from "@keel/ui";
 
 /**
- * Dropdown with create-new (keel-prd.md §5 component inventory), placed
+ * Dropdown with create-new, placed
  * immediately after the logo in app/(app)/layout.tsx so tenant context is
- * always visible (§5 "Layout — top bar navigation").
+ * always visible in the top bar.
  *
  * Built on `<Popover>` rather than shadcn's `<Command>` — `@keel/ui`'s
  * barrel re-exports `CommandItem` as a type only (it's shadowed by
@@ -24,9 +24,9 @@ import { Button, Input, Popover, PopoverContent, PopoverTrigger, Skeleton } from
  * the primitive a distinct export name.
  *
  * Switching organisation pushes the new `/app/[org]` route and lets
- * `<OrgProvider>` refetch `/api/v1/me/` for it (phase-3.md: "Switching
- * organisation updates the route and refetches all data") — no client
- * state carries over between organisations.
+ * `<OrgProvider>` refetch `/api/v1/me/` for it — switching organisation
+ * updates the route and refetches all data, so no client state carries
+ * over between organisations.
  */
 export function OrgSwitcher() {
   const router = useRouter();

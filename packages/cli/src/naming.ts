@@ -1,9 +1,9 @@
 /**
- * The substitution tokens (docs/plans/phase-19.md 19.A "Templates")
- * derived from one PascalCase singular resource name.
+ * The substitution tokens derived from one PascalCase singular resource
+ * name.
  *
- * The plan names five. There are seven, and the two extra ones are the
- * UPPER_SNAKE cases — added because a `Perm` constant is UPPER_SNAKE
+ * Five would cover the obvious cases. There are seven, and the two extra
+ * ones are the UPPER_SNAKE cases — added because a `Perm` constant is UPPER_SNAKE
  * (`Perm.INVOICE_VIEW`), the generated `views.py` has to name four of
  * them, and `.toUpperCase()` is not something a token substituter can do.
  * The alternative was an insertion slot per permission reference, which

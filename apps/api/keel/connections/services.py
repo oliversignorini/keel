@@ -1,8 +1,8 @@
 """Writes for ``Connection`` (CLAUDE.md's per-app shape: ALL writes live
-here). The only write today is the key-rotation sweep (ddia#27) —
+here). The only write today is the key-rotation sweep —
 ``connections/`` is otherwise schema-only, with no create/update/delete
-service yet, because nothing in this phase adds the OAuth-connect flow
-itself.
+service, because the template ships no OAuth-connect flow itself; a
+project that adds one adds its writes here.
 """
 
 from django.db import transaction

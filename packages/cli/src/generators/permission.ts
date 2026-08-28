@@ -1,5 +1,5 @@
 /**
- * `gen permission <resource.action>` (docs/plans/phase-19.md 19.A).
+ * `gen permission <resource.action>`.
  *
  * A permission code is not one line, it is four, and a code that has only
  * some of them is broken in a way the meta-tests catch loudly and late:

@@ -1,5 +1,5 @@
 /**
- * `gen resource` and `gen readonly-resource` (docs/plans/phase-19.md 19.A).
+ * `gen resource` and `gen readonly-resource`.
  *
  * One implementation for both: a read-only resource is a resource with the
  * write paths removed, which is a set of files not emitted and one flag in

@@ -1,4 +1,4 @@
-"""Tests every row of PRD §7's error-envelope table against the shape,
+"""Tests every row of the error-envelope table against the shape,
 not only the status code — a shallow test would assert status only.
 
 Two halves. The first drives a fixture Ninja API (mounted on a test-only
@@ -116,10 +116,9 @@ def test_402_payment_required(client) -> None:
 
 
 def test_403_permission_denied_carries_decision_reason_and_denial_context(client) -> None:
-    """§4 invariant 2 / §7: code carries Decision.reason, the sibling
-    ``denial`` key carries Decision.details (api-patterns finding 17 —
-    ``details`` stays list[{field, message}] | None everywhere, including
-    here)."""
+    """``code`` carries Decision.reason, the sibling ``denial`` key
+    carries Decision.details (``details`` stays
+    list[{field, message}] | None everywhere, including here)."""
     response = client.get("/api/v1/raise/permission_denied/")
 
     assert response.status_code == 403

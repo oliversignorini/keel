@@ -40,8 +40,7 @@ export async function getSubscription(orgSlug: string): Promise<SubscriptionResp
 
 /** Requires `billing.manage`. The returned URL is Stripe's Customer
  * Portal, which is also where invoice history lives — there is no
- * separate invoice endpoint in this API (phase-4.md Worktree C's "invoice
- * access"). */
+ * separate invoice endpoint in this API. */
 export async function createPortalSession(orgSlug: string): Promise<StripeRedirectResponse> {
   const result = await createBillingPortalSession(orgSlug, { method: "POST" });
   return unwrapData(result);

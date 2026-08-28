@@ -1,7 +1,6 @@
-"""Database-level invariants added in the constraint-hardening window
-(ddia#5, ddia#23): ``CHECK`` constraints on the credit ledger and
-``PROTECT`` on ``CreditLedgerEntry.organization``/``job``, plus
-``Plan.entitlements`` shape validation (ddia#24).
+"""Database-level invariants: ``CHECK`` constraints on the credit ledger
+and ``PROTECT`` on ``CreditLedgerEntry.organization``/``job``, plus
+``Plan.entitlements`` shape validation.
 
 These deliberately write around the service layer (``credits.py`` already
 never produces an invalid row — that's what the module docstring claims

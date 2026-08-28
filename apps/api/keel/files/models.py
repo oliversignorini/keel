@@ -1,9 +1,10 @@
-"""FileUpload (PRD §4 "Data model"). Presigned direct upload from the
-browser to storage; Django issues the upload URL and records this row.
+"""FileUpload. Presigned direct upload from the browser to storage;
+Django issues the upload URL and records this row.
 
-Five states, not two (ddia#21 — an earlier model had only ``pending`` /
-``complete``; adding states to a machine that already has rows in it is
-harder than designing them in):
+Five states, not two — ``pending``/``complete`` alone cannot distinguish
+a checksum failure from an abandoned upload from a tombstone, and adding
+states to a machine that already has rows in it is harder than designing
+them in:
 
     pending --> available   (services.complete_upload: checksum verified,
                               size/content_type/etag taken from the
@@ -43,9 +44,9 @@ class FileUpload(OrgScopedModel):
         (STATUS_DELETED, "Deleted"),
     )
 
-    # ddia#21 "reconsider organization CASCADE on FileUpload": every
-    # other ``OrgScopedModel`` inherits ``CASCADE`` from the base class,
-    # which is right for rows that are pure metadata — but a
+    # ``PROTECT``, not the ``CASCADE`` every other ``OrgScopedModel``
+    # inherits from the base class. Cascade is right for rows that are
+    # pure metadata — but a
     # cascade-deleted ``FileUpload`` row silently orphans its storage
     # object forever, with no tombstone left to drive cleanup from. This
     # app's own delete path never hits that (``delete_file`` below is a
@@ -65,9 +66,9 @@ class FileUpload(OrgScopedModel):
     uploader = models.ForeignKey(
         "accounts.User", on_delete=models.PROTECT, related_name="file_uploads"
     )
-    # Display-only (ddia#21: "sanitise filename out of the object key ...
-    # keep it as a display-only column") — never interpolated into
-    # ``key``, which is generated from a uuid7 alone (services._object_key).
+    # Display-only: the client-supplied filename is never interpolated
+    # into ``key``, which is generated from a uuid7 alone
+    # (services._object_key).
     filename = models.CharField(max_length=255)
     key = models.CharField(max_length=1024, unique=True)
     content_type = models.CharField(max_length=255)

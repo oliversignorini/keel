@@ -1,4 +1,4 @@
-"""Two tasks, two different shapes (PRD §4 invariant 5), same split
+"""Two tasks, two different shapes (invariant 5), same split
 ``keel.billing.tasks`` already draws:
 
 - ``purge_deleted_file_object_task`` is Tier-1 (``keel.core.tasks``):
@@ -10,11 +10,11 @@
   ``CELERY_BEAT_SCHEDULE`` (config/settings/base.py) via
   ``config/celery.py``'s ``QUEUE_SCHEDULED`` routing, the same pattern as
   ``keel.billing.tasks.sweep_unprocessed_stripe_events``. It does two
-  independent jobs, both from ddia#21:
+  independent jobs:
 
   1. Expires ``pending`` rows nobody ever completed
-     (``FILES_PENDING_UPLOAD_TTL_SECONDS``) — "a beat sweeper for stale
-     pending rows", so an abandoned upload doesn't accumulate forever.
+     (``FILES_PENDING_UPLOAD_TTL_SECONDS``), so an abandoned upload
+     doesn't accumulate forever.
   2. Retries the object-purge for any ``deleted`` row whose
      ``object_purged`` flag never flipped — the backstop for the
      fire-and-forget dispatch above never reaching the broker at all

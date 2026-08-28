@@ -1,4 +1,4 @@
-"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7)."""
+"""``GET /api/v1/orgs/<org_slug>/audit/``."""
 
 import pytest
 from django.test import Client
@@ -29,7 +29,7 @@ def _client_for(user: User) -> Client:
 
 def test_owner_can_list_the_organizations_audit_log() -> None:
     owner = _user("owner")
-    # create_organization is itself @audited and, since ddia#17, records
+    # create_organization is itself @audited and records the row
     # inline rather than via a deferred on_commit callback that this
     # test's transactional wrapping would otherwise have silently
     # swallowed — so its own "organization.created" row is real and
@@ -77,8 +77,8 @@ def test_rows_from_another_organization_are_not_visible() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    # org_a's own "organization.created" row (ddia#17 — recorded inline
-    # now, see the sibling test above) plus the "widget.created" row
+    # org_a's own "organization.created" row (recorded inline, see the
+    # sibling test above) plus the "widget.created" row
     # created directly — org_b's rows must not appear in either count.
     assert len(body["results"]) == 2
     assert {row["action"] for row in body["results"]} == {

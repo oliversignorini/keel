@@ -1,5 +1,5 @@
 /**
- * `gen e2e <Resource>` — the ship gate (docs/plans/phase-19.md 19.B).
+ * `gen e2e <Resource>` — the ship gate.
  *
  * Not a scaffolder in the sense the other generators are: it writes one
  * Playwright spec for the happy CRUD path against the `--ui` pages, then
@@ -13,12 +13,12 @@
  * Deliberately not part of `--ui`: a `test.skip`'d spec that ships is a
  * test that never runs, so this only exists as its own explicit step.
  *
- * The spec assumes the page contract `templates/ui/` (slice 19.C) is
- * responsible for: a "New <Resource>" link on the list page, a form field
- * per resource field labelled with the field's name, a "Save"/"Create"
- * submit button, and a "Delete" action on the detail page. If 19.C's
- * templates end up shaped differently, this generator's selectors are the
- * contract to update, not the pages.
+ * The spec assumes the page contract `templates/ui/` is responsible for:
+ * a "New <Resource>" link on the list page, a form field per resource
+ * field labelled with the field's name, a "Save"/"Create" submit button,
+ * and a "Delete" action on the detail page. If those templates end up
+ * shaped differently, this generator's selectors are the contract to
+ * update, not the pages.
  */
 
 import * as fs from "node:fs";

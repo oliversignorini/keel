@@ -4,8 +4,7 @@ One channel per organisation rather than per job: ``<JobTray>`` shows
 every job an organisation has in flight at once, and a single
 subscription that carries every job's events is one connection per
 browser tab instead of one per running job — relevant given HTTP/1.1's
-six-connections-per-host cap the plan calls out as the third, smaller
-footgun.
+six-connections-per-host cap.
 
 The publisher (this module, used from ``keel/jobs/runner.py``, a sync
 Celery task) uses the sync ``redis`` client. The subscriber
@@ -14,7 +13,7 @@ Celery task) uses the sync ``redis`` client. The subscriber
 messages are just bytes on a channel name.
 
 Every event carries a ``seq``: a per-organisation counter (``INCR``,
-atomic) stamped on the way out (ddia#16). Redis pub/sub is at-most-once
+atomic) stamped on the way out. Redis pub/sub is at-most-once
 with no buffer — a client that is disconnected when an event publishes
 never receives it, and a bare event stream gives the client no way to
 even notice a gap. ``seq`` doesn't fix that on its own (there is nothing
@@ -24,7 +23,7 @@ the ``seq`` on the first event it receives against the last one it saw
 before disconnecting and, on any gap, refetches ``GET
 /orgs/<org_slug>/jobs/`` (already the source of truth for job state) to
 resynchronise rather than trusting a stream it knows skipped something.
-This is the cheaper of the two fixes the ddia review names — a move to
+This is the cheaper of the two available fixes — a move to
 Redis Streams (``XADD``/``XRANGE`` with ``Last-Event-ID`` replay) buys
 true resumability, at the cost of a second Redis data structure and a
 retention policy for it. The tray only ever needs "am I looking at the

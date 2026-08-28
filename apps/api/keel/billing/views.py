@@ -1,4 +1,4 @@
-"""Billing views (PRD §7).
+"""Billing views.
 ``CheckoutSessionView``/``BillingPortalView``/``SubscriptionView``/
 ``CreditBalanceView`` resolve ``org_slug`` and act on *the* subscription
 for that organisation directly via ``resolve_and_authorize`` — there is
@@ -6,12 +6,11 @@ no separate addressable row id in the URL for a cross-org leak to hide
 behind (the same reasoning ``keel.organizations.views.organization_detail``
 documents), so none of these is an ``OrgScopedResource``.
 
-``GET /api/v1/plans/`` (PRD §7's "three allowed changes"):
-now cursor-paginated like every other collection, ordered
-``(sort_order, code)`` — ``code`` is unique, so that ordering is a valid
-total order for ``CursorPaginator`` (see its module docstring on why the
-tuple must end in a unique tiebreaker). It stops being the one
-unpaginated collection PRD §7 calls out as a deviation.
+``GET /api/v1/plans/`` is cursor-paginated like every other collection,
+ordered ``(sort_order, code)`` — ``code`` is unique, so that ordering is
+a valid total order for ``CursorPaginator`` (see its module docstring on
+why the tuple must end in a unique tiebreaker), leaving no unpaginated
+collection on this router.
 """
 
 from typing import Any
@@ -79,7 +78,7 @@ def list_plans(
     limit: int | None = None,
 ) -> dict:
     queryset = selectors.list_active_plans()
-    # api-patterns finding 13: a Reference Data Holder — catalogue data,
+    # A Reference Data Holder — catalogue data,
     # unauthenticated, long-lived. The ETag covers both plans and prices
     # (a price change doesn't touch Plan.updated_at) plus the page the
     # caller asked for, since a cursor/limit change is a different
@@ -181,9 +180,9 @@ def stripe_webhook(request: HttpRequest) -> HttpResponse:
     try:
         event = stripe_client.verify_webhook_signature(payload=request.body, sig_header=sig_header)
     except stripe.SignatureVerificationError:
-        # Unsigned or wrongly-signed: 400, change nothing, no retry (PRD
-        # §6) — no StripeEvent row is written for a payload that never
-        # proved it came from Stripe.
+        # Unsigned or wrongly-signed: 400, change nothing, no retry — no
+        # StripeEvent row is written for a payload that never proved it
+        # came from Stripe.
         return HttpResponse(status=400)
 
     stripe_event, created = StripeEvent.objects.get_or_create(
@@ -192,13 +191,13 @@ def stripe_webhook(request: HttpRequest) -> HttpResponse:
     )
     if created or stripe_event.processed_at is None:
         # Re-enqueue on every unprocessed replay, not just on first sight
-        # (ddia#7): if the row committed but the first .delay() never
+        # if the row committed but the first .delay() never
         # reached the broker, `created` is False forever on redelivery and
         # the event would otherwise sit unprocessed with no way to
         # recover. Safe because process_stripe_event is a no-op on an
         # event it has already processed.
         tasks.dispatch_stripe_event.delay(str(stripe_event.pk))
     # Already processed, freshly created, or re-enqueued above: either way
-    # this is a 200 — idempotent no-op for a replay (PRD §6, "Already
-    # processed → 200 immediately").
+    # this is a 200 — an already-processed event is an idempotent no-op
+    # for a replay.
     return HttpResponse(status=200)

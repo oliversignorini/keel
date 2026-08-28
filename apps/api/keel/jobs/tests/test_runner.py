@@ -246,7 +246,7 @@ def test_run_job_task_dead_lettering_reports_the_exception_to_sentry(settings) -
 
 
 def test_run_job_renews_the_concurrency_lease_at_each_step_boundary() -> None:
-    """ddia#15: ``LEASE_SECONDS`` is never renewed by ``try_acquire``
+    """``LEASE_SECONDS`` is never renewed by ``try_acquire``
     alone (it is only called once, before ``run_job`` starts) — a job
     whose steps together outlive the lease must not silently lose its
     slot partway through."""
@@ -278,7 +278,7 @@ def test_a_saturated_organization_retries_without_dead_lettering(settings) -> No
         # retries inline (no real sleep) — see
         # keel/core/tests/test_tasks_retry.py's `flaky` test for the
         # same pattern against the shim — so this completes in-process.
-        # `renew` (ddia#15's step-boundary heartbeat) calls `try_acquire`
+        # `renew` (the step-boundary heartbeat) calls `try_acquire`
         # too, so the mock must keep returning True for every call after
         # the slot is actually won, not just the one that wins it.
         acquisitions = iter([False, False, True])

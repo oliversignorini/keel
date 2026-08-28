@@ -242,7 +242,7 @@ def test_check_limit_raises_unregistered_resource_for_an_unknown_resource() -> N
 
 
 def test_check_limit_raises_unregistered_resource_even_when_absent_from_limits() -> None:
-    """ddia#24: a typo'd resource name must not fail open just because
+    """A typo'd resource name must not fail open just because
     the plan's ``limits`` dict happens not to mention it — that used to
     be indistinguishable from a deliberately uncapped, *known* resource.
     No subscription at all is the sharpest case: `entitlements["limits"]`

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Typed frontmatter for MDX blog posts (phase-7.md 7.4). Kept out of
+/** Typed frontmatter for MDX blog posts. Kept out of
  * content-collections.ts, which also imports @content-collections/mdx —
  * that pulls in esbuild, which breaks under Vitest's jsdom environment
  * (see content-collections.test.ts). */

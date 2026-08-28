@@ -8,8 +8,8 @@ from keel.audit.models import AuditLog
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    """Append-only, same discipline as ``CreditLedgerEntryAdmin``
-    (ddia#19): a log a staff user can edit or delete through the admin —
+    """Append-only, same discipline as ``CreditLedgerEntryAdmin``:
+    a log a staff user can edit or delete through the admin —
     including rows recording their own actions — is not a log."""
 
     list_display = ("action", "organization", "actor", "target_type", "created_at")

@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * `axe-core` on the authenticated app — not just the auth/marketing
- * routes earlier phases covered (docs/plans/phase-8.md 8.7: "not just
- * the auth ones Phase 2 covered — marketing, app, settings, widgets").
+ * `axe-core` on the authenticated app — not just the auth routes, but
+ * marketing, app, settings and widgets too.
  * Zero violations, WCAG 2.1 AA as the floor.
  *
  * Also proves the production CSP failure mode named in the brief

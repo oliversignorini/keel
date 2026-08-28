@@ -6,10 +6,9 @@ import { EntitlementGate } from "./entitlement-gate";
 import { createInvitation } from "@/lib/org/api";
 
 /**
- * phase-4.md Worktree C, the load-bearing one: "The client renders from
- * the permission and entitlement lists in `/me`. It is never the
- * enforcement point. Removing a gate client-side must still yield 402
- * from the API — test that."
+ * The load-bearing rule: the client renders from the permission and
+ * entitlement lists in `/me`, and is never the enforcement point.
+ * Removing a gate client-side must still yield 402 from the API.
  *
  * This is the entitlement twin of e2e/org-permissions.spec.ts (which
  * proves the same thing for `<Can>` and 403, against a live server). It
@@ -21,8 +20,8 @@ import { createInvitation } from "@/lib/org/api";
  * `PaymentRequiredError` the caller cannot mistake for success.
  *
  * The endpoint used is invitations, because the seat limit is the one
- * entitlement the PRD's acceptance list names as a live 402 ("Adding a
- * member beyond the seat entitlement returns 402 with upgrade context").
+ * entitlement that raises a live 402: adding a member beyond the seat
+ * entitlement returns 402 with upgrade context.
  * The proof that the *server* actually raises it lives where it belongs,
  * in apps/api/keel/billing/tests/test_entitlements.py — `check_feature`
  * and `check_limit` raise `PaymentRequired` with no client in the picture
@@ -90,7 +89,7 @@ describe("<EntitlementGate> is presentation only", () => {
   });
 
   it("gives the caller the upgrade context the API sent, not a bare failure", async () => {
-    // PRD §8 Phase 4: "returns 402 with upgrade context" — the client must
+    // The API returns 402 with upgrade context — the client must
     // surface *what* is over, which is what the gate's prompt and a
     // caller's error message are both built from.
     const error = await createInvitation("acme", {

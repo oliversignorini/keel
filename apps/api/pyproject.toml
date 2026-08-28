@@ -76,20 +76,17 @@ ignore_missing_imports = true
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
 
-# Per-directory coverage gate (PRD §4, invariant 7), enforced by
+# Per-directory coverage gate (invariant 7), enforced by
 # scripts/check_coverage.py — see that file for the mechanism.
 #
-# Empty in Phase 0 on purpose: every row in the PRD's coverage table
-# (services.py, keel/domain/, organizations/permissions.py,
-# billing/credits.py, Stripe webhooks, adapters) names a path that Phase 0
-# is explicitly forbidden from creating. Phase 1 onward adds a glob the
-# moment the path it covers exists, per "paths that do not exist yet
-# omitted" in docs/plans/phase-0.md task 0.8.
+# A path earns a row here only once it exists: a glob naming a directory
+# that has not been created yet gates nothing while reading as though it
+# did.
 #
 # keel/core is the first real obligation: the authz registry, the
 # exception handler, the pagination class, the audit decorators, the
 # crypto seam and the id generator are all load-bearing and all cheap to
-# test — 100% is what this phase actually achieved, not an aspiration.
+# test — 100% is what these modules actually achieve, not an aspiration.
 # Modules listed explicitly rather than "keel/core/*.py": fnmatch's "*"
 # matches "/" too, so a single-segment glob would also reach
 # keel/core/tests/*.py, where a fixture function's body legitimately
@@ -108,15 +105,14 @@ django_settings_module = "config.settings.test"
 "keel/core/crypto.py" = 100
 "keel/core/logging.py" = 100
 "keel/core/middleware.py" = 100
-# Permission registry (PRD §4 invariant 2, phase-3.md A.1-A.4) — the two
+# Permission registry (invariant 2) — the two
 # CI meta-tests are the specified enforcement mechanism for guard test
 # coverage; 100% here catches ordinary dead code the meta-tests wouldn't
 # (an unreachable branch inside a guard, an unused helper).
 "keel/organizations/permissions.py" = 100
 "keel/organizations/resolvers.py" = 100
 "keel/organizations/roles.py" = 100
-# The credit ledger arithmetic (PRD §4 "Credits — the metered-billing
-# primitive", invariant 7; phase-4.md A.1) — pure arithmetic over rows,
+# The credit ledger arithmetic (invariant 7) — pure arithmetic over rows,
 # so 100% is the achievable floor rather than an aspiration.
 "keel/billing/credits.py" = 100
 
@@ -129,7 +125,7 @@ include_external_packages = true
 # "keel.domain" on purpose: import-linter raises a hard error if a literal
 # source module name does not exist in the graph, which would make this
 # contract fail the build outright while keel/domain/ is absent, rather
-# than pass silently as PRD §4 invariant 1 requires. A wildcard expression
+# than pass silently as invariant 1 requires. A wildcard expression
 # resolves to an empty set (not an error) when nothing matches, and
 # matches every module added under keel/domain/ once the directory exists.
 name = "keel.domain is independent"
@@ -155,7 +151,7 @@ type = "forbidden"
 source_modules = ["keel.core"]
 forbidden_modules = ["keel.organizations"]
 
-# Bandit (docs/plans/phase-9.md 9.C). Runs over keel/ in the `lint` job,
+# Bandit. Runs over keel/ in the `lint` job,
 # invoked with `-x '*/tests/*,*/migrations/*'` — CLI excludes, not
 # exclude_dirs here, because bandit's config-file exclude_dirs matches
 # directory names, not globs, and silently fails to exclude

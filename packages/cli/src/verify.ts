@@ -1,11 +1,11 @@
 /**
- * The DB-free gates (docs/plans/phase-19.md 19.A "Verification").
+ * The DB-free gates.
  *
- * "After writing, run the DB-free gates and exit non-zero on failure:
- * makemigrations --check --dry-run, uv run lint-imports,
+ * After writing, the generator runs the DB-free gates and exits non-zero
+ * on failure: makemigrations --check --dry-run, uv run lint-imports,
  * scripts/check_permission_lint.py. Nothing that needs Postgres — the
  * generator must work in a worktree where `docker compose up` has never
- * been run."
+ * been run.
  *
  * `makemigrations` is run first and for real (not --check) when the app is
  * brand new, because a generated app with no migration cannot pass

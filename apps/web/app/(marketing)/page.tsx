@@ -26,7 +26,7 @@ const FEATURES = [
   },
 ];
 
-/** Restrained on purpose (phase-7.md 7.2): this is a template, and a
+/** Restrained on purpose: this is a template, and a
  * boilerplate with a strong identity is one every project has to fight.
  * Structure and semantics over decoration — a brand pass replaces
  * packages/ui/theme.css and nothing else should need to change. */

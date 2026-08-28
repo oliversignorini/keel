@@ -1,15 +1,14 @@
 /**
- * Hand-written types for the billing API surface (PRD §7; phase-4.md
- * Worktree C).
+ * Hand-written types for the billing API surface.
  *
- * Phase 10 (DRF -> Django Ninja) gave the checkout, portal, subscription
+ * The DRF -> Django Ninja migration gave the checkout, portal, subscription
  * and credit-balance routes real generated schemas (`CheckoutSessionOut`,
  * `BillingPortalOut`, `SubscriptionEnvelopeOut`, `CreditBalanceOut` —
  * `apps/api/keel/billing/schemas.py`), so the shapes those routes used to
  * need hand-transcribed here are now aliases onto the generated type.
  *
- * Phase 14 did the same for `Plan.entitlements` (api-patterns finding
- * 15): it's a real `EntitlementsOut` schema now, not a `Record<string,
+ * The same was done for `Plan.entitlements`: it's a real
+ * `EntitlementsOut` schema now, not a `Record<string,
  * unknown>` JSONField blob — `PlanEntitlements`/`ResolvedEntitlements`
  * below are aliases onto the generated type, kept only so call sites
  * don't have to import `EntitlementsOut` under two different names for

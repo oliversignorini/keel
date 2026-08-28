@@ -1,5 +1,5 @@
-"""Webhook LWW ordering guard and invoice.paid's narrowed transition
-(ddia#9): Stripe guarantees neither delivery order nor at-most-once
+"""Webhook LWW ordering guard and invoice.paid's narrowed transition:
+Stripe guarantees neither delivery order nor at-most-once
 delivery, so handlers called directly here simulate what an out-of-order
 redelivery looks like — the same shape ``test_webhooks_posthog.py`` uses,
 not a real HTTP round trip (that's ``test_webhooks_replay.py``'s job)."""

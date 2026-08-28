@@ -1,4 +1,4 @@
-"""Schemas for the file-upload endpoints (PRD §5)."""
+"""Schemas for the file-upload endpoints."""
 
 from datetime import datetime
 from typing import Literal
@@ -9,8 +9,8 @@ from pydantic import Field
 from keel.core.schemas import KeelSchema
 from keel.files.models import FileUpload
 
-# api-patterns finding 14: a published vocabulary, not a bare `str` — must
-# match FileUpload.STATUS_CHOICES (keel/files/models.py).
+# A published vocabulary, not a bare `str` — must match
+# FileUpload.STATUS_CHOICES (keel/files/models.py).
 FileUploadStatus = Literal["pending", "available", "failed", "expired", "deleted"]
 assert set(FileUploadStatus.__args__) == {choice for choice, _ in FileUpload.STATUS_CHOICES}  # type: ignore[attr-defined]
 

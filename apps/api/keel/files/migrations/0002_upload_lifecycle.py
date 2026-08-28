@@ -1,6 +1,5 @@
 # See keel/files/models.py for the state machine this backs and the
-# reasoning behind each constraint below (ddia#21, ddia review "Schema
-# evolution" §23).
+# reasoning behind each constraint below.
 
 import django.db.models.deletion
 from django.db import migrations, models
@@ -68,7 +67,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="fileupload",
             name="organization",
-            # ddia#21 "reconsider organization CASCADE on FileUpload":
             # PROTECT instead of the OrgScopedModel-inherited CASCADE, so
             # a hard-deleted Organization can never silently orphan a
             # storage object with no tombstone left to clean it up.

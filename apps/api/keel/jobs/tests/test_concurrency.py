@@ -84,7 +84,7 @@ def test_default_limit_reads_settings(settings) -> None:
 
 
 def test_renew_refreshes_a_held_slot_without_consuming_another() -> None:
-    """ddia#15: the step-boundary heartbeat (``run_job``) calls this —
+    """The step-boundary heartbeat (``run_job``) calls this —
     proves it succeeds for a slot already held even when the semaphore is
     fully saturated, and that it does not itself count as a new
     acquisition."""
@@ -97,7 +97,7 @@ def test_renew_refreshes_a_held_slot_without_consuming_another() -> None:
 
 
 def test_acquire_reads_time_from_redis_not_the_caller() -> None:
-    """ddia#15: a worker with a skewed local clock must not decide expiry
+    """A worker with a skewed local clock must not decide expiry
     — this module must not import ``time`` at all, so there is nothing
     for a caller's clock to feed in; ``TIME`` is read inside the Lua
     script from Redis's own clock instead."""

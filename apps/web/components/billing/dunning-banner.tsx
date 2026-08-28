@@ -10,9 +10,8 @@ import type { Subscription } from "@/lib/billing/types";
 import { Perm } from "@/lib/org/permissions";
 
 /**
- * Dunning banner (phase-4.md B.6, and the acceptance box "`payment_failed`
- * puts the org into a dunning state; the banner appears; access is not
- * immediately revoked").
+ * Dunning banner. A `payment_failed` webhook puts the org into a dunning
+ * state and this banner appears; access is not immediately revoked.
  *
  * `status === "past_due"` is the dunning state — set by
  * billing/webhooks.py's `_handle_invoice_payment_failed` and cleared on

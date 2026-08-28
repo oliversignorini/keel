@@ -57,7 +57,7 @@ def test_rebuild_creates_the_balance_row_when_one_never_existed():
     assert CreditBalance.objects.get(organization=org).balance == 15
 
 
-# --- --check: report, don't repair (ddia#4) ---------------------------------
+# --- --check: report, don't repair -------------------------------------------
 
 
 def test_check_mode_reports_no_drift_and_writes_nothing():

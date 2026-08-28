@@ -62,7 +62,7 @@ def test_missing_key_raises_improperly_configured(settings) -> None:
         raise AssertionError("encrypt() with no configured key should raise ImproperlyConfigured")
 
 
-# --- Key rotation (ddia#27) -------------------------------------------------
+# --- Key rotation -----------------------------------------------------------
 
 
 def test_ciphertext_written_with_the_old_key_still_decrypts_after_rotation(settings) -> None:

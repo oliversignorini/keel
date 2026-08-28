@@ -1,4 +1,4 @@
-"""Database-level guarantees (ddia#12) and the provenance hook (the
+"""Database-level guarantees and the provenance hook (the
 smallest thing that answers what produced this row, from what input,
 by which job run)."""
 

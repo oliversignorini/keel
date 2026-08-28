@@ -10,8 +10,8 @@ import { useEffect } from "react";
  * `sentry.client.config.ts`'s automatic instrumentation doesn't already
  * cover — Next requires an explicit `global-error.tsx` to be notified at
  * all). Renders Next's own default error UI; the only addition is the
- * capture call (PRD §4: "a deliberate error appears in Sentry with the
- * correct release and readable stack"; docs/plans/phase-8.md 8.4).
+ * capture call, so that a deliberate error appears in Sentry with the
+ * correct release and a readable stack.
  */
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {

@@ -1,15 +1,15 @@
 /**
- * Typed errors for the Keel error envelope (keel-prd.md v1.2 §7):
+ * Typed errors for the Keel error envelope:
  *   { "error": { "code": "...", "message": "...", "details": [{ field, message }] } }
  *
  * `details` is always this one shape — list[{field, message}] | null — even
  * for a 403: structured denial context (which permission was required, which
  * invariant blocked the action) rides in a sibling `denial` key instead of
- * overloading `details` with a second shape (api-patterns finding 17).
+ * overloading `details` with a second shape.
  * `ForbiddenError` is where `denial` actually appears; every other error
  * class exposes it too for uniformity, always empty there.
  *
- * allauth's own headless endpoints (used directly by Phase 2) reply with a
+ * allauth's own headless endpoints (called directly by the auth flows) reply with a
  * different shape — { status, errors: [{ code, param, message }] } — so
  * normalizeErrorEnvelope() (./normalize-envelope.ts) adapts both into this
  * one envelope before an error class is chosen. One status maps to exactly
@@ -26,7 +26,7 @@ export interface ApiErrorEnvelope {
   code: string;
   message: string;
   details?: ApiErrorDetail[];
-  /** Structured 403 denial context (api-patterns finding 17/18) — e.g.
+  /** Structured 403 denial context — e.g.
    * `{ required: "members.remove" }` or `{ membership_id: "..." }`. The
    * permission code required (or the reason code itself) is enumerable
    * via `GET /api/v1/permissions/`'s `denial_reasons`. */

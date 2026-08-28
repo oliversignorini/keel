@@ -1,9 +1,9 @@
 /**
- * Human labels for `Plan.entitlements.features` codes (phase-7.md 7.3,
- * defect 1: the pricing page rendered raw codes like `api_access`
- * straight from the API). This is the one place a label is registered —
- * Phase 9's `/new-resource` adds entitlements and should add its label
- * here, not wherever the pricing page happens to render them.
+ * Human labels for `Plan.entitlements.features` codes — without them the
+ * pricing page renders raw codes like `api_access` straight from the
+ * API. This is the one place a label is registered: a generated resource
+ * that adds entitlements should add its label here, not wherever the
+ * pricing page happens to render them.
  *
  * A code with no entry here still renders — humanised from its snake_case
  * form — so a plan is never missing a feature just because its label

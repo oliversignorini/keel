@@ -1,6 +1,6 @@
 /**
  * `gen sync-client` — the five steps of `.claude/commands/sync-client.md`
- * as code (docs/plans/phase-19.md 19.A).
+ * as code.
  *
  * This is the only generator that touches `openapi.merged.json` or
  * `packages/api-client/src/generated`, and `docs/review-2026-08.md` rule 3

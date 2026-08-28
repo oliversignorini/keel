@@ -41,8 +41,7 @@ function jobProgress(job: { steps: { status: string | null }[] }): number {
 }
 
 /**
- * `<JobTray>` (PRD §5 component inventory; docs/plans/phase-5.md 5.6):
- * live job status over SSE via `useJobStream`, which itself covers reload
+ * `<JobTray>`: live job status over SSE via `useJobStream`, which itself covers reload
  * survival (a fresh REST fetch on mount) and polling fallback.
  *
  * A fixed, collapsible panel rather than a modal `<Sheet>` — jobs are

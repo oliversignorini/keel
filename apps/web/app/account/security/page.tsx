@@ -81,7 +81,7 @@ type TotpState =
 
 // `/_allauth/browser/v1/account/authenticators/totp` only exists in the
 // generated client's spec when `KEEL_MFA_ENABLED` is on at generation time
-// (docs/auth-client-contract.md) — it's off by default (PRD §8 Phase 2),
+// (docs/auth-client-contract.md) — it's off by default,
 // so `packages/api-client` has no typed `totpGet`/`totpActivate`/
 // `totpDeactivate` to import right now. This calls the same routes
 // directly through the generated transport (identityFetch — same CSRF

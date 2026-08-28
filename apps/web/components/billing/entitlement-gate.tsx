@@ -45,9 +45,9 @@ interface EntitlementGateProps {
 
 /**
  * Renders `children` only while the current organisation's resolved
- * entitlements (from `/api/v1/me/`, PRD §7) include `feature`; otherwise
+ * entitlements (from `/api/v1/me/`) include `feature`; otherwise
  * an upgrade prompt **naming the plan the visitor needs, not the feature
- * they lack** (phase-4.md Worktree C).
+ * they lack**.
  *
  * PRESENTATION ONLY, exactly like `<Can>` (components/org/can.tsx) — but
  * gating on entitlements rather than permission codes, and with one extra
@@ -63,8 +63,8 @@ interface EntitlementGateProps {
  *
  * There is no real feature to wire this into yet: `check_feature` has no
  * caller in the API outside its own tests, because the feature surface it
- * would gate is Phase 5's. So this ships as a tested component with a
- * fixed props contract, not as a gate around something.
+ * would gate doesn't exist yet. So this ships as a tested component with
+ * a fixed props contract, not as a gate around something.
  */
 export function EntitlementGate({ feature, children, fallback }: EntitlementGateProps) {
   const { currentOrg, loading } = useOrgContext();

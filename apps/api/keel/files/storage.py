@@ -43,9 +43,8 @@ _CHUNK_SIZE = 1024 * 1024
 @dataclass(frozen=True)
 class ObjectMetadata:
     """What ``head_object`` reports about an object actually present in
-    storage — the server's own observation, never the client's claim
-    (ddia#21: "take size/content_type/etag from HeadObject not the
-    client")."""
+    storage — the server's own observation, never the client's claim:
+    size, content type and etag all come from ``HeadObject``."""
 
     size: int
     content_type: str

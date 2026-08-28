@@ -17,7 +17,7 @@ function matchesPrefix(pathname: string, prefixes: string[]): boolean {
  * API for every request; this function exists purely to avoid flashing a
  * protected page at a visitor with no cookie at all.
  *
- * Phase 11 (docs/adr/0002-auth-bff-shape.md): this used to also redirect
+ * See docs/adr/0002-auth-bff-shape.md: this used to also redirect
  * a visitor with a session cookie *away* from `/login`/`/signup`, as a
  * "don't show the auth forms to someone plainly already logged in"
  * convenience. That heuristic is unsound in exactly the way its own

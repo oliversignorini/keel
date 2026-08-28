@@ -24,9 +24,9 @@ export interface CreditMeterState {
 interface CreditMeterProps {
   orgSlug: string;
   /**
-   * Pre-flight mode (phase-4.md Worktree C: "pre-flight estimate on the
-   * confirm dialog"). The dialog itself is Phase 5's — there is no job to
-   * confirm yet — so this is a prop a future dialog passes rather than a
+   * Pre-flight mode: a cost estimate on a confirm dialog. The dialog
+   * itself doesn't exist yet — there is no job to
+   * confirm — so this is a prop a future dialog passes rather than a
    * dialog this component invents. With it set, the meter states the cost
    * against the balance and warns when the balance can't cover it.
    */
@@ -41,7 +41,7 @@ interface CreditMeterProps {
 }
 
 /**
- * The credit balance (PRD §4 "Credits"; phase-4.md Worktree C).
+ * The credit balance.
  *
  * Renders **nothing at all** when credits are disabled, and issues no
  * request to find that out — see lib/billing/credits-flag.ts for why the

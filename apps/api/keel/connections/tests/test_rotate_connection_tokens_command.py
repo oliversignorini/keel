@@ -1,4 +1,4 @@
-"""``python manage.py rotate_connection_tokens`` (ddia#27)."""
+"""``python manage.py rotate_connection_tokens``."""
 
 import pytest
 from cryptography.fernet import Fernet

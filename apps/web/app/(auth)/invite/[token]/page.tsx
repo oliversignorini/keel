@@ -11,8 +11,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 /**
- * `/invite/[token]` (PRD §5 Routes, §6 "Invitation"; phase-3.md Worktree
- * C: "all four outcomes, with copy that does not leak").
+ * `/invite/[token]` — the invitation flow, covering all four outcomes
+ * with copy that does not leak which one occurred.
  *
  * All four outcomes are driven by two calls, never more:
  *

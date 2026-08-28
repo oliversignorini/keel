@@ -2,11 +2,10 @@ import { expect, test } from "@playwright/test";
 
 /**
  * Signup, login, logout, and password reset, driven through the real
- * Django API and caught at Mailpit (localhost:8025) per B.5 — the PRD
- * requires the verification email be caught there rather than stubbed.
- * These require p2-auth-api's allauth setup to be running; until then they
- * fail on the first API call, which is the honest state of Phase 2 while
- * the two worktrees are still concurrent.
+ * Django API and caught at Mailpit (localhost:8025) — the verification
+ * email has to be caught there rather than stubbed.
+ * These require the allauth setup to be running; until then they
+ * fail on the first API call.
  */
 
 const MAILPIT_API = "http://localhost:8025/api/v1";
@@ -108,7 +107,7 @@ test("login with valid credentials establishes a session and logout ends it", as
   expect(sessionCookie?.httpOnly).toBe(true);
   expect(sessionCookie?.sameSite).toBe("Lax");
 
-  // Phase 11 acceptance: no auth token anywhere JS can read it — the
+  // No auth token anywhere JS can read it — the
   // session lives only in the HttpOnly cookie above. `document.cookie`
   // never includes an HttpOnly cookie by construction, so checking it's
   // empty of "sessionid" doubles as the assertion that the cookie really

@@ -190,7 +190,7 @@ def test_has_perm_is_reexported_from_organizations_permissions() -> None:
 
 
 def test_registered_denial_reasons_lists_every_deny_case_code() -> None:
-    """api-patterns finding 18: the published set can't drift from what the
+    """The published set can't drift from what the
     guards above actually raise, because it's derived from the same
     ``DenialReason`` constants they use."""
     assert registered_denial_reasons() == sorted(

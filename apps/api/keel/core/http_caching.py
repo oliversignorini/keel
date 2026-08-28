@@ -1,6 +1,6 @@
-"""Conditional-request headers for Reference Data Holders (api-patterns
-finding 13) — long-lived, read-only collections like ``GET /api/v1/plans/``
-and ``GET /api/v1/permissions/``. The pattern's own caveat applies: this
+"""Conditional-request headers for reference data — long-lived,
+read-only collections like ``GET /api/v1/plans/``
+and ``GET /api/v1/permissions/``. The usual caveat applies: this
 saves bandwidth on a repeat request, not the query itself — callers still
 run their lookup, this only decides what headers ride along with it.
 """
@@ -24,8 +24,8 @@ def compute_etag(*parts: Any) -> str:
 
 def set_reference_data_cache_headers(response: HttpResponse, *etag_parts: Any) -> None:
     """Sets ``Cache-Control`` and ``ETag`` on ``response``. No server-side
-    conditional-GET short-circuit here — that's a separate decision
-    (api-patterns finding 13 is explicit: don't stack it with this one) —
-    this is the client/proxy-cacheability half only."""
+    conditional-GET short-circuit here — that's a separate decision, and
+    deliberately not stacked on this one; this is the
+    client/proxy-cacheability half only."""
     response["Cache-Control"] = CACHE_CONTROL_REFERENCE_DATA
     response["ETag"] = compute_etag(*etag_parts)

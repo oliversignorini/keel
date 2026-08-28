@@ -1,4 +1,4 @@
-"""Presigned direct upload (PRD §5): Django issues the upload URL and records
+"""Presigned direct upload: Django issues the upload URL and records
 ``FileUpload``; the browser uploads straight to storage; the row reaches
 ``available``. See ``keel.files.models`` for the full state machine."""
 
@@ -23,7 +23,7 @@ _SAFE_EXTENSION_RE = re.compile(r"^[A-Za-z0-9]{1,10}$")
 # Filename is display-only (never part of the storage key — see
 # _object_key below) but still gets rendered back to the uploader's own
 # browser, so control characters and path separators are stripped here
-# rather than trusted through (ddia#21).
+# rather than trusted through.
 _UNSAFE_FILENAME_CHARS_RE = re.compile(r"[\x00-\x1f/\\]")
 
 
@@ -43,10 +43,9 @@ def _object_key(*, organization_id: Any, filename: str) -> str:
     """Organisation-scoped by construction, not merely by convention: the
     org id is the key's first path segment, so a presigned URL for one
     organisation's upload can never collide with — or be guessed into —
-    another's. The uploader's filename is
-    deliberately *not* interpolated here (ddia#21: "sanitise filename out
-    of the object key") — only a whitelisted extension survives, so a
-    filename can never change the key's shape or traverse a path."""
+    another's. The uploader's filename is deliberately *not* interpolated
+    here — only a whitelisted extension survives, so a filename can never
+    change the key's shape or traverse a path."""
     return f"org/{organization_id}/{uuid7()}{_safe_extension(filename)}"
 
 
@@ -119,13 +118,12 @@ def _fail(file_upload: FileUpload, *, reason: str) -> FileUpload:
 )
 def complete_upload(*, file_upload: FileUpload) -> FileUpload:
     """Moves ``file_upload`` to ``available`` only once the object is
-    actually confirmed present in storage (PRD §5.6's acceptance
-    criterion is "reaches complete", not "was told to") — trusting the
-    browser's completion call alone would let a client mark a row
-    available for a PUT that failed or never happened.
+    actually confirmed present in storage — trusting the browser's
+    completion call alone would let a client mark a row available for a
+    PUT that failed or never happened.
 
     Every fact recorded below comes from the storage provider's own
-    ``HeadObject``, never from the client (ddia#21) — ``size`` and
+    ``HeadObject``, never from the client — ``size`` and
     ``content_type`` are overwritten with what was actually observed,
     and the checksum the client declared at create time is verified
     against the actual bytes (``storage.compute_sha256``) before the row
@@ -134,9 +132,9 @@ def complete_upload(*, file_upload: FileUpload) -> FileUpload:
     ``failed`` instead of raising into a 500, since a corrupted or
     policy-violating upload is an expected outcome, not a bug.
 
-    Every transition is a guarded ``UPDATE ... WHERE status = pending``
-    (ddia#21), not an unconditional assignment: two concurrent
-    completion calls for the same upload both pass the ``head_object``
+    Every transition is a guarded ``UPDATE ... WHERE status = pending``,
+    not an unconditional assignment: two concurrent completion calls
+    for the same upload both pass the ``head_object``
     check, but only one can move the row out of ``pending``. The other's
     update matches zero rows — treated as already-decided, not an
     error, since that's exactly what it is."""
@@ -204,8 +202,8 @@ def purge_deleted_file_object(*, file_upload_id: Any) -> None:
 
 @audited("file.deleted")
 def delete_file(*, file_upload: FileUpload, actor: Any) -> FileUpload:
-    """A tombstone, not a row delete (ddia#21: "a deleted tombstone
-    state driving R2 object cleanup instead of row deletion"). Deleting
+    """A tombstone, not a row delete: the ``deleted`` state is what
+    drives storage-object cleanup. Deleting
     the row outright would either leave the storage object orphaned
     forever (nothing left to know it needs cleaning up) or force the
     delete to do a synchronous storage call inside the request — this

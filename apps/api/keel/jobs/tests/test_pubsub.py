@@ -1,4 +1,4 @@
-"""Sequence numbers on published events (ddia#16) — Redis pub/sub is
+"""Sequence numbers on published events — Redis pub/sub is
 at-most-once with no buffer, so ``seq`` is what lets a reconnecting
 client detect a gap and refetch rather than trust a stream it knows
 skipped something. See ``keel/jobs/pubsub.py``'s module docstring."""

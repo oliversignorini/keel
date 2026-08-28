@@ -3,10 +3,10 @@ import { buttonVariants } from "@keel/ui";
 
 import { MarketingMobileNav } from "./_components/mobile-nav";
 
-/** The `(marketing)` route group (PRD §5): `/`, `/pricing`, `/blog`,
+/** The `(marketing)` route group: `/`, `/pricing`, `/blog`,
  * `/blog/[slug]`, `/legal/terms`, `/legal/privacy` — the only routes
- * `init` needs to delete to remove the marketing site (PRD §8 Phase 9;
- * see docs/marketing-removal.md).
+ * `init` needs to delete to remove the marketing site (see
+ * docs/marketing-removal.md).
  *
  * `data-surface="marketing"` is the token-contract hook (packages/ui/theme.css)
  * for a per-project brand pass that wants different tokens here than in

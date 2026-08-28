@@ -1,5 +1,5 @@
-"""Sentry wiring (PRD §4 Integration points: "Both runtimes, releases
-tied to git SHA, source maps uploaded").
+"""Sentry wiring for both runtimes: releases are tied to the git SHA and
+source maps are uploaded.
 
 No DSN exists for this project yet. ``sentry_sdk.init()`` with a blank
 ``dsn`` makes the SDK a documented no-op — every call in this module is
@@ -96,7 +96,7 @@ def report_message(
     message: str, *, level: _LogLevel = "warning", tags: dict[str, str] | None = None
 ) -> None:
     """The non-exception counterpart to ``report_exception`` — for a
-    condition worth an alert with no exception to attach (ddia#4: a
+    condition worth an alert with no exception to attach (a
     ``check_credit_balances_task`` drift finding is a fact about state,
     not a stack trace)."""
     with sentry_sdk.new_scope() as scope:

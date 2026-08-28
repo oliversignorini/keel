@@ -1,4 +1,4 @@
-"""``keel.core.idempotency`` (api-patterns finding 10/11) — generalised
+"""``keel.core.idempotency`` — generalised
 out of ``keel/jobs`` because a retried POST can duplicate a checkout
 session, an invitation email, an upload row or an organisation exactly
 the way it can duplicate a job.
@@ -52,7 +52,7 @@ def test_first_claim_proceeds_and_sets_the_cache_key() -> None:
 
 
 def test_a_concurrent_claim_raises_conflict_not_a_hand_built_response() -> None:
-    """api-patterns finding 11: this must go through
+    """This must go through
     keel.core.error_handlers like every other domain error, not a
     second, untested copy of the envelope."""
     key = _key()

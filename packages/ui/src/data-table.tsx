@@ -43,8 +43,7 @@ import {
 export type { ColumnDef } from "@tanstack/react-table";
 
 /** `<DataTable>` — TanStack Table wired for the shape every list page in
- * this project needs (PRD §5 component inventory; docs/plans/phase-6.md
- * 6.C): sorting, filtering, column visibility, cursor pagination (the
+ * this project needs: sorting, filtering, column visibility, cursor pagination (the
  * API's `next` / `previous` are opaque — this never turns them into
  * page numbers), row selection, and bulk actions. Client-side sorting
  * and filtering are over the rows already on the page, matching the

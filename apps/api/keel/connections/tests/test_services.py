@@ -1,4 +1,4 @@
-"""``rotate_connection_tokens`` (ddia#27) — the only write ``connections/``
+"""``rotate_connection_tokens`` — the only write ``connections/``
 has today. ``connections/`` is otherwise schema-only (no create/update
 service), so these tests build ``Connection`` rows directly."""
 
