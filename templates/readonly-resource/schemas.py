@@ -1,0 +1,27 @@
+"""Shape validation at the edge, read-only edition. One schema, not
+three: there is no create payload and no update payload because there is
+no write path (``gen readonly-resource``).
+
+If this resource later grows a write path, that is `gen resource`, not an
+edit here — the write schemas, the services, the audit decorators and the
+permission codes arrive together or not at all.
+"""
+
+# keel:insert schema_imports
+
+from keel.core.schemas import KeelSchema
+
+
+class __Resource__Out(KeelSchema):
+    """What the API returns. Relations are serialized as their id, never
+    as a nested object — expanding one is a client decision, and nesting
+    it here is how a list endpoint quietly becomes an N+1."""
+
+    # keel:insert out_fields
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+
+    @staticmethod
+    def resolve_created_by(obj: object) -> str:
+        return str(obj.created_by_id)  # type: ignore[attr-defined]
