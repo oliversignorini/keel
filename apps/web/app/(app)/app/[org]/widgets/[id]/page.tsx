@@ -36,12 +36,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { WidgetStatusField } from "../_components/widget-status-field";
 import { WidgetFormSkeleton } from "../_components/widget-form-skeleton";
 
 const widgetFormSchema = z.object({
   name: z.string().min(1, "Name is required.").max(255),
   description: z.string().optional(),
-  status: z.string().max(32).optional(),
+  status: z.string().optional(),
 });
 type WidgetFormValues = z.infer<typeof widgetFormSchema>;
 
@@ -56,6 +57,7 @@ export default function WidgetDetailPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const {
+    control,
     register,
     handleSubmit,
     setError,
@@ -175,12 +177,7 @@ export default function WidgetDetailPage() {
           error={errors.description?.message}
           {...register("description")}
         />
-        <FormField
-          label="Status"
-          id="status"
-          error={errors.status?.message}
-          {...register("status")}
-        />
+        <WidgetStatusField control={control} error={errors.status} />
       </ResourceForm>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

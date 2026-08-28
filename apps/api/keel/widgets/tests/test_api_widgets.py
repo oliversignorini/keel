@@ -79,11 +79,11 @@ def test_owner_can_create_list_retrieve_update_and_delete() -> None:
 
     response = client.patch(
         f"/api/v1/orgs/{org.slug}/widgets/{row_id}/",
-        {"description": "changed"},
+        {"status": "paused"},
         content_type="application/json",
     )
     assert response.status_code == 200, response.content
-    assert response.json()["description"] == "changed"
+    assert response.json()["status"] == "paused"
 
     response = client.delete(f"/api/v1/orgs/{org.slug}/widgets/{row_id}/")
     assert response.status_code == 204

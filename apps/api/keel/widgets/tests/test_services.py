@@ -86,10 +86,10 @@ def test_update_widget_updates_only_given_fields() -> None:
         status="",
     )
 
-    updated = services.update_widget(widget=row, actor=creator, description="changed")
+    updated = services.update_widget(widget=row, actor=creator, status="paused")
 
     updated.refresh_from_db()
-    assert updated.description == "changed"
+    assert updated.status == "paused"
     assert updated.name == row.name  # untouched fields stay untouched
 
 

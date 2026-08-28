@@ -14,6 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
   Button,
   type ColumnDef,
   DataTable,
@@ -29,6 +30,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { statusLabel } from "./_components/widget-status-field";
 import { WidgetsTableSkeleton } from "./_components/widgets-table-skeleton";
 
 function cursorFromUrl(url: string | null | undefined): string | undefined {
@@ -94,6 +96,7 @@ export default function WidgetsPage() {
       {
         accessorKey: "status",
         header: "Status",
+        cell: ({ row }) => <Badge variant="secondary">{statusLabel(row.original.status)}</Badge>,
       },
       ...(canManage
         ? [

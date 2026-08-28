@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { InvalidFieldSpec, parseFields, renderModelFields, splitFieldSpecs } from "./fields.js";
+import {
+  InvalidFieldSpec,
+  parseFields,
+  renderCreateParams,
+  renderModelFields,
+  renderOutFields,
+  splitFieldSpecs,
+} from "./fields.js";
 
 const names = { resources: "invoices" };
 
@@ -90,6 +97,16 @@ describe("renderModelFields", () => {
       '        ("sent", "Sent"),',
       "    )",
       '    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default="draft")',
+    ]);
+  });
+
+  it("an optional choice field's read type is never `| None` — it renders blank/default, never null (like str/text)", () => {
+    expect(renderOutFields(parseFields("status:choice(draft,sent)?"))).toEqual(["    status: str"]);
+  });
+
+  it("an optional choice field's service param type is never `| None` for the same reason", () => {
+    expect(renderCreateParams(parseFields("status:choice(draft,sent)?"))).toEqual([
+      "    status: str,",
     ]);
   });
 
