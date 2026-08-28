@@ -107,6 +107,19 @@ export function spliceTargets(repo: Repo) {
   };
 }
 
+/** `webDir` — where the Next.js app lives. Not detected the way
+ * `pythonPackage` is (there is only ever one `apps/web`), but kept next to
+ * `spliceTargets` so `--ui` (19.C) locates its splice files the same way
+ * the backend generator does. */
+export function webSpliceTargets(repo: Repo) {
+  const webDir = path.join(repo.root, "apps", "web");
+  return {
+    webDir,
+    permissions: path.join(webDir, "lib", "org", "permissions.ts"),
+    layout: path.join(webDir, "app", "(app)", "layout.tsx"),
+  };
+}
+
 export function rel(repo: Repo, absolute: string): string {
   return path.relative(repo.root, absolute).split(path.sep).join("/");
 }

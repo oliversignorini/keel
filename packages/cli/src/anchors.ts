@@ -255,6 +255,76 @@ export function splicePermission(
   return splices;
 }
 
+export interface WebSpliceTargets {
+  permissions: string;
+  layout: string;
+}
+
+/**
+ * The frontend half of a permission code (19.C — `--ui`), spliced into
+ * `apps/web/lib/org/permissions.ts`'s `Perm` object literal. That file
+ * carries no logic (its own docstring: "the actual source of truth" is
+ * the Python `Perm`) — this only keeps the two spellings from drifting,
+ * the same reason `<Can code={Perm.WIDGETS_MANAGE}>` reads a constant
+ * instead of every call site spelling out a string literal.
+ */
+export function spliceFrontendPermission(
+  targets: WebSpliceTargets,
+  input: PermissionSpliceInput,
+  dryRun: boolean,
+): Splice {
+  return applySpec(
+    {
+      file: targets.permissions,
+      description: `permissions.ts Perm.${input.constant} = "${input.code}"`,
+      insert: [`  ${input.constant}: "${input.code}",`],
+      present: (content) => new RegExp(`^\\s{2}${input.constant}:\\s*"`, "m").test(content),
+      locate: (lines) => {
+        const last = lastIndexMatching(lines, /^\s{2}[A-Z][A-Z0-9_]*:\s*"[a-z_]+\.[a-z_]+",\s*$/);
+        return last === -1 ? -1 : last + 1;
+      },
+    },
+    dryRun,
+  );
+}
+
+export interface NavSpliceInput {
+  /** `gadgets` */
+  resources: string;
+  /** `Gadgets` */
+  label: string;
+  /** The `Perm` constant a nav link's visibility requires — `GADGET_VIEW`. */
+  viewConstant: string;
+}
+
+/**
+ * A resource's link in the primary nav (`apps/web/app/(app)/layout.tsx`),
+ * inserted just before the "Settings" entry so a generated resource lands
+ * between the built-in routes and Settings, matching where `widgets`
+ * already sits. Nav visibility is presentation only — the route itself
+ * still enforces the permission server-side regardless of whether a link
+ * to it is rendered (see the comment already in `layout.tsx`).
+ */
+export function spliceNavItem(
+  targets: WebSpliceTargets,
+  input: NavSpliceInput,
+  dryRun: boolean,
+): Splice {
+  const entry =
+    `      { href: \`/\${params.org}/${input.resources}\`, label: "${input.label}", ` +
+    `requires: Perm.${input.viewConstant} },`;
+  return applySpec(
+    {
+      file: targets.layout,
+      description: `layout.tsx nav item for /${input.resources}`,
+      insert: [entry],
+      present: (content) => content.includes(`\`/\${params.org}/${input.resources}\``),
+      locate: (lines) => lines.findIndex((line) => /label: "Settings"/.test(line)),
+    },
+    dryRun,
+  );
+}
+
 export interface JobRegistrationInput {
   /** The module under `keel/jobs/` to import, e.g. `invoice_rollup`. */
   module: string;

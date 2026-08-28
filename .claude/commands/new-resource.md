@@ -12,7 +12,7 @@ domain logic.
 ## 1. Run the generator
 
 ```
-pnpm gen resource __Resource__ --fields "name:str,description:text?,status:choice(draft,live)"
+pnpm gen resource Invoice --fields "name:str,description:text?,status:choice(draft,live)"
 ```
 
 Field DSL: `str`, `str(N)`, `text`, `int`, `decimal`, `bool`, `date`,
@@ -30,9 +30,10 @@ failing loudly if any of them don't pass. The command's own output tells
 you exactly which files were written and which anchors were spliced —
 trust that list over re-reading the tree.
 
-If the command reports `--ui is not implemented in this slice`, drop
-`--ui` — see `/plan-feature` if this resource also needs frontend pages
-this session doesn't have a generator for yet.
+Pass `--ui` if this resource needs frontend pages: a list, create and
+detail route assembled from `@keel/ui`'s existing primitives, plus a
+thin `apps/web/lib/<resources>/api.ts` wrapper. Not supported yet on
+`readonly-resource`.
 
 ## 2. Do the judgement work the generator left as insertion points
 
@@ -58,8 +59,8 @@ never regenerates it itself.
 ## 4. Finish
 
 `/check-invariants` — fix anything it reports before considering this
-done. Once the feature (backend and, if this project has `--ui`,
-frontend) is actually finished, `pnpm gen e2e __Resource__` is the ship
+done. Once the feature (backend and, if generated with `--ui`,
+frontend) is actually finished, `pnpm gen e2e Invoice` is the ship
 gate: it writes a Playwright spec for the happy CRUD path and runs the
 full `/check-invariants` suite including `pytest`. An output that fails
 either is not a finished `/new-resource` run.

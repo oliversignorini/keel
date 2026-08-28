@@ -11,6 +11,9 @@
  *   # keel:endif
  *   # keel:insert <slot>    replace this line with generator-rendered lines
  *
+ * Markers may also be written `// keel:if ...` etc. — templates/ui is real
+ * .tsx, and `#` is not a comment there.
+ *
  * There are no loops and no expressions, and adding either is the signal
  * that the template is doing work that belongs in the generator or in the
  * judgement half the slash command drives. A marker line never survives
@@ -43,9 +46,34 @@ export interface RenderContext {
 
 export class TemplateError extends Error {}
 
-const IF_RE = /^\s*#\s*keel:if\s+([a-z0-9_-]+)\s*$/;
-const ENDIF_RE = /^\s*#\s*keel:endif\s*$/;
-const INSERT_RE = /^\s*#\s*keel:insert\s+([a-z0-9_-]+)\s*$/;
+// `#` for Python; `//` for TypeScript; `{/* ... */}` for TSX markup
+// (19.C — templates/ui is real .tsx, and neither `#` nor `//` is a legal
+// comment inside JSX children).
+const COMMENT_RE = /^\s*(?:#\s*(.*?)|\/\/\s*(.*?)|\{\/\*\s*(.*?)\s*\*\/\})\s*$/;
+const IF_ARG_RE = /^keel:if\s+([a-z0-9_-]+)$/;
+const ENDIF_ARG_RE = /^keel:endif$/;
+const INSERT_ARG_RE = /^keel:insert\s+([a-z0-9_-]+)$/;
+
+interface Marker {
+  kind: "if" | "endif" | "insert";
+  arg?: string;
+}
+
+/** Strips whichever comment syntax the line uses (`#`, `//`, `{/* … *\/}`)
+ * and checks the content against the three marker shapes. Returns `null`
+ * for an ordinary line, including an ordinary comment. */
+function parseMarker(line: string): Marker | null {
+  const commentMatch = COMMENT_RE.exec(line);
+  if (!commentMatch) return null;
+  const content = (commentMatch[1] ?? commentMatch[2] ?? commentMatch[3] ?? "").trim();
+
+  const ifMatch = IF_ARG_RE.exec(content);
+  if (ifMatch) return { kind: "if", arg: ifMatch[1] };
+  if (ENDIF_ARG_RE.test(content)) return { kind: "endif" };
+  const insertMatch = INSERT_ARG_RE.exec(content);
+  if (insertMatch) return { kind: "insert", arg: insertMatch[1] };
+  return null;
+}
 
 /** Substitutes the tokens. Plural before singular within each case, so
  * `__Resources__` is never matched as `__Resource__` followed by a stray
@@ -79,15 +107,15 @@ export function render(source: string, context: RenderContext, label: string): s
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!;
+    const marker = parseMarker(line);
 
-    const ifMatch = IF_RE.exec(line);
-    if (ifMatch) {
-      keeping.push(context.flags.has(ifMatch[1]!));
+    if (marker?.kind === "if") {
+      keeping.push(context.flags.has(marker.arg!));
       continue;
     }
-    if (ENDIF_RE.test(line)) {
+    if (marker?.kind === "endif") {
       if (keeping.length === 0) {
-        throw new TemplateError(`${label}:${i + 1}: "# keel:endif" with no matching "# keel:if".`);
+        throw new TemplateError(`${label}:${i + 1}: "keel:endif" with no matching "keel:if".`);
       }
       keeping.pop();
       continue;
@@ -95,14 +123,13 @@ export function render(source: string, context: RenderContext, label: string): s
 
     if (!isKeeping()) continue;
 
-    const insertMatch = INSERT_RE.exec(line);
-    if (insertMatch) {
-      const slot = insertMatch[1]!;
+    if (marker?.kind === "insert") {
+      const slot = marker.arg!;
       const block = context.inserts[slot];
       if (block === undefined) {
         throw new TemplateError(
           `${label}:${i + 1}: no lines supplied for insertion slot "${slot}". ` +
-            `Every "# keel:insert" in a template must have a matching entry in the ` +
+            `Every "keel:insert" in a template must have a matching entry in the ` +
             `generator's insert map — a missing one is a generator bug, not an empty region.`,
         );
       }

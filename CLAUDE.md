@@ -46,16 +46,17 @@ reference for flags; this table is only "what exists and which command
 provisions it" — for a brief spanning more than one row, run
 `/plan-feature` first rather than working through this table by hand.
 
-| Provisions                                 | Command                                            | Slash command that adds judgement |
-| ------------------------------------------ | -------------------------------------------------- | --------------------------------- |
-| Full CRUD vertical slice                   | `pnpm gen resource <Name> --fields "..."`          | `/new-resource`                   |
-| Read-only vertical slice                   | `pnpm gen readonly-resource <Name> --fields "..."` | `/new-readonly-resource`          |
-| One permission code                        | `pnpm gen permission <resource.action>`            | `/new-permission`                 |
-| A job type (Tier 1 or 2)                   | `pnpm gen job <Name> --tier 1\|2`                  | `/new-job`                        |
-| TypeScript API client regen                | `pnpm gen sync-client`                             | `/sync-client`                    |
-| Ship gate: e2e spec + full invariant suite | `pnpm gen e2e <Resource>`                          | run once the feature is finished  |
-| Third-party OAuth provider                 | — (no mechanical core to extract)                  | `/new-connection`                 |
-| Multi-generator feature plan               | —                                                  | `/plan-feature`                   |
+| Provisions                                 | Command                                                 | Slash command that adds judgement |
+| ------------------------------------------ | ------------------------------------------------------- | --------------------------------- |
+| Full CRUD vertical slice                   | `pnpm gen resource <Name> --fields "..." --ui\|--no-ui` | `/new-resource`                   |
+| Read-only vertical slice                   | `pnpm gen readonly-resource <Name> --fields "..."`      | `/new-readonly-resource`          |
+| One permission code                        | `pnpm gen permission <resource.action>`                 | `/new-permission`                 |
+| A job type (Tier 1 or 2)                   | `pnpm gen job <Name> --tier 1\|2`                       | `/new-job`                        |
+| A transactional email                      | `pnpm gen email <Name> --subject "..."`                 | `/new-email`                      |
+| TypeScript API client regen                | `pnpm gen sync-client`                                  | `/sync-client`                    |
+| Ship gate: e2e spec + full invariant suite | `pnpm gen e2e <Resource>`                               | run once the feature is finished  |
+| Third-party OAuth provider                 | — (no mechanical core to extract)                       | `/new-connection`                 |
+| Multi-generator feature plan               | —                                                       | `/plan-feature`                   |
 
 Everything past the field list, the step list, or the permission code
 itself — business rules, bespoke validation, subject-aware guards — is
