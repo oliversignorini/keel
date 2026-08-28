@@ -4,11 +4,25 @@ import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { useOrgContext } from "@/lib/org/org-context";
 import { createWidget } from "@/lib/widgets/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormField, PageHeader, ResourceForm } from "@keel/ui";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  FormField,
+  PageHeader,
+  ResourceForm,
+} from "@keel/ui";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+
+import { WidgetStatusField } from "../_components/widget-status-field";
 
 const widgetFormSchema = z.object({
   name: z.string().min(1, "Name is required.").max(255),
@@ -24,6 +38,7 @@ export default function NewWidgetPage() {
   const { currentOrg } = useOrgContext();
   const [formError, setFormError] = useState<string | null>(null);
   const {
+    control,
     register,
     handleSubmit,
     setError,
@@ -36,6 +51,7 @@ export default function NewWidgetPage() {
     setFormError(null);
     try {
       const widget = await createWidget(currentOrg!.slug, values);
+      toast.success(`${widget.name} created`);
       router.push(`/${currentOrg!.slug}/widgets/${widget.id}`);
     } catch (error) {
       setFormError(applyFieldErrors(error, setError));
@@ -44,7 +60,24 @@ export default function NewWidgetPage() {
 
   return (
     <div className="max-w-lg">
-      <PageHeader title="New widget" />
+      <PageHeader
+        breadcrumb={
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href={`/${currentOrg.slug}/widgets`}>Widgets</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>New widget</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        }
+        title="New widget"
+      />
       <ResourceForm
         onSubmit={handleSubmit(onSubmit)}
         formError={formError}
@@ -54,12 +87,7 @@ export default function NewWidgetPage() {
         onCancel={() => router.push(`/${currentOrg!.slug}/widgets`)}
       >
         <FormField label="Name" id="name" error={errors.name?.message} {...register("name")} />
-        <FormField
-          label="Status"
-          id="status"
-          error={errors.status?.message}
-          {...register("status")}
-        />
+        <WidgetStatusField control={control} error={errors.status} />
         <FormField
           label="Description"
           id="description"
