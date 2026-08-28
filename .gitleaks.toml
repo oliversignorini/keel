@@ -1,11 +1,9 @@
 # gitleaks config (docs/plans/phase-9.md 9.C). Extends the default
 # ruleset rather than replacing it — Keel has no rules of its own to add,
-# only one known false positive to allowlist.
+# only known false positives to allowlist.
 [extend]
 useDefault = true
 
-[allowlist]
-description = "Documented dev-only placeholders, not real secrets"
 # .env.example's KEEL_ENCRYPTION_KEY is a Fernet key generated purely as
 # an illustration of the expected shape (see the comment above it in that
 # file) and is committed on purpose — nothing rotates it because nothing
@@ -20,15 +18,28 @@ description = "Documented dev-only placeholders, not real secrets"
 # session_token values come straight from django-allauth's own headless
 # OpenAPI spec as illustrative response bodies, not credentials for
 # anything that exists.
+[[allowlists]]
+description = "Documented dev-only placeholder files, not real secrets"
 paths = [
   '''(^|/)\.env\.example$''',
   '''(^|/)\.env\.bak$''',
   '''(^|/)openapi\.merged\.json$''',
 ]
+
 # The same illustrative Fernet key from .env.example is reused verbatim in
 # .github/workflows/ci.yml env blocks so CI tests exercise the crypto path.
 # Allowlist the value itself rather than the workflows directory, so any
 # *other* secret landing in a workflow file still fails the scan.
-regexes = [
-  '''O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=''',
-]
+[[allowlists]]
+description = "Illustrative Fernet key reused in CI env blocks"
+regexes = ['''O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=''']
+
+# scripts/init.ts once carried a Stripe-shaped placeholder string (commit
+# 88233bd); the string was replaced at HEAD with one that can't match the
+# rule, but the full-history scan (--log-opts=--all) still sees the old
+# commit. Commit+path pins exactly that one historical occurrence — a new
+# Stripe-looking string anywhere, including in that file, still fails.
+[[allowlists]]
+description = "Historical placeholder in scripts/init.ts, fixed at HEAD"
+commits = ["88233bd9d77655412b69ba545056fdfb3d3959bb"]
+paths = ['''^scripts/init\.ts$''']

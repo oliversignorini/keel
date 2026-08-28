@@ -83,6 +83,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # init ends by making the generated project's initial commit; a real
+      # user has a git identity configured, the runner does not.
+      - name: Configure git identity for init's initial commit
+        run: |
+          git config --global user.name "template-ci"
+          git config --global user.email "template-ci@users.noreply.github.com"
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
