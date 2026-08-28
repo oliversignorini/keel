@@ -66,7 +66,7 @@ _RAISERS: dict[str, Any] = {
     "permission_denied": lambda: PermissionDeniedWithReason(
         code="insufficient_role",
         message="You do not have permission to perform this action.",
-        details={"required": "org.update"},
+        denial={"required": "org.update"},
     ),
     "conflict": lambda: Conflict(code="already_accepted", message="Invitation already accepted."),
     "unprocessable": lambda: UnprocessableEntity(
@@ -115,14 +115,18 @@ def test_402_payment_required(client) -> None:
     assert body["error"]["details"] == [{"field": "seats", "message": "Limit reached."}]
 
 
-def test_403_permission_denied_carries_decision_reason_and_details(client) -> None:
-    """§4 invariant 2 / §7: code carries Decision.reason, details carries Decision.details."""
+def test_403_permission_denied_carries_decision_reason_and_denial_context(client) -> None:
+    """§4 invariant 2 / §7: code carries Decision.reason, the sibling
+    ``denial`` key carries Decision.details (api-patterns finding 17 —
+    ``details`` stays list[{field, message}] | None everywhere, including
+    here)."""
     response = client.get("/api/v1/raise/permission_denied/")
 
     assert response.status_code == 403
     body = response.json()
     assert body["error"]["code"] == "insufficient_role"
-    assert body["error"]["details"] == {"required": "org.update"}
+    assert body["error"]["details"] is None
+    assert body["error"]["denial"] == {"required": "org.update"}
 
 
 def test_404_not_found(client) -> None:
@@ -216,6 +220,35 @@ def test_keel_throttled_with_a_wait_exposes_a_retry_after_header() -> None:
 
 def test_a_plain_domain_error_has_no_response_headers() -> None:
     assert keel_exceptions.DomainError().response_headers == {}
+
+
+def test_a_plain_domain_error_has_no_extra_envelope_fields() -> None:
+    assert keel_exceptions.DomainError().extra_envelope_fields == {}
+
+
+def test_throttled_carries_extra_headers_alongside_retry_after() -> None:
+    exc = keel_exceptions.Throttled(
+        wait=12.5,
+        headers={
+            "X-RateLimit-Limit": "300",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": "1700000000",
+        },
+    )
+
+    assert exc.response_headers == {
+        "Retry-After": "12",
+        "X-RateLimit-Limit": "300",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": "1700000000",
+    }
+
+
+def test_permission_denied_with_reason_carries_denial_in_extra_envelope_fields() -> None:
+    exc = PermissionDeniedWithReason(code="insufficient_role", denial={"required": "org.update"})
+
+    assert exc.details is None
+    assert exc.extra_envelope_fields == {"denial": {"required": "org.update"}}
 
 
 def test_keel_throttled_with_a_wait_pluralizes_correctly() -> None:

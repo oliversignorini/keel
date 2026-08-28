@@ -11,6 +11,11 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.checks import Error, register
+from django.core.checks.security.base import (
+    SECRET_KEY_INSECURE_PREFIX,
+    SECRET_KEY_MIN_LENGTH,
+    SECRET_KEY_MIN_UNIQUE_CHARACTERS,
+)
 
 
 @register()
@@ -120,6 +125,133 @@ def check_csrf_trusted_origins_cover_app_domain(
                     "DJANGO_CSRF_TRUSTED_ORIGINS."
                 ),
                 id="keel.core.E004",
+            )
+        ]
+
+    return []
+
+
+def _production_checks_enforced() -> bool:
+    """``config/settings/prod.py`` is the only settings module that sets
+    this — see its comment for why an explicit flag, not DEBUG or the
+    settings module name, gates the checks below."""
+    return bool(getattr(settings, "KEEL_ENFORCE_PRODUCTION_CHECKS", False))
+
+
+@register()
+def check_secret_key_not_default(app_configs: object, **kwargs: object) -> list[Error]:
+    """docs/plans/phase-16.md 16.B: "Production must fail to start on the
+    default SECRET_KEY" — Django's own ``security.W009`` already flags a
+    weak key (same weakness test, reused here via the same constants it
+    uses) but only as a warning that ``manage.py check --deploy`` prints
+    and moves on from. This is the same test as an ``Error``, so a
+    deployment that never set ``DJANGO_SECRET_KEY`` (``base.py``'s
+    ``insecure-dev-key-change-me`` default) fails to boot instead of
+    silently running with a key an attacker can guess."""
+    if not _production_checks_enforced():
+        return []
+
+    secret_key = settings.SECRET_KEY
+    if (
+        len(set(secret_key)) < SECRET_KEY_MIN_UNIQUE_CHARACTERS
+        or len(secret_key) < SECRET_KEY_MIN_LENGTH
+        or secret_key.startswith(SECRET_KEY_INSECURE_PREFIX)
+    ):
+        return [
+            Error(
+                "SECRET_KEY is missing, too short, too predictable, or still the "
+                "insecure development default.",
+                hint=(
+                    "Set DJANGO_SECRET_KEY to a long, random value before deploying "
+                    "(security.W009's own criterion, enforced here as a hard failure "
+                    "rather than a warning). Generate one with "
+                    '`python -c "from django.core.management.utils import '
+                    'get_random_secret_key; print(get_random_secret_key())"`.'
+                ),
+                id="keel.core.E005",
+            )
+        ]
+
+    return []
+
+
+@register()
+def check_allowed_hosts_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
+    """docs/plans/phase-16.md 16.B: "Validate ALLOWED_HOSTS ... are set
+    and are not wildcards in production." Django itself only warns
+    (``security.W020``, not enabled by ``--deploy``) when ``DEBUG`` is
+    also ``True`` — which prod.py never is — so a wildcard host here has
+    no other gate at all."""
+    if not _production_checks_enforced():
+        return []
+
+    if not settings.ALLOWED_HOSTS or "*" in settings.ALLOWED_HOSTS:
+        return [
+            Error(
+                f"ALLOWED_HOSTS={settings.ALLOWED_HOSTS!r} is empty or contains a wildcard.",
+                hint=(
+                    "A wildcard or empty ALLOWED_HOSTS accepts the Host header from "
+                    "any caller, which defeats Django's own Host-header validation "
+                    "(cache-poisoning / password-reset-link-poisoning surface). Set "
+                    "DJANGO_ALLOWED_HOSTS to the real, comma-separated list of hosts "
+                    "this deployment answers for."
+                ),
+                id="keel.core.E006",
+            )
+        ]
+
+    return []
+
+
+@register()
+def check_csrf_trusted_origins_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
+    """docs/plans/phase-16.md 16.B: CSRF_TRUSTED_ORIGINS "set and not a
+    wildcard in production" — the counterpart to
+    ``check_allowed_hosts_not_wildcard`` above for the header Django's
+    CSRF middleware actually validates unsafe requests against."""
+    if not _production_checks_enforced():
+        return []
+
+    origins = settings.CSRF_TRUSTED_ORIGINS
+    if not origins or any("*" in origin for origin in origins):
+        return [
+            Error(
+                f"CSRF_TRUSTED_ORIGINS={origins!r} is empty or contains a wildcard.",
+                hint=(
+                    "A wildcard origin defeats CsrfViewMiddleware's Origin/Referer "
+                    "check. Set DJANGO_CSRF_TRUSTED_ORIGINS to the real scheme+host "
+                    "origins this deployment's frontend is served from (e.g. "
+                    "'https://app.acme.com')."
+                ),
+                id="keel.core.E007",
+            )
+        ]
+
+    return []
+
+
+@register()
+def check_cors_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
+    """docs/plans/phase-16.md 16.B: CORS origins "set and not a wildcard
+    in production." ``CORS_ALLOW_CREDENTIALS = True`` (base.py) already
+    makes django-cors-headers itself refuse to reflect ``*`` at request
+    time, but that failure is a same-request 4xx a caller discovers by
+    trying, not a deploy-time signal that the configuration is wrong."""
+    if not _production_checks_enforced():
+        return []
+
+    if getattr(settings, "CORS_ALLOW_ALL_ORIGINS", False) or "*" in settings.CORS_ALLOWED_ORIGINS:
+        return [
+            Error(
+                "CORS_ALLOW_ALL_ORIGINS is True, or '*' is in CORS_ALLOWED_ORIGINS.",
+                hint=(
+                    "docs/adr/0002-auth-bff-shape.md: no browser fetch()/XHR should "
+                    "reach Django directly with credentials in production — "
+                    "DJANGO_CORS_ALLOWED_ORIGINS should stay unset (empty) unless a "
+                    "deployment has a real, named direct-browser caller, in which "
+                    "case list its exact origin(s), never a wildcard."
+                ),
+                id="keel.core.E008",
             )
         ]
 

@@ -3,6 +3,16 @@ from .base import DATABASES, MIDDLEWARE, STORAGES, env
 
 DEBUG = False
 
+# Gates the production-only checks in keel/core/checks.py (weak SECRET_KEY,
+# wildcard ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS/CORS) — an explicit flag
+# rather than inferring "production" from DEBUG or the settings module
+# name, because dev/test also run with DEBUG effectively False in CI
+# without a real SECRET_KEY configured (config/settings/test.py), and
+# inferring from either would either miss real deployments or fail the
+# test suite. docs/plans/phase-16.md 16.B: "Production must fail to start
+# on the default SECRET_KEY."
+KEEL_ENFORCE_PRODUCTION_CHECKS = True
+
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -10,16 +20,6 @@ SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=60 * 60 * 24
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = "DENY"
-
-# `check --deploy` now runs with `--fail-level WARNING` in CI
-# (docs/plans/phase-16.md 16.D), so every warning it raises is blocking —
-# silence only what's already tracked as a known, owned gap.
-# TODO(phase-16.B): drop this once 16.B makes base.py's SECRET_KEY default
-# ("insecure-dev-key-change-me") fail production boot outright instead of
-# only warning — security.W009 is exactly that finding.
-SILENCED_SYSTEM_CHECKS = [
-    "security.W009",
-]
 
 # Railway's (and every other reverse-proxy PaaS's) edge terminates TLS and
 # forwards the original scheme via X-Forwarded-Proto — without this,

@@ -11,7 +11,7 @@ from django.test import Client as APIClient
 from keel.accounts.models import User
 from keel.organizations import services
 from keel.organizations.models import Invitation, Membership, Role
-from keel.organizations.permissions import Perm
+from keel.organizations.permissions import DenialReason, Perm
 from keel.organizations.roles import PRESET_ADMIN, PRESET_MEMBER, PRESET_OWNER
 
 pytestmark = pytest.mark.django_db
@@ -154,6 +154,19 @@ def test_permissions_registry_lists_registered_codes() -> None:
 
     assert response.status_code == 200
     assert Perm.MEMBERS_VIEW in response.json()["codes"]
+
+
+def test_permissions_registry_publishes_denial_reason_codes() -> None:
+    """api-patterns finding 18: a client can enumerate every 403 ``code``
+    a denial can answer with, the same way it already enumerates
+    permission codes."""
+    client = _client_for(_user())
+
+    response = client.get("/api/v1/permissions/")
+
+    denial_reasons = response.json()["denial_reasons"]
+    assert DenialReason.INSUFFICIENT_ROLE in denial_reasons
+    assert DenialReason.CANNOT_REMOVE_LAST_OWNER in denial_reasons
 
 
 def test_permissions_registry_sets_cache_control_and_etag() -> None:

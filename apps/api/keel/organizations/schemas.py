@@ -173,6 +173,10 @@ class MeOut(Schema):
 
 class PermissionCodesOut(Schema):
     codes: list[str]
+    # api-patterns finding 18: the enumerable set of 403 `code` values a
+    # denial can answer with — published alongside the permission codes
+    # themselves, same Reference Data Holder, same reasoning.
+    denial_reasons: list[str]
 
 
 class InviteOrganizationOut(Schema):

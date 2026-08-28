@@ -407,9 +407,21 @@ FILES_PENDING_UPLOAD_TTL_SECONDS = env.int("FILES_PENDING_UPLOAD_TTL_SECONDS", d
 AUDIT_LOG_RETENTION_DAYS = env.int("AUDIT_LOG_RETENTION_DAYS", default=365)
 
 # --- Encryption (keel/core/crypto.py) ---------------------------------
-# Backs Connection.access_token / refresh_token. Generate with:
+# Backs Connection.access_token / refresh_token. Generate a key with:
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
+#
+# One env var, comma-separated when rotating (ddia#27): django-environ's
+# env.list() already splits on comma, so a single key
+# (KEEL_ENCRYPTION_KEY=<key>) and multiple
+# (KEEL_ENCRYPTION_KEY=<new-key>,<old-key>) both parse without a second
+# setting name to introduce. keel.core.crypto wraps this in a
+# cryptography.fernet.MultiFernet — the first key encrypts every new
+# value, every key can decrypt, so rotating means prepending a new key
+# rather than losing the ability to read what the old one wrote.
+# `python manage.py rotate_connection_tokens` (keel/connections/management)
+# re-encrypts every Connection row under the first (newest) key once a
+# rotation has added one.
+KEEL_ENCRYPTION_KEYS = env.list("KEEL_ENCRYPTION_KEY", default=[])
 
 # --- General API rate limiting -------------------------------------------
 # PRD §3 NFR "Security": "Rate limiting ... on the API generally";

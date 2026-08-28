@@ -270,7 +270,7 @@ def remove_member(*, membership: Membership, actor: Any) -> None:
         decision = has_perm(actor, membership.organization, Perm.MEMBERS_REMOVE, subject=membership)
         if not decision.allowed:
             raise PermissionDeniedWithReason(
-                code=decision.reason or "permission_denied", details=decision.details
+                code=decision.reason or "permission_denied", denial=decision.details
             )
         membership.delete()
         if _billing_seat_pricing_enabled():

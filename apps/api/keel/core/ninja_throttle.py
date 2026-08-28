@@ -5,7 +5,11 @@ Ported from Django REST Framework's ``SimpleRateThrottle`` /
 ``AnonRateThrottle`` / ``UserRateThrottle`` — same cache-backed sliding
 window over Django's cache (Redis in production), same
 ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE`` settings, same 429 +
-``Retry-After`` behaviour — with no dependency on that framework.
+``Retry-After`` behaviour — with no dependency on that framework. Every
+throttled-scope response (429 or not) also carries ``X-RateLimit-Limit``
+/ ``-Remaining`` / ``-Reset``, so a client can pace itself before being
+rejected rather than learning the policy only on failure (api-patterns
+finding 7).
 
 Applied as a layer over every ``/api/v1/`` request (``ThrottleMiddleware``
 below), not tucked inside the deny-by-default auth callables
@@ -72,7 +76,12 @@ class RateThrottle:
         # a throttle whose rate doesn't depend on env-derived settings.
         self._explicit_rate = rate
 
-    def check(self, request: HttpRequest) -> None:
+    def check(self, request: HttpRequest) -> dict[str, str] | None:
+        """Returns the ``X-RateLimit-*`` headers reflecting this
+        throttle's state after the check (api-patterns finding 7), or
+        ``None`` when this throttle doesn't apply to the request at all
+        (rate disabled, or ``_cache_key`` opted the request out — e.g.
+        ``AnonRateThrottle`` on an authenticated request)."""
         rate: str | None = (
             self._explicit_rate
             if self._explicit_rate is not None
@@ -80,12 +89,12 @@ class RateThrottle:
         )
         parsed = _parse_rate(rate)
         if parsed is None:
-            return
+            return None
         num_requests, duration = parsed
 
         key = self._cache_key(request)
         if key is None:
-            return
+            return None
 
         history: list[float] = self.cache.get(key, [])
         now: float = self.timer()
@@ -101,10 +110,27 @@ class RateThrottle:
                 if available_requests > 0
                 else float(duration)
             )
-            raise Throttled(wait=wait)
+            raise Throttled(
+                wait=wait,
+                headers=self._headers(num_requests, remaining=0, reset_at=now + remaining_duration),
+            )
 
         history.insert(0, now)
         self.cache.set(key, history, duration)
+        # history[-1] is the oldest surviving entry (insert(0, ...) keeps
+        # newest-first) — the moment it ages out of the window is the
+        # moment a slot frees up, which is the honest "Reset" value for a
+        # sliding window rather than a fixed one.
+        reset_at = history[-1] + duration
+        return self._headers(num_requests, remaining=num_requests - len(history), reset_at=reset_at)
+
+    @staticmethod
+    def _headers(limit: int, *, remaining: int, reset_at: float) -> dict[str, str]:
+        return {
+            "X-RateLimit-Limit": str(limit),
+            "X-RateLimit-Remaining": str(max(remaining, 0)),
+            "X-RateLimit-Reset": str(int(reset_at)),
+        }
 
     def _cache_key(self, request: HttpRequest) -> str | None:
         raise NotImplementedError
@@ -131,12 +157,21 @@ class UserRateThrottle(RateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
-def throttle(request: HttpRequest) -> None:
+def throttle(request: HttpRequest) -> dict[str, str]:
     """Run both the anon and user throttles — mirrors
     ``DEFAULT_THROTTLE_CLASSES = [UserRateThrottle, AnonRateThrottle]``,
-    each of which is a no-op for the request shape the other one covers."""
-    AnonRateThrottle().check(request)
-    UserRateThrottle().check(request)
+    each of which is a no-op for the request shape the other one covers.
+
+    Returns the ``X-RateLimit-*`` headers for whichever throttle is the
+    binding constraint on this request: ``AnonRateThrottle``'s, when it
+    applies (an anonymous caller is bound by the anon rate, which
+    ``UserRateThrottle`` — keyed by IP for the same caller — also checks
+    but at a looser rate), otherwise ``UserRateThrottle``'s. Raises
+    ``Throttled`` on the first throttle that is over-limit, carrying that
+    throttle's own headers (api-patterns finding 7)."""
+    anon_headers = AnonRateThrottle().check(request)
+    user_headers = UserRateThrottle().check(request)
+    return anon_headers or user_headers or {}
 
 
 class ThrottleMiddleware:
@@ -147,7 +182,11 @@ class ThrottleMiddleware:
 
     A ``Throttled`` raised here is caught and rendered through the same
     envelope ``keel.core.ninja_exceptions`` uses for one consistent 429
-    body, since this runs outside Ninja's own exception-handler dispatch."""
+    body, since this runs outside Ninja's own exception-handler dispatch.
+    The ``X-RateLimit-*`` headers ride on every throttled-scope response,
+    not only the 429 — a client that never fails still learns how close
+    it is to the limit (api-patterns finding 7: "the client can pace
+    itself before being rejected")."""
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         self.get_response = get_response
@@ -155,9 +194,13 @@ class ThrottleMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if request.path.startswith("/api/v1/"):
             try:
-                throttle(request)
+                headers = throttle(request)
             except Throttled as exc:
                 from keel.core.ninja_exceptions import domain_error_response
 
                 return domain_error_response(exc)
+            response = self.get_response(request)
+            for header, value in headers.items():
+                response[header] = value
+            return response
         return self.get_response(request)

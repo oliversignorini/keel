@@ -5,7 +5,11 @@ break login in production."""
 from django.test import override_settings
 
 from keel.core.checks import (
+    check_allowed_hosts_not_wildcard,
+    check_cors_not_wildcard,
     check_csrf_trusted_origins_cover_app_domain,
+    check_csrf_trusted_origins_not_wildcard,
+    check_secret_key_not_default,
     check_secure_cookies_match_debug,
     check_session_cookie_domain,
 )
@@ -105,3 +109,145 @@ def test_fails_when_no_trusted_origin_matches_the_app_domain() -> None:
 
     assert len(errors) == 1
     assert errors[0].id == "keel.core.E004"
+
+
+# --- Production-only checks (docs/plans/phase-16.md 16.B) ------------------
+# `KEEL_ENFORCE_PRODUCTION_CHECKS` is only ever True under
+# config/settings/prod.py — every test below sets it explicitly rather than
+# relying on the settings module the test suite happens to run under.
+
+
+def test_secret_key_check_is_a_no_op_when_production_checks_are_not_enforced() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=False, SECRET_KEY="insecure-dev-key-change-me"
+    ):
+        assert check_secret_key_not_default(None) == []
+
+
+def test_secret_key_check_passes_with_a_long_random_key() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True,
+        SECRET_KEY="a" * 10 + "b" * 10 + "c" * 10 + "d" * 10 + "e" * 10,
+    ):
+        assert check_secret_key_not_default(None) == []
+
+
+def test_secret_key_check_fails_on_the_base_py_default() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True, SECRET_KEY="insecure-dev-key-change-me"
+    ):
+        errors = check_secret_key_not_default(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E005"
+
+
+def test_secret_key_check_fails_on_a_short_key_even_if_not_the_literal_default() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=True, SECRET_KEY="short-but-different"):
+        errors = check_secret_key_not_default(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E005"
+
+
+def test_secret_key_check_fails_on_the_django_insecure_prefix() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True,
+        SECRET_KEY="django-insecure-" + "x" * 40,
+    ):
+        errors = check_secret_key_not_default(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E005"
+
+
+def test_allowed_hosts_check_is_a_no_op_when_production_checks_are_not_enforced() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=False, ALLOWED_HOSTS=["*"]):
+        assert check_allowed_hosts_not_wildcard(None) == []
+
+
+def test_allowed_hosts_check_passes_with_real_hosts() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True, ALLOWED_HOSTS=["app.acme.com", "api.acme.com"]
+    ):
+        assert check_allowed_hosts_not_wildcard(None) == []
+
+
+def test_allowed_hosts_check_fails_on_wildcard() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=True, ALLOWED_HOSTS=["*"]):
+        errors = check_allowed_hosts_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E006"
+
+
+def test_allowed_hosts_check_fails_when_empty() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=True, ALLOWED_HOSTS=[]):
+        errors = check_allowed_hosts_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E006"
+
+
+def test_csrf_origins_wildcard_check_is_a_no_op_when_not_enforced() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=False, CSRF_TRUSTED_ORIGINS=[]):
+        assert check_csrf_trusted_origins_not_wildcard(None) == []
+
+
+def test_csrf_trusted_origins_wildcard_check_passes_with_real_origins() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True, CSRF_TRUSTED_ORIGINS=["https://app.acme.com"]
+    ):
+        assert check_csrf_trusted_origins_not_wildcard(None) == []
+
+
+def test_csrf_trusted_origins_wildcard_check_fails_on_wildcard() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True, CSRF_TRUSTED_ORIGINS=["https://*.acme.com"]
+    ):
+        errors = check_csrf_trusted_origins_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E007"
+
+
+def test_csrf_trusted_origins_wildcard_check_fails_when_empty() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=True, CSRF_TRUSTED_ORIGINS=[]):
+        errors = check_csrf_trusted_origins_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E007"
+
+
+def test_cors_check_is_a_no_op_when_not_enforced() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=False, CORS_ALLOW_ALL_ORIGINS=True):
+        assert check_cors_not_wildcard(None) == []
+
+
+def test_cors_check_passes_with_an_empty_allowlist() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True,
+        CORS_ALLOWED_ORIGINS=[],
+        CORS_ALLOW_ALL_ORIGINS=False,
+    ):
+        assert check_cors_not_wildcard(None) == []
+
+
+def test_cors_check_fails_when_allow_all_origins_is_true() -> None:
+    with override_settings(KEEL_ENFORCE_PRODUCTION_CHECKS=True, CORS_ALLOW_ALL_ORIGINS=True):
+        errors = check_cors_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E008"
+
+
+def test_cors_check_fails_when_wildcard_is_in_the_allowed_origins_list() -> None:
+    with override_settings(
+        KEEL_ENFORCE_PRODUCTION_CHECKS=True,
+        CORS_ALLOWED_ORIGINS=["*"],
+        CORS_ALLOW_ALL_ORIGINS=False,
+    ):
+        errors = check_cors_not_wildcard(None)
+
+    assert len(errors) == 1
+    assert errors[0].id == "keel.core.E008"
