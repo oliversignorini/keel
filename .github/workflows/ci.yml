@@ -171,15 +171,21 @@ jobs:
           # nothing here binds a port or talks to Stripe/Sentry/etc.
           # SECRET_KEY is deliberately NOT overridden: base.py's own
           # insecure default is exactly the finding this gate exists to
-          # surface (security.W009) — see the report for the phase that
-          # owns fixing it.
+          # surface (security.W009) — see config/settings/prod.py's
+          # SILENCED_SYSTEM_CHECKS for why it's silenced rather than fixed
+          # here, and the TODO pointing at the phase that owns fixing it.
           DJANGO_ALLOWED_HOSTS: "lvh.me,.lvh.me,localhost,127.0.0.1"
           DJANGO_SECURE_SSL_REDIRECT: "true"
           KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
-        run: uv run python manage.py check --deploy
-        # Errors fail the build; warnings only print (Django's own
-        # behavior — see docs/plans/phase-9.md 9.C). Currently all-warning
-        # on this codebase (verified locally), so this is blocking.
+        run: uv run python manage.py check --deploy --fail-level WARNING
+        # docs/plans/phase-16.md 16.D: this job was already all-warning on
+        # this codebase (verified locally) so it *behaved* as blocking, but
+        # `check --deploy` only fails the process on an Error by default —
+        # a new warning-level finding would have gone on printing in a
+        # green job forever. `--fail-level WARNING` makes that failure
+        # mode structural instead of coincidental; config/settings/prod.py's
+        # SILENCED_SYSTEM_CHECKS keeps today's one known warning
+        # (security.W009) from tripping it before 16.B fixes it for real.
 
       - name: pytest
         working-directory: apps/api
@@ -395,6 +401,7 @@ jobs:
         run: pnpm exec playwright test e2e/accessibility.spec.ts
 
       - name: Signup, login, logout, and password reset against the live API
+        id: auth_flows
         working-directory: apps/web
         continue-on-error: true
         run: pnpm exec playwright test e2e/auth-flows.spec.ts
@@ -421,6 +428,17 @@ jobs:
         # email-verification internals are explicitly out of this phase's
         # ownership (docs/plans/phase-11.md's Boundary table) — flagging
         # for whoever owns that surface next, see the Phase 11 report.
+
+      - name: Annotate auth-flows failure
+        if: steps.auth_flows.outcome == 'failure'
+        run: |
+          echo "e2e/auth-flows.spec.ts failed (non-blocking — see the previous step's comment for the known upstream cause)." >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=auth-flows.spec.ts failed::e2e/auth-flows.spec.ts failed — non-blocking, see the 'Signup, login, logout, and password reset against the live API' step's comment for the known cause."
+        # A step-level annotation, not a new job (docs/plans/phase-16.md
+        # 16.D) — continue-on-error keeps this job green even when the
+        # spec fails, which is exactly what made the finding invisible
+        # before; this puts it on the run summary and PR annotations tab
+        # without spending any more Actions minutes on it.
 
   contracts:
     runs-on: ubuntu-latest

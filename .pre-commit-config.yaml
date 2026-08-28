@@ -1,3 +1,17 @@
+# Two hook types share this one file (docs/plans/phase-16.md 16.D):
+# pre-commit (fast, changed-files-only formatting/lint, unchanged from
+# before this phase) and pre-push (a local mirror of the blocking CI
+# gates, running against the whole repo — see docs/pre-push.md).
+#
+# `default_stages` alone is not enough to keep pre-commit/pre-commit-hooks'
+# built-in hooks (end-of-file-fixer, trailing-whitespace, check-merge-conflict)
+# off the pre-push run — verified locally that `pre-commit run --hook-stage
+# pre-push` still ran them and rewrote committed files (that upstream repo's
+# own hook manifest sets its own `stages`, which wins over this file's
+# `default_stages`) — so every hook below carries an explicit `stages:` and
+# nothing relies on the default.
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.4
@@ -5,37 +19,83 @@ repos:
       - id: ruff
         args: [--fix]
         files: ^apps/api/
+        stages: [pre-commit]
       - id: ruff-format
         files: ^apps/api/
+        stages: [pre-commit]
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+  # local, not pre-commit/mirrors-mypy: the mirror's own isolated env only
+  # ever had `django-stubs` in `additional_dependencies`, so
+  # `--config-file=apps/api/pyproject.toml` (whose `[tool.mypy]` also
+  # ignores-missing-imports celery/environ/allauth/boto3/botocore) ran
+  # with `pass_filenames: false` and no positional target, which mypy
+  # rejects outright ("Missing target module, package, files, or
+  # command") — this hook has failed on every real invocation since
+  # Phase 0. Running `apps/api/.venv`'s own mypy against `.` is both
+  # simpler and exactly what CI runs.
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: bash -c 'cd apps/api && uv run mypy .'
+        language: system
         files: ^apps/api/
-        additional_dependencies:
-          - django-stubs
-        args: [--config-file=apps/api/pyproject.toml]
         pass_filenames: false
+        stages: [pre-commit]
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
+  # rbubley's fork, not upstream pre-commit/mirrors-prettier: upstream
+  # stopped tagging releases after v3.1.0 (last real tag before its
+  # v4.0.0-alpha.* series), so v3.3.3 — pinned here since Phase 0 — has
+  # never existed there and fails every `pre-commit run` with "pathspec
+  # 'v3.3.3' did not match any file(s)". rbubley/mirrors-prettier is the
+  # community continuation that still tags real prettier releases.
+  - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.3.3
     hooks:
       - id: prettier
         files: ^(apps/web|packages)/
+        stages: [pre-commit]
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.13.0
+  # local, not pre-commit/mirrors-eslint: apps/web/eslint.config.mjs
+  # imports the workspace package @keel/eslint-config, which the
+  # mirror's isolated env (only ever given `eslint` itself in
+  # `additional_dependencies`) can't resolve, and the mirror also runs
+  # from the repo root, where there is no eslint.config.* at all — every
+  # real invocation has failed with "ESLint couldn't find an
+  # eslint.config file" since Phase 0. `pnpm --filter web lint` is the
+  # same command CI runs.
+  - repo: local
     hooks:
       - id: eslint
+        name: eslint
+        entry: pnpm --filter web lint
+        language: system
         files: ^apps/web/
-        types: [file]
-        additional_dependencies:
-          - eslint@9.13.0
+        pass_filenames: false
+        stages: [pre-commit]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
+        stages: [pre-commit]
       - id: trailing-whitespace
+        stages: [pre-commit]
       - id: check-merge-conflict
+        stages: [pre-commit]
+
+  # Pre-push mirror of the blocking CI gates (docs/plans/phase-16.md
+  # 16.D). Runs the project's own tools (uv, pnpm) rather than a
+  # pre-commit-managed environment, so results match `apps/api/.venv`
+  # and CI exactly instead of a second, differently-pinned toolchain.
+  # See docs/pre-push.md for what this excludes and the --no-verify
+  # escape hatch; CI stays authoritative either way.
+  - repo: local
+    hooks:
+      - id: pre-push-gates
+        name: pre-push gates (ruff, mypy, permission lint, bandit, eslint, prettier, pytest, openapi drift + compat)
+        entry: bash scripts/pre-push-checks.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

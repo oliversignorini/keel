@@ -11,6 +11,16 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = "DENY"
 
+# `check --deploy` now runs with `--fail-level WARNING` in CI
+# (docs/plans/phase-16.md 16.D), so every warning it raises is blocking —
+# silence only what's already tracked as a known, owned gap.
+# TODO(phase-16.B): drop this once 16.B makes base.py's SECRET_KEY default
+# ("insecure-dev-key-change-me") fail production boot outright instead of
+# only warning — security.W009 is exactly that finding.
+SILENCED_SYSTEM_CHECKS = [
+    "security.W009",
+]
+
 # Railway's (and every other reverse-proxy PaaS's) edge terminates TLS and
 # forwards the original scheme via X-Forwarded-Proto — without this,
 # Django sees every request as plain HTTP behind the proxy, which makes
