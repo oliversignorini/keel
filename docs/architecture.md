@@ -268,7 +268,7 @@ this an enforced property rather than a convention:
   (`.hbs`, `.eta`, `.j2`, …) shows up, proving the templates are real
   source the repo's own linter reads.
 - **`reference-slice-is-a-render`** — re-runs `pnpm gen resource Widget
-  --force --ui` in place and fails on any diff against what's committed
+--force --ui` in place and fails on any diff against what's committed
   under `apps/api/keel/widgets` and the widgets frontend route.
 - **`generated-slice-passes-the-invariants`** — generates a throwaway
   resource, readonly-resource, permission, and email into the CI checkout
