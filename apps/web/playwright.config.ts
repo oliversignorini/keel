@@ -11,6 +11,15 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   reporter: "list",
+  // Same root cause as the webServer timeout below: a cold `next dev`
+  // compile of each auth-flows.spec.ts route (a first-hit /login,
+  // /signup, /app, ...) can itself run past the 5s default now that the
+  // shadcn/radix dependency graph landed, so a `toHaveURL` assertion
+  // right after a real navigation was timing out on the compile, not on
+  // a broken redirect.
+  expect: {
+    timeout: 15_000,
+  },
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3100",
     trace: "on-first-retry",
