@@ -6,15 +6,20 @@ PRD §7:
 Every status code in that section's table maps here: 400 (validation —
 raised by Ninja itself and translated in ``keel.core.ninja_exceptions``),
 401 (NotAuthenticated / AuthenticationFailed), 402 (PaymentRequired), 403
-(PermissionDeniedWithReason — carries Decision.reason / Decision.details,
-PRD §4 invariant 2), 404 (Http404), 409 (Conflict), 422
-(UnprocessableEntity), 429 (Throttled, whose ``wait`` becomes the
-``Retry-After`` header).
+(PermissionDeniedWithReason — carries Decision.reason as ``code`` and
+Decision.details as its own ``denial`` envelope key, PRD §4 invariant 2),
+404 (Http404), 409 (Conflict), 422 (UnprocessableEntity), 429 (Throttled,
+whose ``wait`` becomes the ``Retry-After`` header, plus the
+``X-RateLimit-*`` headers ``keel.core.ninja_throttle`` computes).
 
 These are framework-independent by design: they carry ``status_code`` /
-``code`` / ``message`` / ``details`` and nothing else, and
-``keel.core.ninja_exceptions.register`` is the single place that turns one
-into an HTTP response.
+``code`` / ``message`` / ``details`` and nothing else (``details`` is
+always ``list[{field, message}] | None`` — api-patterns finding 17 — a
+subclass that needs other structured context, like
+``PermissionDeniedWithReason``, publishes it through
+``extra_envelope_fields`` instead of overloading ``details`` with a
+second shape), and ``keel.core.ninja_exceptions.register`` is the single
+place that turns one into an HTTP response.
 """
 
 from typing import Any
@@ -50,6 +55,17 @@ class DomainError(Exception):
         12)."""
         return {}
 
+    @property
+    def extra_envelope_fields(self) -> dict[str, Any]:
+        """Additional top-level keys the envelope handler
+        (``keel.core.ninja_exceptions.domain_error_response``) merges into
+        the ``error`` object, sibling to ``details`` — empty by default.
+        ``PermissionDeniedWithReason`` overrides this to carry structured
+        denial context under its own ``denial`` key rather than overloading
+        ``details``, which validation errors already use for a different
+        shape (``list[{field, message}]``) — api-patterns finding 17."""
+        return {}
+
 
 class NotAuthenticated(DomainError):
     """Framework-independent counterpart to DRF's own ``NotAuthenticated``
@@ -83,6 +99,23 @@ class PermissionDeniedWithReason(DomainError):
     default_code = "permission_denied"
     default_message = "You do not have permission to perform this action."
 
+    def __init__(
+        self,
+        code: str | None = None,
+        message: str | None = None,
+        denial: dict[str, Any] | None = None,
+    ) -> None:
+        # `details` stays None here — a permission denial has no per-field
+        # validation errors, only the structured `denial` context below
+        # (api-patterns finding 17: `details` is one shape, list[{field,
+        # message}], everywhere; a 403's own context is a sibling key).
+        super().__init__(code=code, message=message, details=None)
+        self.denial = denial
+
+    @property
+    def extra_envelope_fields(self) -> dict[str, Any]:
+        return {"denial": self.denial}
+
 
 class Conflict(DomainError):
     status_code = 409
@@ -106,8 +139,19 @@ class Throttled(DomainError):
     default_code = "throttled"
     default_message = "Request was throttled."
 
-    def __init__(self, wait: float | None = None, details: Any = None) -> None:
+    def __init__(
+        self,
+        wait: float | None = None,
+        details: Any = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self.wait = wait
+        # api-patterns finding 7: the three X-RateLimit-* headers, computed
+        # by keel.core.ninja_throttle.RateThrottle.check from the same
+        # window state that decided this request was over-limit —
+        # threaded through here so the 429 response carries them too, not
+        # only successful throttled-scope responses.
+        self._extra_headers = headers or {}
         if wait is not None:
             unit = "second" if int(wait) == 1 else "seconds"
             message = f"{self.default_message} Expected available in {int(wait)} {unit}."
@@ -117,6 +161,7 @@ class Throttled(DomainError):
 
     @property
     def response_headers(self) -> dict[str, str]:
-        if self.wait is None:
-            return {}
-        return {"Retry-After": f"{int(self.wait)}"}
+        headers = dict(self._extra_headers)
+        if self.wait is not None:
+            headers["Retry-After"] = f"{int(self.wait)}"
+        return headers

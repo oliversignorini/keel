@@ -169,17 +169,21 @@ jobs:
           # Obvious placeholders, not real secrets — this only imports
           # config.settings.prod far enough to run Django's system checks;
           # nothing here binds a port or talks to Stripe/Sentry/etc.
-          # SECRET_KEY is deliberately NOT overridden: base.py's own
-          # insecure default is exactly the finding this gate exists to
-          # surface (security.W009) — see the report for the phase that
-          # owns fixing it.
+          # DJANGO_SECRET_KEY IS now overridden (phase 16.B,
+          # keel.core.checks.check_secret_key_not_default): base.py's own
+          # insecure default is now a hard Error under
+          # KEEL_ENFORCE_PRODUCTION_CHECKS (set unconditionally in
+          # config/settings/prod.py), not merely security.W009's warning —
+          # a real deployment must set this too, this is a CI-only stand-in.
+          DJANGO_SECRET_KEY: "not-a-real-secret-but-long-and-random-enough-for-ci-52chars"
           DJANGO_ALLOWED_HOSTS: "lvh.me,.lvh.me,localhost,127.0.0.1"
           DJANGO_SECURE_SSL_REDIRECT: "true"
           KEEL_ENCRYPTION_KEY: O-fOj6lG4KEcdbIbgEHBP8o0lMTG4dH-I_9ICP96te8=
         run: uv run python manage.py check --deploy
         # Errors fail the build; warnings only print (Django's own
-        # behavior — see docs/plans/phase-9.md 9.C). Currently all-warning
-        # on this codebase (verified locally), so this is blocking.
+        # behavior — see docs/plans/phase-9.md 9.C). Blocking since phase
+        # 9.C; phase 16.B additionally makes the weak-SECRET_KEY case
+        # itself a blocking Error (keel.core.E005), not just a warning.
 
       - name: pytest
         working-directory: apps/api

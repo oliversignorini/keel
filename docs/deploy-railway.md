@@ -390,10 +390,16 @@ Before the first real deploy goes live for real users:
       actually sends (see the human checklist).
 - [ ] **Secrets.** `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` — both must
       be freshly generated per environment, never the `.env.example`
-      placeholder values, and never reused between staging and production
-      (`KEEL_ENCRYPTION_KEY` in particular: rotating it does not
-      retroactively re-encrypt existing `Connection` rows — see
-      `apps/api/keel/core/crypto.py`).
+      placeholder values, and never reused between staging and production.
+      `DJANGO_SECRET_KEY` failing this is now a hard boot failure, not
+      just `security.W009` (`keel.core.checks.check_secret_key_not_default`,
+      phase 16.B). `KEEL_ENCRYPTION_KEY` rotates safely (ddia#27,
+      `apps/api/keel/core/crypto.py`): set it to `<new-key>,<old-key>`
+      (comma-separated, newest first — every configured key can decrypt,
+      only the first encrypts), then run
+      `python manage.py rotate_connection_tokens` to move existing
+      `Connection` rows onto the new key before dropping the old one from
+      the env var.
 - [ ] **CORS/CSRF.** `DJANGO_CORS_ALLOWED_ORIGINS` and
       `DJANGO_CSRF_TRUSTED_ORIGINS` set to the real production origins
       (`https://app.<domain>`, `https://<domain>`) — the `.env.example`

@@ -14,7 +14,7 @@ import pytest
 from keel.accounts.models import User
 from keel.core.authz import has_perm as core_has_perm
 from keel.organizations.models import Membership, Organization, Role
-from keel.organizations.permissions import Perm, has_perm
+from keel.organizations.permissions import DenialReason, Perm, has_perm, registered_denial_reasons
 from keel.organizations.tests.guard_cases import ALLOW_CASES, DENY_CASES, allow_case, deny_case
 
 pytestmark = pytest.mark.django_db
@@ -187,6 +187,17 @@ def test_members_remove_denies_removing_the_sole_owner_even_by_another_owner() -
 
 def test_has_perm_is_reexported_from_organizations_permissions() -> None:
     assert has_perm is core_has_perm
+
+
+def test_registered_denial_reasons_lists_every_deny_case_code() -> None:
+    """api-patterns finding 18: the published set can't drift from what the
+    guards above actually raise, because it's derived from the same
+    ``DenialReason`` constants they use."""
+    assert registered_denial_reasons() == sorted(
+        {DenialReason.INSUFFICIENT_ROLE, DenialReason.CANNOT_REMOVE_LAST_OWNER}
+    )
+    for case in DENY_CASES:
+        assert case.reason in registered_denial_reasons()
 
 
 def test_perm_codes_match_prd() -> None:

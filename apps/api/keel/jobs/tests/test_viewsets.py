@@ -161,7 +161,7 @@ def test_a_member_without_jobs_create_is_denied_with_a_reason() -> None:
     assert response.status_code == 403
     body = response.json()
     assert body["error"]["code"] == "insufficient_role"
-    assert body["error"]["details"]["required"] == Perm.JOBS_CREATE
+    assert body["error"]["denial"]["required"] == Perm.JOBS_CREATE
 
 
 def test_cross_organization_job_access_404s() -> None:

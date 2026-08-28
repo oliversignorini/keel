@@ -132,7 +132,7 @@ def resolve_and_authorize(
         decision = has_perm(request.auth, organization, code)
         if not decision.allowed:
             raise PermissionDeniedWithReason(
-                code=decision.reason or "permission_denied", details=decision.details
+                code=decision.reason or "permission_denied", denial=decision.details
             )
     return organization
 

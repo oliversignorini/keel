@@ -34,7 +34,7 @@ from keel.core.ninja_authz import (
 from keel.core.ninja_pagination import Page, paginate
 from keel.organizations import selectors, services
 from keel.organizations.models import Invitation, Membership, Role
-from keel.organizations.permissions import Perm
+from keel.organizations.permissions import Perm, registered_denial_reasons
 from keel.organizations.schemas import (
     InvitationCreateIn,
     InvitationOut,
@@ -345,10 +345,14 @@ def me(request: Any) -> dict:
 @me_router.get("/permissions/", response=PermissionCodesOut, operation_id="retrievePermissionCodes")
 def permissions_registry(request: Any, response: HttpResponse) -> dict:
     """A Reference Data Holder (api-patterns finding 13) â€” the permission
-    registry only changes on deploy, not per-request."""
+    registry only changes on deploy, not per-request. Also publishes the
+    enumerable 403 denial reason codes (api-patterns finding 18), so a
+    client can branch on ``error.code`` without having read the Python
+    that raises it."""
     codes = selectors.registered_permission_codes()
-    set_reference_data_cache_headers(response, sorted(codes))
-    return {"codes": codes}
+    denial_reasons = registered_denial_reasons()
+    set_reference_data_cache_headers(response, sorted(codes), sorted(denial_reasons))
+    return {"codes": codes, "denial_reasons": denial_reasons}
 
 
 # --- /invite/<token>/: public GET, authenticated POST ----------------------

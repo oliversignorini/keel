@@ -30,7 +30,15 @@ from keel.core import ninja_exceptions
 api = NinjaAPI(
     title="Keel API",
     version="1.0.0",
-    description="Keel — Django + Next.js SaaS template.",
+    description=(
+        "Keel — Django + Next.js SaaS template.\n\n"
+        "Rate limiting: every request is throttled per-user (authenticated) "
+        "or per-IP (anonymous); a throttled-scope response — 200 or 429 — "
+        "carries X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset "
+        "so a client can pace itself before being rejected. A 429 additionally "
+        "carries Retry-After. See docs/adr/0003-api-lifecycle-guarantee.md for "
+        "this API's versioning and stability commitment."
+    ),
 )
 
 ninja_exceptions.register(api)

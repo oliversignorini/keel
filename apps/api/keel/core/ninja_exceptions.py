@@ -19,7 +19,14 @@ from keel.core.exceptions import DomainError
 class ErrorBodyOut(Schema):
     code: str
     message: str
-    details: Any = None
+    # list[{field, message}] for validation errors, None otherwise —
+    # never the dict shape a 403's structured denial context used to
+    # overload this field with (api-patterns finding 17).
+    details: list[dict[str, Any]] | None = None
+    # Present only on a 403 raised via PermissionDeniedWithReason —
+    # Decision.details, i.e. what permission code was required or which
+    # invariant blocked the action (api-patterns finding 17 / 18).
+    denial: dict[str, Any] | None = None
 
 
 class ErrorEnvelope(Schema):
@@ -52,17 +59,21 @@ def _validation_details(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return details
 
 
-def _envelope(status_code: int, code: str, message: str, details: Any) -> HttpResponse:
-    return JsonResponse(
-        {"error": {"code": code, "message": message, "details": details}}, status=status_code
-    )
+def _envelope(
+    status_code: int, code: str, message: str, details: Any, **extra: Any
+) -> HttpResponse:
+    body = {"code": code, "message": message, "details": details}
+    body.update(extra)
+    return JsonResponse({"error": body}, status=status_code)
 
 
 def domain_error_response(exc: DomainError) -> HttpResponse:
     """Render a ``DomainError`` as PRD §7's envelope. Shared by the Ninja
     exception handler below and ``keel.core.ninja_throttle.ThrottleMiddleware``,
     which raises/catches ``Throttled`` outside Ninja's own dispatch."""
-    response = _envelope(exc.status_code, exc.code, exc.message, exc.details)
+    response = _envelope(
+        exc.status_code, exc.code, exc.message, exc.details, **exc.extra_envelope_fields
+    )
     for header, value in exc.response_headers.items():
         response[header] = value
     return response

@@ -19,7 +19,37 @@ import sentry_sdk
 from django.conf import settings
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+from keel.core.redaction import redact_mapping
+
 _LogLevel = Literal["fatal", "critical", "error", "warning", "info", "debug"]
+
+# The event sections that can carry secret-shaped values: request headers/
+# cookies/body, and any breadcrumb/extra data a call site attached.
+# `send_default_pii=False` below already keeps Sentry from *collecting*
+# cookies/IPs itself, but a call site can still put a secret into `extra`
+# or a breadcrumb explicitly (e.g. logging a webhook payload for
+# debugging) — this is the layer below `send_default_pii`
+# (docs/plans/phase-16.md 16.B) that catches that.
+_SCRUBBED_EVENT_KEYS = ("extra", "contexts", "breadcrumbs")
+
+
+def scrub_event(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:
+    """``before_send`` — redacts secret-shaped keys anywhere in the parts
+    of a Sentry event a call site controls, using the same denylist
+    ``keel.core.logging.JSONFormatter`` scrubs log lines with
+    (``keel.core.redaction``), so "what counts as a secret" can't drift
+    between the two. Never drops the event — only redacts values."""
+    request = event.get("request")
+    if isinstance(request, dict):
+        for key in ("headers", "cookies", "data"):
+            if key in request:
+                request[key] = redact_mapping(request[key])
+
+    for key in _SCRUBBED_EVENT_KEYS:
+        if key in event:
+            event[key] = redact_mapping(event[key])
+
+    return event
 
 
 def init_sentry(**overrides: Any) -> None:
@@ -43,6 +73,9 @@ def init_sentry(**overrides: Any) -> None:
         # failure — Sentry's default (event_level=ERROR) would otherwise
         # double every dead-lettered task into two events.
         "integrations": [LoggingIntegration(level=20, event_level=None)],
+        # The redaction layer below send_default_pii (docs/plans/
+        # phase-16.md 16.B) — see scrub_event's docstring.
+        "before_send": scrub_event,
     }
     options.update(overrides)
     sentry_sdk.init(**options)

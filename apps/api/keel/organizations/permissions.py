@@ -49,6 +49,30 @@ class Perm:
     JOBS_CREATE = "jobs.create"
 
 
+class DenialReason:
+    """The full vocabulary of ``Decision.deny(...)`` reason codes this
+    module raises — becomes the error envelope's ``code`` on a 403
+    (``keel.core.ninja_authz.resolve_and_authorize``). Enumerated here,
+    not just used as inline string literals, so
+    ``registered_denial_reasons`` below can publish the set through
+    ``GET /api/v1/permissions/`` instead of a client having to learn it by
+    reading this file (api-patterns finding 18)."""
+
+    INSUFFICIENT_ROLE = "insufficient_role"
+    CANNOT_REMOVE_LAST_OWNER = "cannot_remove_last_owner"
+
+
+def registered_denial_reasons() -> list[str]:
+    """Every reason code this module can deny with — derived from
+    ``DenialReason`` itself so the published list can't drift from the
+    literals the guards below actually raise."""
+    return sorted(
+        value
+        for name, value in vars(DenialReason).items()
+        if not name.startswith("_") and isinstance(value, str)
+    )
+
+
 def _resolve_role_permissions(user: Any, organization: Any) -> frozenset[str]:
     if user is None or organization is None:
         return frozenset()
@@ -74,7 +98,7 @@ def _role_guard(code: str) -> Guard:
     def guard(user: Any, organization: Any, subject: Any | None = None) -> Decision:
         permissions = _resolve_role_permissions(user, organization)
         if code not in permissions:
-            return Decision.deny("insufficient_role", details={"required": code})
+            return Decision.deny(DenialReason.INSUFFICIENT_ROLE, details={"required": code})
         return Decision.allow()
 
     return guard
@@ -109,10 +133,12 @@ def _members_remove_guard(user: Any, organization: Any, subject: Any | None = No
 
     permissions = _resolve_role_permissions(user, organization)
     if Perm.MEMBERS_REMOVE not in permissions:
-        return Decision.deny("insufficient_role", details={"required": Perm.MEMBERS_REMOVE})
+        return Decision.deny(
+            DenialReason.INSUFFICIENT_ROLE, details={"required": Perm.MEMBERS_REMOVE}
+        )
     if subject is not None and is_last_active_owner(subject):
         return Decision.deny(
-            "cannot_remove_last_owner",
+            DenialReason.CANNOT_REMOVE_LAST_OWNER,
             details={"membership_id": str(subject.pk)},
         )
     return Decision.allow()

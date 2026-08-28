@@ -52,4 +52,20 @@ describe("errorFromStatus", () => {
     });
     expect(error.details).toEqual([{ field: "email", message: "Already a member." }]);
   });
+
+  it("carries structured 403 denial context through as its own field", () => {
+    const error = errorFromStatus(403, {
+      code: "insufficient_role",
+      message: "You do not have permission to perform this action.",
+      details: undefined,
+      denial: { required: "members.remove" },
+    });
+    expect(error.details).toEqual([]);
+    expect(error.denial).toEqual({ required: "members.remove" });
+  });
+
+  it("defaults denial to null when the envelope omits it", () => {
+    const error = errorFromStatus(400, envelope);
+    expect(error.denial).toBeNull();
+  });
 });

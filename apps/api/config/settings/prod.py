@@ -3,6 +3,16 @@ from .base import DATABASES, MIDDLEWARE, STORAGES, env
 
 DEBUG = False
 
+# Gates the production-only checks in keel/core/checks.py (weak SECRET_KEY,
+# wildcard ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS/CORS) — an explicit flag
+# rather than inferring "production" from DEBUG or the settings module
+# name, because dev/test also run with DEBUG effectively False in CI
+# without a real SECRET_KEY configured (config/settings/test.py), and
+# inferring from either would either miss real deployments or fail the
+# test suite. docs/plans/phase-16.md 16.B: "Production must fail to start
+# on the default SECRET_KEY."
+KEEL_ENFORCE_PRODUCTION_CHECKS = True
+
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

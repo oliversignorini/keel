@@ -48,7 +48,7 @@ def forbid_when_impersonating(impersonator: Any, action: str) -> None:
         raise ImpersonationRestricted(
             code="impersonation_restricted",
             message=f"Impersonated sessions cannot {action}.",
-            details={"action": action},
+            denial={"action": action},
         )
 
 
