@@ -20,6 +20,11 @@ export default defineConfig({
   expect: {
     timeout: 15_000,
   },
+  // Runs one full signup/verify/reset round-trip before any test's clock
+  // starts, so `next dev`'s per-route first-compile cost lands here
+  // instead of inside whichever auth-flows.spec.ts test happens to run
+  // first (see that file's global-setup.ts for why).
+  globalSetup: "./e2e/global-setup.ts",
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3100",
     trace: "on-first-retry",
