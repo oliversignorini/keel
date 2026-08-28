@@ -39,7 +39,16 @@ class AuditLog(UUIDv7PrimaryKeyModel):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        indexes = (models.Index(fields=["organization", "created_at"]),)
+        indexes = (
+            models.Index(fields=["organization", "created_at"]),
+            # ``GET .../audit/`` pages on ``ordering=("-id",)`` (ddia#18 —
+            # id is UUIDv7, monotonic and already unique, unlike
+            # created_at), not on created_at — this index backs that
+            # cursor query; the created_at one above backs nothing it
+            # currently pages on but is left in place for any future
+            # date-range read.
+            models.Index(fields=["organization", "id"]),
+        )
 
     def __str__(self) -> str:
         return self.action

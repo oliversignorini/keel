@@ -6,6 +6,7 @@ from typing import Any, Literal
 from ninja import Schema
 from pydantic import Field
 
+from keel.core.schemas import KeelSchema
 from keel.jobs.models import Job
 
 # api-patterns finding 14: a published vocabulary, not a bare `str` — must
@@ -15,8 +16,7 @@ JobStatus = Literal["queued", "running", "succeeded", "partial", "failed"]
 assert set(JobStatus.__args__) == {choice for choice, _ in Job.STATUS_CHOICES}  # type: ignore[attr-defined]
 
 
-class JobStepOut(Schema):
-    id: str
+class JobStepOut(KeelSchema):
     name: str
     ordinal: int
     status: JobStatus
@@ -25,13 +25,8 @@ class JobStepOut(Schema):
     finished_at: datetime | None
     error: str
 
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
-
-class JobOut(Schema):
-    id: str
+class JobOut(KeelSchema):
     type: str
     status: JobStatus
     params: dict[str, Any]
@@ -41,10 +36,6 @@ class JobOut(Schema):
     started_at: datetime | None
     finished_at: datetime | None
     steps: list[JobStepOut]
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
     @staticmethod
     def resolve_steps(obj: Any) -> list[Any]:

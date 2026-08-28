@@ -5,6 +5,7 @@ writes.
 """
 
 from typing import Any
+from uuid import UUID
 
 from django.db.models import Q, QuerySet
 
@@ -69,6 +70,20 @@ def list_invitations(organization: Organization) -> QuerySet[Invitation]:
 
 def get_invitation_by_token(token: str) -> Invitation | None:
     return Invitation.objects.select_related("organization", "role").filter(token=token).first()
+
+
+def get_role(role_id: str | UUID) -> Role | None:
+    return Role.objects.filter(pk=str(role_id)).first()
+
+
+def get_membership_by_id(
+    organization: Organization, membership_id: str | UUID
+) -> Membership | None:
+    return (
+        Membership.objects.filter(organization=organization, pk=membership_id)
+        .select_related("role")
+        .first()
+    )
 
 
 def resolve_permission_codes(membership: Membership | None) -> list[str]:

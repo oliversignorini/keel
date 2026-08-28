@@ -8,6 +8,7 @@ from ninja import Schema
 from pydantic import Field
 
 from keel.billing.models import Price
+from keel.core.schemas import KeelSchema
 
 # api-patterns finding 14: a published vocabulary, not a bare `str` — must
 # match Price.INTERVAL_CHOICES (keel/billing/models.py).
@@ -31,15 +32,10 @@ SubscriptionStatus = Literal[
 ]
 
 
-class PriceOut(Schema):
-    id: str
+class PriceOut(KeelSchema):
     interval: PriceInterval
     unit_amount: int
     currency: str
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
 
 class EntitlementsOut(Schema):
@@ -53,17 +49,12 @@ class EntitlementsOut(Schema):
     limits: dict[str, int | None] = Field(default_factory=dict)
 
 
-class PlanOut(Schema):
-    id: str
+class PlanOut(KeelSchema):
     code: str
     name: str
     entitlements: EntitlementsOut
     sort_order: int
     prices: list[PriceOut]
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
     @staticmethod
     def resolve_prices(obj: Any) -> list[Any]:
@@ -73,18 +64,13 @@ class PlanOut(Schema):
         return getattr(obj, "active_prices", [])
 
 
-class SubscriptionOut(Schema):
-    id: str
+class SubscriptionOut(KeelSchema):
     plan: str
     status: SubscriptionStatus
     quantity: int
     current_period_end: datetime | None
     trial_end: datetime | None
     cancel_at_period_end: bool
-
-    @staticmethod
-    def resolve_id(obj: Any) -> str:
-        return str(obj.id)
 
     @staticmethod
     def resolve_plan(obj: Any) -> str:
