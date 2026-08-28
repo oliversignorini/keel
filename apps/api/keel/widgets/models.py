@@ -1,5 +1,12 @@
-"""Widget — the demo resource (PRD §4 "Data model"). The copy-paste
-pattern /new-resource generates from. ``init`` deletes this app."""
+"""Widget — data shape only (PRD §4 "Data model"; CLAUDE.md's
+per-app file shape). No queries and no business rules: reads live in
+``selectors.py``, writes in ``services.py``.
+
+Constraints, extra indexes, nullability and every other ``Meta`` option
+are judgement rather than mechanics, and the generator deliberately stops
+short of them (ADR 0004, "Full codegen, delete the commands"). Add them
+here and write the migration with ``makemigrations``.
+"""
 
 from django.db import models
 

@@ -1,6 +1,20 @@
 """Shape validation at the edge (PRD §4, "What is the validation
-boundary?"; docs/plans/phase-6.md 6.D). Ninja ``Schema``s replace DRF
-serializers — Pydantic-native, no ``Meta`` class indirection."""
+boundary?"). Ninja ``Schema``s replace DRF serializers — Pydantic-native,
+no ``Meta`` class indirection.
+
+Three schemas, not one: what a client may send on create, what it may
+send on update, and what the API returns. The update schema exists
+separately because *unset* has to mean *unchanged* — which is also why
+PATCH is the only mutating method on the detail route (see ``views.py``).
+
+Note the comments below are comments and not docstrings, deliberately:
+pydantic promotes a schema class's docstring into the generated OpenAPI
+document as that component's ``description``, so a docstring here is
+public API surface that shows up in `openapi.merged.json` and in the
+generated TypeScript client. Notes for the next developer belong in a
+comment; text meant for an API consumer belongs in a docstring, on
+purpose.
+"""
 
 from datetime import datetime
 
@@ -10,6 +24,9 @@ from pydantic import Field
 from keel.core.schemas import KeelSchema
 
 
+# What the API returns. Relations are serialized as their id, never as a
+# nested object — expanding one is a client decision, and nesting it here
+# is how a list endpoint quietly becomes an N+1.
 class WidgetOut(KeelSchema):
     name: str
     description: str
@@ -23,12 +40,18 @@ class WidgetOut(KeelSchema):
         return str(obj.created_by_id)  # type: ignore[attr-defined]
 
 
+# Create payload. A required field has no default; an optional one
+# defaults to empty rather than to ``None`` so the column never holds two
+# different spellings of "nothing".
 class WidgetIn(Schema):
     name: str = Field(min_length=1, max_length=255)
     description: str = ""
     status: str = ""
 
 
+# Update payload — every field optional. ``views.py`` reads it with
+# ``exclude_unset=True``, so omitting a field leaves it unchanged, and
+# sending it as ``null`` is a different request from not sending it.
 class WidgetPatchIn(Schema):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None

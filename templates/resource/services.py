@@ -46,7 +46,7 @@ def create___resource__(
     *,
     organization: Organization,
     # keel:insert create_params
-    created_by: Any,
+    created_by: Any
 ) -> __Resource__:
     check_limit(organization, "__app__")
     with transaction.atomic():

@@ -1,6 +1,7 @@
-"""One-line delegations to services (PRD §4 per-app structure;
-docs/plans/phase-6.md 6.D). Tier-1 shim (``keel.core.tasks``) — see that
-module's docstring for the fire-and-forget/multi-step boundary.
+"""One-line delegations to services (CLAUDE.md's per-app file shape).
+Tier-1 shim (``keel.core.tasks``) — see that module's docstring for the
+fire-and-forget / multi-step boundary. A task that grows a second step
+belongs in ``keel/jobs/``, not here.
 """
 
 from keel.core.tasks import task

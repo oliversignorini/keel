@@ -1,7 +1,11 @@
-"""Query-count regression test for ``GET /orgs/<slug>/widgets/`` (Phase
-16.A — docs/query-patterns.md explains the methodology). The count is
-pinned and commented so a future N+1 fails loudly instead of silently
-degrading with row count.
+"""Query-count regression test for ``GET /orgs/<slug>/widgets/``
+(docs/query-patterns.md explains the methodology). The count is pinned and
+commented so a future N+1 fails loudly instead of silently degrading with
+row count.
+
+If you add a relation to ``Widget``, add it to
+``selectors.list_widgets``'s ``select_related`` — not to this
+number.
 """
 
 import pytest
@@ -27,9 +31,9 @@ def test_list_widgets_query_count(django_assert_num_queries: object) -> None:
     # 2: session_key -> User (session_auth).
     # 3: resolve_and_authorize's org_slug -> Organization, joined through
     #    an active Membership (the tenant-isolation lookup).
-    # 4: has_perm's Membership+Role lookup for WIDGETS_VIEW.
-    # 5: the widget list itself, select_related("created_by") — one query
-    #    regardless of row count, which is what this test guards.
+    # 4: has_perm's Membership+Role lookup for the view code.
+    # 5: the list itself, select_related(...) — one query regardless of
+    #    row count, which is what this test guards.
     with django_assert_num_queries(5):  # type: ignore[operator]
         response = client.get(f"/api/v1/orgs/{org.slug}/widgets/")
     assert response.status_code == 200

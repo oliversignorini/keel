@@ -8,8 +8,9 @@ class WidgetsConfig(AppConfig):
     def ready(self) -> None:
         # Registers "widgets" as a countable resource for
         # keel.billing.entitlements.check_limit (docs/plans/phase-4.md
-        # B.4) — the demo resource /new-resource copies from, deleted
-        # along with this app's other files by `init`.
+        # B.4). check_limit raises UnregisteredResource for a name nobody
+        # registered a counter for, so this has to exist before any
+        # service calls it — hence AppConfig.ready(), not import time.
         from keel.billing.entitlements import register_resource_counter
         from keel.widgets.models import Widget
 

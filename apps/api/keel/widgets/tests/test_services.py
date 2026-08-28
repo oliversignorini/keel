@@ -19,15 +19,22 @@ def _org() -> tuple[Organization, User]:
 def test_create_widget_creates_a_row() -> None:
     org, creator = _org()
 
-    widget = services.create_widget(
-        organization=org, name="Sprocket", description="spins", status="active", created_by=creator
+    row = services.create_widget(
+        organization=org,
+        created_by=creator,
+        name="A name",
+        description="",
+        status="",
     )
 
-    assert widget.pk is not None
-    assert Widget.objects.filter(pk=widget.pk, organization=org).exists()
+    assert row.pk is not None
+    assert Widget.objects.filter(pk=row.pk, organization=org).exists()
 
 
 def test_create_widget_enforces_the_widgets_limit() -> None:
+    """CLAUDE.md invariant 3's ordering, proved: ``check_limit`` runs
+    before anything is written, so the second create raises rather than
+    inserting a row and rolling it back."""
     org, creator = _org()
     plan = Plan.objects.create(
         code="starter",
@@ -50,12 +57,20 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
         status="active",
     )
     services.create_widget(
-        organization=org, name="First", description="", status="", created_by=creator
+        organization=org,
+        created_by=creator,
+        name="A name",
+        description="",
+        status="",
     )
 
     with pytest.raises(PaymentRequired) as exc_info:
         services.create_widget(
-            organization=org, name="Second", description="", status="", created_by=creator
+            organization=org,
+            created_by=creator,
+            name="A name",
+            description="",
+            status="",
         )
 
     assert exc_info.value.code == "limit_exceeded"
@@ -63,23 +78,31 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
 
 def test_update_widget_updates_only_given_fields() -> None:
     org, creator = _org()
-    widget = services.create_widget(
-        organization=org, name="Sprocket", description="", status="", created_by=creator
+    row = services.create_widget(
+        organization=org,
+        created_by=creator,
+        name="A name",
+        description="",
+        status="",
     )
 
-    updated = services.update_widget(widget=widget, actor=creator, status="archived")
+    updated = services.update_widget(widget=row, actor=creator, description="changed")
 
     updated.refresh_from_db()
-    assert updated.status == "archived"
-    assert updated.name == "Sprocket"
+    assert updated.description == "changed"
+    assert updated.name == row.name  # untouched fields stay untouched
 
 
 def test_delete_widget_removes_the_row() -> None:
     org, creator = _org()
-    widget = services.create_widget(
-        organization=org, name="Sprocket", description="", status="", created_by=creator
+    row = services.create_widget(
+        organization=org,
+        created_by=creator,
+        name="A name",
+        description="",
+        status="",
     )
 
-    services.delete_widget(widget=widget, actor=creator)
+    services.delete_widget(widget=row, actor=creator)
 
-    assert not Widget.objects.filter(pk=widget.pk).exists()
+    assert not Widget.objects.filter(pk=row.pk).exists()

@@ -21,6 +21,14 @@
  * `# keel:if` must be a whole line so that the template file stays valid
  * Python with every region present, which is exactly what makes the
  * "linters lint the templates" claim true.
+ *
+ * One flag is reserved and is deliberately never set by any generator:
+ * `template_only` marks content that exists so the template file parses
+ * and is dropped from every render. It is needed exactly where a class
+ * body would otherwise be nothing but a `# keel:insert` marker — a
+ * comment is not a statement, so the template would be a syntax error,
+ * and a docstring is not an option because pydantic promotes a schema
+ * class's docstring into the public OpenAPI document.
  */
 
 import type { Names } from "./naming.js";

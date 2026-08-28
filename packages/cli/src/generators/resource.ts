@@ -168,6 +168,9 @@ function buildInserts(
     service_call_kwargs: renderServiceCallKwargs(fields),
     update_assertions: renderUpdateAssertions(fields, patchTarget),
     api_create_body: [`_CREATE_BODY = ${renderApiCreateBody(fields)}`],
+    api_retrieve_assertions: display
+      ? [`    assert response.json()["${display.name}"] == _CREATE_BODY["${display.name}"]`]
+      : [],
     api_patch_assertions: renderApiPatchAssertions(names, patchTarget),
     api_validation_test: renderApiValidationTest(names, fields),
   };

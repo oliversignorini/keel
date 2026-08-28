@@ -348,6 +348,7 @@ export function renderOutFields(fields: Field[]): string[] {
 
 /** `schemas.py` — the create schema. */
 export function renderInFields(fields: Field[]): string[] {
+  if (fields.length === 0) return ["    pass"];
   return fields.map((field) => {
     if (field.kind === "str") {
       const constraint = `Field(min_length=1, max_length=${field.maxLength})`;
@@ -370,8 +371,14 @@ export function renderInFields(fields: Field[]): string[] {
 
 /** `schemas.py` — the PATCH schema: every field optional, unset means unchanged. */
 export function renderPatchFields(fields: Field[]): string[] {
+  if (fields.length === 0) return ["    pass"];
   return fields.map((field) => {
     if (field.kind === "str") {
+      // An optional field carries no length constraint, here or in the
+      // create schema: `min_length=1` on a column whose whole point is
+      // that empty is a legal value would reject the value the model
+      // itself defaults to.
+      if (field.optional) return `    ${field.name}: str | None = None`;
       return `    ${field.name}: str | None = Field(default=None, min_length=1, max_length=${field.maxLength})`;
     }
     if (field.kind === "text" || field.kind === "choice") {
@@ -430,6 +437,10 @@ export function renderServiceCallKwargs(fields: Field[]): string[] {
 function sampleValue(field: Field): string {
   switch (field.kind) {
     case "str":
+      // An optional column's sample value is its own default. A factory
+      // that fills in every optional field never exercises the shape a
+      // row actually has when a caller leaves them out.
+      if (field.optional) return '""';
       return pythonQuote(`A ${field.name}`.slice(0, Math.max(1, field.maxLength ?? 255)));
     case "text":
       return field.optional ? '""' : pythonQuote("Some text");

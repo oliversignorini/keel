@@ -75,6 +75,7 @@ def test_owner_can_create_list_retrieve_update_and_delete() -> None:
 
     response = client.get(f"/api/v1/orgs/{org.slug}/__resources__/{row_id}/")
     assert response.status_code == 200
+    # keel:insert api_retrieve_assertions
 
     # keel:insert api_patch_assertions
 

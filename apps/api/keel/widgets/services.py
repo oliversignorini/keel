@@ -1,10 +1,12 @@
-"""Writes (PRD §4 "Data model"; docs/plans/phase-6.md 6.D). The
-reference-slice's ``services.py`` — the shape ``/new-resource`` copies.
+"""Writes (PRD §4 "Data model"; CLAUDE.md invariants 3 and 7).
 
-Same discipline as ``keel/organizations/services.py``: one
-``transaction.atomic()`` per function, opened here and never in a view;
-mutating functions are ``@audited`` or ``@not_audited(reason=...)``; a
-quantity check (``check_limit``) happens before anything is written.
+The discipline this file exists to hold: one ``transaction.atomic()`` per
+function, opened here and never in a view; every mutating function is
+``@audited`` or ``@not_audited(reason=...)``; a quantity check
+(``check_limit``) happens before anything is written; anything external
+(Stripe, a webhook, a search index) goes through
+``transaction.on_commit()`` rather than running inside the open
+transaction.
 """
 
 from __future__ import annotations
@@ -22,16 +24,16 @@ from keel.widgets.models import Widget
 def _notify_widget_created(widget_id: Any) -> None:
     """Seam for a downstream integration (search index, webhook, ...) —
     the same "documented no-op" pattern as
-    ``organizations.services._sync_stripe_customer``. Nothing in this
-    project actually needs one; this exists so ``/new-resource``'s copy
-    has somewhere to put one."""
+    ``organizations.services._sync_stripe_customer``. Fill it in or delete
+    it; leaving it empty is a deliberate third option."""
 
 
 def _dispatch_widget_created(widget_id: Any) -> None:
     """Enqueues the Tier-1 notification task (``keel.widgets.tasks``) on
     commit — a lazy import because ``tasks.py`` imports this module at
-    module level (PRD §4 invariant 5's "one-line delegation to services"
-    means the task, not this service, owns the enqueue direction)."""
+    module level (CLAUDE.md invariant 5's "one-line delegation to
+    services" means the task, not this service, owns the enqueue
+    direction)."""
     from keel.widgets.tasks import notify_widget_created_task
 
     notify_widget_created_task.enqueue(str(widget_id))
