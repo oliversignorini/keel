@@ -1,5 +1,9 @@
 import type { FormHTMLAttributes, ReactNode } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
+import { Alert, AlertDescription } from "./components/ui/alert";
+import { Button } from "./components/ui/button";
+import { Card, CardContent, CardFooter } from "./components/ui/card";
 import { cn } from "./cn";
 
 /** `<ResourceForm>` — the CRUD-form chrome every generated resource form
@@ -29,31 +33,29 @@ export function ResourceForm({
   children: ReactNode;
 } & Omit<FormHTMLAttributes<HTMLFormElement>, "onSubmit">) {
   return (
-    <form onSubmit={onSubmit} noValidate {...formProps} className={cn("flex flex-col gap-4")}>
-      {formError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {formError}
-        </p>
-      ) : null}
-      {children}
-      <div className="flex items-center justify-end gap-2 pt-2">
-        {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-          >
-            Cancel
-          </button>
-        ) : null}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-        >
-          {isSubmitting ? (submittingLabel ?? submitLabel) : submitLabel}
-        </button>
-      </div>
+    <form onSubmit={onSubmit} noValidate {...formProps} className={cn("contents")}>
+      <Card>
+        <CardContent className="flex flex-col gap-4">
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertCircle />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+          {children}
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : null}
+            {isSubmitting ? (submittingLabel ?? submitLabel) : submitLabel}
+          </Button>
+        </CardFooter>
+      </Card>
     </form>
   );
 }

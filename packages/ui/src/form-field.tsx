@@ -1,6 +1,9 @@
 import { type InputHTMLAttributes, type TextareaHTMLAttributes, forwardRef } from "react";
+import { AlertCircle } from "lucide-react";
 
-import { cn } from "./cn";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
+import { Textarea } from "./components/ui/textarea";
 
 interface FieldChromeProps {
   label: string;
@@ -15,13 +18,12 @@ function FieldChrome({
   children,
 }: FieldChromeProps & { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-foreground">
-        {label}
-      </label>
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
       {children}
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="flex items-center gap-1 text-sm text-destructive">
+          <AlertCircle className="size-3.5 shrink-0" />
           {error}
         </p>
       ) : null}
@@ -39,14 +41,11 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function F
 ) {
   return (
     <FieldChrome label={label} id={id} error={error}>
-      <input
+      <Input
         id={id}
         ref={ref}
         aria-invalid={Boolean(error)}
-        className={cn(
-          "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring",
-          className,
-        )}
+        className={className}
         {...inputProps}
       />
     </FieldChrome>
@@ -59,14 +58,11 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
   function FormTextarea({ label, id, error, className, ...textareaProps }, ref) {
     return (
       <FieldChrome label={label} id={id} error={error}>
-        <textarea
+        <Textarea
           id={id}
           ref={ref}
           aria-invalid={Boolean(error)}
-          className={cn(
-            "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring",
-            className,
-          )}
+          className={className}
           {...textareaProps}
         />
       </FieldChrome>

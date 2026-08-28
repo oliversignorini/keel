@@ -1,3 +1,7 @@
+import { LogOut, UserCog } from "lucide-react";
+
+import { Button } from "./components/ui/button";
+
 /**
  * `<ImpersonationBanner>` (PRD §5 component inventory: "Persistent,
  * unmissable, with an exit action"; PRD §6 "Impersonation";
@@ -8,6 +12,8 @@
  *
  * Deliberately has no close/dismiss control of any kind — "cannot be
  * dismissed" is the acceptance criterion, not merely the default state.
+ * Uses the `warning` token (not `alert variant="warning"`, which would
+ * dismiss like any other alert) styled as a persistent bar.
  */
 export function ImpersonationBanner({
   impersonatorEmail,
@@ -21,18 +27,22 @@ export function ImpersonationBanner({
   return (
     <div
       role="status"
-      className="sticky top-0 z-40 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950 dark:bg-amber-600 dark:text-amber-50"
+      className="sticky top-0 z-40 flex items-center justify-center gap-3 bg-warning px-4 py-2 text-sm font-medium text-warning-foreground"
     >
+      <UserCog className="size-4 shrink-0" />
       <span>
         {impersonatorEmail} is impersonating {targetEmail}
       </span>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         onClick={onExit}
-        className="rounded-md border border-amber-950/30 px-2 py-0.5 font-semibold hover:bg-amber-950/10 dark:border-amber-50/30 dark:hover:bg-amber-50/10"
+        className="border-warning-foreground/30 bg-transparent text-warning-foreground hover:bg-warning-foreground/10"
       >
+        <LogOut />
         Exit impersonation
-      </button>
+      </Button>
     </div>
   );
 }

@@ -12,8 +12,33 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { type ReactNode, useMemo, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
-import { cn } from "./cn";
+import { Button } from "./components/ui/button";
+import { Checkbox } from "./components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "./components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table";
 
 export type { ColumnDef } from "@tanstack/react-table";
 
@@ -70,6 +95,7 @@ export function DataTable<TData extends { id: string }>({
   });
 
   const selectedIds = useMemo(() => Object.keys(rowSelection), [rowSelection]);
+  const hideableColumns = table.getAllColumns().filter((column) => column.getCanHide());
 
   if (!isLoading && data.length === 0 && emptyState) {
     return <>{emptyState}</>;
@@ -77,14 +103,52 @@ export function DataTable<TData extends { id: string }>({
 
   return (
     <div className="flex flex-col gap-3">
-      <input
-        type="search"
-        value={globalFilter}
-        onChange={(event) => setGlobalFilter(event.target.value)}
-        placeholder={filterPlaceholder}
-        aria-label="Filter rows"
-        className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-      />
+      <div className="flex items-center gap-2">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            placeholder={filterPlaceholder}
+            aria-label="Filter rows"
+            className="h-9 w-full rounded-md border border-input bg-background pr-8 pl-8 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          />
+          {globalFilter ? (
+            <button
+              type="button"
+              onClick={() => setGlobalFilter("")}
+              aria-label="Clear filter"
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+
+        {hideableColumns.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-auto">
+                <SlidersHorizontal />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {hideableColumns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(Boolean(value))}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </div>
 
       {bulkActions && selectedIds.length > 0 ? (
         <div className="flex items-center gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm">
@@ -94,86 +158,82 @@ export function DataTable<TData extends { id: string }>({
       ) : null}
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead>
+        <Table>
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border bg-muted/50">
+              <TableRow key={headerGroup.id} className="bg-muted/50 hover:bg-muted/50">
                 {bulkActions ? (
-                  <th className="w-10 px-3 py-2">
-                    <input
-                      type="checkbox"
+                  <TableHead className="w-10">
+                    <Checkbox
                       aria-label="Select all rows"
-                      checked={table.getIsAllRowsSelected()}
-                      ref={(el) => {
-                        if (el) el.indeterminate = table.getIsSomeRowsSelected();
-                      }}
-                      onChange={table.getToggleAllRowsSelectedHandler()}
+                      checked={
+                        table.getIsAllRowsSelected() ||
+                        (table.getIsSomeRowsSelected() && "indeterminate")
+                      }
+                      onCheckedChange={(value) => table.toggleAllRowsSelected(Boolean(value))}
                     />
-                  </th>
+                  </TableHead>
                 ) : null}
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="px-3 py-2 text-left font-medium text-foreground">
+                  <TableHead key={header.id}>
                     {header.isPlaceholder ? null : (
                       <button
                         type="button"
                         onClick={header.column.getToggleSortingHandler()}
                         disabled={!header.column.getCanSort()}
-                        className={cn(
-                          "flex items-center gap-1",
-                          header.column.getCanSort() && "cursor-pointer select-none",
-                        )}
+                        className="flex items-center gap-1 disabled:cursor-default"
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ?? null}
+                        {header.column.getCanSort()
+                          ? ({
+                              asc: <ArrowUp className="size-3.5" />,
+                              desc: <ArrowDown className="size-3.5" />,
+                            }[header.column.getIsSorted() as string] ?? (
+                              <ArrowUpDown className="size-3.5 text-muted-foreground" />
+                            ))
+                          : null}
                       </button>
                     )}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
-          <tbody>
+          </TableHeader>
+          <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-border last:border-0 hover:bg-accent/50">
+              <TableRow key={row.id}>
                 {bulkActions ? (
-                  <td className="px-3 py-2">
-                    <input
-                      type="checkbox"
+                  <TableCell>
+                    <Checkbox
                       aria-label={`Select row ${row.id}`}
                       checked={row.getIsSelected()}
-                      onChange={row.getToggleSelectedHandler()}
+                      onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
                     />
-                  </td>
+                  </TableCell>
                 ) : null}
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 text-foreground">
+                  <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
+                  </TableCell>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onPreviousPage}
-          disabled={!hasPreviousPage}
-          className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-40"
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          onClick={onNextPage}
-          disabled={!hasNextPage}
-          className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-40"
-        >
-          Next
-        </button>
-      </div>
+      {hasNextPage || hasPreviousPage ? (
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onPreviousPage} disabled={!hasPreviousPage}>
+            <ChevronLeft />
+            Previous
+          </Button>
+          <Button variant="outline" size="sm" onClick={onNextPage} disabled={!hasNextPage}>
+            Next
+            <ChevronRight />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

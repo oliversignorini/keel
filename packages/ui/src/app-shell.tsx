@@ -2,6 +2,17 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { MenuIcon } from "lucide-react";
+
+import { Button } from "./components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./components/ui/sheet";
 
 /** `<AppShell>` — top bar, no sidebar, sticky, 56px (PRD §5 Layout):
  *
@@ -10,7 +21,7 @@ import { useState } from "react";
  * `orgSwitcher` sits immediately after the logo — tenant context must
  * always be visible (PRD §5: "the single most common source of 'wrong
  * data' confusion in multi-tenant apps"). On mobile, `nav` collapses
- * into a sheet; the org switcher stays in the bar regardless of
+ * into a `<Sheet>`; the org switcher stays in the bar regardless of
  * viewport.
  *
  * `jobTraySlot` is a named slot for Phase 5.5's `<JobTray>`
@@ -45,27 +56,39 @@ export function AppShell({
         {logo}
         {orgSwitcher}
         <nav className="hidden items-center gap-4 text-sm text-muted-foreground md:flex">{nav}</nav>
-        <button
-          type="button"
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileNavOpen}
-          onClick={() => setMobileNavOpen((value) => !value)}
-          className="ml-1 rounded-md p-1.5 text-foreground hover:bg-accent md:hidden"
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
+
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <SheetTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle navigation menu"
+              className="ml-1 md:hidden"
+            >
+              <MenuIcon />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72">
+            <SheetHeader>
+              <SheetTitle>Navigation</SheetTitle>
+              <SheetDescription className="sr-only">Site navigation</SheetDescription>
+            </SheetHeader>
+            <nav
+              className="flex flex-col gap-1 px-2 text-sm text-muted-foreground [&_a]:rounded-md [&_a]:px-2 [&_a]:py-3"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              {nav}
+            </nav>
+          </SheetContent>
+        </Sheet>
+
         <div className="ml-auto flex items-center gap-2">
           {commandPaletteTrigger}
           {themeToggle}
           {accountMenu}
         </div>
       </header>
-
-      {mobileNavOpen ? (
-        <nav className="flex flex-col gap-1 border-b border-border bg-background px-4 py-3 text-sm text-muted-foreground md:hidden">
-          {nav}
-        </nav>
-      ) : null}
 
       {jobTraySlot}
 

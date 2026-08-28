@@ -22,7 +22,7 @@ export default function RootLayout({
     // necessarily mismatches the server-rendered markup for one attribute
     // — exactly the case next-themes' own docs say to suppress it for.
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="bg-background text-foreground antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>
