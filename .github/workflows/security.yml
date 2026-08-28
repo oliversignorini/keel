@@ -57,6 +57,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: pnpm audit
+        id: pnpm_audit
         continue-on-error: true
         run: pnpm audit --prod
         # Non-blocking (TODO Phase 16 — Production hardening): 9
@@ -67,6 +68,19 @@ jobs:
         # which is exactly the "not a one-line config fix" case
         # docs/plans/phase-9.md 9.C allows landing non-blocking for.
         # Dependabot (9.A) picks up the patched versions as they land.
+
+      - name: Annotate pnpm audit findings
+        if: steps.pnpm_audit.outcome == 'failure'
+        run: |
+          echo "::warning title=pnpm audit found advisories::pnpm audit --prod reported one or more advisories (see the 'pnpm audit' step's log above) — non-blocking per docs/plans/phase-9.md 9.C, but this annotation exists so the finding surfaces on the run summary instead of hiding behind continue-on-error's green job (docs/plans/phase-16.md 16.D)." >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=pnpm audit found advisories::pnpm audit --prod reported one or more advisories — see the 'pnpm audit' step's log."
+        # A step-level annotation, not a new job — 16.D's whole point is
+        # not spending more free-plan Actions minutes on this. `::warning::`
+        # surfaces in the PR's "Files changed" annotations and the run's
+        # checks tab even though the job itself stays green; the
+        # $GITHUB_STEP_SUMMARY line puts the same thing on the run summary
+        # page, which is what someone glancing at a green check never opens
+        # the raw logs to see otherwise.
 
   gitleaks:
     runs-on: ubuntu-latest
