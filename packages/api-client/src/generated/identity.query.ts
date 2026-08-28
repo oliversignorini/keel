@@ -395,7 +395,7 @@ export interface ErrorBodyOut {
 
 /**
  * PRD §7's error shape as a published Ninja schema — the response
-every ``keel.core.ninja_authz`` router constructor attaches to the
+every ``keel.core.authz`` router constructor attaches to the
 project's default error-response set ({400, 401, 403, 404, 409, 422,
 429}) on every operation, so the OpenAPI document (and the generated
 TypeScript client) describes the envelope this module actually
@@ -6769,8 +6769,9 @@ export const useCreateCheckoutSession = <TError = ErrorEnvelope,
     
 /**
  * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
-a **404**, not a zero balance — see the DRF-era docstring this
-replaces for the full reasoning; unchanged here.
+a **404**, not a zero balance — a disabled feature has no balance to
+report, and a zero balance is a real, distinguishable state once the
+feature is on.
  * @summary Get Credit Balance
  */
 export type retrieveCreditBalanceResponse200 = {

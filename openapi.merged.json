@@ -2389,7 +2389,7 @@
         "type": "object"
       },
       "ErrorEnvelope": {
-        "description": "PRD \u00a77's error shape as a published Ninja schema \u2014 the response\nevery ``keel.core.ninja_authz`` router constructor attaches to the\nproject's default error-response set ({400, 401, 403, 404, 409, 422,\n429}) on every operation, so the OpenAPI document (and the generated\nTypeScript client) describes the envelope this module actually\nproduces instead of leaving every error typed ``unknown``.",
+        "description": "PRD \u00a77's error shape as a published Ninja schema \u2014 the response\nevery ``keel.core.authz`` router constructor attaches to the\nproject's default error-response set ({400, 401, 403, 404, 409, 422,\n429}) on every operation, so the OpenAPI document (and the generated\nTypeScript client) describes the envelope this module actually\nproduces instead of leaving every error typed ``unknown``.",
         "properties": {
           "error": {
             "$ref": "#/components/schemas/ErrorBodyOut"
@@ -7382,7 +7382,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/credits/": {
       "get": {
-        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 see the DRF-era docstring this\nreplaces for the full reasoning; unchanged here.",
+        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 a disabled feature has no balance to\nreport, and a zero balance is a real, distinguishable state once the\nfeature is on.",
         "operationId": "retrieveCreditBalance",
         "parameters": [
           {

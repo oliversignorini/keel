@@ -4,7 +4,7 @@ specifies:
     { "error": { "code": ..., "message": ..., "details": [...] } }
 
 Registered once, on the single ``KeelAPI`` instance
-(``keel/core/ninja_api.py``), via ``register(api)``.
+(``keel/core/api.py``), via ``register(api)``.
 """
 
 from typing import Any
@@ -24,7 +24,7 @@ class ErrorBodyOut(Schema):
 
 class ErrorEnvelope(Schema):
     """PRD §7's error shape as a published Ninja schema — the response
-    every ``keel.core.ninja_authz`` router constructor attaches to the
+    every ``keel.core.authz`` router constructor attaches to the
     project's default error-response set ({400, 401, 403, 404, 409, 422,
     429}) on every operation, so the OpenAPI document (and the generated
     TypeScript client) describes the envelope this module actually
@@ -60,7 +60,7 @@ def _envelope(status_code: int, code: str, message: str, details: Any) -> HttpRe
 
 def domain_error_response(exc: DomainError) -> HttpResponse:
     """Render a ``DomainError`` as PRD §7's envelope. Shared by the Ninja
-    exception handler below and ``keel.core.ninja_throttle.ThrottleMiddleware``,
+    exception handler below and ``keel.core.throttle.ThrottleMiddleware``,
     which raises/catches ``Throttled`` outside Ninja's own dispatch."""
     response = _envelope(exc.status_code, exc.code, exc.message, exc.details)
     for header, value in exc.response_headers.items():

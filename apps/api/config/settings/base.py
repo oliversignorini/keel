@@ -111,7 +111,7 @@ MIDDLEWARE = [
     # after AuthenticationMiddleware so request.user is populated for
     # UserRateThrottle, and applied uniformly regardless of which auth
     # callable (or none, for a public router) the route underneath uses.
-    "keel.core.ninja_throttle.ThrottleMiddleware",
+    "keel.core.throttle.ThrottleMiddleware",
     "keel.core.middleware.ImpersonationMiddleware",
     "keel.core.idempotency.IdempotencyKeyMiddleware",
     "allauth.account.middleware.AccountMiddleware",
@@ -414,8 +414,8 @@ KEEL_ENCRYPTION_KEY = env("KEEL_ENCRYPTION_KEY", default="")
 # --- General API rate limiting -------------------------------------------
 # PRD §3 NFR "Security": "Rate limiting ... on the API generally";
 # docs/plans/phase-8.md 8.6. allauth's own limiter already covers
-# /_allauth/* — this is everything else. Read by keel.core.ninja_throttle,
-# which every Ninja operation runs through via keel.core.ninja_auth.
+# /_allauth/* — this is everything else. Read by keel.core.throttle's
+# ThrottleMiddleware, applied ahead of routing to every /api/v1/ request.
 # Django's cache (Redis, PRD §3 "Redis for ... rate limit counters") backs
 # the counters. `None` disables a throttle entirely (config/settings/test.py).
 KEEL_API_THROTTLE_USER_RATE: str | None = env("KEEL_API_THROTTLE_USER_RATE", default="300/minute")

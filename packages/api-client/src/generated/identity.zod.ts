@@ -1397,8 +1397,9 @@ export const createCheckoutSessionResponse = zod.object({
 
 /**
  * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
-a **404**, not a zero balance — see the DRF-era docstring this
-replaces for the full reasoning; unchanged here.
+a **404**, not a zero balance — a disabled feature has no balance to
+report, and a zero balance is a real, distinguishable state once the
+feature is on.
  * @summary Get Credit Balance
  */
 export const retrieveCreditBalanceParams = zod.object({

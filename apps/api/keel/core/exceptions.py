@@ -4,7 +4,7 @@ PRD §7:
     { "error": { "code": ..., "message": ..., "details": [...] } }
 
 Every status code in that section's table maps here: 400 (validation —
-raised by Ninja itself and translated in ``keel.core.ninja_exceptions``),
+raised by Ninja itself and translated in ``keel.core.error_handlers``),
 401 (NotAuthenticated / AuthenticationFailed), 402 (PaymentRequired), 403
 (PermissionDeniedWithReason — carries Decision.reason / Decision.details,
 PRD §4 invariant 2), 404 (Http404), 409 (Conflict), 422
@@ -13,7 +13,7 @@ PRD §4 invariant 2), 404 (Http404), 409 (Conflict), 422
 
 These are framework-independent by design: they carry ``status_code`` /
 ``code`` / ``message`` / ``details`` and nothing else, and
-``keel.core.ninja_exceptions.register`` is the single place that turns one
+``keel.core.error_handlers.register`` is the single place that turns one
 into an HTTP response.
 """
 
@@ -53,7 +53,7 @@ class DomainError(Exception):
 
 class NotAuthenticated(DomainError):
     """Framework-independent counterpart to DRF's own ``NotAuthenticated``
-    (used by ``keel.core.ninja_auth``, PRD §7: anonymous request to a
+    (used by ``keel.core.auth``, PRD §7: anonymous request to a
     protected route answers 401, never 403)."""
 
     status_code = 401
@@ -63,7 +63,7 @@ class NotAuthenticated(DomainError):
 
 class AuthenticationFailed(DomainError):
     """Framework-independent counterpart to DRF's own ``AuthenticationFailed``
-    — used by ``keel.core.ninja_auth`` for a CSRF failure on an
+    — used by ``keel.core.auth`` for a CSRF failure on an
     otherwise-authenticated session: 401, not the 403 Django's own CSRF
     middleware would give a plain view (PRD §7)."""
 
@@ -98,9 +98,9 @@ class UnprocessableEntity(DomainError):
 
 class Throttled(DomainError):
     """Framework-independent counterpart to DRF's own ``Throttled`` — used
-    by ``keel.core.ninja_throttle``. ``wait`` is the number of seconds the
+    by ``keel.core.throttle``. ``wait`` is the number of seconds the
     caller should wait, surfaced as the ``Retry-After`` header by the
-    Ninja exception handler (``keel.core.ninja_exceptions``)."""
+    Ninja exception handler (``keel.core.error_handlers``)."""
 
     status_code = 429
     default_code = "throttled"

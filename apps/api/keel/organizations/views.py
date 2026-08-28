@@ -23,7 +23,7 @@ from django.utils import timezone
 from ninja import Status
 
 from keel.billing.entitlements import resolve_entitlements_bulk
-from keel.core.ninja_authz import (
+from keel.core.authz import (
     OrgScopedResource,
     keel_router,
     optional_auth_router,
@@ -32,7 +32,7 @@ from keel.core.ninja_authz import (
 from keel.core.exceptions import Conflict, NotAuthenticated, UnprocessableEntity
 from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.pagination import Page, paginate
 from keel.core.selectors import get_scoped_or_404
 from keel.organizations import selectors, services
 from keel.organizations.models import Invitation, Role

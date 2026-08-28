@@ -1,23 +1,21 @@
 """Session authentication for Ninja routes (PRD §7's error table).
 
 Deny by default (PRD §4 task 1.12): every ``KeelAPI`` operation is mounted
-through one of ``keel.core.ninja_authz``'s router constructors
-(``keel_router`` / ``public_router`` / ``optional_auth_router``), each of
-which declares its auth explicitly — there is no bare ``Router()`` with an
-implicit default anywhere in the app routers. An operation that forgot to
-go through one of those constructors is a bug caught by
+through one of ``keel.core.authz``'s router constructors (``keel_router``
+/ ``public_router`` / ``optional_auth_router``), each of which declares
+its auth explicitly — there is no bare ``Router()`` with an implicit
+default anywhere in the app routers. An operation that forgot to go
+through one of those constructors is a bug caught by
 ``keel/core/tests/test_ninja_wiring.py``, not a silently-open endpoint.
 
 Anonymous request → 401 ``not_authenticated``. Authenticated session
 present but the request is an unsafe method (POST/PUT/PATCH/DELETE)
-without a valid CSRF token → 401 ``authentication_failed`` — the same
-outcome DRF's ``SessionAuthentication.enforce_csrf`` produces (via
-``AuthenticationFailed``), not the 403 Django's own CSRF middleware would
-give a plain view. Reproducing that exact mapping is why this hand-rolls
+without a valid CSRF token → 401 ``authentication_failed``, not the 403
+Django's own CSRF middleware would give a plain view — this hand-rolls
 the CSRF check with ``CsrfViewMiddleware`` rather than turning on Ninja's
 built-in ``csrf=True`` handling, which answers 403.
 
-Rate limiting is a separate layer (``keel.core.ninja_throttle.
+Rate limiting is a separate layer (``keel.core.throttle.
 ThrottleMiddleware``) that runs ahead of routing for every ``/api/v1/``
 request — not part of either callable below, so it applies uniformly to
 routes built with ``public_router()``/``optional_auth_router()`` too,
@@ -58,7 +56,7 @@ def enforce_csrf(request: HttpRequest) -> None:
 def session_auth(request: HttpRequest) -> object:
     """The one auth callable every ``keel_router()`` operation uses unless
     it is explicitly public (``optional_session_auth`` below, or a
-    ``public_router()``/``keel.core.ninja_authz``).
+    ``public_router()`` — see ``keel.core.authz``).
 
     Returns the authenticated user (so Ninja's ``request.auth`` is
     populated) or raises — never returns ``None``, which Ninja would

@@ -1,15 +1,13 @@
-"""Import-time checks on ``OrgScopedResource`` / ``GlobalResource`` — the
-Ninja counterpart to ``test_authz.py``'s checks on
-``OrgScopedViewSet`` / ``GlobalViewSet`` (PRD §4 invariant 7). Same
-contract, different framework underneath; see
-``keel/core/ninja_authz.py``'s module docstring.
+"""Import-time checks on ``OrgScopedResource`` / ``GlobalResource``
+(PRD §4 invariant 7) — see ``keel/core/authz.py``'s module docstring,
+"The Ninja binding layer" section.
 """
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from ninja import Router
 
-from keel.core.ninja_authz import (
+from keel.core.authz import (
     GlobalResource,
     OrgScopedResource,
     registered_scoped_resources,

@@ -16,9 +16,9 @@ from typing import Any
 from django.http import FileResponse, Http404
 from ninja import Status
 
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.idempotency import idempotent
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.pagination import Page, paginate
 from keel.files import selectors, services, storage
 from keel.files.models import FileUpload
 from keel.files.schemas import (

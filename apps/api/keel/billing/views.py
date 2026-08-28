@@ -29,11 +29,11 @@ from keel.billing.schemas import (
     PlanOut,
     SubscriptionEnvelopeOut,
 )
-from keel.core.ninja_authz import GlobalResource, keel_router, public_router, resolve_and_authorize
+from keel.core.authz import GlobalResource, keel_router, public_router, resolve_and_authorize
 from keel.core.exceptions import UnprocessableEntity
 from keel.core.http_caching import set_reference_data_cache_headers
 from keel.core.idempotency import idempotent
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.pagination import Page, paginate
 from keel.organizations.permissions import Perm
 
 # --- Plans: public, no auth ------------------------------------------------
@@ -165,7 +165,7 @@ def get_credit_balance(request: Any, org_slug: str) -> dict:
 
 # --- Stripe webhook: public, signature-verified, CSRF-exempt --------------
 # django-ninja views are always csrf_exempt at the Django middleware level
-# (see keel/core/ninja_api.py's module docstring) — this router's `auth=None`
+# (see keel/core/api.py's module docstring) — this router's `auth=None`
 # is what keeps it session-independent: Stripe authenticates itself via the
 # signature check below, not a session.
 

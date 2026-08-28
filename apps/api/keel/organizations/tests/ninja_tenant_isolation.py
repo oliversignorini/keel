@@ -6,7 +6,7 @@ this drives the real, mounted URL with Django's test ``Client`` instead of
 anyway": it goes through the actual URLconf, the real auth callable, and
 the real middleware stack, not a bare view function.
 
-``OrgScopedResource.detail_url_template`` (``keel/core/ninja_authz.py``)
+``OrgScopedResource.detail_url_template`` (``keel/core/authz.py``)
 is what makes this possible without introspecting Ninja's internal
 routing structures: every scoped resource declares the literal URL for
 its own retrieve-shaped operation.
@@ -20,7 +20,7 @@ from django.urls.exceptions import Resolver404
 from django.utils.module_loading import import_string
 
 from keel.accounts.models import User
-from keel.core.ninja_authz import (
+from keel.core.authz import (
     OrgScopedResource,
     registered_global_resources,
     registered_scoped_resources,
@@ -43,7 +43,7 @@ def iter_global_justifications() -> Any:
     """``(resource name, GLOBAL_JUSTIFICATION)`` for every production
     ``organization_scoped = False`` ``GlobalResource`` — the Ninja
     counterpart to ``tenant_isolation.py``'s DRF-side function of the
-    same name, walking ``keel.core.ninja_authz.registered_global_resources()``
+    same name, walking ``keel.core.authz.registered_global_resources()``
     instead of ``keel.core.authz.registered_global_viewsets()``."""
     seen = set()
     for resource in registered_global_resources():

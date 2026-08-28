@@ -1,9 +1,9 @@
 """Deny-by-default, proven (PRD §4 task 1.12) — the gate
-``keel.core.ninja_auth``'s module docstring promises.
+``keel.core.auth``'s module docstring promises.
 
 Every router mounted on the shared ``KeelAPI`` instance must declare its
 auth explicitly through one of the three sanctioned constructors in
-``keel.core.ninja_authz`` (``keel_router`` / ``optional_auth_router`` /
+``keel.core.authz`` (``keel_router`` / ``optional_auth_router`` /
 ``public_router``). Ninja's own default for a bare ``Router()`` is *no
 auth at all* — the sentinel ``ninja.constants.NOT_SET``, distinct from an
 explicit ``auth=None`` — so a router that forgot to declare anything would
@@ -16,7 +16,7 @@ fails on the first one that isn't using a sanctioned auth value.
 from ninja import Router
 from ninja.constants import NOT_SET
 
-from keel.core.ninja_auth import optional_session_auth, session_auth
+from keel.core.auth import optional_session_auth, session_auth
 
 _SANCTIONED_AUTH = (session_auth, optional_session_auth, None)
 
@@ -32,7 +32,7 @@ def _mounted_routers() -> list[tuple[str, Router]]:
     from django.urls import get_resolver
 
     _ = get_resolver().url_patterns
-    from keel.core.ninja_api import api
+    from keel.core.api import api
 
     return list(api._routers)
 
@@ -50,7 +50,7 @@ def test_every_mounted_router_declares_a_sanctioned_auth() -> None:
         assert router.auth is not NOT_SET, (
             f"Router mounted at {path!r} never declared an auth value — it "
             "was built with a bare ninja.Router() instead of one of "
-            "keel.core.ninja_authz's keel_router() / optional_auth_router() "
+            "keel.core.authz's keel_router() / optional_auth_router() "
             "/ public_router(), so Ninja silently treats every operation on "
             "it as open."
         )
@@ -58,7 +58,7 @@ def test_every_mounted_router_declares_a_sanctioned_auth() -> None:
             f"Router mounted at {path!r} declares auth={router.auth!r}, which "
             "is none of the three sanctioned callables (session_auth, "
             "optional_session_auth, or explicit None via public_router()). "
-            "Build it with one of keel.core.ninja_authz's router "
+            "Build it with one of keel.core.authz's router "
             "constructors instead."
         )
 

@@ -13,14 +13,14 @@ from typing import Any
 from django.http import Http404
 from ninja import NinjaAPI
 
-from keel.core import ninja_exceptions
+from keel.core import error_handlers
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.core.exceptions import PermissionDeniedWithReason
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
 from keel.organizations.models import Membership
 from keel.organizations.permissions import Perm
 
 fixture_api = NinjaAPI(title="Keel API (tenant-isolation fixture)", version="fixture")
-ninja_exceptions.register(fixture_api)
+error_handlers.register(fixture_api)
 
 
 class WellScopedResource(OrgScopedResource):

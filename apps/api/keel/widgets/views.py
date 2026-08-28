@@ -13,8 +13,8 @@ from typing import Any
 
 from ninja import Status
 
-from keel.core.ninja_authz import OrgScopedResource, keel_router, resolve_and_authorize
-from keel.core.ninja_pagination import Page, paginate
+from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
+from keel.core.pagination import Page, paginate
 from keel.core.selectors import get_scoped_or_404
 from keel.organizations.permissions import Perm
 from keel.widgets import selectors, services

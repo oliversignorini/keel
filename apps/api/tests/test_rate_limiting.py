@@ -1,9 +1,9 @@
 """General API rate limiting (PRD §3 NFR "Security"; docs/plans/phase-8.md
 8.6): "Rate limits return 429 with Retry-After" in the standard error
 envelope. allauth's own limiter covers /_allauth/*; this is the general
-path every Ninja operation runs through — ``keel.core.ninja_throttle``'s
-``UserRateThrottle`` / ``AnonRateThrottle``, called from
-``keel.core.ninja_auth.session_auth``.
+path every ``/api/v1/`` request runs through — ``keel.core.throttle``'s
+``UserRateThrottle`` / ``AnonRateThrottle``, applied by
+``ThrottleMiddleware`` ahead of routing.
 
 Why explicit ``rate=`` rather than a settings override: config/settings/
 test.py sets ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE`` to ``None``
@@ -19,7 +19,7 @@ from django.test import RequestFactory
 
 from keel.accounts.models import User
 from keel.core.exceptions import Throttled
-from keel.core.ninja_throttle import AnonRateThrottle, UserRateThrottle
+from keel.core.throttle import AnonRateThrottle, UserRateThrottle
 
 pytestmark = pytest.mark.django_db
 
@@ -58,7 +58,7 @@ def test_exceeding_the_anon_rate_returns_429_with_retry_after() -> None:
     exc = excinfo.value
     assert exc.status_code == 429
     assert exc.code == "throttled"
-    # `wait` is what keel.core.ninja_exceptions turns into Retry-After.
+    # `wait` is what keel.core.error_handlers turns into Retry-After.
     assert exc.wait is not None
     assert int(exc.wait) > 0
 

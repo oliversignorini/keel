@@ -1,13 +1,11 @@
 """Cursor pagination for Ninja routes (PRD §7 conventions): ``{ results,
 next, previous }``.
 
-Ported line for line from Django REST Framework's ``CursorPagination``
-rather than reimplemented from scratch, because a hand-rolled
-"cursor = last id seen" approach is subtly wrong: the within-tie offset
-encoded alongside the ordering value is what lets a page boundary land
-inside a run of equal sort values without skipping or repeating rows.
-Django Ninja ships no cursor paginator at all, so this exists to carry
-that guarantee over unchanged, verified by
+Deliberately not a hand-rolled "cursor = last id seen" approach — that is
+subtly wrong: the within-tie offset encoded alongside the ordering value
+is what lets a page boundary land inside a run of equal sort values
+without skipping or repeating rows. Django Ninja ships no cursor
+paginator at all, so this module carries that guarantee, verified by
 ``keel/core/tests/test_ninja_pagination.py``'s ≥60-tied-row test.
 
 Operates on a plain Django ``HttpRequest`` and a queryset — no framework
@@ -79,9 +77,8 @@ class InvalidPagination(UnprocessableEntity):
 
 
 class CursorPaginator:
-    """Instantiate per request (mirrors DRF's per-request pagination
-    instance — ``self.cursor``/``self.page`` etc. are request-local
-    state, not class state)."""
+    """Instantiate per request — ``self.cursor``/``self.page`` etc. are
+    request-local state, not class state."""
 
     cursor_query_param = "cursor"
     page_size_query_param = "limit"

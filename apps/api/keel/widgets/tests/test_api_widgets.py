@@ -7,7 +7,7 @@ DRF's ``APIClient.force_authenticate`` — phase-10.md 10.B moved this
 endpoint to Ninja, and ``force_authenticate`` only patches DRF's own
 authentication pipeline, which a Ninja route never runs through.
 ``force_login`` sets the real Django session, which
-``keel.core.ninja_auth.session_auth`` reads like any other request.
+``keel.core.auth.session_auth`` reads like any other request.
 """
 
 import pytest

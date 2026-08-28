@@ -1,19 +1,17 @@
 """Rate limiting for Ninja routes (PRD §3 NFR "Security": "Rate limiting
 ... on the API generally"; docs/plans/phase-8.md 8.6).
 
-Ported from Django REST Framework's ``SimpleRateThrottle`` /
-``AnonRateThrottle`` / ``UserRateThrottle`` — same cache-backed sliding
-window over Django's cache (Redis in production), same
-``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE`` settings, same 429 +
-``Retry-After`` behaviour — with no dependency on that framework.
+A cache-backed sliding window over Django's cache (Redis in production),
+configured by ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE``, answering
+429 + ``Retry-After`` on the limit.
 
 Applied as a layer over every ``/api/v1/`` request (``ThrottleMiddleware``
 below), not tucked inside the deny-by-default auth callables
-(``keel.core.ninja_auth``) — a request that arrived is what gets rate
-limited, regardless of whether the route it hit turns out to require a
-session. Auth-gated routes and the project's public routers
-(``keel.core.ninja_authz.public_router`` — ``GET /plans/``, the Stripe
-webhook) are covered identically because neither ever calls
+(``keel.core.auth``) — a request that arrived is what gets rate limited,
+regardless of whether the route it hit turns out to require a session.
+Auth-gated routes and the project's public routers
+(``keel.core.authz.public_router`` — ``GET /plans/``, the Stripe webhook)
+are covered identically because neither ever calls
 ``session_auth``/``optional_session_auth``, only routes through this
 middleware.
 """
@@ -64,12 +62,12 @@ class RateThrottle:
     rate_setting: str = ""
 
     def __init__(self, rate: str | None = None) -> None:
-        # An explicit rate bypasses settings entirely — the same trick
-        # tests/test_rate_limiting.py's DRF-era fixture throttles use
-        # (subclass with a low `rate`), since a runtime settings override
-        # has nothing left to affect once a view has already read it.
-        # Here there is no import-time read to race, but tests still want
-        # a throttle whose rate doesn't depend on env-derived settings.
+        # An explicit rate bypasses settings entirely — tests/test_rate_
+        # limiting.py's fixture throttles use this (subclass with a low
+        # `rate`), since a runtime settings override has nothing left to
+        # affect once a view has already read it. Here there is no
+        # import-time read to race, but tests still want a throttle whose
+        # rate doesn't depend on env-derived settings.
         self._explicit_rate = rate
 
     def check(self, request: HttpRequest) -> None:
@@ -146,7 +144,7 @@ class ThrottleMiddleware:
     already populated — ``UserRateThrottle`` keys on it.
 
     A ``Throttled`` raised here is caught and rendered through the same
-    envelope ``keel.core.ninja_exceptions`` uses for one consistent 429
+    envelope ``keel.core.error_handlers`` uses for one consistent 429
     body, since this runs outside Ninja's own exception-handler dispatch."""
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
@@ -157,7 +155,7 @@ class ThrottleMiddleware:
             try:
                 throttle(request)
             except Throttled as exc:
-                from keel.core.ninja_exceptions import domain_error_response
+                from keel.core.error_handlers import domain_error_response
 
                 return domain_error_response(exc)
         return self.get_response(request)

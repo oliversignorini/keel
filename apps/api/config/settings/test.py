@@ -55,7 +55,7 @@ STORAGES["files"]["OPTIONS"]["bucket"] = R2_BUCKET  # noqa: F405
 ACCOUNT_RATE_LIMITS = False  # type: ignore[assignment]
 
 # Same reasoning as ACCOUNT_RATE_LIMITS above, for the general API
-# throttle (docs/plans/phase-8.md 8.6): keel.core.ninja_throttle's
+# throttle (docs/plans/phase-8.md 8.6): keel.core.throttle's
 # counters live in the same real Redis cache, keyed by client ident/user
 # id, and persist across the whole test run — hundreds of tests hitting
 # the same endpoints would otherwise trip an unrelated test's rate limit
