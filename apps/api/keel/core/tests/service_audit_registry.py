@@ -1,5 +1,5 @@
-"""The audit meta-test mechanism (PRD v1.2 §8 Phase 8, "The service
-registry, specified"; docs/plans/phase-8.md 8.1). See
+"""The audit meta-test mechanism (PRD v1.2 §8, "The service registry,
+specified"). See
 ``test_service_audit_registry.py`` for the meta-test itself and the proof
 that this mechanism actually catches a gap.
 

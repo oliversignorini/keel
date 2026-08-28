@@ -1,5 +1,5 @@
-"""Reads (PRD §7's audit endpoint; docs/plans/phase-8.md 8.2). Services
-mutate and return; this module queries and returns."""
+"""Reads (PRD §7's audit endpoint). Services mutate and return; this
+module queries and returns."""
 
 from django.db.models import QuerySet
 

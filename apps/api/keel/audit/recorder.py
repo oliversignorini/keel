@@ -1,8 +1,8 @@
-"""The real ``AuditLog`` writer (PRD v1.2 §8 Phase 8; docs/plans/phase-8.md
-8.1). Installed against ``keel.core.audit.set_recorder`` at app-ready
-time — see ``AuditConfig.ready``. Until this module is imported, every
-``@audited`` call is a no-op (the seam Phase 1 documented, "nothing
-writes to it until Phase 8 wires ``set_recorder`` to a real writer").
+"""The real ``AuditLog`` writer (PRD v1.2 §8). Installed against
+``keel.core.audit.set_recorder`` at app-ready time — see
+``AuditConfig.ready``. Until this module is imported, every ``@audited``
+call is a no-op — "nothing writes to it until this module wires
+``set_recorder`` to a real writer".
 
 ``AuditRecord`` carries no ``organization``, ``ip`` or ``user_agent`` —
 those fields live on request context that the decorator, deliberately, is

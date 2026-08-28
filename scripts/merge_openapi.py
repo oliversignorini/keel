@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Deterministically merge the two OpenAPI documents this project serves
-(PRD §7, §8 Phase 2 A.3) into one file for client generation.
+(PRD §7, §8) into one file for client generation.
 
-- Django Ninja describes ``/api/v1/…`` (this project's own views;
-  phase-10.md 10.D — replaced drf-spectacular when the API layer moved
-  off DRF).
+- Django Ninja describes ``/api/v1/…`` (this project's own views —
+  replaced drf-spectacular when the API layer moved off DRF).
 - ``django-allauth`` headless describes ``/_allauth/browser/v1/…`` (PRD §4
   "Auth architecture": "allauth's headless flow ... also serves its own
   OpenAPI specification").
@@ -16,8 +15,8 @@ combines them into a single document at ``openapi.merged.json``, which
 
 Determinism matters more than most scripts: if the merge reordered keys
 run to run, a "generated client is stale" CI check would fail randomly on
-unrelated changes and eventually just get disabled (docs/plans/phase-2.md
-A.3). The only thing that makes that true here is ``sort_keys=True`` on
+unrelated changes and eventually just get disabled. The only thing that
+makes that true here is ``sort_keys=True`` on
 the final dump — every dict-building step above it is free to produce
 keys in whatever order Python felt like, because the last step erases it.
 """
@@ -299,8 +298,8 @@ def build_ninja_spec() -> dict:
 # unstable-reading and a breaking rename risk every time a path changes.
 # This assigns a stable, hand-picked name per (method, path) instead, so
 # the generated client's function names don't depend on orval's fallback
-# heuristic. Phase 2's web code (apps/web/app/(auth)/*, lib/auth/*) was
-# built against these exact names.
+# heuristic. The web code (apps/web/app/(auth)/*, lib/auth/*) was built
+# against these exact names.
 ALLAUTH_OPERATION_IDS: dict[tuple[str, str], str] = {
     ("get", "/_allauth/browser/v1/account/authenticators"): "authenticatorsList",
     ("get", "/_allauth/browser/v1/account/authenticators/recovery-codes"): "recoveryCodesGet",
@@ -351,7 +350,7 @@ def _normalize_nullable_to_31(node: Any) -> None:
 
     allauth headless's own schema generator (``allauth.headless.spec``)
     predates 3.1 and still emits the 3.0 keyword; Ninja emits real 3.1
-    (stage 10.D's finding — see the ADR / phase-10 report). A document
+    (see ``docs/adr/0001-django-ninja-over-drf.md``). A document
     declaring ``"openapi": "3.1.0"`` throughout is otherwise fine mixed
     dialect-wise for every case tested (orval 7.21 resolves Ninja's own
     ``anyOf``-with-``null`` fields correctly) — the one real gap found

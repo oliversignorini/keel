@@ -39,7 +39,7 @@ class UserAdmin(DjangoUserAdmin):
 
     @admin.action(description="Impersonate this user")
     def impersonate(self, request: HttpRequest, queryset: QuerySet[User]) -> HttpResponse | None:
-        """Staff-only (PRD §6 "Impersonation"; docs/plans/phase-8.md 8.3):
+        """Staff-only (PRD §6 "Impersonation"):
         Django admin's own permission check already required ``is_staff``
         to reach this action at all. Logs the browser session in as the
         selected user, writes ``impersonation.start`` recording both

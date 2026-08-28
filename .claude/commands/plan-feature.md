@@ -2,7 +2,7 @@ Turn a brain dump in `$ARGUMENTS` — "we need invoicing, it connects to
 organisations like this, finance can export it" — into a provisioning
 plan: which generators to run, in what order, and what remains manual
 judgement. **Do not run anything yet.** The user approves the plan before
-a single generator runs (ADR 0004, `docs/plans/phase-19.md` 19.B).
+a single generator runs (ADR 0004).
 
 Consult `CLAUDE.md`'s generator catalogue first — that table plus
 `pnpm gen --help` is the whole discovery mechanism for what this
@@ -29,14 +29,14 @@ Read `$ARGUMENTS` for:
   generator; note it as a manual step.
 - **Anything with no generator** — say so explicitly rather than folding
   it into the nearest generator call. A brief that needs a report, a
-  dashboard widget, or a cross-resource computation names work this
-  phase's generators don't cover; call it out as manual, not `--fields`
-  on the nearest resource.
+  dashboard widget, or a cross-resource computation names work no
+  generator covers; call it out as manual, not `--fields` on the nearest
+  resource.
 
 ## 2. Order the plan
 
-Dependencies compound in one direction: permissions a resource's viewset
-needs (beyond the default CRUD four) come from `gen permission` calls
+Dependencies compound in one direction: permissions a resource's routes
+need (beyond the default CRUD four) come from `gen permission` calls
 that either precede the resource or are cleaned up right after it; a
 resource an `fk` field targets must exist (or already exist in the
 codebase) before the resource that references it; `gen sync-client` comes
@@ -63,8 +63,8 @@ of commands, e.g.:
 **A feature spanning several generators or worktrees** (e.g. a resource,
 an export permission, a rollup job, and a settings page): write
 `docs/plans/<feature>.md` instead — the artifact a second agent picks up
-without re-deriving the plan from the original brief. Use
-`docs/plans/phase-19.md`'s own shape as the template: what this is, scope
+without re-deriving the plan from the original brief. Use an existing
+plan under `docs/plans/` as the shape to copy: what this is, scope
 boundary (paths in/out), the ordered steps above broken into waves if
 more than one worktree is involved, and an acceptance checklist. A plan
 file for `gen resource Invoice --ui` alone is ceremony; a plan file for

@@ -1,11 +1,9 @@
-"""``GET /api/v1/plans/`` (PRD §7; docs/plans/phase-4.md B.1; phase-10.md
-10.C) — public, cursor-paginated, lists only active plans and their
-active prices.
+"""``GET /api/v1/plans/`` (PRD §7) — public, cursor-paginated, lists only
+active plans and their active prices.
 
-Now cursor-paginated like every other collection (one of phase-10.md's
-"three allowed changes") — see ``keel/billing/views.py``'s module
-docstring for why ``(sort_order, code)`` is a valid ordering for
-``CursorPaginator``.
+Cursor-paginated like every other collection — see
+``keel/billing/views.py``'s module docstring for why
+``(sort_order, code)`` is a valid ordering for ``CursorPaginator``.
 """
 
 import pytest
@@ -64,9 +62,8 @@ def test_list_plans_returns_active_plans_with_nested_active_prices() -> None:
 
 
 def test_list_plans_is_cursor_paginated() -> None:
-    """phase-10.md's second allowed change: the bare-array deviation from
-    PRD §7's "all collections are cursor-paginated" convention is fixed
-    here, not carried over."""
+    """The bare-array deviation from PRD §7's "all collections are
+    cursor-paginated" convention is fixed here, not carried over."""
     _plan("starter")
 
     response = Client().get("/api/v1/plans/")

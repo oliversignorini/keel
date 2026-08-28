@@ -1,4 +1,4 @@
-"""Reads (PRD §4, "Data model"; phase-3.md B.2).
+"""Reads (PRD §4, "Data model").
 
 Services mutate and return; this module queries and returns. Nothing here
 writes.

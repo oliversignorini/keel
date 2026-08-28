@@ -1,7 +1,7 @@
 # Local dev: reaching the app
 
-Phase 6 (`docs/plans/phase-6.md` 6.A) moved the app shell onto its own
-subdomain, split from marketing and auth on the apex. Locally that means:
+The app shell lives on its own subdomain, split from marketing and auth
+on the apex. Locally that means:
 
 ```
 app.lvh.me:3000    -> Next.js, the (app) route group   (the product itself)
@@ -32,8 +32,8 @@ authenticate in dev — the worst failure shape, because it only shows up
 on the machine you'd least expect it on.
 
 `lvh.me` is a public DNS name whose wildcard resolves to `127.0.0.1` —
-verified on the machine this phase was built on: `app.lvh.me` and
-`api.lvh.me` both resolve to `127.0.0.1`. No `/etc/hosts` edit needed.
+`app.lvh.me` and `api.lvh.me` both resolve to `127.0.0.1`. No
+`/etc/hosts` edit needed.
 
 **The one real weakness:** `lvh.me` is a third-party DNS record, so this
 setup does not work offline. If you need it to, add to your hosts file:

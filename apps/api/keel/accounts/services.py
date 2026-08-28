@@ -1,5 +1,5 @@
-"""Expired session cleanup (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-5.4), daily. A system action — no actor to record."""
+"""Expired session cleanup (PRD §5 "Scheduled jobs"), daily. A system
+action — no actor to record."""
 
 from typing import Any
 

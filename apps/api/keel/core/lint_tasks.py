@@ -1,7 +1,7 @@
-"""Static checks for the two Tier-1 task acceptance criteria (PRD §5;
-docs/plans/phase-5.md 5.3: "Every task body is a single call into a
-service" / "Tasks take IDs, never model instances" — "Both of these are
-lint-enforced acceptance criteria"). Ruff has no plugin mechanism this
+"""Static checks for the two Tier-1 task acceptance criteria (PRD §5):
+"Every task body is a single call into a service" / "Tasks take IDs,
+never model instances" — both lint-enforced acceptance criteria. Ruff
+has no plugin mechanism this
 project can hook a custom rule into (it's a Rust binary), so these are
 plain AST-based checks run as meta-tests, the same shape as
 ``keel/organizations/tests/test_meta_guard_coverage.py``'s registry

@@ -1,4 +1,4 @@
-"""Retry, dead-letter, redrive (PRD §5; docs/plans/phase-5.md 5.3)."""
+"""Retry, dead-letter, redrive (PRD §5)."""
 
 from unittest.mock import patch
 
@@ -103,9 +103,9 @@ def test_redrive_re_enqueues_the_dead_lettered_task_and_marks_it_redriven(settin
 
 @pytest.mark.django_db
 def test_dead_lettering_reports_the_exception_to_sentry(settings) -> None:
-    """docs/plans/phase-8.md 8.4's dead-letter seam, wired: a task
-    dead-lettering (PRD §5, "then a FailedTask row plus a Sentry
-    event") produces a captured event, not just a documented no-op."""
+    """The dead-letter seam, wired: a task dead-lettering (PRD §5, "then
+    a FailedTask row plus a Sentry event") produces a captured event, not
+    just a documented no-op."""
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = False
     transport = CapturingTransport()

@@ -11,8 +11,8 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 
-# Four queues, routed by cost profile, not by domain (PRD §5,
-# docs/plans/phase-5.md 5.1). The split exists so a hundred queued
+# Four queues, routed by cost profile, not by domain (PRD §5). The split
+# exists so a hundred queued
 # third-party calls (Stripe syncs, OAuth refreshes) cannot delay a
 # password-reset email, and so a slow scheduled rollup cannot starve
 # either. Projects add queues for new cost profiles as they appear;

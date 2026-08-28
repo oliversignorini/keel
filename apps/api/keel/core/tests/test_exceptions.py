@@ -190,8 +190,8 @@ def test_keel_authentication_failed_shape() -> None:
 
 
 def test_domain_error_is_a_plain_exception_carrying_its_message() -> None:
-    """No DRF ``APIException`` underneath any more (phase-10 DRF removal):
-    a ``DomainError`` is an ordinary exception whose ``str()`` is its
+    """No DRF ``APIException`` underneath: a ``DomainError`` is an
+    ordinary exception whose ``str()`` is its
     human message, and ``keel.core.error_handlers`` is the only thing
     that turns it into a response."""
     exc = Conflict(code="already_accepted", message="Invitation already accepted.")

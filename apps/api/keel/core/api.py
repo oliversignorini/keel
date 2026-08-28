@@ -1,6 +1,6 @@
-"""The single ``NinjaAPI`` instance every migrated app mounts a router on
-(PRD phase-10.md 10.A/10.D). One instance, not one per app, so the merged
-OpenAPI document (``scripts/merge_openapi.py``) has one schema to read.
+"""The single ``NinjaAPI`` instance every app mounts a router on. One
+instance, not one per app, so the merged OpenAPI document
+(``scripts/merge_openapi.py``) has one schema to read.
 
 CSRF: django-ninja only auto-enforces CSRF for its built-in
 ``APIKeyCookie``-style auth classes (``csrf=True`` there defaults on);
@@ -15,8 +15,7 @@ OpenAPI version: django-ninja 1.6.3 hard-codes ``"openapi": "3.1.0"`` in
 override it, and its generated component schemas use real 3.1 / JSON
 Schema 2020-12 shapes (nullable-via-``type`` arrays, ``prefixItems``,
 etc.), not just the version string — allauth headless emits actual 3.0.3.
-Stage 10.D deals with this for real (see its notes in
-``docs/plans/phase-10.md`` and the phase-10 report); this module is not
+``scripts/merge_openapi.py`` deals with this for real; this module is not
 the place to paper over it with a string replacement that would leave
 the component schemas in the wrong dialect underneath a lying version
 number.

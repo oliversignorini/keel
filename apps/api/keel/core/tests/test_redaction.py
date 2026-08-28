@@ -1,6 +1,6 @@
 """``keel.core.redaction`` — the shared denylist behind both
 ``keel.core.logging.JSONFormatter`` and ``keel.core.sentry``'s
-``before_send`` scrubber (docs/plans/phase-16.md 16.B)."""
+``before_send`` scrubber."""
 
 from keel.core.redaction import is_sensitive_key, redact_mapping
 

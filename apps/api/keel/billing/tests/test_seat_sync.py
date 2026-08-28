@@ -1,4 +1,4 @@
-"""Seat sync (docs/plans/phase-4.md B.5): behind ``BILLING_SEAT_PRICING``,
+"""Seat sync: behind ``BILLING_SEAT_PRICING``,
 off by default. When on, seat count syncs to Stripe with proration on
 membership create and remove, dispatched via ``transaction.on_commit()``,
 never inline. When off: no Stripe call is made, and membership writes

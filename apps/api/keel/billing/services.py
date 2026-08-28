@@ -1,7 +1,7 @@
-"""Billing services (docs/plans/phase-4.md B.1-B.6). Starts with plan/price
-sync — the part that is pure arithmetic over rows, same shape as
-``organizations/services.py``: one function per operation, transactional,
-no Stripe I/O inside it (``stripe_client.py`` owns that seam)."""
+"""Billing services. Starts with plan/price sync — the part that is pure
+arithmetic over rows, same shape as ``organizations/services.py``: one
+function per operation, transactional, no Stripe I/O inside it
+(``stripe_client.py`` owns that seam)."""
 
 from datetime import timedelta
 from typing import Any
@@ -135,8 +135,8 @@ def create_checkout_session(
     cancel_url: str,
     impersonator: Any = None,
 ) -> str:
-    """``POST /orgs/<org_slug>/billing/checkout/``
-    (docs/plans/phase-4.md B.2). Returns the Checkout Session URL — the
+    """``POST /orgs/<org_slug>/billing/checkout/``.
+    Returns the Checkout Session URL — the
     ``Subscription`` row itself is created later, by the webhook handler
     processing ``checkout.session.completed``, not here.
 
@@ -144,7 +144,7 @@ def create_checkout_session(
     plan-change entry point — Checkout replaces an existing subscription's
     price when reused this way. A downgrade whose target plan's limits
     are already exceeded by current usage is blocked before any Stripe
-    call (docs/plans/phase-4.md B.4).
+    call.
 
     Covers both halves of PRD §6's "start or cancel a subscription"
     restriction for impersonated sessions — starting and plan-changing
@@ -167,8 +167,8 @@ def create_checkout_session(
 def create_portal_session(
     *, organization: Organization, actor: Any, return_url: str, impersonator: Any = None
 ) -> str:
-    """``POST /orgs/<org_slug>/billing/portal/``
-    (docs/plans/phase-4.md B.2). Returns the Customer Portal URL — the
+    """``POST /orgs/<org_slug>/billing/portal/``.
+    Returns the Customer Portal URL — the
     Stripe Customer Portal is where a subscription is cancelled (PRD §4
     "Billing flow"), so this is the other half of PRD §6's "start or
     cancel a subscription" restriction for impersonated sessions."""
@@ -187,7 +187,7 @@ def create_portal_session(
 )
 def sync_seat_quantity(organization: Organization) -> None:
     """Syncs active membership count to the organisation's Stripe
-    subscription quantity, with proration (docs/plans/phase-4.md B.5).
+    subscription quantity, with proration.
     A no-op if the organisation has no ``Subscription`` yet — seat pricing
     can be on before anyone has checked out."""
     subscription = Subscription.objects.filter(organization=organization).first()
@@ -208,8 +208,8 @@ def sync_seat_quantity(organization: Organization) -> None:
     "sync_plans_from_stripe, which carries the same not_audited reasoning."
 )
 def sync_stripe_plans() -> dict[str, int]:
-    """The nightly Stripe plan sync (PRD §5 "Scheduled jobs";
-    docs/plans/phase-5.md 5.4). Wraps fetch-then-upsert as one call so
+    """The nightly Stripe plan sync (PRD §5 "Scheduled jobs").
+    Wraps fetch-then-upsert as one call so
     the scheduled task's body stays a single service call — the
     management command (``sync_stripe_plans``) uses this too, so there
     is exactly one place that sequence is spelled out."""
@@ -223,10 +223,9 @@ def sync_stripe_plans() -> dict[str, int]:
     "which is the record that matters here, not a call-level audit entry."
 )
 def send_trial_ending_notices() -> int:
-    """Trial-ending notices (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-    5.4), daily. Idempotent when run twice: no field on ``Subscription``
-    records "already notified" (Phase 1's baseline didn't add one, and
-    this phase generates no migrations), so idempotency is checked
+    """Trial-ending notices (PRD §5 "Scheduled jobs"), daily. Idempotent
+    when run twice: no field on ``Subscription`` records "already
+    notified" — no migration adds one, so idempotency is checked
     against ``AuditLog`` instead — one row per (subscription, trial end
     date) is the record that a notice already went out for *this* trial
     end. Returns the count of notices actually sent."""
@@ -310,8 +309,8 @@ def check_credit_balances(*, organization_id: str | None = None) -> list[dict[st
     "reasoning as send_trial_ending_notices above."
 )
 def check_dunning() -> int:
-    """Dunning check (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md 5.4),
-    daily. Same idempotency mechanism as ``send_trial_ending_notices``:
+    """Dunning check (PRD §5 "Scheduled jobs"), daily. Same idempotency
+    mechanism as ``send_trial_ending_notices``:
     one ``AuditLog`` row per (subscription, current period end) records
     that a payment-failed notice already went out for *this* billing
     period, since ``Subscription`` has no "already notified" field to

@@ -1,7 +1,6 @@
 Generate a full CRUD vertical slice for the resource named in `$ARGUMENTS`
 (a singular PascalCase model name, e.g. `Invoice`), then do the judgement
-work the generator deliberately leaves undone (ADR 0004,
-`docs/plans/phase-19.md`).
+work the generator deliberately leaves undone (ADR 0004).
 
 **Ask first** if the app name (the CLI derives it as the lowercase plural
 of the resource, e.g. `invoices`) isn't right for this resource, or if you
@@ -53,7 +52,7 @@ thin `apps/web/lib/<resources>/api.ts` wrapper. Not supported yet on
 ## 3. Sync the client
 
 `pnpm gen sync-client` in whichever worktree owns the generated client
-this wave (`docs/plans/WORKTREES.md` rule 3) — the resource generator
+lock (`docs/plans/WORKTREES.md` rule 3) — the resource generator
 never regenerates it itself.
 
 ## 4. Finish

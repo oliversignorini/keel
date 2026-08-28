@@ -1,4 +1,4 @@
-"""Audit decorators (PRD v1.2, Phase 8, "The service registry, specified").
+"""Audit decorators (PRD v1.2 §8, "The service registry, specified").
 
 ``@audited(action)`` marks a mutating service function so its call is
 recorded inline, immediately after it returns (ddia#17) — not deferred
@@ -9,16 +9,14 @@ explicit escape hatch for a mutating function that deliberately isn't
 recorded, registered with its reason so the choice is visible rather
 than silent.
 
-There are no services to decorate yet in Phase 1 — ``keel.audit.AuditLog``
-gets its table in the baseline migration (task 1.10), but nothing writes
-to it until Phase 8 wires ``set_recorder`` to a real writer. What Phase 1
-proves is that the decorators record correctly and register correctly,
-against fixture functions.
+``keel.audit.AuditLog`` holds the persisted rows; ``set_recorder`` wires
+this module's decorators to the real writer at app-ready time
+(``keel/audit/apps.py``).
 
 The registry is walkable (module-level ``registry``, iterable as
-``(qualified_name, entry)`` pairs) — Phase 8's meta-test enumerates every
-marked function and its marker the same way Phase 3's meta-test walks
-``keel.core.authz.registry``.
+``(qualified_name, entry)`` pairs) — the audit meta-test enumerates every
+marked function and its marker the same way the permission-guard
+meta-test walks ``keel.core.authz.registry``.
 """
 
 from collections.abc import Callable, Iterator
@@ -39,7 +37,8 @@ class AuditRecord:
 
 
 def _default_recorder(record: AuditRecord) -> None:
-    """No-op until Phase 8 installs the real AuditLog writer."""
+    """No-op default, replaced by the real ``AuditLog`` writer via
+    ``set_recorder`` at app-ready time."""
 
 
 _recorder: Callable[[AuditRecord], None] = _default_recorder
@@ -63,9 +62,10 @@ def set_recorder(fn: Callable[[AuditRecord], None]) -> None:
     """Install the function that persists an ``AuditRecord``.
 
     A settings-configured seam, same shape as
-    ``keel.core.authz``'s membership resolver: Phase 8 calls this once,
-    at app-ready time, with a function that writes to ``AuditLog``. Tests
-    call it too, to capture records without touching the database.
+    ``keel.core.authz``'s membership resolver: ``keel/audit/apps.py``
+    calls this once, at app-ready time, with a function that writes to
+    ``AuditLog``. Tests call it too, to capture records without touching
+    the database.
     """
     global _recorder
     _recorder = fn

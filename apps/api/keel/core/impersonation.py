@@ -1,5 +1,5 @@
 """Impersonation session state and the shared restriction primitive (PRD
-§6 "Impersonation"; docs/plans/phase-8.md 8.3).
+§6 "Impersonation").
 
 The session, not a request header, is the source of truth: staff starts
 impersonation from Django admin, which logs the browser session in as

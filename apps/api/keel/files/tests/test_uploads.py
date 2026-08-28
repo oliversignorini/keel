@@ -1,5 +1,4 @@
-"""Presigned direct upload (PRD §5; docs/plans/phase-5.md 5.6;
-docs/plans/phase-13.md). Uses ``moto``'s mocked S3 rather than a real
+"""Presigned direct upload (PRD §5). Uses ``moto``'s mocked S3 rather than a real
 MinIO/R2 — see ``keel.files.storage.S3CompatibleStorage`` and
 ``infra/compose.dev.yml``'s ``minio`` service for the two real-environment
 stand-ins this project uses instead of real R2 credentials, which don't
@@ -165,8 +164,8 @@ def test_complete_before_the_object_actually_exists_is_rejected() -> None:
 def test_a_corrupted_upload_is_rejected_on_complete() -> None:
     """The bytes that actually land in storage don't match the checksum
     the client declared at create time — services.complete_upload must
-    catch this itself (docs/plans/phase-13.md "a corrupted upload is
-    rejected"), since neither MinIO nor moto can be relied on to reject
+    catch this itself ("a corrupted upload is rejected"), since neither
+    MinIO nor moto can be relied on to reject
     a mismatched checksum at PUT time (keel.files.storage.ObjectStorage's
     ``compute_sha256`` docstring)."""
     org, owner = _org_with_owner()
@@ -282,9 +281,9 @@ def test_deleting_an_already_deleted_upload_is_idempotent() -> None:
 
 
 def test_a_file_is_unreadable_from_a_different_organization() -> None:
-    """The real cross-tenant test the acceptance criterion asks for
-    (docs/plans/phase-5.md 5.6) — not an assertion that the object key
-    merely *contains* the org id, but that a member of a different
+    """The real cross-tenant test the acceptance criterion asks for —
+    not an assertion that the object key merely *contains* the org id,
+    but that a member of a different
     organisation gets a 404, the same "doesn't exist to you" response an
     absent row would produce."""
     org_a, owner_a = _org_with_owner()

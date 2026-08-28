@@ -27,8 +27,8 @@ class RequestIDMiddleware:
 
 
 class ImpersonationMiddleware:
-    """Resolves the impersonator (PRD §6 "Impersonation"; docs/plans/phase-8.md
-    8.3) once per request: ``request.impersonator`` is the staff ``User`` who
+    """Resolves the impersonator (PRD §6 "Impersonation") once per
+    request: ``request.impersonator`` is the staff ``User`` who
     started the session, or ``None`` for an ordinary session — the value
     every view below threads into an audited service call as
     ``impersonator=``. Also publishes the same value to

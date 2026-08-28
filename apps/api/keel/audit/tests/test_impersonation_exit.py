@@ -1,5 +1,4 @@
-"""``POST /api/v1/impersonation/exit/`` (PRD §6 "Impersonation";
-docs/plans/phase-8.md 8.3)."""
+"""``POST /api/v1/impersonation/exit/`` (PRD §6 "Impersonation")."""
 
 import pytest
 from django.test import Client as APIClient

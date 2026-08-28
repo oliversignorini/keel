@@ -1,7 +1,7 @@
 # File storage
 
-Status as of Phase 13 (`docs/plans/phase-13.md`). Covers the upload
-lifecycle, the storage adapter seam, provider options, and the
+Covers the upload lifecycle, the storage adapter seam, provider options,
+and the
 production caveats — including why Railway's persistent volumes are not
 the answer, a question this template will otherwise get asked often
 given it deploys to Railway by default (`docs/deploy-railway.md`).
@@ -10,8 +10,8 @@ given it deploys to Railway by default (`docs/deploy-railway.md`).
 
 `keel/files/` handles _storage_: presigned direct upload, a status
 lifecycle, listing, retrieval and (soft) deletion, tenant isolation,
-garbage collection. It does not — and, by this project's own boundary
-(`docs/plans/phase-13.md` "Boundary"), never will — do anything with the
+garbage collection. It does not — and, by this project's own stated
+boundary, never will — do anything with the
 _contents_ of a file: no OCR, no text extraction, no embeddings, no
 document understanding. That's a different project's problem (Brein);
 this template only guarantees the bytes exist, belong to the right
@@ -44,12 +44,11 @@ but only one moves the row out of `pending`; the other's update matches
 zero rows and is treated as "someone already decided this", not an
 error. The same pattern covers delete.
 
-**Why five states, not two.** The phase-5 model shipped `pending` /
+**Why five states, not two.** An earlier model shipped `pending` /
 `complete` only — no way to represent a corrupted upload, an abandoned
 one, or a deleted one. Retrofitting states onto a machine that already
-has rows in it is real migration work; Phase 13 is the first template
-phase allowed a schema change since the baseline, so this is where that
-gets designed in rather than deferred again.
+has rows in it is real migration work, so this is where that gets
+designed in rather than deferred again.
 
 **Checksum verification.** The client declares a `checksum_sha256` at
 create time — what it's about to upload. On completion, the server
@@ -157,7 +156,7 @@ Two implementations ship:
 `keel/files/tests/test_local_storage.py` runs the same upload -> complete
 -> download -> delete flow `test_uploads.py` runs against moto, instead
 against `LocalFileSystemStorage`, with nothing touched but
-`STORAGES["files"]["BACKEND"]` — the acceptance criterion this phase
+`STORAGES["files"]["BACKEND"]` — the acceptance criterion this doc
 names, demonstrated as a test rather than asserted in prose.
 
 ```bash
@@ -170,13 +169,13 @@ KEEL_FILES_STORAGE_BACKEND=keel.files.storage.S3CompatibleStorage
 
 ## Provider options
 
-| Provider             | Backend                  | Notes                                                                                                                                                                                                                                                                                                                                                   |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Local disk**       | `LocalFileSystemStorage` | Solo dev only. Single-process, no presigned bucket URLs, not multi-instance-safe. Never use in production.                                                                                                                                                                                                                                              |
-| **MinIO**            | `S3CompatibleStorage`    | Dev/CI parity with a real S3-shaped API — `infra/compose.dev.yml`'s `minio` service. Real presigned-URL behaviour without a cloud account.                                                                                                                                                                                                              |
-| **Cloudflare R2**    | `S3CompatibleStorage`    | This template's production default (PRD §5). S3-API-compatible, no egress fees, works unchanged with the same adapter used for MinIO.                                                                                                                                                                                                                   |
-| **AWS S3**           | `S3CompatibleStorage`    | Drop-in — set `R2_ENDPOINT_URL` to AWS's regional endpoint (or omit it for the default endpoint resolution) and the real credentials. Nothing else changes.                                                                                                                                                                                             |
-| **Supabase Storage** | `S3CompatibleStorage`    | Supabase Storage exposes an S3-compatible API (a separate endpoint and its own access-key pair from a project's Postgres credentials) — set `R2_ENDPOINT_URL` to the project's S3 endpoint. Not verified against a live Supabase project in this phase; the adapter makes no R2-specific assumption, but treat this row as "should work," not "tested." |
+| Provider             | Backend                  | Notes                                                                                                                                                                                                                                                                                                                                     |
+| -------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local disk**       | `LocalFileSystemStorage` | Solo dev only. Single-process, no presigned bucket URLs, not multi-instance-safe. Never use in production.                                                                                                                                                                                                                                |
+| **MinIO**            | `S3CompatibleStorage`    | Dev/CI parity with a real S3-shaped API — `infra/compose.dev.yml`'s `minio` service. Real presigned-URL behaviour without a cloud account.                                                                                                                                                                                                |
+| **Cloudflare R2**    | `S3CompatibleStorage`    | This template's production default (PRD §5). S3-API-compatible, no egress fees, works unchanged with the same adapter used for MinIO.                                                                                                                                                                                                     |
+| **AWS S3**           | `S3CompatibleStorage`    | Drop-in — set `R2_ENDPOINT_URL` to AWS's regional endpoint (or omit it for the default endpoint resolution) and the real credentials. Nothing else changes.                                                                                                                                                                               |
+| **Supabase Storage** | `S3CompatibleStorage`    | Supabase Storage exposes an S3-compatible API (a separate endpoint and its own access-key pair from a project's Postgres credentials) — set `R2_ENDPOINT_URL` to the project's S3 endpoint. Not verified against a live Supabase project; the adapter makes no R2-specific assumption, but treat this row as "should work," not "tested." |
 
 Anything else genuinely S3-compatible works the same way — the seam's
 entire point is that a new provider is an `OPTIONS` change, never a code

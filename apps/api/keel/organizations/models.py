@@ -1,7 +1,7 @@
 """Organisation, roles, membership, invitations (PRD §4 "Data model").
 
 Permission *codes* and their guards belong to
-``organizations/permissions.py`` (Phase 3) — this module holds data shape
+``organizations/permissions.py`` — this module holds data shape
 only, per PRD §4 invariant 2.
 """
 

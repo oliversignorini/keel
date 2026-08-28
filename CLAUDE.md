@@ -41,7 +41,7 @@ contains a business rule is a bug, not a style choice.
 ## Generator catalogue
 
 Before hand-writing a slice, check whether `pnpm gen` already provisions
-it (ADR 0004, `docs/plans/phase-19.md`). `pnpm gen --help` is the full
+it (ADR 0004). `pnpm gen --help` is the full
 reference for flags; this table is only "what exists and which command
 provisions it" — for a brief spanning more than one row, run
 `/plan-feature` first rather than working through this table by hand.
@@ -77,7 +77,7 @@ finished.
 - Only one worktree at a time regenerates `openapi.merged.json` or the
   generated client. Two in flight is an unresolvable merge conflict.
 - No migrations outside a phase that declares one — see `docs/review-2026-08.md`.
-- **ADR 0001 replaced DRF with Django Ninja in Phase 10.** The commands
+- **ADR 0001 replaced DRF with Django Ninja.** The commands
   below and the invariant table above describe today's Ninja reality:
   resources built on `keel/core/authz.py`'s `GlobalResource` /
   `OrgScopedResource`, `schemas.py` instead of DRF serializers, and an

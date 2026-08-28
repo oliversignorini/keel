@@ -1,5 +1,5 @@
-"""``Idempotency-Key`` handling (PRD §5.5.3; docs/plans/phase-5.5.md
-5.5.3), scoped by user + a caller-supplied scope + key so one user's
+"""``Idempotency-Key`` handling (PRD §5.5.3), scoped by user + a
+caller-supplied scope + key so one user's
 replayed key can never surface another user's cached response, and one
 endpoint's key can never collide with another endpoint's.
 

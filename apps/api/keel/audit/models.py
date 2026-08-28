@@ -1,6 +1,6 @@
 """AuditLog (PRD §4 "Data model"). organization and actor are both
 nullable — some entries are system actions with no org or no user in the
-loop; impersonator is nullable and unread until Phase 8."""
+loop; impersonator is nullable too, for an entry with no impersonator."""
 
 from django.db import models
 

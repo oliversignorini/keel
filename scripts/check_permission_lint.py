@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Permission-check placement lint (PRD §4 invariant 2; phase-3.md A.6).
+"""Permission-check placement lint (PRD §4 invariant 2).
 
 "Authorization is expressed only in organizations/permissions.py."
 ``keel/core/authz.py`` defines the *vocabulary* (``Decision``, the
@@ -13,9 +13,9 @@ being enforced is "does this string appear in a file other than the one
 sanctioned file", and a regex answers that directly. ``Decision.allow(``
 and ``Decision.deny(`` are unambiguous, so a plain grep is right for them.
 
-``registry.register(`` is not. Phase 5.5 introduced a second, entirely
-unrelated registry — ``keel.jobs.registry``, which registers job *types*
-and shares the method name by coincidence. A bare grep flagged
+``registry.register(`` is not. There is a second, entirely unrelated
+registry — ``keel.jobs.registry``, which registers job *types* and
+shares the method name by coincidence. A bare grep flagged
 ``keel/jobs/demo.py`` as an authorization violation, which is a false
 positive that would have been "fixed" by renaming perfectly good job code
 or, worse, by exempting a path and blunting the rule. So that one pattern

@@ -1,4 +1,4 @@
-"""Preset role seeding (PRD §4 "Tenancy and permissions"; phase-3.md A.4).
+"""Preset role seeding (PRD §4 "Tenancy and permissions").
 
 Owner/Admin/Member are global singleton ``Role`` rows — ``Role.organization
 = None`` marks a system preset per that model's docstring — shared by

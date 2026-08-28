@@ -1,5 +1,5 @@
 """The ``settings.KEEL_ORGANIZATION_RESOLVER`` callable (PRD §4, "The
-membership-resolution seam"; phase-3.md A.3).
+membership-resolution seam").
 
 ``keel/core/authz.py`` cannot import this app, so it calls this function
 by dotted path instead. Returning ``None`` means "this slug doesn't

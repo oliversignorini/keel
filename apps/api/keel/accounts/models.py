@@ -1,5 +1,4 @@
-"""The custom ``User`` (PRD §4, "Data model"). No allauth glue yet —
-Phase 2 attaches to this."""
+"""The custom ``User`` (PRD §4, "Data model")."""
 
 from typing import ClassVar
 

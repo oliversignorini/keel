@@ -1,10 +1,10 @@
-# Jobs and audit (Phase 15)
+# Jobs and audit
 
 What `keel/jobs/` and `keel/audit/` actually guarantee, how to extend
 each safely, and where the boundary between "belongs in Keel" and
-"belongs in a product built on Keel" sits. Phase 5.5 and Phase 8 built
-the mechanisms; this phase hardened the constraints underneath them and
-closed the gaps a design review found. Read `keel/jobs/*.py`'s and
+"belongs in a product built on Keel" sits. This document hardens the
+constraints underneath the mechanisms and closes the gaps a design
+review found. Read `keel/jobs/*.py`'s and
 `keel/audit/*.py`'s own docstrings for the reasoning behind any one
 line — this document is the map across files, not a replacement for them.
 
@@ -51,15 +51,15 @@ impersonating someone," nothing more.
 arguments through its result backend and broker — a passed-in model
 instance is pickled/JSON-encoded as of the moment the task was
 _enqueued_, and a retried or resumed task re-reads it stale. An id forces
-every re-entry (a resumed task, an admin redrive, this phase's own
-`sweep_stuck_jobs`) to `.get()` the row fresh, which is exactly what
+every re-entry (a resumed task, an admin redrive, `sweep_stuck_jobs`
+itself) to `.get()` the row fresh, which is exactly what
 makes `run_job` safe to call twice.
 
 ## Idempotency
 
 `Idempotency-Key` handling lives in `keel/core/idempotency.py` — it
-moved out of `keel/jobs/` this phase because it was never actually
-jobs-specific (a retried POST can duplicate a Stripe checkout session,
+moved out of `keel/jobs/` because it was never actually jobs-specific
+(a retried POST can duplicate a Stripe checkout session,
 an invitation email, an upload row, or an organisation exactly the way
 it can duplicate a job). Two layers, cheapest first:
 
@@ -79,7 +79,7 @@ it can duplicate a job). Two layers, cheapest first:
 2. **The database constraint.** The cache claim is cheap and closes most
    of the race, but it is not the real guarantee: two requests can both
    pass `cache.get()` before either calls `cache.add()`, and — the gap
-   this phase closed — `create_job`'s own `select_for_update()` locks a
+   this closes — `create_job`'s own `select_for_update()` locks a
    `Job` row that doesn't exist yet when both requests read `None` for
    the same key, so it cannot serialise them either. `Job` carries a
    partial `UniqueConstraint` on `(organization, idempotency_key)`
@@ -197,7 +197,7 @@ connection. Two things worth knowing about its guarantees:
 
 - **It is at-most-once.** Redis pub/sub has no buffer and no replay — a
   browser tab that's disconnected when an event publishes never
-  receives it, full stop. This phase added a `seq`: a per-organisation,
+  receives it, full stop. A `seq` addresses this: a per-organisation,
   monotonically increasing counter (`INCR`), stamped on every published
   event. `seq` does not make the stream replayable on its own — there is
   nothing to replay _from_ — but it turns "silently missed an event"
@@ -226,8 +226,8 @@ consumes it.
 
 Future document-ingestion or data-pipeline work needs to answer "what
 produced this row, from what input, by which job run." Rather than build
-that (out of this phase's scope — no ingestion pipeline exists yet), this
-phase built the smallest hook that answers it: `ProvenanceMixin`
+that (out of scope here — no ingestion pipeline exists yet), this repo
+carries the smallest hook that answers it: `ProvenanceMixin`
 (`keel/core/models.py`), two nullable columns —
 
 - `produced_by_job`: a string-referenced FK to `jobs.Job`

@@ -1,6 +1,6 @@
-"""The Stripe webhook worker (PRD §6 "Stripe webhook"; docs/plans/phase-4.md
-B.3): "atomic dispatch to the handler, upsert Subscription, retry with
-backoff x5, then StripeEvent.error plus a Sentry event."
+"""The Stripe webhook worker (PRD §6 "Stripe webhook"): "atomic dispatch
+to the handler, upsert Subscription, retry with backoff x5, then
+StripeEvent.error plus a Sentry event."
 
 Uses Celery directly rather than ``keel.core.tasks``'s Tier-1 shim: that
 shim is explicitly fire-and-forget with no retry surface, and this worker
@@ -9,11 +9,11 @@ this class of need "needs Celery's actual surface, used directly" rather
 than growing the shim to cover it.
 
 Retry/backoff here is deliberately simple (exponential, no dead-letter
-queue): PRD §5 "Scheduled jobs" lists a ``FailedTask`` row and a generic
-dead-letter mechanism as Phase 5 deliverables, not Phase 4's. An event
-that exhausts its retries lands with ``StripeEvent.error`` set and
-``processed_at`` still null — inspectable and re-processable by hand via
-Django admin, re-drivable properly once Phase 5's mechanism exists.
+queue): the generic ``FailedTask`` row and dead-letter mechanism PRD §5
+"Scheduled jobs" describes live in ``keel/jobs/`` and this worker doesn't
+use them. An event that exhausts its retries lands with
+``StripeEvent.error`` set and ``processed_at`` still null — inspectable
+and re-processable by hand via Django admin.
 
 Also holds ``sync_seat_quantity_task`` (B.5), which *does* use the Tier-1
 shim — see its own docstring for why the two tasks in this module use
@@ -39,8 +39,8 @@ STRIPE_EVENT_PAYLOAD_RETENTION = timedelta(days=30)
 
 def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
     """Wired to the real SDK (PRD §5, "then StripeEvent.error plus a
-    Sentry event"; docs/plans/phase-8.md 8.4) via ``keel.core.sentry``,
-    which is itself a no-op without a DSN — see that module's docstring."""
+    Sentry event") via ``keel.core.sentry``, which is itself a no-op
+    without a DSN — see that module's docstring."""
     from keel.core.sentry import report_exception
 
     report_exception(
@@ -157,7 +157,7 @@ def check_credit_balances_task() -> int:
 
 @task
 def sync_seat_quantity_task(organization_id: str) -> None:
-    """Tier-1 fire-and-forget dispatch (docs/plans/phase-4.md B.5) — this
+    """Tier-1 fire-and-forget dispatch — this
     is exactly the shim's own canonical example, "sync a Stripe object".
     Unlike the webhook worker above, no retry is needed here: the next
     membership create/remove re-syncs to the correct count regardless of

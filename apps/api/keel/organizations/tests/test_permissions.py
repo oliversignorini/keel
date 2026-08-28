@@ -1,5 +1,5 @@
 """``organizations/permissions.py`` — the single source of truth for
-permission codes and guards (PRD §4 invariant 2; phase-3.md A.1, A.2).
+permission codes and guards (PRD §4 invariant 2).
 
 Every code declares one ``@allow_case`` and at least one ``@deny_case``
 here. The generic ``test_guard_allow`` / ``test_guard_deny`` runners below

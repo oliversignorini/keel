@@ -1,6 +1,6 @@
-"""Test settings with TOTP MFA switched on (PRD §8 Phase 2 A.4: "TOTP
-enrolment and challenge work when the flag is enabled, and the endpoints
-are absent when it is not").
+"""Test settings with TOTP MFA switched on (PRD §8: "TOTP enrolment and
+challenge work when the flag is enabled, and the endpoints are absent
+when it is not").
 
 ``allauth.mfa`` is only added to INSTALLED_APPS when KEEL_MFA_ENABLED is
 true at settings-load time (config/settings/base.py) — Django's app

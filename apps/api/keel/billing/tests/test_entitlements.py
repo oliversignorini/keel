@@ -1,4 +1,4 @@
-"""``keel.billing.entitlements`` (docs/plans/phase-4.md B.4)."""
+"""``keel.billing.entitlements``."""
 
 import pytest
 

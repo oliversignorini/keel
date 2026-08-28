@@ -1,4 +1,4 @@
-"""Tests for the __Resource__ job type (docs/plans/phase-19.md 19.B).
+"""Tests for the __Resource__ job type.
 
 Every generated step is a stub (``return None``) — business logic is
 judgement, left for whoever fills in ``keel/jobs/__resource__.py``. What

@@ -9,16 +9,17 @@ permission code, no role, and nothing that answers a question about a
 user — that is ``organizations/permissions.py``, which imports this
 module, registers real guards against real codes, and re-exports
 ``has_perm``. If you are about to write the string "org.view" in this
-file, stop: it belongs in Phase 3.
+file, stop: it belongs in ``organizations/permissions.py``.
 
 **The membership-resolution seam.** ``OrgScopedResource`` must resolve
 the organisation named in the URL and confirm the requesting user is a
 member of it, but ``keel/core`` may not import ``keel.organizations``
-(that import-linter contract is asserted in Phase 0 and must stay
-green). So resolution is delegated to a settings-configured dotted path,
+(an import-linter contract that must stay green). So resolution is
+delegated to a settings-configured dotted path,
 ``settings.KEEL_ORGANIZATION_RESOLVER`` — a callable
-``(request, org_slug: str) -> Organization | None`` that Phase 3 supplies
-(likely backed by a ``Membership`` lookup). Returning ``None`` means "this
+``(request, org_slug: str) -> Organization | None`` that
+``keel/organizations/resolvers.py`` supplies (backed by a ``Membership``
+lookup). Returning ``None`` means "this
 slug doesn't resolve, or it does and the requester isn't an active member
 of it" — deliberately the same outcome for both, because PRD §4 invariant
 7's tenant-isolation meta-test requires cross-org access to answer 404,
@@ -102,8 +103,9 @@ class PermissionRegistry:
     """A registry of permission codes to guards.
 
     Iteration order is insertion order and is part of the contract —
-    Phase 3's meta-test (PRD §4 invariant 2: "every registered guard has a
-    unit test with one allow case and one deny case") walks it, so it must
+    the guard-coverage meta-test (PRD §4 invariant 2: "every registered
+    guard has a unit test with one allow case and one deny case") walks
+    it, so it must
     stay a stable, inspectable surface rather than a dict comprehension
     buried in a closure.
     """

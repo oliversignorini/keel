@@ -1,6 +1,6 @@
-"""The six scheduled jobs (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-5.4). Each job is run twice and asserted to reach identical final state —
-same shape as Phase 4's webhook replay tests."""
+"""The six scheduled jobs (PRD §5 "Scheduled jobs"). Each job is run twice
+and asserted to reach identical final state — same shape as the webhook
+replay tests."""
 
 from datetime import timedelta
 from unittest.mock import patch

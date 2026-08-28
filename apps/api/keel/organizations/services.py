@@ -1,8 +1,8 @@
-"""Writes (PRD §4 "Data model"; phase-3.md B.1).
+"""Writes (PRD §4 "Data model").
 
 One ``transaction.atomic()`` per service function, opened here and never
 in a view. Mutating services are decorated ``@audited`` or
-``@not_audited(reason=...)`` (Phase 1's ``keel.core.audit``).
+``@not_audited(reason=...)`` (``keel.core.audit``).
 
 Services may call guards (``keel.organizations.permissions.has_perm``);
 they may never reimplement one. A service enforcing a rule authorization
@@ -31,17 +31,15 @@ INVITATION_TTL = timedelta(days=7)
 
 
 def _sync_stripe_customer(organization_id: Any) -> None:
-    """Seam for Stripe customer creation (phase-3.md B.1: "Stripe customer
-    creation via ``transaction.on_commit()``, never inline"). Phase 4 owns
-    Stripe integration and replaces this body with the real API call;
-    until then it is a documented no-op so organisation creation doesn't
-    depend on billing being wired up."""
+    """Seam for Stripe customer creation, via ``transaction.on_commit()``,
+    never inline. Billing integration replaces this body with the real
+    API call; until then it is a documented no-op so organisation
+    creation doesn't depend on billing being wired up."""
 
 
 @audited("organization.created")
 def create_organization(*, name: str, slug: str, created_by: Any) -> Organization:
-    """Atomic: org, Owner membership, three preset roles — all or nothing
-    (PRD §8 Phase 3 acceptance)."""
+    """Atomic: org, Owner membership, three preset roles — all or nothing."""
     with transaction.atomic():
         organization = Organization.objects.create(name=name, slug=slug, created_by=created_by)
         preset_roles = seed_preset_roles()
@@ -102,12 +100,12 @@ def transfer_ownership(
 
 
 def _sync_seats(organization_id: Any) -> None:
-    """Dispatches the Tier-1 seat-sync task (docs/plans/phase-4.md B.5).
-    Enqueuing rather than calling ``keel.billing.services.sync_seat_quantity``
-    directly means a Stripe failure here can never surface as an exception
-    from ``accept_invitation``/``remove_member`` — B.5's "membership writes
-    succeed while Stripe is unreachable" holds regardless of whether this
-    fires from inside a request or a background worker."""
+    """Dispatches the Tier-1 seat-sync task. Enqueuing rather than calling
+    ``keel.billing.services.sync_seat_quantity`` directly means a Stripe
+    failure here can never surface as an exception from
+    ``accept_invitation``/``remove_member`` — membership writes succeed
+    while Stripe is unreachable, regardless of whether this fires from
+    inside a request or a background worker."""
     from keel.billing.tasks import sync_seat_quantity_task
 
     sync_seat_quantity_task.enqueue(str(organization_id))
@@ -145,12 +143,12 @@ def revoke_invitation(*, invitation: Invitation, actor: Any) -> Invitation:
 
 @audited("invitation.accepted")
 def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
-    """Atomic: membership created, ``accepted_at`` set (phase-3.md B.1).
-    Seat sync fires on commit, behind ``BILLING_SEAT_PRICING``.
+    """Atomic: membership created, ``accepted_at`` set. Seat sync fires
+    on commit, behind ``BILLING_SEAT_PRICING``.
 
     Checked against the plan's seat entitlement before anything is
-    written (docs/plans/phase-4.md B.4: "Adding a member beyond the seat
-    entitlement returns 402 with upgrade context"). The seat counter only
+    written: adding a member beyond the seat entitlement returns 402
+    with upgrade context. The seat counter only
     counts ``STATUS_ACTIVE`` memberships, so both a brand-new membership
     and reactivating a suspended one genuinely add a seat and are checked;
     re-accepting an already-active membership is a pure no-op and isn't.
@@ -199,7 +197,7 @@ def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
 
 @audited("membership.role_changed")
 def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Membership:
-    """The last Owner cannot be demoted (PRD §8 Phase 3 acceptance). Keys
+    """The last Owner cannot be demoted. Keys
     off ``Perm.ORG_TRANSFER`` — the code only the Owner preset holds — the
     same source of truth ``permissions.is_last_active_owner`` uses for the
     remove-guard, never off a role name.
@@ -229,14 +227,14 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
     "record. See the docstring below for why this isn't @audited."
 )
 def expire_invitations() -> int:
-    """Invitation expiry (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-    5.4), hourly. A system action, not a user one — no ``actor``, so not
-    ``@audited`` (that decorator records who did it; nobody did this).
+    """Invitation expiry (PRD §5 "Scheduled jobs"), hourly. A system
+    action, not a user one — no ``actor``, so not ``@audited`` (that
+    decorator records who did it; nobody did this).
 
-    Phase 1's schema has no separate "expired" state on ``Invitation`` —
-    only ``accepted_at`` / ``revoked_at``, and no migration is available
-    to add one (docs/plans/phase-5.md boundary: "a needed migration
-    means a Phase 1 gap"). An invitation past its ``expires_at`` with
+    The schema has no separate "expired" state on ``Invitation`` — only
+    ``accepted_at`` / ``revoked_at``, and adding one would need a
+    migration this app doesn't currently have (invariant 4: one baseline
+    migration per app). An invitation past its ``expires_at`` with
     neither set is, in every observable way (it 403s on accept), already
     revoked; this just makes that state visible on the row itself.
     Idempotent by construction: the ``filter`` only ever matches rows
@@ -261,9 +259,8 @@ def remove_member(*, membership: Membership, actor: Any) -> None:
     first's delete to commit and see the up-to-date membership set.
 
     Seat sync fires on commit, behind ``BILLING_SEAT_PRICING`` — the
-    other half of docs/plans/phase-4.md B.5 alongside
-    ``accept_invitation``'s ("seat count syncs to Stripe ... on
-    membership create and remove")."""
+    other half of ``accept_invitation``'s ("seat count syncs to Stripe
+    ... on membership create and remove")."""
     organization_id = membership.organization_id
     with transaction.atomic():
         Organization.objects.select_for_update().get(pk=organization_id)

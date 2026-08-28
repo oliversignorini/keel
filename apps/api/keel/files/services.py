@@ -1,5 +1,4 @@
-"""Presigned direct upload (PRD §5; docs/plans/phase-5.md 5.6;
-docs/plans/phase-13.md): Django issues the upload URL and records
+"""Presigned direct upload (PRD §5): Django issues the upload URL and records
 ``FileUpload``; the browser uploads straight to storage; the row reaches
 ``available``. See ``keel.files.models`` for the full state machine."""
 
@@ -44,7 +43,7 @@ def _object_key(*, organization_id: Any, filename: str) -> str:
     """Organisation-scoped by construction, not merely by convention: the
     org id is the key's first path segment, so a presigned URL for one
     organisation's upload can never collide with — or be guessed into —
-    another's (docs/plans/phase-5.md 5.6). The uploader's filename is
+    another's. The uploader's filename is
     deliberately *not* interpolated here (ddia#21: "sanitise filename out
     of the object key") — only a whitelisted extension survives, so a
     filename can never change the key's shape or traverse a path."""

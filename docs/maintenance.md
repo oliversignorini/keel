@@ -29,11 +29,10 @@ the boundary the upgrade checklist below exists for.
   [djangoproject.com](https://www.djangoproject.com/download/)) takes
   priority over the monthly cadence — apply a security release within the
   week it ships, not at the next scheduled check.
-- **Dependencies generally (`uv.lock`, `pnpm-lock.yaml`)** — `docs/plans/phase-9.md`'s 9.A
-  slice adds `.github/dependabot.yml` for pip/npm/github-actions/docker,
-  weekly, grouped minor+patch. Once that lands, Dependabot PRs are the
-  cadence; this section stops being the mechanism and starts being the
-  record of what it covers.
+- **Dependencies generally (`uv.lock`, `pnpm-lock.yaml`)** — `.github/dependabot.yml`
+  covers pip/npm/github-actions/docker, weekly, grouped minor+patch.
+  Dependabot PRs are the cadence; this section is the record of what it
+  covers, not the mechanism itself.
 - **PostgreSQL and Redis major versions** — no fixed schedule. Bump when
   the hosting provider (Railway, Neon) deprecates the running major, or
   when a feature this repo wants (e.g. a newer `pgvector` release) needs
@@ -60,10 +59,9 @@ notes for removed features before starting.
    `pyproject.toml`) mean a version bump that changes ORM behavior under
    the hood shows up as a red test, not a silent regression.
 4. Run `python manage.py check --deploy` under `config.settings.prod`
-   locally (see `.github/workflows/ci.yml`'s `test-api` job, once
-   `docs/plans/phase-9.md` 9.C lands it, for the exact invocation and
-   required env vars) — a new Django release occasionally adds a new
-   deploy check.
+   locally (see `.github/workflows/ci.yml`'s `test-api` job for the exact
+   invocation and required env vars) — a new Django release occasionally
+   adds a new deploy check.
 5. Regenerate the OpenAPI schema and the TS client
    (`scripts/merge_openapi.py`, then orval) — a Django/django-ninja bump
    can change generated schema shape even with no application code

@@ -8,10 +8,10 @@ portable without touching call sites.
 an email, sync a Stripe object, run a nightly rollup. Do NOT extend this
 to cover multi-step jobs — chaining, per-queue routing, custom task base
 classes, step-level commits belong to Celery's actual surface, used
-directly. Phase 5.5 builds the Tier 2 primitive properly; growing this
-shim to reach it turns a seam into a wall.
+directly: ``keel/jobs/`` is the Tier 2 primitive; growing this shim to
+reach it turns a seam into a wall.
 
-Retry/dead-letter policy (PRD §5, docs/plans/phase-5.md 5.3): exponential
+Retry/dead-letter policy (PRD §5): exponential
 backoff with jitter, five attempts, then a ``FailedTask`` row plus a
 Sentry event. ``keel.jobs`` is imported lazily inside the failure path
 only — every other module in this file's import graph runs on every
@@ -39,11 +39,10 @@ def report_to_sentry(
     task_name: str, error: str, traceback_text: str, exc: Exception | None = None
 ) -> None:
     """Wired to the real SDK (PRD §5: "then a FailedTask row plus a
-    Sentry event"; docs/plans/phase-8.md 8.4) via ``keel.core.sentry``,
-    which is itself a no-op without a DSN — see that module's docstring.
-    ``exc`` is optional only so the pre-Phase-8 call shape (task_name,
-    error, traceback_text) still type-checks; every real call site below
-    passes it."""
+    Sentry event") via ``keel.core.sentry``, which is itself a no-op
+    without a DSN — see that module's docstring. ``exc`` is optional only
+    so the older call shape (task_name, error, traceback_text) still
+    type-checks; every real call site below passes it."""
     from keel.core.sentry import report_exception
 
     if exc is not None:

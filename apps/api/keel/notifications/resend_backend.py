@@ -1,4 +1,4 @@
-"""Resend integration (PRD §5, docs/plans/phase-5.md 5.5). A Django email
+"""Resend integration (PRD §5). A Django email
 backend rather than a bespoke send path, so every call site — the six
 templated sends in ``keel.notifications.emails``, allauth's own
 ``send_mail`` for account emails once ``ACCOUNT_ADAPTER`` routes through

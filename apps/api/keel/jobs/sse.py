@@ -50,9 +50,8 @@ async def _event_stream(request: HttpRequest, organization_id: str) -> AsyncIter
     await pubsub.subscribe(channel)
     try:
         # Flushed before touching Redis again: the first byte this
-        # endpoint exists to protect (docs/plans/phase-5.5.md 5.5.5,
-        # footgun 2) must reach the client with zero Redis-related
-        # delay, not after the priming read below.
+        # endpoint exists to protect must reach the client with zero
+        # Redis-related delay, not after the priming read below.
         yield b": connected\n\n"
 
         # A message published in the gap between subscribe() completing

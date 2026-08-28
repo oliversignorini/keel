@@ -1,5 +1,4 @@
-"""Django admin's "Impersonate" action (PRD §6 "Impersonation";
-docs/plans/phase-8.md 8.3)."""
+"""Django admin's "Impersonate" action (PRD §6 "Impersonation")."""
 
 from typing import Any
 

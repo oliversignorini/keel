@@ -1,4 +1,4 @@
-"""The Stripe I/O boundary for plan/price sync (docs/plans/phase-4.md B.1).
+"""The Stripe I/O boundary for plan/price sync.
 
 Thin on purpose: this module's only job is turning Stripe's API into the
 plain dicts ``keel.billing.services.sync_plans_from_stripe`` consumes.
@@ -57,9 +57,8 @@ def create_checkout_session(
     cancel_url: str,
     trial_period_days: int,
 ) -> str:
-    """Returns the Checkout Session URL (docs/plans/phase-4.md B.2:
-    ``automatic_tax`` enabled, 14-day trial without requiring a card up
-    front)."""
+    """Returns the Checkout Session URL (``automatic_tax`` enabled, 14-day
+    trial without requiring a card up front)."""
     session = _client().checkout.sessions.create(
         {
             "mode": "subscription",
@@ -81,7 +80,7 @@ def create_checkout_session(
 
 
 def create_billing_portal_session(*, customer_id: str, return_url: str) -> str:
-    """Returns the Customer Portal URL (docs/plans/phase-4.md B.2)."""
+    """Returns the Customer Portal URL."""
     session = _client().billing_portal.sessions.create(
         {"customer": customer_id, "return_url": return_url}
     )
@@ -89,7 +88,7 @@ def create_billing_portal_session(*, customer_id: str, return_url: str) -> str:
 
 
 def update_subscription_quantity(*, subscription_id: str, quantity: int) -> None:
-    """Syncs seat count with proration (docs/plans/phase-4.md B.5)."""
+    """Syncs seat count with proration."""
     _client().subscriptions.update(
         subscription_id, {"quantity": quantity, "proration_behavior": "create_prorations"}
     )

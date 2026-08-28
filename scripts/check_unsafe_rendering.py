@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Unsafe-rendering lint (docs/boundary-guardrails.md "Unsafe rendering";
-docs/plans/phase-16.md 16.C).
+"""Unsafe-rendering lint (docs/boundary-guardrails.md "Unsafe rendering").
 
 Bandit already flags ``mark_safe``/``SafeString`` in ``.py`` files
 (B308/B703, active per ``[tool.bandit]`` in ``apps/api/pyproject.toml``),
@@ -12,9 +11,9 @@ the Python half by design (defense in depth costs nothing here) and the
 sole gate on the template half.
 
 There is currently no legitimate use of any of the three anywhere in
-``apps/api`` — this rule is preventative (docs/plans/phase-16.md: "document
-that no such path exists and the rule is preventative"). If a real one is
-ever needed, the escape hatch is a same-line comment:
+``apps/api`` — this rule is preventative, documenting that no such path
+exists. If a real one is ever needed, the escape hatch is a same-line
+comment:
 
     some_html = mark_safe(value)  # unsafe-rendering: <reason>
     {{ value|safe }}{# unsafe-rendering: <reason> #}

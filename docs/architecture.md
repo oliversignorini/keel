@@ -29,8 +29,8 @@ there.
 **Enforced by:** convention plus code review, not a CI gate — this is the
 one invariant with no automated check today. `apps/api/keel/widgets/`
 (`services.py`, `selectors.py`) is the reference shape every other app
-follows; since Phase 19 it is a generated render of `templates/resource`
-rather than hand-maintained (see "Generators" below), so the shape stays
+follows; it is a generated render of `templates/resource` rather than
+hand-maintained (see "Generators" below), so the shape stays
 correct by construction for anything provisioned with `pnpm gen`.
 
 ### 2. Authorization is expressed only in `organizations/permissions.py`
@@ -87,8 +87,8 @@ migration appearing in a feature branch means a real gap or drift.
 
 **Enforced by:** `manage.py makemigrations --check --dry-run` in CI's
 `test-api` job, which fails the build if model state and migrations
-disagree. (Not yet wired to `check --deploy`'s production-settings run —
-see 9.C.)
+disagree, plus `manage.py check --deploy --fail-level WARNING` under
+production settings in the same CI job.
 
 ### 5. Async work runs on Celery, with an explicit two-tier boundary
 
@@ -185,8 +185,8 @@ worker pool exhausts it at a request count far below what
 request/response load testing suggests. `infra/railway.json` declares
 both services from the same image.
 
-**Note on the pipeline today.** Since Phase 11
-(`docs/adr/0002-auth-bff-shape.md`), the browser no longer calls
+**Note on the pipeline today.** Since
+`docs/adr/0002-auth-bff-shape.md`, the browser no longer calls
 `api.lvh.me` directly for any programmatic `fetch`/`XMLHttpRequest` —
 every `/api/v1/…` and `/_allauth/…` call is same-origin against Next.js,
 which forwards it to Django server-side
@@ -220,7 +220,7 @@ apps/api/
 │   ├── files/             # presigned R2/S3 uploads
 │   ├── jobs/               # Job, JobStep, FailedTask — Tier 2 primitive
 │   ├── connections/        # third-party OAuth Connection
-│   └── widgets/             # demo resource — `init` (Phase 17) deletes this
+│   └── widgets/             # demo resource — `init` deletes this
 └── tests/
 ```
 
@@ -248,7 +248,7 @@ Where business logic lives is not per-app discretion: **writes go through
 
 ---
 
-## Generators (Phase 19, ADR 0004)
+## Generators (ADR 0004)
 
 `packages/cli` (`pnpm gen ...`) is the primary way a resource, permission,
 job, transactional email, or e2e ship gate gets added — see CLAUDE.md's
@@ -321,7 +321,7 @@ hope.
 
 **ADR 0001** (`docs/adr/0001-django-ninja-over-drf.md`) replaced
 drf-spectacular's half of this diagram with Django Ninja's native OpenAPI
-generation in Phase 10. The merge step, `openapi.merged.json`, and
+generation. The merge step, `openapi.merged.json`, and
 everything downstream of it survived unchanged — only the left-hand
 source of the Django-side spec moved.
 

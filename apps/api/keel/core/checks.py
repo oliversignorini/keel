@@ -67,7 +67,7 @@ def check_session_cookie_domain(app_configs: object, **kwargs: object) -> list[E
 
 @register()
 def check_secure_cookies_match_debug(app_configs: object, **kwargs: object) -> list[Error]:
-    """Phase 11's DEBUG-ordering trap: ``config/settings/base.py`` computes
+    """The DEBUG-ordering trap: ``config/settings/base.py`` computes
     ``SESSION_COOKIE_SECURE`` / ``CSRF_COOKIE_SECURE`` as ``not DEBUG`` at
     import time, where ``DEBUG`` is ``env("DJANGO_DEBUG")`` — a settings
     module that overrides ``DEBUG`` afterwards (``config/settings/dev.py``)
@@ -99,7 +99,7 @@ def check_secure_cookies_match_debug(app_configs: object, **kwargs: object) -> l
 def check_csrf_trusted_origins_cover_app_domain(
     app_configs: object, **kwargs: object
 ) -> list[Error]:
-    """Phase 11 (docs/adr/0002-auth-bff-shape.md): the BFF proxy forwards
+    """docs/adr/0002-auth-bff-shape.md: the BFF proxy forwards
     the browser's original ``Origin``/``Referer`` headers unchanged, and
     Django's CSRF middleware validates those against
     ``CSRF_TRUSTED_ORIGINS`` (only when the request is secure, but a
@@ -140,8 +140,8 @@ def _production_checks_enforced() -> bool:
 
 @register()
 def check_secret_key_not_default(app_configs: object, **kwargs: object) -> list[Error]:
-    """docs/plans/phase-16.md 16.B: "Production must fail to start on the
-    default SECRET_KEY" — Django's own ``security.W009`` already flags a
+    """Production must fail to start on the default SECRET_KEY. Django's
+    own ``security.W009`` already flags a
     weak key (same weakness test, reused here via the same constants it
     uses) but only as a warning that ``manage.py check --deploy`` prints
     and moves on from. This is the same test as an ``Error``, so a
@@ -177,8 +177,8 @@ def check_secret_key_not_default(app_configs: object, **kwargs: object) -> list[
 
 @register()
 def check_allowed_hosts_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
-    """docs/plans/phase-16.md 16.B: "Validate ALLOWED_HOSTS ... are set
-    and are not wildcards in production." Django itself only warns
+    """Validate that ALLOWED_HOSTS is set and not a wildcard in
+    production. Django itself only warns
     (``security.W020``, not enabled by ``--deploy``) when ``DEBUG`` is
     also ``True`` — which prod.py never is — so a wildcard host here has
     no other gate at all."""
@@ -205,8 +205,8 @@ def check_allowed_hosts_not_wildcard(app_configs: object, **kwargs: object) -> l
 
 @register()
 def check_csrf_trusted_origins_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
-    """docs/plans/phase-16.md 16.B: CSRF_TRUSTED_ORIGINS "set and not a
-    wildcard in production" — the counterpart to
+    """CSRF_TRUSTED_ORIGINS must be set and not a wildcard in
+    production — the counterpart to
     ``check_allowed_hosts_not_wildcard`` above for the header Django's
     CSRF middleware actually validates unsafe requests against."""
     if not _production_checks_enforced():
@@ -232,8 +232,8 @@ def check_csrf_trusted_origins_not_wildcard(app_configs: object, **kwargs: objec
 
 @register()
 def check_cors_not_wildcard(app_configs: object, **kwargs: object) -> list[Error]:
-    """docs/plans/phase-16.md 16.B: CORS origins "set and not a wildcard
-    in production." ``CORS_ALLOW_CREDENTIALS = True`` (base.py) already
+    """CORS origins must be set and not a wildcard in production.
+    ``CORS_ALLOW_CREDENTIALS = True`` (base.py) already
     makes django-cors-headers itself refuse to reflect ``*`` at request
     time, but that failure is a same-request 4xx a caller discovers by
     trying, not a deploy-time signal that the configuration is wrong."""

@@ -1,4 +1,4 @@
-"""Billing schemas (PRD §7; docs/plans/phase-4.md B.1; phase-10.md 10.C)."""
+"""Billing schemas (PRD §7)."""
 
 from datetime import datetime
 from typing import Any, Literal
@@ -60,7 +60,7 @@ class PlanOut(KeelSchema):
     def resolve_prices(obj: Any) -> list[Any]:
         # ``get_queryset`` prefetches only active prices into this
         # attribute — public callers never see a price Stripe has
-        # deactivated (docs/plans/phase-4.md B.1).
+        # deactivated.
         return getattr(obj, "active_prices", [])
 
 

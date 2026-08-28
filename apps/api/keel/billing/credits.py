@@ -1,6 +1,6 @@
 """``billing/credits.py`` — the credit ledger arithmetic (PRD §4 "Credits
-— the metered-billing primitive"; docs/plans/phase-4.md A.1-A.3). Gated
-at 100% coverage (PRD invariant 7): this module is pure arithmetic over
+— the metered-billing primitive"). Gated at 100% coverage (PRD invariant
+7): this module is pure arithmetic over
 rows, and if it were doing more than that, it would be too hard to reach
 100% honestly.
 
@@ -9,7 +9,7 @@ source of truth. ``CreditBalance`` is a summary index, written in the
 same transaction as each entry, serialised with ``SELECT ... FOR
 UPDATE`` on that row — that lock is what makes "three concurrent holds
 against a balance sufficient for two" resolve to exactly two holds and
-one 402 (phase-4.md A.2) instead of a double-spend.
+one 402 instead of a double-spend.
 
 Two debit shapes:
 
@@ -45,8 +45,8 @@ from keel.core.exceptions import PaymentRequired
 
 
 def credits_enabled() -> bool:
-    """``BILLING_CREDITS`` is a settings flag, off by default
-    (phase-4.md A.5). The models and this module exist regardless of
+    """``BILLING_CREDITS`` is a settings flag, off by default.
+    The models and this module exist regardless of
     the flag — that is what makes enabling credits a settings change
     rather than a migration. Callers that expose credits as a feature
     (endpoints, the web meter) check this; the arithmetic itself does
@@ -63,7 +63,7 @@ def get_balance(organization: Any) -> int:
 
 
 def _daily_cap(organization: Any) -> int | None:
-    """The cap is data, not a new mechanism (phase-4.md A.3): a
+    """The cap is data, not a new mechanism: a
     per-plan entitlement, read through the organisation's subscription.
     No subscription, or no cap configured, means unlimited."""
     subscription = getattr(organization, "subscription", None)
@@ -74,8 +74,8 @@ def _daily_cap(organization: Any) -> int | None:
 
 
 def _spent_today(organization: Any) -> int:
-    """A query over the ledger, not a new column (phase-4.md A.3):
-    today's holds and immediate consumption, as a positive number of
+    """A query over the ledger, not a new column: today's holds and
+    immediate consumption, as a positive number of
     credits."""
     since = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     total = (
@@ -158,9 +158,9 @@ def hold(
     organization: Any, amount: int, *, job: Any = None, actor: Any = None
 ) -> CreditLedgerEntry:
     """Reserve ``amount`` for a job about to start. The row that makes
-    the ledger a reservation system rather than a rollup (phase-4.md
-    A.2) — serialised against every other hold on this organisation by
-    the ``SELECT ... FOR UPDATE`` on ``CreditBalance``."""
+    the ledger a reservation system rather than a rollup — serialised
+    against every other hold on this organisation by the
+    ``SELECT ... FOR UPDATE`` on ``CreditBalance``."""
     return _debit(organization, amount, CreditLedgerEntry.KIND_HOLD, job=job, actor=actor)
 
 
@@ -204,7 +204,7 @@ def release(
     organization: Any, hold_entry: CreditLedgerEntry, amount: int, *, actor: Any = None
 ) -> CreditLedgerEntry:
     """A job finishing under estimate releases the unused remainder of
-    its hold (phase-4.md A.3). ``amount`` must not exceed what the hold
+    its hold. ``amount`` must not exceed what the hold
     reserved — a hold's held amount is a hard cap on what can come back
     from it."""
     held = -hold_entry.amount
@@ -218,7 +218,7 @@ def release(
 def refund(
     organization: Any, hold_entry: CreditLedgerEntry, *, actor: Any = None
 ) -> CreditLedgerEntry:
-    """A failed job's hold is fully refunded (phase-4.md A.3) — the
+    """A failed job's hold is fully refunded — the
     entire held amount comes back in one entry."""
     held = -hold_entry.amount
     return _credit(
@@ -235,10 +235,10 @@ def grant(
 
 @audited("credits.adjustment")
 def adjust(organization: Any, amount: int, *, reason: str, actor: Any) -> CreditLedgerEntry:
-    """An operator correction (phase-4.md A.4). Never an ``UPDATE``
+    """An operator correction. Never an ``UPDATE``
     against the balance — an append-only row with a reason and an
-    actor, visible in Django admin and, once Phase 8 wires
-    ``set_recorder``, in the audit log via ``@audited``. ``amount`` may
+    actor, visible in Django admin and, via ``set_recorder``, in the
+    audit log via ``@audited``. ``amount`` may
     be negative (a clawback) or positive (a goodwill credit); zero and
     a blank reason are both rejected so every adjustment is explicit.
 

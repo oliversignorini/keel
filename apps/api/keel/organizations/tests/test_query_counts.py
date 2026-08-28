@@ -1,5 +1,5 @@
 """Query-count regression tests for ``GET /me/``, ``GET /orgs/`` and
-``GET /orgs/<slug>/members/`` (Phase 16.A — docs/query-patterns.md)."""
+``GET /orgs/<slug>/members/`` (see docs/query-patterns.md)."""
 
 import pytest
 from django.test import Client

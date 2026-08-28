@@ -1,4 +1,4 @@
-"""Sentry wiring (PRD §4 Integration points; docs/plans/phase-8.md 8.4).
+"""Sentry wiring (PRD §4 Integration points).
 
 No DSN exists for this project (assert against a stub transport, see
 module docstring below), so what these tests actually prove is the
@@ -97,8 +97,8 @@ def test_release_is_tied_to_the_configured_git_sha() -> None:
     assert event["environment"] == "production"
 
 
-# --- Redaction (docs/plans/phase-16.md 16.B: "before_send scrubber ...
-# test it with a payload containing each secret type") -----------------
+# --- Redaction ("before_send scrubber ... test it with a payload
+# containing each secret type") -----------------------------------------
 
 
 def test_scrub_event_redacts_request_headers_cookies_and_body() -> None:

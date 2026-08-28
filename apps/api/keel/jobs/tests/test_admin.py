@@ -1,7 +1,6 @@
 """Dead-letter redrive in Django admin (PRD §5.5.7). ``FailedTaskAdmin``
-itself is Phase 5 scaffolding (``keel/jobs/admin.py``) — this is the
-test Phase 5 left for it, exercised here against a job task's own
-dead-letter row rather than a generic shim task."""
+itself lives in ``keel/jobs/admin.py`` — this test exercises it against
+a job task's own dead-letter row rather than a generic shim task."""
 
 from unittest.mock import patch
 

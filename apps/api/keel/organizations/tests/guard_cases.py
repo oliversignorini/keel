@@ -1,4 +1,4 @@
-"""Declarative table of guard test cases (phase-3.md A.5, meta-test 1).
+"""Declarative table of guard test cases (meta-test 1).
 
 Test modules register cases with ``@allow_case(code)`` / ``@deny_case(code,
 reason)`` at import time — during pytest collection, before any test runs

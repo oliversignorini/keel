@@ -1,7 +1,7 @@
 # Local pre-push gates
 
-`docs/plans/phase-16.md` 16.D. The repo runs CI on GitHub's free plan, so
-the answer to "this failure should be caught earlier" is a local hook,
+The repo runs CI on GitHub's free plan, so the answer to "this failure
+should be caught earlier" is a local hook,
 not another Actions job. `git push` now runs a mirror of the blocking CI
 gates before anything reaches GitHub; a broken push never burns Actions
 minutes in the first place.
@@ -19,25 +19,24 @@ uvx pre-commit install --hook-type pre-commit --hook-type pre-push
 you don't have `uv`/`uvx`.) This installs two separate git hooks from
 the one `.pre-commit-config.yaml`:
 
-- **pre-commit** (unchanged from Phase 0): ruff, ruff-format, mypy,
-  prettier, eslint, end-of-file-fixer, trailing-whitespace,
-  check-merge-conflict — fast, changed-files-only, runs on every commit.
-- **pre-push** (this phase): one hook, `pre-push-gates`, that runs
+- **pre-commit**: ruff, ruff-format, mypy, prettier, eslint,
+  end-of-file-fixer, trailing-whitespace, check-merge-conflict — fast,
+  changed-files-only, runs on every commit.
+- **pre-push**: one hook, `pre-push-gates`, that runs
   `scripts/pre-push-checks.sh` against the whole repo.
 
 ## Why pre-commit, not lefthook
 
 Both are reasonable choices; pre-commit won because the repo already had
-a `.pre-commit-config.yaml` from Phase 0 (`docs/plans/phase-0.md` 0.7) —
-adding lefthook alongside it would mean two hook managers, two install
-steps, and two places a new contributor could look and find nothing.
-pre-commit's `stages:` key maps directly onto "some hooks run at commit,
-some at push" without a second config file, and its `repo: local` hook
-type lets the push-time gates shell out to the project's own `uv run` /
-`pnpm` commands instead of a pre-commit-managed environment — which
-matters here specifically: fixing this phase's other finding (see
-below) showed that pre-commit's own isolated per-hook environments had
-been silently wrong for mypy and eslint since Phase 0, because they
+a `.pre-commit-config.yaml` — adding lefthook alongside it would mean two
+hook managers, two install steps, and two places a new contributor could
+look and find nothing. pre-commit's `stages:` key maps directly onto
+"some hooks run at commit, some at push" without a second config file,
+and its `repo: local` hook type lets the push-time gates shell out to
+the project's own `uv run` / `pnpm` commands instead of a
+pre-commit-managed environment — which matters here specifically: fixing
+the bug described below showed that pre-commit's own isolated per-hook
+environments had been silently wrong for mypy and eslint, because they
 didn't share the real `apps/api/.venv` or `apps/web`'s
 `@keel/eslint-config` workspace package. Running the project's actual
 tools instead of a shadow toolchain is what makes the pre-push mirror
@@ -45,8 +44,7 @@ trustworthy in the first place.
 
 ## What the pre-push hook runs
 
-In order (`scripts/pre-push-checks.sh`), ~50s warm on the machine this
-was built on:
+In order (`scripts/pre-push-checks.sh`), ~50s warm:
 
 1. `ruff check` / `ruff format --check` (apps/api)
 2. `mypy` (apps/api)
@@ -78,12 +76,12 @@ for.
 ## What's deliberately excluded entirely
 
 - `manage.py makemigrations --check --dry-run` and `manage.py check
---deploy` — not named in 16.D's gate list, and `check --deploy` needs
-  `config.settings.prod` plus placeholder env vars CI sets explicitly
-  (see `ci.yml`'s `test-api` job); wiring that locally for a check that
-  only matters at merge time isn't worth the noise.
+--deploy` — `check --deploy` needs `config.settings.prod` plus
+  placeholder env vars CI sets explicitly (see `ci.yml`'s `test-api`
+  job); wiring that locally for a check that only matters at merge time
+  isn't worth the noise.
 - `lint-imports` (the `contracts` job's import-linter check) — same
-  reasoning, not in 16.D's list.
+  reasoning.
 - `check_coverage.py` — needs the `--cov` run this hook skips (see
   above), and per-directory coverage regressions are a merge-time
   concern, not a per-push one.
@@ -106,9 +104,9 @@ Reach for it when you know a gate is failing for a reason unrelated to
 your change (e.g. a flaky local Postgres) and want CI's clean-environment
 result instead.
 
-## A bug this phase found and fixed along the way
+## A bug found and fixed along the way
 
-Phase 0's `.pre-commit-config.yaml` had never actually been run
+The original `.pre-commit-config.yaml` had never actually been run
 end-to-end: `pre-commit/mirrors-prettier`'s pin (`v3.3.3`) doesn't exist
 in that repo (it stopped tagging real releases after `v3.1.0`), and the
 `mirrors-mypy` / `mirrors-eslint` hooks both failed on every real
@@ -116,9 +114,9 @@ invocation (`mypy: error: Missing target module...` and `ESLint
 couldn't find an eslint.config file`, respectively — the former from
 `pass_filenames: false` with no explicit target, the latter from running
 outside `apps/web` with an isolated `additional_dependencies: [eslint]`
-that can't see `@keel/eslint-config`). Fixed as part of standing this
-phase's pre-push layer up far enough to verify it locally: prettier now
-points at `rbubley/mirrors-prettier` (the community-maintained
-continuation), and mypy/eslint are `repo: local` hooks that shell out to
-`apps/api`'s real `uv run mypy .` and `pnpm --filter web lint` — the
-same commands CI runs.
+that can't see `@keel/eslint-config`). Fixed as part of standing the
+pre-push layer up far enough to verify it locally: prettier now points
+at `rbubley/mirrors-prettier` (the community-maintained continuation),
+and mypy/eslint are `repo: local` hooks that shell out to `apps/api`'s
+real `uv run mypy .` and `pnpm --filter web lint` — the same commands CI
+runs.

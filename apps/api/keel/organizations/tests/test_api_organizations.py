@@ -1,6 +1,6 @@
-"""End-to-end API tests over the real URLconf (PRD §7; §8 Phase 3
-acceptance): organisations, members, roles, invitations, /me,
-/permissions, and the invitation-accept edge cases (phase-3.md B.4).
+"""End-to-end API tests over the real URLconf (PRD §7): organisations,
+members, roles, invitations, /me, /permissions, and the invitation-accept
+edge cases.
 """
 
 from datetime import timedelta
@@ -195,7 +195,7 @@ def test_me_returns_organizations_role_and_permissions() -> None:
 
 
 def test_me_resolves_entitlements_from_the_current_plan() -> None:
-    """docs/plans/phase-4.md B.4: "Resolution feeds GET /api/v1/me/"."""
+    """Entitlement resolution feeds ``GET /api/v1/me/``."""
     from keel.billing.models import Plan, Price, Subscription
 
     org, creator = _org_with_owner()
@@ -227,7 +227,7 @@ def test_me_resolves_entitlements_from_the_current_plan() -> None:
     assert org_row["entitlements"] == {"features": ["api_access"], "limits": {"seats": 10}}
 
 
-# --- Invitation accept: the four edge cases (phase-3.md B.4) --------------
+# --- Invitation accept: the four edge cases --------------------------------
 
 
 def _pending_invitation(org, creator, email: str = "invitee@example.com") -> Invitation:

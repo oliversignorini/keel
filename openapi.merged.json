@@ -7415,7 +7415,7 @@
     },
     "/api/v1/orgs/{org_slug}/billing/credits/": {
       "get": {
-        "description": "Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is\na **404**, not a zero balance \u2014 a disabled feature has no balance to\nreport, and a zero balance is a real, distinguishable state once the\nfeature is on.",
+        "description": "Behind ``BILLING_CREDITS``, off by default. Off is\na **404**, not a zero balance \u2014 a disabled feature has no balance to\nreport, and a zero balance is a real, distinguishable state once the\nfeature is on.",
         "operationId": "retrieveCreditBalance",
         "parameters": [
           {

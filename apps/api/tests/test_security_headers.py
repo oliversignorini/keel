@@ -1,5 +1,5 @@
-"""Security headers (PRD §3 NFR "Security"; docs/plans/phase-8.md 8.6):
-X-Content-Type-Options, Referrer-Policy, and a CSP on Django's own pages.
+"""Security headers (PRD §3 NFR "Security"): X-Content-Type-Options,
+Referrer-Policy, and a CSP on Django's own pages.
 HSTS is prod.py's job (only correct over HTTPS) — see
 config/settings/prod.py and docs/deploy-railway.md for that half."""
 

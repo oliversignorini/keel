@@ -1,7 +1,6 @@
 """Routes allauth's verification and reset emails through the react-email
-templates (PRD §5, docs/plans/phase-5.md 5.5: "verification and reset
-emails must keep working through it" — "it" being
-``HEADLESS_FRONTEND_URLS``, Phase 2's Next.js routes).
+templates (PRD §5: "verification and reset emails must keep working
+through it" — "it" being ``HEADLESS_FRONTEND_URLS``, the Next.js routes).
 
 Overrides only ``send_mail``, allauth's one common send point for every
 templated account email (see
@@ -28,7 +27,7 @@ class KeelAccountAdapter(DefaultAccountAdapter):
     def set_password(self, user: AbstractBaseUser, password: str) -> None:
         """Allauth's one call point for every password set — change,
         reset-confirm, and signup (PRD §6 "cannot change password" for an
-        impersonated session; docs/plans/phase-8.md 8.3). ``self.request``
+        impersonated session). ``self.request``
         is populated by allauth's own ``get_adapter(request)``/
         ``allauth.core.context`` machinery regardless of which flow got
         here, so this is the one enforcement point that covers all of

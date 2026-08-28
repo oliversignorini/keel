@@ -101,7 +101,7 @@ def create_job(
 def cancel_job(*, job: Job, actor: Any) -> Job:
     """Best-effort: a job already mid-step finishes that step (there is
     no schema-level "cancelled" status to interrupt into — ``Job``'s
-    columns are fixed at the Phase 1 baseline) but stops before the
+    columns are fixed by its baseline schema) but stops before the
     next one — see the resumption guard at the top of
     ``keel.jobs.runner.run_job``'s per-step loop.
 

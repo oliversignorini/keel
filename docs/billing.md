@@ -17,11 +17,12 @@ ledger doesn't know what a credit buys; `BILLING_CREDITS` and
 `BILLING_SEAT_PRICING` are both off by default so a project that doesn't
 need one of these mechanisms never pays for it.
 
-The phase-14 audit found nothing product-specific left in the diff —
-no hard-coded plan tiers, no assumption about what a credit is for, no
-organisation-vs-user ambiguity. What it _did_ find were gaps that made
-the generic machinery unsafe under concurrency and Stripe's actual
-delivery guarantees; those are fixed here (see "Hardening" below) rather
+An audit of this module found nothing product-specific left in the
+diff — no hard-coded plan tiers, no assumption about what a credit is
+for, no organisation-vs-user ambiguity. What it _did_ find were gaps
+that made the generic machinery unsafe under concurrency and Stripe's
+actual delivery guarantees; those are fixed here (see "Hardening" below)
+rather
 than left as sharp edges a consuming project would hit first.
 
 ## Ownership: credits belong to the organisation, never the user
@@ -159,11 +160,11 @@ invite flow that matters — see `keel-prd.md` §4 "Billing flow".
 
 ---
 
-## Hardening (phase 14)
+## Hardening
 
 The audit's other finding: the generic machinery above was correct in
 the average case and unsafe at the edges Stripe and concurrent access
-actually exercise. Fixed in this phase, all covered by tests:
+actually exercise. Fixed here, all covered by tests:
 
 - **Concurrent holds race to zero correctly** — `SELECT ... FOR UPDATE`
   on `CreditBalance` serialises every debit for an organisation through

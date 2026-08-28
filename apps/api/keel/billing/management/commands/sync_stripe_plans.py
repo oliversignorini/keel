@@ -1,5 +1,5 @@
-"""``python manage.py sync_stripe_plans`` (docs/plans/phase-4.md B.1). Run
-nightly by beat once Phase 5 schedules it (PRD §5, "Scheduled jobs")."""
+"""``python manage.py sync_stripe_plans``. Intended to run nightly via
+Celery beat (PRD §5, "Scheduled jobs")."""
 
 from typing import Any
 

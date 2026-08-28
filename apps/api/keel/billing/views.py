@@ -1,12 +1,12 @@
-"""Billing views (PRD §7; docs/plans/phase-4.md B.1, B.2, B.3; phase-10.md
-10.C). ``CheckoutSessionView``/``BillingPortalView``/``SubscriptionView``/
+"""Billing views (PRD §7).
+``CheckoutSessionView``/``BillingPortalView``/``SubscriptionView``/
 ``CreditBalanceView`` resolve ``org_slug`` and act on *the* subscription
 for that organisation directly via ``resolve_and_authorize`` — there is
 no separate addressable row id in the URL for a cross-org leak to hide
 behind (the same reasoning ``keel.organizations.views.organization_detail``
 documents), so none of these is an ``OrgScopedResource``.
 
-``GET /api/v1/plans/`` (PRD §7's "three allowed changes", phase-10.md):
+``GET /api/v1/plans/`` (PRD §7's "three allowed changes"):
 now cursor-paginated like every other collection, ordered
 ``(sort_order, code)`` — ``code`` is unique, so that ordering is a valid
 total order for ``CursorPaginator`` (see its module docstring on why the
@@ -43,7 +43,7 @@ plans_router = public_router()
 
 class PlanResource(GlobalResource):
     """``GET /api/v1/plans/`` — the pricing page reads this
-    unauthenticated (docs/plans/phase-4.md B.1), so this is a
+    unauthenticated, so this is a
     ``GlobalResource`` with a public router rather than
     ``resolve_and_authorize``'s session-authenticated path: a plan is not
     owned by any organisation, and this request never resolves
@@ -153,7 +153,7 @@ def get_subscription(request: Any, org_slug: str) -> dict:
     "/{org_slug}/billing/credits/", response=CreditBalanceOut, operation_id="retrieveCreditBalance"
 )
 def get_credit_balance(request: Any, org_slug: str) -> dict:
-    """Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
+    """Behind ``BILLING_CREDITS``, off by default. Off is
     a **404**, not a zero balance — a disabled feature has no balance to
     report, and a zero balance is a real, distinguishable state once the
     feature is on."""

@@ -1,5 +1,5 @@
 """Sentry wiring (PRD §4 Integration points: "Both runtimes, releases
-tied to git SHA, source maps uploaded"; docs/plans/phase-8.md 8.4).
+tied to git SHA, source maps uploaded").
 
 No DSN exists for this project yet. ``sentry_sdk.init()`` with a blank
 ``dsn`` makes the SDK a documented no-op — every call in this module is
@@ -28,8 +28,8 @@ _LogLevel = Literal["fatal", "critical", "error", "warning", "info", "debug"]
 # `send_default_pii=False` below already keeps Sentry from *collecting*
 # cookies/IPs itself, but a call site can still put a secret into `extra`
 # or a breadcrumb explicitly (e.g. logging a webhook payload for
-# debugging) — this is the layer below `send_default_pii`
-# (docs/plans/phase-16.md 16.B) that catches that.
+# debugging) — this is the layer below `send_default_pii` that catches
+# that.
 _SCRUBBED_EVENT_KEYS = ("extra", "contexts", "breadcrumbs")
 
 
@@ -73,8 +73,8 @@ def init_sentry(**overrides: Any) -> None:
         # failure — Sentry's default (event_level=ERROR) would otherwise
         # double every dead-lettered task into two events.
         "integrations": [LoggingIntegration(level=20, event_level=None)],
-        # The redaction layer below send_default_pii (docs/plans/
-        # phase-16.md 16.B) — see scrub_event's docstring.
+        # The redaction layer below send_default_pii — see scrub_event's
+        # docstring.
         "before_send": scrub_event,
     }
     options.update(overrides)

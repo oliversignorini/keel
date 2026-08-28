@@ -1,7 +1,6 @@
 """Rebuild ``CreditBalance`` from ``CreditLedgerEntry`` (PRD §4 "Credits
-— the metered-billing primitive"; docs/plans/phase-4.md A.3): "a
-management command rebuilds ``CreditBalance`` from the ledger and
-reproduces the same number."
+— the metered-billing primitive"): a management command rebuilds
+``CreditBalance`` from the ledger and reproduces the same number.
 
 The ledger is the truth; the balance row is only ever an index of it, so
 this command exists to prove — and, if the index has ever drifted, to

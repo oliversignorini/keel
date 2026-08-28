@@ -35,7 +35,7 @@ for _env_file in _ENV_CANDIDATES:
 
 # --- Version floor -----------------------------------------------------
 # A project that needs an older Django or Python is a fork, not a
-# configuration (PRD §8, Phase 0).
+# configuration (PRD §8).
 if sys.version_info < (3, 12):  # noqa: UP036 - a floor assertion, not dead code
     raise RuntimeError("Keel requires Python 3.12 or newer.")
 if django.VERSION < (6, 0):
@@ -45,7 +45,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
-# --- MFA scaffold flag (PRD §8 Phase 2, A.1) -------------------------------
+# --- MFA scaffold flag (PRD §8) --------------------------------------------
 # TOTP is wired but off by default. Flip to true to install allauth.mfa
 # (and thereby its headless endpoints, gated on apps.is_installed — see
 # allauth.headless.urls.build_urlpatterns) without generating a migration
@@ -67,15 +67,14 @@ INSTALLED_APPS = [
     # of cdn.jsdelivr.net — keeps the docs working offline and inside
     # embedded browsers that block third-party CDN scripts.
     "ninja",
-    # allauth headless (PRD §4 "Auth architecture", §8 Phase 2)
+    # allauth headless (PRD §4 "Auth architecture", §8)
     "allauth",
     "allauth.account",
     "allauth.headless",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.usersessions",
-    # Keel apps — empty in Phase 0, registered so Phase 1's baseline
-    # migration has somewhere to land. No models here yet.
+    # Keel apps
     "keel.core",
     "keel.accounts",
     "keel.organizations",
@@ -97,7 +96,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # Django 6's native CSP middleware (docs/plans/phase-8.md 8.6) — reads
+    # Django 6's native CSP middleware — reads
     # SECURE_CSP above. Placed early per Django's own middleware-ordering
     # guidance for security headers.
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
@@ -206,8 +205,8 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 60 * 60 * 6}
 JOBS_MAX_CONCURRENT_PER_ORG = env.int("JOBS_MAX_CONCURRENT_PER_ORG", default=3)
 JOBS_REDIS_URL = env("JOBS_REDIS_URL", default=CELERY_BROKER_URL)
 
-# The six scheduled jobs (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-# 5.4). Each is idempotent when run twice — see keel/jobs/tasks.py and
+# The six scheduled jobs (PRD §5 "Scheduled jobs"). Each is idempotent
+# when run twice — see keel/jobs/tasks.py and
 # its tests, which run every job twice and assert identical state.
 CELERY_BEAT_SCHEDULE = {
     "sync-stripe-plans": {
@@ -244,13 +243,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "keel.jobs.runner.sweep_stuck_jobs_task",
         "schedule": crontab(minute="*/15"),
     },
-    # Phase 13 (ddia#21) — expires abandoned pending uploads and retries
+    # ddia#21 — expires abandoned pending uploads and retries
     # any tombstoned row whose storage object wasn't purged yet.
     "sweep-stale-file-uploads": {
         "task": "keel.files.tasks.sweep_stale_uploads",
         "schedule": crontab(minute="*/15"),
     },
-    # Phase 14 additions (ddia#4, ddia#10) — see keel/billing/tasks.py.
+    # ddia#4, ddia#10 — see keel/billing/tasks.py.
     "check-credit-balances": {
         "task": "keel.billing.tasks.check_credit_balances_task",
         "schedule": crontab(hour=6, minute=0),  # nightly, report-only
@@ -314,8 +313,8 @@ CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=["http://
 # as defense in depth against a call site that bypasses the proxy by
 # mistake, not as the mechanism that lets the app work. Set
 # DJANGO_CORS_ALLOWED_ORIGINS only for a deployment that still needs a
-# browser to call this API directly (see the ADR's "what Phase 12 needs"
-# note before doing that in production).
+# browser to call this API directly (see the ADR's note on what a
+# Railway deployment needs before doing that in production).
 CORS_ALLOWED_ORIGINS = env.list("DJANGO_CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOW_CREDENTIALS = True
 
@@ -327,14 +326,14 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
 
-# Resend (PRD §5, docs/plans/phase-5.md 5.5). Blank in dev/test, same
+# Resend (PRD §5). Blank in dev/test, same
 # pattern as STRIPE_SECRET_KEY above — keel.notifications.resend_backend
 # raises ImproperlyConfigured if a send is actually attempted without it.
 # Only wired as EMAIL_BACKEND in prod.py; dev/test keep sending through
 # Mailpit / locmem via the stock Django backends.
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 
-# R2 presigned direct upload (PRD §5; docs/plans/phase-5.md 5.6). No R2
+# R2 presigned direct upload (PRD §5). No R2
 # credentials exist for this project — dev points ``R2_ENDPOINT_URL`` at
 # the MinIO container in infra/compose.dev.yml (S3-API-compatible), and
 # tests use ``moto``'s mocked S3 (keel/files/tests/test_uploads.py). Prod
@@ -347,7 +346,7 @@ R2_SECRET_ACCESS_KEY = env("R2_SECRET_ACCESS_KEY", default="minioadmin")
 R2_BUCKET = env("R2_BUCKET", default="keel-dev")
 R2_PUBLIC_URL = env("R2_PUBLIC_URL", default="http://localhost:9000/keel-dev")
 
-# --- Storage seam (docs/plans/phase-13.md; docs/storage.md) -----------------
+# --- Storage seam (docs/storage.md) -----------------------------------------
 # ``STORAGES["files"]`` selects the adapter keel.files.services/views call
 # through keel.files.storage.get_storage() — never a concrete provider
 # import. Flip KEEL_FILES_STORAGE_BACKEND alone (no OPTIONS edit, no code
@@ -386,8 +385,8 @@ STORAGES = {
 
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Service-layer upload policy (docs/plans/phase-13.md "Enforce size and
-# content-type limits at the service layer, configurably"), checked
+# Service-layer upload policy — enforces size and content-type limits at
+# the service layer, configurably — checked
 # against both the client's declared values at create time and the
 # storage provider's observed HeadObject values at complete time
 # (ddia#21) — so a client can't declare a small size to pass the create
@@ -402,8 +401,8 @@ FILES_ALLOWED_CONTENT_TYPES = env.list("FILES_ALLOWED_CONTENT_TYPES", default=[]
 # this many seconds.
 FILES_PENDING_UPLOAD_TTL_SECONDS = env.int("FILES_PENDING_UPLOAD_TTL_SECONDS", default=60 * 60 * 24)
 
-# Audit log retention (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-# 5.4) — keel.audit.services.purge_old_audit_logs, run weekly.
+# Audit log retention (PRD §5 "Scheduled jobs") —
+# keel.audit.services.purge_old_audit_logs, run weekly.
 AUDIT_LOG_RETENTION_DAYS = env.int("AUDIT_LOG_RETENTION_DAYS", default=365)
 
 # --- Encryption (keel/core/crypto.py) ---------------------------------
@@ -424,8 +423,8 @@ AUDIT_LOG_RETENTION_DAYS = env.int("AUDIT_LOG_RETENTION_DAYS", default=365)
 KEEL_ENCRYPTION_KEYS = env.list("KEEL_ENCRYPTION_KEY", default=[])
 
 # --- General API rate limiting -------------------------------------------
-# PRD §3 NFR "Security": "Rate limiting ... on the API generally";
-# docs/plans/phase-8.md 8.6. allauth's own limiter already covers
+# PRD §3 NFR "Security": "Rate limiting ... on the API generally".
+# allauth's own limiter already covers
 # /_allauth/* — this is everything else. Read by keel.core.throttle's
 # ThrottleMiddleware, applied ahead of routing to every /api/v1/ request.
 # Django's cache (Redis, PRD §3 "Redis for ... rate limit counters") backs
@@ -433,7 +432,7 @@ KEEL_ENCRYPTION_KEYS = env.list("KEEL_ENCRYPTION_KEY", default=[])
 KEEL_API_THROTTLE_USER_RATE: str | None = env("KEEL_API_THROTTLE_USER_RATE", default="300/minute")
 KEEL_API_THROTTLE_ANON_RATE: str | None = env("KEEL_API_THROTTLE_ANON_RATE", default="60/minute")
 
-# --- allauth headless (PRD §4 "Auth architecture", §8 Phase 2 A.1) ---------
+# --- allauth headless (PRD §4 "Auth architecture", §8) ---------------------
 # `HEADLESS_ONLY = True`: no allauth template-rendered account views, only
 # the JSON API at /_allauth/. The account app's own login/signup URLs
 # (accounts/) are still included in config/urls.py because the OAuth
@@ -477,11 +476,11 @@ HEADLESS_FRONTEND_URLS = {
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=provider",
 }
 # `/invite/[token]` also appears in this settings-doc's PRD passage but is
-# an organizations (Phase 3) concept, not an allauth flow — it is not a
+# an organizations concept, not an allauth flow — it is not a
 # HEADLESS_FRONTEND_URLS key because allauth never redirects there.
 
 # keel.notifications.adapter routes verification/reset emails through
-# the react-email templates (docs/plans/phase-5.md 5.5).
+# the react-email templates.
 ACCOUNT_ADAPTER = "keel.notifications.adapter.KeelAccountAdapter"
 
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
@@ -509,7 +508,7 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 # Rate limits, read from allauth.account.app_settings.RATE_LIMITS' defaults
-# (PRD §8 Phase 2 A.1: "configured, not left at defaults you have not
+# (PRD §8: "configured, not left at defaults you have not
 # read") and restated explicitly here rather than left implicit, so a
 # reviewer sees the policy in this file instead of in the library source.
 ACCOUNT_RATE_LIMITS = {
@@ -523,7 +522,7 @@ ACCOUNT_RATE_LIMITS = {
     "login_failed": "10/m/ip,5/300s/key",
 }
 
-# The one configured social provider (PRD §8 Phase 2 A.1). Credentials
+# The one configured social provider (PRD §8). Credentials
 # come from settings, not the DB-backed SocialApp model, so there is
 # nothing to seed via a data migration or the admin. Adding a second
 # provider is exactly this: another top-level key with its own APPS
@@ -546,8 +545,8 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # the provider already verified it
 SOCIALACCOUNT_STORE_TOKENS = False
 
 # MFA (TOTP): app is only installed (see INSTALLED_APPS above) when
-# KEEL_MFA_ENABLED is true. WebAuthn ships in allauth but is out of Phase 2
-# scope per the plan, so it is left out of SUPPORTED_TYPES even when TOTP
+# KEEL_MFA_ENABLED is true. WebAuthn ships in allauth but is out of scope
+# for this template, so it is left out of SUPPORTED_TYPES even when TOTP
 # is switched on.
 MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
 
@@ -584,15 +583,15 @@ KEEL_ORGANIZATION_RESOLVER = "keel.organizations.resolvers.resolve_organization"
 KEEL_CUSTOM_ROLES_ENABLED = env.bool("KEEL_CUSTOM_ROLES_ENABLED", default=False)
 
 # Credits are a per-project feature flag, off by default (PRD §4, "Credits
-# — the metered-billing primitive"; docs/plans/phase-4.md A.5) — the
+# — the metered-billing primitive") — the
 # CreditLedgerEntry/CreditBalance models and keel.billing.credits exist
 # regardless, so turning this on is a settings change, not a migration.
 # With it off: no endpoints, no meter, no cost.
 BILLING_CREDITS = env.bool("BILLING_CREDITS", default=False)
 
-# Seat-based billing sync on invitation acceptance is Phase 4's — the hook
-# exists in organizations/services.py now, gated off until Phase 4 wires
-# a real seat-sync implementation (phase-3.md B.1).
+# Seat-based billing sync on invitation acceptance — the hook exists in
+# organizations/services.py now, gated off until billing wires a real
+# seat-sync implementation.
 BILLING_SEAT_PRICING = env.bool("BILLING_SEAT_PRICING", default=False)
 
 # Stripe is the source of truth for plans/prices (PRD §7, "Plans and
@@ -609,7 +608,7 @@ STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
 # stripe.Webhook's own signing helper against a fixture secret.
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 
-# Sentry (PRD §4 Integration points; docs/plans/phase-8.md 8.4). Blank
+# Sentry (PRD §4 Integration points). Blank
 # DSN in dev/test — sentry_sdk.init() with dsn=None is a documented
 # no-op, so this is unconditional (keel/core/sentry.py). Release is tied
 # to the git SHA: Railway sets RAILWAY_GIT_COMMIT_SHA automatically; the
@@ -618,13 +617,13 @@ SENTRY_DSN = env("SENTRY_DSN", default="")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default="development")
 SENTRY_RELEASE = env("RAILWAY_GIT_COMMIT_SHA", default=env("GIT_SHA", default="dev"))
 
-# PostHog (PRD §4 Integration points; docs/plans/phase-8.md 8.5). Same
+# PostHog (PRD §4 Integration points). Same
 # treatment as Sentry above — blank key in dev/test, and the client
 # (keel/core/posthog.py) is a documented no-op without one.
 POSTHOG_PROJECT_API_KEY = env("POSTHOG_PROJECT_API_KEY", default="")
 POSTHOG_HOST = env("POSTHOG_HOST", default="https://us.i.posthog.com")
 
-# --- Security headers (PRD §3 NFR "Security"; docs/plans/phase-8.md 8.6) ---
+# --- Security headers (PRD §3 NFR "Security") -------------------------------
 # NOSNIFF and REFERRER_POLICY are Django's own defaults already (3.0+ and
 # 3.1+ respectively) — explicit here so the header is a documented
 # decision, not an implicit default someone could accidentally change by
