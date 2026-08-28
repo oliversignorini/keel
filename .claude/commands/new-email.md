@@ -14,9 +14,11 @@ existing build pipeline. Do not invent a runtime-rendering path.
    `EmailMultiAlternatives` directly — `_send` is the one path.
 3. **Call site** — dispatch it from the owning service via a Tier-1 task
    (`keel.core.tasks`), same as `keel/widgets/tasks.py`'s
-   `notify_widget_created_task` pattern: the service does the write and
+   `notify_widget_created_task` pattern (or `docs/reference-slice/api-widgets/tasks.py`
+   if the demo slice was moved there, or any other app's `tasks.py` if it
+   was deleted — the pattern is one line: the service does the write and
    schedules the task on `transaction.on_commit()`; the task calls the
-   sender. Never call a sender function directly from inside an open
+   sender). Never call a sender function directly from inside an open
    transaction.
 4. Route the task through the `email` queue, not `default`.
 

@@ -3,10 +3,99 @@
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Keel has not cut a release yet — everything below is `[Unreleased]`, grouped
-by the phase it landed in. Phase numbers and plans are in `docs/plans/`.
+Entries are grouped by the phase they landed in. Phase numbers and plans
+are in `docs/plans/`.
 
-## [Unreleased]
+## [1.0.0] - 2026-08-28
+
+First tagged release. Phases 0–18: a working, instantiable multi-tenant
+SaaS template.
+
+### Phase 18 — Portfolio polish and v1.0
+
+- README rewritten around what Keel is, who it's for, and what it is
+  not; the invariants and an architecture diagram moved into the README
+  itself
+- Screenshots of the running application
+- `CHANGELOG.md` finalised and tagged `v1.0.0`
+- `.claude/commands/new-resource.md` and `new-email.md` degrade
+  gracefully when the demo slice has been deleted; `infra/k6/README.md`
+  documents that the smoke test targets the demo slice and is orphaned
+  once `init --demo-slice delete` removes it
+
+### Phase 17 — Template mechanics (`init`)
+
+- `scripts/init.ts`: renames the project and tenant noun across content
+  and file/directory names, applies feature toggles (marketing site,
+  demo slice, billing shape, optional `domain/` layer), regenerates
+  lockfiles/OpenAPI/the generated client, resets git history, and
+  deletes the template-authoring files (itself included)
+- `template-ci.yml` — a CI job that runs `init` against a throwaway
+  config and asserts the result still boots and passes its own gates
+
+### Phase 16 — Query hygiene, settings hardening, rendering guardrails, pre-push gates
+
+- **16.A** — query-count tests on every list endpoint; the `ninja_*`
+  modules folded into `authz`/`auth`/`pagination`/`error_handlers`/
+  `throttle`/`api` (no more `ninja_` prefixes); selector/index audit
+- **16.B** — `manage.py check --deploy` wired into CI with a hard error
+  on a default `SECRET_KEY`; secrets and logging hardening
+- **16.C** — rendering, validation, and async task-boundary guardrails
+- **16.D** — local `git push` hook (`docs/pre-push.md`) mirroring CI's
+  blocking gates, plus CI `check --deploy` annotation visibility
+
+### Phase 15 — Jobs and audit foundations
+
+- Hardened constraints on `Job`/`JobStep`/`FailedTask`, generalised
+  idempotency beyond billing, an audit provenance hook
+
+### Phase 14 — Billing and credits polish
+
+- Constraint hardening on the credit ledger, webhook ordering
+  guarantees, typed entitlements
+
+### Phase 13 — Document storage foundation
+
+- Typed upload/list responses, foundation for per-organisation document
+  storage on top of the existing presigned R2/S3 uploads
+
+### Phase 12 — Railway + Postgres deployment baseline (prep)
+
+- `infra/railway.json`, the two-service (gunicorn + uvicorn/SSE) shape,
+  Postgres/`pgvector` groundwork ahead of `docs/deploy-railway.md`
+
+### Phase 11 — Auth BFF (ADR 0002)
+
+- Every `/api/v1/…` and `/_allauth/…` call now goes through a Next.js
+  server-side proxy (`apps/web/app/api/v1/[...path]/route.ts`,
+  `.../api/internal/allauth/[...path]/route.ts`) instead of a direct
+  cross-origin browser call — closes the last gap between the
+  architecture direction and the running code
+
+### Phase 10 — DRF to Django Ninja migration
+
+- Every app (`widgets`, `audit`, `billing`, `jobs`, `files`,
+  `organizations`) migrated from DRF to Django Ninja, invariant
+  meta-tests rewritten against Ninja routers, DRF and drf-spectacular
+  removed entirely
+- `/api/v1/organizations/` renamed to `/api/v1/orgs/` to match PRD §7
+- The OpenAPI pipeline switched to Ninja's native generation; the merge
+  step and generated client unchanged downstream
+- Every paginated list endpoint's OpenAPI schema typed; operation IDs
+  and query params cleaned up
+
+### Phase 9 — Repository metadata, docs, CI security gates, CLAUDE.md
+
+- **9.A** — `LICENSE` (MIT), `SECURITY.md`, `CONTRIBUTING.md`, this
+  changelog, GitHub issue/PR templates, Dependabot
+- **9.B** — `docs/architecture.md`, `docs/auth-flow.md`,
+  `docs/diagrams/system.md`
+- **9.C** — CI security gates: Bandit, `pip-audit`, `pnpm audit`,
+  Gitleaks secret scanning (`.github/workflows/security.yml`)
+- **9.D** — `CLAUDE.md` and the `.claude/commands/` slash commands
+  (`new-resource`, `new-readonly-resource`, `new-email`, `new-job`,
+  `new-connection`, `new-permission`, `sync-client`,
+  `check-invariants`)
 
 ### Phase 8 — Observability and hardening
 

@@ -3,6 +3,14 @@ Generate a full CRUD vertical slice for the resource named in `$ARGUMENTS`
 `apps/api/keel/widgets/` — the reference slice — file for file. Do not
 invent a different structure.
 
+If `apps/api/keel/widgets/` doesn't exist (this project ran `init
+--demo-slice delete`), check `docs/reference-slice/` instead — `init
+--demo-slice keep` moves it there rather than deleting it. If neither
+exists, follow the seven-file shape in this repo's `CLAUDE.md` ("Per-app
+file shape") and use another already-migrated app (e.g.
+`apps/api/keel/organizations/`) as the closest live example of the
+pattern.
+
 **Ask first** if the app name (usually the lowercase plural of the
 resource, e.g. `invoices`) isn't obvious from `$ARGUMENTS`, or if the
 resource needs fields beyond `name`/`description`/`status` — get the field
@@ -36,7 +44,9 @@ file allowed to add these)
 
 - Add `<RESOURCE>_VIEW` and `<RESOURCE>_MANAGE` codes to `Perm`.
 - `registry.register(Perm.<RESOURCE>_VIEW, _role_guard(Perm.<RESOURCE>_VIEW))`
-  and the `_MANAGE` equivalent, next to the existing `WIDGETS_*` lines.
+  and the `_MANAGE` equivalent, next to the existing domain-resource
+  entries (`WIDGETS_*` if the demo slice is still present, otherwise
+  next to whatever resource's codes were added most recently).
 - Add both codes to `_MEMBER_CODES` in `roles.py` (Member gets view +
   manage on domain resources, per the comment there) unless told otherwise.
 
@@ -55,9 +65,11 @@ file allowed to add these)
 ## Frontend (`apps/web/app/(app)/app/[org]/<app>/`)
 
 - `page.tsx` (list), `new/page.tsx` (create), `[id]/page.tsx` (detail),
-  matching `widgets/`'s three files. Use the generated client from
-  `packages/api-client` — call `/sync-client` first if the OpenAPI spec
-  needs regenerating to pick up the new endpoints.
+  matching `widgets/`'s three files (or `docs/reference-slice/web-widgets-pages/`
+  if the demo slice was moved there, or another resource's pages if it
+  was deleted outright). Use the generated client from `packages/api-client`
+  — call `/sync-client` first if the OpenAPI spec needs regenerating to
+  pick up the new endpoints.
 
 ## Finish
 
