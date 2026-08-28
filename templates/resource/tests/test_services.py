@@ -23,7 +23,7 @@ def test_create___resource___creates_a_row() -> None:
 
     row = services.create___resource__(
         organization=org,
-        created_by=creator,
+        actor=creator,
         # keel:insert service_call_kwargs
     )
 
@@ -58,14 +58,14 @@ def test_create___resource___enforces_the___app___limit() -> None:
     )
     services.create___resource__(
         organization=org,
-        created_by=creator,
+        actor=creator,
         # keel:insert service_call_kwargs
     )
 
     with pytest.raises(PaymentRequired) as exc_info:
         services.create___resource__(
             organization=org,
-            created_by=creator,
+            actor=creator,
             # keel:insert service_call_kwargs
         )
 
@@ -76,7 +76,7 @@ def test_update___resource___updates_only_given_fields() -> None:
     org, creator = _org()
     row = services.create___resource__(
         organization=org,
-        created_by=creator,
+        actor=creator,
         # keel:insert service_call_kwargs
     )
 
@@ -87,10 +87,14 @@ def test_delete___resource___removes_the_row() -> None:
     org, creator = _org()
     row = services.create___resource__(
         organization=org,
-        created_by=creator,
+        actor=creator,
         # keel:insert service_call_kwargs
     )
 
-    services.delete___resource__(__resource__=row, actor=creator)
+    deleted = services.delete___resource__(__resource__=row, actor=creator)
 
     assert not __Resource__.objects.filter(pk=row.pk).exists()
+    # Returned, pk intact, so the @audited row names what was deleted —
+    # a delete service returning None records a blank target.
+    assert deleted.pk == row.pk
+    assert deleted.organization_id == org.pk

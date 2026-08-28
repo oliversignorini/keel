@@ -38,14 +38,20 @@ def _sync_stripe_customer(organization_id: Any) -> None:
 
 
 @audited("organization.created")
-def create_organization(*, name: str, slug: str, created_by: Any) -> Organization:
-    """Atomic: org, Owner membership, three preset roles — all or nothing."""
+def create_organization(*, name: str, slug: str, actor: Any) -> Organization:
+    """Atomic: org, Owner membership, three preset roles — all or nothing.
+
+    The creator is ``actor``, not ``created_by``: ``@audited`` reads the
+    actor out of the call's ``actor`` kwarg, so naming the parameter
+    after the model field it lands in writes every
+    ``organization.created`` row with ``actor=NULL``. The model field is
+    still ``created_by``."""
     with transaction.atomic():
-        organization = Organization.objects.create(name=name, slug=slug, created_by=created_by)
+        organization = Organization.objects.create(name=name, slug=slug, created_by=actor)
         preset_roles = seed_preset_roles()
         Membership.objects.create(
             organization=organization,
-            user=created_by,
+            user=actor,
             role=preset_roles[PRESET_OWNER],
             status=Membership.STATUS_ACTIVE,
         )
@@ -119,14 +125,18 @@ def _billing_seat_pricing_enabled() -> bool:
 
 @audited("invitation.created")
 def create_invitation(
-    *, organization: Organization, email: str, role: Role, invited_by: Any
+    *, organization: Organization, email: str, role: Role, actor: Any
 ) -> Invitation:
+    """The inviter is ``actor`` for the same reason ``create_organization``'s
+    creator is: ``@audited`` reads ``actor`` from the call kwargs, and a
+    parameter named after the ``invited_by`` model field it lands in
+    leaves every ``invitation.created`` row without an actor."""
     with transaction.atomic():
         invitation = Invitation.objects.create(
             organization=organization,
             email=email.strip().lower(),
             role=role,
-            invited_by=invited_by,
+            invited_by=actor,
             token=get_random_string(INVITATION_TOKEN_LENGTH),
             expires_at=timezone.now() + INVITATION_TTL,
         )
@@ -142,7 +152,7 @@ def revoke_invitation(*, invitation: Invitation, actor: Any) -> Invitation:
 
 
 @audited("invitation.accepted")
-def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
+def accept_invitation(*, invitation: Invitation, actor: Any) -> Membership:
     """Atomic: membership created, ``accepted_at`` set. Seat sync fires
     on commit, behind ``BILLING_SEAT_PRICING``.
 
@@ -152,6 +162,9 @@ def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
     counts ``STATUS_ACTIVE`` memberships, so both a brand-new membership
     and reactivating a suspended one genuinely add a seat and are checked;
     re-accepting an already-active membership is a pure no-op and isn't.
+
+    The accepting user is ``actor``: they are who ``@audited`` records
+    against the ``invitation.accepted`` row.
 
     Re-checks the invitation's validity inside this transaction (ddia#22)
     rather than trusting the view's pre-transaction check: an accept
@@ -167,7 +180,7 @@ def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
             raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
 
         existing = Membership.objects.filter(
-            organization=invitation.organization, user=user
+            organization=invitation.organization, user=actor
         ).first()
         adds_a_new_active_seat = existing is None or existing.status != Membership.STATUS_ACTIVE
         if adds_a_new_active_seat:
@@ -179,7 +192,7 @@ def accept_invitation(*, invitation: Invitation, user: Any) -> Membership:
         if existing is None:
             membership = Membership.objects.create(
                 organization=invitation.organization,
-                user=user,
+                user=actor,
                 role=invitation.role,
                 status=Membership.STATUS_ACTIVE,
             )
@@ -246,7 +259,7 @@ def expire_invitations() -> int:
 
 
 @audited("membership.removed")
-def remove_member(*, membership: Membership, actor: Any) -> None:
+def remove_member(*, membership: Membership, actor: Any) -> Membership:
     """Calls the ``members.remove`` guard with ``membership`` as the
     subject rather than reimplementing the last-owner check — the
     guard, not this function, is authorization's source of truth.
@@ -260,7 +273,12 @@ def remove_member(*, membership: Membership, actor: Any) -> None:
 
     Seat sync fires on commit, behind ``BILLING_SEAT_PRICING`` — the
     other half of ``accept_invitation``'s ("seat count syncs to Stripe
-    ... on membership create and remove")."""
+    ... on membership create and remove").
+
+    Returns the removed membership so ``@audited`` has a target to
+    record; a delete service returning ``None`` writes a
+    ``membership.removed`` row that names neither the membership nor its
+    organisation."""
     organization_id = membership.organization_id
     with transaction.atomic():
         Organization.objects.select_for_update().get(pk=organization_id)
@@ -269,6 +287,14 @@ def remove_member(*, membership: Membership, actor: Any) -> None:
             raise PermissionDeniedWithReason(
                 code=decision.reason or "permission_denied", denial=decision.details
             )
+        pk = membership.pk
         membership.delete()
+        # Restored so the membership.removed audit row names which
+        # membership in which organisation was removed: @audited falls
+        # back to the return value for its target, and Django's
+        # Model.delete() clears the in-memory pk. A detached snapshot,
+        # never re-saved.
+        membership.pk = pk
         if _billing_seat_pricing_enabled():
             transaction.on_commit(lambda: _sync_seats(organization_id))
+    return membership

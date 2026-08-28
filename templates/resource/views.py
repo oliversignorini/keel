@@ -69,7 +69,7 @@ def create___resource__(
     organization = resolve_and_authorize(request, org_slug, (_CREATE,))
     __resource__ = services.create___resource__(
         organization=organization,
-        created_by=request.auth,
+        actor=request.auth,
         # keel:insert create_call_args
     )
     return Status(201, __resource__)

@@ -21,7 +21,7 @@ def test_create_widget_creates_a_row() -> None:
 
     row = services.create_widget(
         organization=org,
-        created_by=creator,
+        actor=creator,
         name="A name",
         description="",
         status="",
@@ -58,7 +58,7 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
     )
     services.create_widget(
         organization=org,
-        created_by=creator,
+        actor=creator,
         name="A name",
         description="",
         status="",
@@ -67,7 +67,7 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
     with pytest.raises(PaymentRequired) as exc_info:
         services.create_widget(
             organization=org,
-            created_by=creator,
+            actor=creator,
             name="A name",
             description="",
             status="",
@@ -80,7 +80,7 @@ def test_update_widget_updates_only_given_fields() -> None:
     org, creator = _org()
     row = services.create_widget(
         organization=org,
-        created_by=creator,
+        actor=creator,
         name="A name",
         description="",
         status="",
@@ -97,12 +97,16 @@ def test_delete_widget_removes_the_row() -> None:
     org, creator = _org()
     row = services.create_widget(
         organization=org,
-        created_by=creator,
+        actor=creator,
         name="A name",
         description="",
         status="",
     )
 
-    services.delete_widget(widget=row, actor=creator)
+    deleted = services.delete_widget(widget=row, actor=creator)
 
     assert not Widget.objects.filter(pk=row.pk).exists()
+    # Returned, pk intact, so the @audited row names what was deleted —
+    # a delete service returning None records a blank target.
+    assert deleted.pk == row.pk
+    assert deleted.organization_id == org.pk

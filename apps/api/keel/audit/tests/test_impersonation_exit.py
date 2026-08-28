@@ -28,6 +28,11 @@ def test_exit_restores_the_staff_session_and_writes_an_audit_row() -> None:
     row = AuditLog.objects.get(action="impersonation.end")
     assert row.actor_id == target.pk
     assert row.impersonator_id == staff.pk
+    # Written through keel.core.audit's recorder seam
+    # (keel.audit.services.record_impersonation_end), not by the view —
+    # the target fields are the recorder's, not hand-set in the view.
+    assert row.target_type == "User"
+    assert row.target_id == str(target.pk)
 
 
 def test_exit_404s_when_not_impersonating() -> None:

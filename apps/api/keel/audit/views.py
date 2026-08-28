@@ -16,7 +16,7 @@ from typing import Any
 from django.http import Http404
 from ninja import Status
 
-from keel.audit import selectors
+from keel.audit import selectors, services
 from keel.audit.models import AuditLog
 from keel.audit.schemas import AuditLogOut
 from keel.core.authz import OrgScopedResource, keel_router, resolve_and_authorize
@@ -84,11 +84,5 @@ def impersonation_exit(request: Any) -> Status[None]:
     impersonator = User.objects.get(pk=impersonator_id)
     target = request.auth
     end_impersonation(request, impersonator=impersonator)
-    AuditLog.objects.create(
-        actor=target,
-        impersonator=impersonator,
-        action="impersonation.end",
-        target_type="User",
-        target_id=str(target.pk),
-    )
+    services.record_impersonation_end(actor=target, impersonator=impersonator, target=target)
     return Status(204, None)

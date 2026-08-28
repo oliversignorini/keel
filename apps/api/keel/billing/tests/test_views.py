@@ -29,7 +29,7 @@ def _org_with_owner() -> tuple[Organization, User]:
     global _counter
     _counter += 1
     owner = _user("owner")
-    org = services.create_organization(name="Acme", slug=f"acme-{_counter}", created_by=owner)
+    org = services.create_organization(name="Acme", slug=f"acme-{_counter}", actor=owner)
     return org, owner
 
 

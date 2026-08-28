@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 
 def test_list_jobs_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
-    org = org_services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = org_services.create_organization(name="Acme", slug="acme", actor=owner)
     for _ in range(3):
         job = job_factory(org)
         JobStep.objects.create(job=job, name="step-1", ordinal=0)

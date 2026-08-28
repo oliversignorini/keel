@@ -44,6 +44,11 @@ def test_impersonate_starts_the_session_and_writes_an_audit_row() -> None:
     row = AuditLog.objects.get(action="impersonation.start")
     assert row.actor_id == target.pk
     assert row.impersonator_id == staff.pk
+    # Written through keel.core.audit's recorder seam
+    # (keel.audit.services.record_impersonation_start), not by the admin
+    # action — the target fields are the recorder's.
+    assert row.target_type == "User"
+    assert row.target_id == str(target.pk)
 
 
 def test_impersonate_refuses_more_than_one_selected_user() -> None:

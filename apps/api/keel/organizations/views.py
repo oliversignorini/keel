@@ -85,7 +85,7 @@ def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
     slug = resolve_create_slug(payload)
     try:
         organization = services.create_organization(
-            created_by=request.auth, name=payload.name, slug=slug
+            actor=request.auth, name=payload.name, slug=slug
         )
     except IntegrityError as exc:
         # slug's unique=True constraint is the single source of truth
@@ -253,7 +253,7 @@ def create_invitation(request: Any, org_slug: str, payload: InvitationCreateIn) 
         organization=organization,
         email=payload.email,
         role=role,
-        invited_by=request.auth,
+        actor=request.auth,
     )
     return Status(201, invitation)
 
@@ -375,4 +375,4 @@ def invite_accept(request: Any, token: str) -> Any:
         # Wrong email: rejected without disclosing who was actually
         # invited.
         raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
-    return services.accept_invitation(invitation=invitation, user=request.auth)
+    return services.accept_invitation(invitation=invitation, actor=request.auth)

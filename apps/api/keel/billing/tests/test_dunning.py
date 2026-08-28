@@ -28,7 +28,7 @@ def _org_with_owner() -> tuple[Organization, User]:
     owner = User.objects.create_user(
         email=f"owner-dun-{_counter}@example.com", password="s3cret-pass"
     )
-    org = services.create_organization(name="Acme", slug=f"acme-dun-{_counter}", created_by=owner)
+    org = services.create_organization(name="Acme", slug=f"acme-dun-{_counter}", actor=owner)
     return org, owner
 
 

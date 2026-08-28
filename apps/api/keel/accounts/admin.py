@@ -7,7 +7,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 
 from keel.accounts.models import User
-from keel.audit.models import AuditLog
+from keel.audit import services as audit_services
 from keel.core.impersonation import start_impersonation
 
 
@@ -62,12 +62,11 @@ class UserAdmin(DjangoUserAdmin):
             return None
 
         start_impersonation(request, impersonator=impersonator, target=target)
-        AuditLog.objects.create(
-            actor=target,
-            impersonator=impersonator,
-            action="impersonation.start",
-            target_type="User",
-            target_id=str(target.pk),
+        # Through the recorder seam (keel.core.audit), not an inline
+        # AuditLog.objects.create() — an admin action is no more entitled
+        # to decide an audit row's shape than a view is.
+        audit_services.record_impersonation_start(
+            actor=target, impersonator=impersonator, target=target
         )
         self.message_user(request, f"Now impersonating {target.email}.", level=messages.SUCCESS)
         return HttpResponseRedirect(settings.APP_FRONTEND_URL)

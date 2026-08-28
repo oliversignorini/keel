@@ -20,21 +20,16 @@ shim — see its own docstring for why the two tasks in this module use
 different mechanisms.
 """
 
-from datetime import timedelta
 from typing import Any
 
 from celery import shared_task
-from django.db import transaction
-from django.utils import timezone
 
+from keel.billing import selectors, services
 from keel.billing.models import StripeEvent
-from keel.billing.webhooks import HANDLERS
 from keel.core.tasks import task
 
 MAX_RETRIES = 5
 RETRY_BACKOFF_BASE_SECONDS = 5
-STALE_EVENT_THRESHOLD = timedelta(minutes=5)
-STRIPE_EVENT_PAYLOAD_RETENTION = timedelta(days=30)
 
 
 def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
@@ -49,41 +44,13 @@ def _report_to_sentry(stripe_event: StripeEvent, exc: Exception) -> None:
     )
 
 
-def process_stripe_event(stripe_event: StripeEvent) -> None:
-    """Atomic dispatch to the handler for ``stripe_event.type``, then marks
-    it processed. A replay of an already-processed event (``processed_at``
-    set) is a no-op — the second line of idempotency defense behind the
-    view's ``get_or_create`` (PRD §6, "Replaying an event is a no-op by
-    construction"). An unhandled event type is marked processed without
-    doing anything, since PRD §6 only lists six event types as handled.
-
-    The "already processed" guard is a lock, not a plain read (ddia#8):
-    two workers processing the same event concurrently (Celery is
-    at-least-once, and the view's re-enqueue-on-replay adds a second path
-    to the same race) must not both run the handler — a
-    ``select_for_update`` inside the same transaction as the check makes
-    the second one block until the first commits, then see
-    ``processed_at`` already set."""
-    with transaction.atomic():
-        stripe_event = StripeEvent.objects.select_for_update().get(pk=stripe_event.pk)
-        if stripe_event.processed_at is not None:
-            return
-        handler = HANDLERS.get(stripe_event.type)
-        if handler is not None:
-            handler(stripe_event.payload["data"]["object"], stripe_event.payload.get("created"))
-        stripe_event.processed_at = timezone.now()
-        stripe_event.error = ""
-        stripe_event.save(update_fields=["processed_at", "error"])
-
-
 @shared_task(bind=True, max_retries=MAX_RETRIES)
 def dispatch_stripe_event(self: Any, event_id: str) -> None:
     stripe_event = StripeEvent.objects.get(pk=event_id)
     try:
-        process_stripe_event(stripe_event)
+        services.process_stripe_event(stripe_event)
     except Exception as exc:
-        stripe_event.error = str(exc)
-        stripe_event.save(update_fields=["error"])
+        services.record_stripe_event_error(stripe_event, str(exc))
         if self.request.retries >= self.max_retries:
             _report_to_sentry(stripe_event, exc)
             return
@@ -99,15 +66,14 @@ def sweep_unprocessed_stripe_events() -> int:
     reached the broker at all, so no redelivery from Stripe will ever
     re-trigger the view's own re-enqueue path (Stripe only retries on a
     non-200, and the view always returns 200). Re-dispatches any row
-    still unprocessed ``STALE_EVENT_THRESHOLD`` after receipt —
-    ``process_stripe_event`` is a no-op if another worker already handled
-    it in the meantime."""
-    threshold = timezone.now() - STALE_EVENT_THRESHOLD
-    stale_ids = list(
-        StripeEvent.objects.filter(
-            processed_at__isnull=True, received_at__lt=threshold
-        ).values_list("pk", flat=True)
-    )
+    ``keel.billing.selectors.stale_unprocessed_stripe_event_ids`` reports
+    as stale — ``process_stripe_event`` is a no-op if another worker
+    already handled it in the meantime.
+
+    The query is a read (selectors); the enqueue direction is this task's
+    own, the same way ``organizations.services._sync_seats`` leaves it to
+    the task it dispatches to."""
+    stale_ids = selectors.stale_unprocessed_stripe_event_ids()
     for event_id in stale_ids:
         dispatch_stripe_event.delay(event_id)
     return len(stale_ids)
@@ -115,21 +81,10 @@ def sweep_unprocessed_stripe_events() -> int:
 
 @shared_task(name="keel.billing.tasks.prune_stripe_event_payloads")
 def prune_stripe_event_payloads() -> int:
-    """Beat task (ddia#10): ``StripeEvent.payload`` is the write-ahead log
-    for billing state and grows monotonically with no retention — table
-    bloat, vacuum pressure on the hottest billing table, and indefinite
-    retention of whatever PII a Stripe event carries. Nulls ``payload``
-    on rows older than ``STRIPE_EVENT_PAYLOAD_RETENTION`` that have
-    already been processed, keeping id/type/timestamps — the dedup key —
-    intact. An unprocessed row is never touched: it may still be replayed
-    by ``sweep_unprocessed_stripe_events`` or retried by
-    ``dispatch_stripe_event``, both of which need the payload."""
-    threshold = timezone.now() - STRIPE_EVENT_PAYLOAD_RETENTION
-    return (
-        StripeEvent.objects.filter(processed_at__isnull=False, received_at__lt=threshold)
-        .exclude(payload={})
-        .update(payload={})
-    )
+    """One-line delegation to
+    ``keel.billing.services.prune_stripe_event_payloads`` (ddia#10) —
+    see that function for the retention rule."""
+    return services.prune_stripe_event_payloads()
 
 
 @shared_task(name="keel.billing.tasks.check_credit_balances_task")

@@ -20,7 +20,7 @@ pytestmark = pytest.mark.django_db
 
 def test_list_widgets_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
-    org = org_services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = org_services.create_organization(name="Acme", slug="acme", actor=owner)
     for _ in range(3):
         widget_factory(org)
 

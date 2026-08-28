@@ -25,7 +25,7 @@ def _price() -> Price:
 
 def test_get_subscription_query_count(django_assert_num_queries: object) -> None:
     owner = User.objects.create_user(email="owner@example.com", password="s3cret-pass")
-    org = org_services.create_organization(name="Acme", slug="acme", created_by=owner)
+    org = org_services.create_organization(name="Acme", slug="acme", actor=owner)
     price = _price()
     Subscription.objects.create(
         organization=org,

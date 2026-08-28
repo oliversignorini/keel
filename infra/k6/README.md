@@ -35,7 +35,7 @@ owner.set_password('s3cret-pass-1234')
 owner.save()
 org = Organization.objects.filter(slug='k6-smoke').first()
 if not org:
-    org = services.create_organization(name='K6 Smoke', slug='k6-smoke', created_by=owner)
+    org = services.create_organization(name='K6 Smoke', slug='k6-smoke', actor=owner)
 if Widget.objects.filter(organization=org).count() < 200:
     Widget.objects.bulk_create([
         Widget(organization=org, name=f'Widget {i}', description='', status='active', created_by=owner)

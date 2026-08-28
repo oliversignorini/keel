@@ -32,7 +32,7 @@ def _org_with_owner() -> tuple[Organization, User]:
     global _counter
     _counter += 1
     owner = _user("owner")
-    org = services.create_organization(name="Acme", slug=f"acme-seat-{_counter}", created_by=owner)
+    org = services.create_organization(name="Acme", slug=f"acme-seat-{_counter}", actor=owner)
     return org, owner
 
 
@@ -108,7 +108,7 @@ def test_flag_off_no_stripe_call_and_membership_write_succeeds(
     role = seed_preset_roles()[PRESET_MEMBER]
     invitee = _user("invitee")
     invitation = services.create_invitation(
-        organization=org, email=invitee.email, role=role, invited_by=owner
+        organization=org, email=invitee.email, role=role, actor=owner
     )
 
     def _fail(**kw):
@@ -117,7 +117,7 @@ def test_flag_off_no_stripe_call_and_membership_write_succeeds(
     monkeypatch.setattr(stripe_client, "update_subscription_quantity", _fail)
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        membership = services.accept_invitation(invitation=invitation, user=invitee)
+        membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     # @audited writes its row inline now (ddia#17), so no on_commit
     # callback is registered for it — with the flag off, the seat-sync
@@ -136,13 +136,13 @@ def test_flag_on_syncs_on_accept_and_on_remove(
     role = seed_preset_roles()[PRESET_MEMBER]
     invitee = _user("invitee")
     invitation = services.create_invitation(
-        organization=org, email=invitee.email, role=role, invited_by=owner
+        organization=org, email=invitee.email, role=role, actor=owner
     )
     seen = []
     monkeypatch.setattr(stripe_client, "update_subscription_quantity", lambda **kw: seen.append(kw))
 
     with django_capture_on_commit_callbacks(execute=True):
-        membership = services.accept_invitation(invitation=invitation, user=invitee)
+        membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert seen == [{"subscription_id": subscription.stripe_subscription_id, "quantity": 2}]
 
@@ -168,7 +168,7 @@ def test_flag_on_membership_write_succeeds_when_stripe_is_unreachable(
     role = seed_preset_roles()[PRESET_MEMBER]
     invitee = _user("invitee")
     invitation = services.create_invitation(
-        organization=org, email=invitee.email, role=role, invited_by=owner
+        organization=org, email=invitee.email, role=role, actor=owner
     )
 
     def _unreachable(**kw):
@@ -177,6 +177,6 @@ def test_flag_on_membership_write_succeeds_when_stripe_is_unreachable(
     monkeypatch.setattr(stripe_client, "update_subscription_quantity", _unreachable)
 
     with django_capture_on_commit_callbacks(execute=True):
-        membership = services.accept_invitation(invitation=invitation, user=invitee)
+        membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
     assert Membership.objects.filter(pk=membership.pk, status=Membership.STATUS_ACTIVE).exists()

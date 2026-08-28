@@ -36,7 +36,7 @@ def _mocked_bucket():
 
 def _org() -> Organization:
     owner = User.objects.create_user(email="sweep-owner@example.com", password="s3cret-pass")
-    return services.create_organization(name="Acme", slug="acme-sweep", created_by=owner)
+    return services.create_organization(name="Acme", slug="acme-sweep", actor=owner)
 
 
 def _pending_upload(org: Organization, *, age: timedelta) -> FileUpload:

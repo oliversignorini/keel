@@ -37,7 +37,7 @@ def _org_with_owner():
     global _counter
     _counter += 1
     creator = _user("owner")
-    org = org_services.create_organization(name="Acme", slug=f"acme-{_counter}", created_by=creator)
+    org = org_services.create_organization(name="Acme", slug=f"acme-{_counter}", actor=creator)
     return org, creator
 
 
