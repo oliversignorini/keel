@@ -4,11 +4,11 @@ import { authGetSession } from "@keel/api-client";
 import { toAppHost } from "@/lib/host";
 import { acceptInvitation, resolveInvitation } from "@/lib/org/api";
 import type { InviteResolveResponse } from "@/lib/org/types";
+import { Button } from "@keel/ui";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { SubmitButton } from "../../_components/submit-button";
 
 /**
  * `/invite/[token]` (PRD §5 Routes, §6 "Invitation"; phase-3.md Worktree
@@ -115,7 +115,8 @@ export default function InvitePage() {
 
   if (outcome.kind === "loading") {
     return (
-      <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
+      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
         Checking your invitation…
       </p>
     );
@@ -124,12 +125,10 @@ export default function InvitePage() {
   if (outcome.kind === "invalid" || outcome.kind === "accept_failed") {
     return (
       <>
-        <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <h1 className="mb-2 text-lg font-semibold text-foreground">
           This invitation is no longer valid
         </h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Ask an admin to send you a new one.
-        </p>
+        <p className="text-sm text-muted-foreground">Ask an admin to send you a new one.</p>
       </>
     );
   }
@@ -139,19 +138,16 @@ export default function InvitePage() {
     const loginHref = `/login?next=${encodeURIComponent(`/invite/${params.token}`)}`;
     return (
       <>
-        <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <h1 className="mb-2 text-lg font-semibold text-foreground">
           You&apos;ve been invited to {outcome.invite.organization.name}
         </h1>
-        <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="mb-6 text-sm text-muted-foreground">
           Create an account with {outcome.invite.email} to accept.
         </p>
         <div className="flex flex-col gap-2">
-          <Link
-            href={signupHref}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-medium text-white dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            Create account
-          </Link>
+          <Button asChild>
+            <Link href={signupHref}>Create account</Link>
+          </Button>
           <Link href={loginHref} className="text-center text-sm underline">
             Already have an account? Log in
           </Link>
@@ -163,10 +159,8 @@ export default function InvitePage() {
   if (outcome.kind === "wrong_email") {
     return (
       <>
-        <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Wrong account
-        </h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <h1 className="mb-2 text-lg font-semibold text-foreground">Wrong account</h1>
+        <p className="text-sm text-muted-foreground">
           This invitation is for {outcome.invite.email}, but you&apos;re signed in as{" "}
           {outcome.currentEmail}.
         </p>
@@ -177,15 +171,16 @@ export default function InvitePage() {
   // ready_to_accept | accepted
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+      <h1 className="mb-2 text-lg font-semibold text-foreground">
         Join {outcome.kind === "ready_to_accept" ? outcome.invite.organization.name : ""}
       </h1>
-      <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         You&apos;re signed in with the invited email.
       </p>
-      <SubmitButton type="button" onClick={accept} disabled={accepting}>
+      <Button type="button" onClick={accept} disabled={accepting}>
+        {accepting ? <Loader2 className="animate-spin" /> : null}
         {accepting ? "Joining…" : "Accept invitation"}
-      </SubmitButton>
+      </Button>
     </>
   );
 }

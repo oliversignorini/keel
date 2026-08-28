@@ -12,6 +12,18 @@ import type { PlanWithPrices, Subscription } from "@/lib/billing/types";
 import { useSubscription } from "@/lib/billing/use-subscription";
 import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@keel/ui";
+import { ExternalLink } from "lucide-react";
 
 /**
  * `/app/[org]/settings/billing` (PRD §5 Routes; phase-4.md Worktree C:
@@ -34,24 +46,31 @@ export default function BillingSettingsPage() {
   if (!currentOrg) return null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <TrialBanner subscription={subscription} />
       <DunningBanner subscription={subscription} orgSlug={orgSlug} />
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Plan</h2>
-        {loading ? (
-          <p role="status" className="text-sm text-neutral-600 dark:text-neutral-400">
-            Loading…
-          </p>
-        ) : subscription ? (
-          <CurrentPlan subscription={subscription} />
-        ) : (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            This organisation isn&apos;t on a plan yet.
-          </p>
-        )}
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Plan</CardTitle>
+          <CardDescription>What this organisation is currently subscribed to.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div role="status" aria-label="Loading plan" className="flex flex-col gap-3">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-40" />
+            </div>
+          ) : subscription ? (
+            <CurrentPlan subscription={subscription} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This organisation isn&apos;t on a plan yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <CreditMeter orgSlug={orgSlug} />
 
@@ -66,23 +85,38 @@ export default function BillingSettingsPage() {
   );
 }
 
+/** `past_due` → `Past due`; Stripe's snake_case is not a label. */
+function statusLabel(status: string): string {
+  const words = status.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function statusVariant(status: string): "success" | "warning" | "destructive" | "secondary" {
+  if (status === "active") return "success";
+  if (status === "trialing") return "warning";
+  if (status === "past_due" || status === "unpaid") return "destructive";
+  return "secondary";
+}
+
 function CurrentPlan({ subscription }: { subscription: Subscription }) {
   return (
-    <dl className="grid max-w-md grid-cols-2 gap-y-2 text-sm">
-      <dt className="text-neutral-500 dark:text-neutral-400">Plan</dt>
-      <dd className="text-neutral-900 dark:text-neutral-100">{subscription.plan}</dd>
-      <dt className="text-neutral-500 dark:text-neutral-400">Status</dt>
-      <dd className="text-neutral-900 dark:text-neutral-100">{subscription.status}</dd>
-      <dt className="text-neutral-500 dark:text-neutral-400">Seats</dt>
-      <dd className="text-neutral-900 dark:text-neutral-100">{subscription.quantity}</dd>
+    <dl className="grid max-w-md grid-cols-2 gap-y-3 text-sm">
+      <dt className="text-muted-foreground">Plan</dt>
+      <dd className="text-foreground">{subscription.plan}</dd>
+      <dt className="text-muted-foreground">Status</dt>
+      <dd>
+        <Badge variant={statusVariant(subscription.status)}>
+          {statusLabel(subscription.status)}
+        </Badge>
+      </dd>
+      <dt className="text-muted-foreground">Seats</dt>
+      <dd className="text-foreground">{subscription.quantity}</dd>
       {subscription.current_period_end ? (
         <>
-          <dt className="text-neutral-500 dark:text-neutral-400">
+          <dt className="text-muted-foreground">
             {subscription.cancel_at_period_end ? "Ends" : "Renews"}
           </dt>
-          <dd className="text-neutral-900 dark:text-neutral-100">
-            {formatDate(subscription.current_period_end)}
-          </dd>
+          <dd className="text-foreground">{formatDate(subscription.current_period_end)}</dd>
         </>
       ) : null}
     </dl>
@@ -111,29 +145,27 @@ function ManageBillingSection({ orgSlug }: { orgSlug: string }) {
   }
 
   return (
-    <section>
-      <h2 className="mb-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Manage billing
-      </h2>
-      <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-        Change plan, update your payment details, or download invoices.
-      </p>
-      {error ? <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      <button
-        type="button"
-        onClick={() => void openPortal()}
-        disabled={busy}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-      >
-        {busy ? "Opening…" : "Manage billing"}
-      </button>
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage billing</CardTitle>
+        <CardDescription>
+          Change plan, update your payment details, or download invoices.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
+        <Button onClick={() => void openPortal()} disabled={busy}>
+          {busy ? "Opening…" : "Manage billing"}
+          <ExternalLink />
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
 /** No subscription yet: pick a plan and go to Checkout. */
 function UpgradeSection({ orgSlug }: { orgSlug: string }) {
-  const [plans, setPlans] = useState<PlanWithPrices[]>([]);
+  const [plans, setPlans] = useState<PlanWithPrices[] | null>(null);
   const [busyPriceId, setBusyPriceId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,12 +176,65 @@ function UpgradeSection({ orgSlug }: { orgSlug: string }) {
         if (!cancelled) setPlans(result);
       })
       .catch(() => {
-        if (!cancelled) setError("Could not load plans.");
+        if (!cancelled) {
+          setError("Could not load plans.");
+          setPlans([]);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Choose a plan</CardTitle>
+        <CardDescription>Includes a 14-day trial. No card required to start.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error ? <p className="mb-2 text-sm text-destructive">{error}</p> : null}
+        {plans === null ? (
+          <div role="status" aria-label="Loading plans" className="grid gap-4 sm:grid-cols-3">
+            {[0, 1, 2].map((card) => (
+              <Skeleton key={card} className="h-40 w-full" />
+            ))}
+          </div>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {plans.map((plan) => {
+              const price = plan.prices.find((candidate) => candidate.interval === "month");
+              if (!price) return null;
+              return (
+                <li key={plan.id}>
+                  <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle>{plan.name}</CardTitle>
+                      <CardDescription>
+                        <span className="text-lg font-semibold text-foreground">
+                          {formatPrice(price.unit_amount, price.currency)}
+                        </span>{" "}
+                        / month
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button
+                        className="w-full"
+                        onClick={() => void checkout(price.id)}
+                        disabled={busyPriceId !== null}
+                      >
+                        {busyPriceId === price.id ? "Starting…" : `Choose ${plan.name}`}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   async function checkout(priceId: string) {
     setBusyPriceId(priceId);
@@ -162,36 +247,4 @@ function UpgradeSection({ orgSlug }: { orgSlug: string }) {
       setBusyPriceId(null);
     }
   }
-
-  return (
-    <section>
-      <h2 className="mb-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Choose a plan
-      </h2>
-      <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-        Includes a 14-day trial. No card required to start.
-      </p>
-      {error ? <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      <ul className="flex flex-wrap gap-3">
-        {plans.map((plan) => {
-          const price = plan.prices.find((candidate) => candidate.interval === "month");
-          if (!price) return null;
-          return (
-            <li key={plan.id}>
-              <button
-                type="button"
-                onClick={() => void checkout(price.id)}
-                disabled={busyPriceId !== null}
-                className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-neutral-700"
-              >
-                {busyPriceId === price.id
-                  ? "Starting…"
-                  : `${plan.name} — ${formatPrice(price.unit_amount, price.currency)}/month`}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@keel/ui";
+import { Clock } from "lucide-react";
+
 import { formatDate } from "@/lib/billing/format";
 import type { Subscription } from "@/lib/billing/types";
 
@@ -18,12 +21,13 @@ export function TrialBanner({ subscription }: { subscription: Subscription | nul
 
   const ends = subscription.trial_end ? `ends ${formatDate(subscription.trial_end)}` : "is running";
 
+  // `role="status"` rather than <Alert>'s default `role="alert"`: a trial
+  // in progress is not an assertive interruption.
   return (
-    <div
-      role="status"
-      className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
-    >
-      Your trial {ends}. Add a payment method before it ends to keep your plan.
-    </div>
+    <Alert role="status">
+      <Clock />
+      <AlertTitle>Your trial {ends}.</AlertTitle>
+      <AlertDescription>Add a payment method before it ends to keep your plan.</AlertDescription>
+    </Alert>
   );
 }

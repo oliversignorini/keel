@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { buttonVariants } from "@keel/ui";
 
 import { JsonLd } from "@/components/json-ld";
 import { SITE_URL } from "@/lib/site";
@@ -41,24 +42,18 @@ export default function LandingPage() {
         }}
       />
       <section className="mx-auto max-w-5xl px-4 py-24 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-5xl">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           Ship the SaaS parts you would rather not build
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
           Auth, organisations, billing, and a marketing site — a working starting point, not a
           tutorial.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-          <Link
-            href="/signup"
-            className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white dark:bg-neutral-100 dark:text-neutral-900"
-          >
+          <Link href="/signup" className={buttonVariants({ size: "lg" })}>
             Start free trial
           </Link>
-          <Link
-            href="/pricing"
-            className="rounded-md border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 dark:border-neutral-700 dark:text-neutral-100"
-          >
+          <Link href="/pricing" className={buttonVariants({ variant: "outline", size: "lg" })}>
             See pricing
           </Link>
         </div>
@@ -68,10 +63,8 @@ export default function LandingPage() {
         <ul className="grid gap-8 sm:grid-cols-3">
           {FEATURES.map((feature) => (
             <li key={feature.title}>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                {feature.title}
-              </h2>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{feature.body}</p>
+              <h2 className="text-lg font-semibold text-foreground">{feature.title}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{feature.body}</p>
             </li>
           ))}
         </ul>

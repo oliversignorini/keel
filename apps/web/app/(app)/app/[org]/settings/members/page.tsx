@@ -14,6 +14,45 @@ import { useOrgContext } from "@/lib/org/org-context";
 import { Perm } from "@/lib/org/permissions";
 import type { RoleWithPermissions } from "@/lib/org/types";
 import { ApiError, type InvitationOut, type MembershipOut } from "@keel/api-client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Avatar,
+  AvatarFallback,
+  Badge,
+  Button,
+  buttonVariants,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@keel/ui";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -37,6 +76,10 @@ export default function MembersSettingsPage() {
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
+  // The remove dialog lives outside the row's `<DropdownMenu>` on purpose:
+  // the menu unmounts its content when it closes, which would tear the
+  // dialog down with it mid-open.
+  const [pendingRemoval, setPendingRemoval] = useState<MembershipOut | null>(null);
 
   const load = useCallback(async () => {
     if (!currentOrg) return;
@@ -69,7 +112,6 @@ export default function MembersSettingsPage() {
   }
 
   async function handleRemove(membershipId: string) {
-    if (!window.confirm("Remove this member?")) return;
     setActionError(null);
     try {
       await removeMember(currentOrg!.slug, membershipId);
@@ -93,100 +135,208 @@ export default function MembersSettingsPage() {
     }
   }
 
+  const pending = invitations.filter((invitation) => invitation.status === "pending");
+
   return (
-    <div className="flex flex-col gap-10">
-      {actionError ? <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p> : null}
+    <div className="flex flex-col gap-6">
+      {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Members
-        </h2>
-        {loading ? (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading…</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-neutral-200 text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-                <th className="py-2 font-medium">Member</th>
-                <th className="py-2 font-medium">Role</th>
-                <th className="py-2 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => (
-                <tr key={member.id} className="border-b border-neutral-100 dark:border-neutral-900">
-                  <td className="py-2 text-neutral-900 dark:text-neutral-100">
-                    {member.user.name || member.user.email}
-                  </td>
-                  <td className="py-2">
-                    <Can code={Perm.MEMBERS_CHANGE_ROLE} fallback={member.role.name}>
-                      <select
-                        value={member.role.id}
-                        onChange={(event) => void handleRoleChange(member.id, event.target.value)}
-                        className="rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-                      >
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
-                    </Can>
-                  </td>
-                  <td className="py-2 text-right">
-                    <Can code={Perm.MEMBERS_REMOVE}>
-                      <button
-                        type="button"
-                        onClick={() => void handleRemove(member.id)}
-                        className="text-red-600 underline dark:text-red-400"
-                      >
-                        Remove
-                      </button>
-                    </Can>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Members</CardTitle>
+          <CardDescription>Everyone with access to this organisation.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <MembersSkeleton />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="w-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => {
+                  const displayName = member.user.name || member.user.email;
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback>{initials(displayName)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground">{displayName}</span>
+                            {member.user.name ? (
+                              <span className="text-xs text-muted-foreground">
+                                {member.user.email}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Can
+                          code={Perm.MEMBERS_CHANGE_ROLE}
+                          fallback={<Badge variant="secondary">{member.role.name}</Badge>}
+                        >
+                          <Select
+                            value={member.role.id}
+                            onValueChange={(roleId) => void handleRoleChange(member.id, roleId)}
+                          >
+                            {/* The native selects this replaced had no
+                                accessible name at all — axe `select-name`,
+                                critical, one node per row (finding 4). */}
+                            <SelectTrigger className="w-36" aria-label={`Role for ${displayName}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map((role) => (
+                                <SelectItem key={role.id} value={role.id}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </Can>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Can code={Perm.MEMBERS_REMOVE}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`Actions for ${displayName}`}
+                              >
+                                <MoreHorizontal />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={() => setPendingRemoval(member)}
+                              >
+                                <Trash2 />
+                                Remove member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </Can>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Pending invitations
-        </h2>
-        {invitations.filter((invitation) => invitation.status === "pending").length === 0 ? (
-          <p className="text-sm text-neutral-500 dark:text-neutral-500">No pending invitations.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {invitations
-              .filter((invitation) => invitation.status === "pending")
-              .map((invitation) => (
-                <li
-                  key={invitation.id}
-                  className="flex items-center justify-between rounded-md border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-800"
-                >
-                  <span className="text-neutral-900 dark:text-neutral-100">
-                    {invitation.email} — {invitation.role.name}
-                  </span>
-                  <Can code={Perm.MEMBERS_INVITE}>
-                    <button
-                      type="button"
-                      onClick={() => void handleRevoke(invitation.id)}
-                      className="text-red-600 underline dark:text-red-400"
-                    >
-                      Revoke
-                    </button>
-                  </Can>
-                </li>
-              ))}
-          </ul>
-        )}
-      </section>
+      <AlertDialog
+        open={pendingRemoval !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoval(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRemoval
+                ? `${pendingRemoval.user.name || pendingRemoval.user.email} loses access to this organisation immediately. They can be invited back later.`
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (pendingRemoval) void handleRemove(pendingRemoval.id);
+              }}
+            >
+              Remove member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending invitations</CardTitle>
+          <CardDescription>Invitations that haven&apos;t been accepted yet.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : pending.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No pending invitations.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="w-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pending.map((invitation) => (
+                  <TableRow key={invitation.id}>
+                    <TableCell className="text-foreground">{invitation.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{invitation.role.name}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Can code={Perm.MEMBERS_INVITE}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleRevoke(invitation.id)}
+                        >
+                          Revoke
+                        </Button>
+                      </Can>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Can code={Perm.MEMBERS_INVITE}>
         <InviteForm orgSlug={currentOrg.slug} roles={roles} onInvited={load} />
       </Can>
+    </div>
+  );
+}
+
+/** Up to two initials from a display name, falling back to the first
+ * character of an email local part. */
+function initials(displayName: string): string {
+  const words = displayName.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0]![0]! + words[1]![0]!).toUpperCase();
+  }
+  return displayName.slice(0, 2).toUpperCase();
+}
+
+function MembersSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" role="status" aria-label="Loading members">
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="flex items-center gap-3">
+          <Skeleton className="size-8 rounded-full" />
+          <Skeleton className="h-4 flex-1" />
+          <Skeleton className="h-8 w-36" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -230,40 +380,47 @@ function InviteForm({
   }
 
   return (
-    <section>
-      <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Invite a member
-      </h2>
-      <form onSubmit={submit} className="flex max-w-md flex-col gap-3">
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-        <input
-          type="email"
-          required
-          placeholder="teammate@example.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-        />
-        <select
-          value={roleId}
-          onChange={(event) => setRoleId(event.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-        >
-          <option value="">Select a role…</option>
-          {roles.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          {submitting ? "Sending…" : "Send invitation"}
-        </button>
-      </form>
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>Invite a member</CardTitle>
+        <CardDescription>
+          They&apos;ll get an email with a link to join this organisation.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={submit} className="flex max-w-md flex-col gap-3">
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              required
+              placeholder="teammate@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="invite-role">Role</Label>
+            <Select value={roleId} onValueChange={setRoleId}>
+              <SelectTrigger id="invite-role">
+                <SelectValue placeholder="Select a role…" />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={submitting} className="self-start">
+            {submitting ? "Sending…" : "Send invitation"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

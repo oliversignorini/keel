@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from "@keel/ui";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -9,6 +9,19 @@ import Link from "next/link";
  * "Settings uses a secondary horizontal tab row rather than a nested
  * sidebar"): General · Members · Roles · Billing · Audit. Audit is
  * Phase 8's (docs/plans/phase-8.md 8.2) — the fifth tab PRD §5 lists.
+ *
+ * The row is a Radix `<Tabs>` whose triggers are `asChild` `<Link>`s:
+ * navigation stays real (each tab is a route, middle-clickable and
+ * linkable), while the list keeps the roving-tabindex and `aria-selected`
+ * semantics a hand-rolled link row never had.
+ *
+ * The routed `children` MUST stay wrapped in a `<TabsContent>` for the
+ * active slug. Radix points every trigger's `aria-controls` at a panel id
+ * it expects to exist, and axe (`aria-valid-attr-value`, critical) fails
+ * the selected trigger when that panel is absent — verified against
+ * axe-core 4.13, the version e2e/app-accessibility.spec.ts runs. Rendering
+ * the panel is also the honest description of the markup: the routed page
+ * genuinely is the active tab's panel.
  */
 const TABS = [
   { slug: "general", label: "General" },
@@ -22,29 +35,23 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const params = useParams<{ org: string }>();
   const pathname = usePathname();
 
+  // The tab is the segment after `/settings`, so a future nested route
+  // (`/settings/members/[id]`) still highlights its parent tab.
+  const active = TABS.find((tab) => pathname.split("/").includes(tab.slug))?.slug ?? "general";
+
   return (
     <div>
-      <nav className="mb-6 flex gap-1 border-b border-neutral-200 dark:border-neutral-800">
-        {TABS.map((tab) => {
-          const href = `/${params.org}/settings/${tab.slug}`;
-          const active = pathname === href;
-          return (
-            <Link
-              key={tab.slug}
-              href={href}
-              className={cn(
-                "border-b-2 px-3 py-2 text-sm font-medium",
-                active
-                  ? "border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100"
-                  : "border-transparent text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100",
-              )}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
-      {children}
+      <PageHeader title="Settings" />
+      <Tabs value={active} className="gap-6">
+        <TabsList>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.slug} value={tab.slug} asChild>
+              <Link href={`/${params.org}/settings/${tab.slug}`}>{tab.label}</Link>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value={active}>{children}</TabsContent>
+      </Tabs>
     </div>
   );
 }

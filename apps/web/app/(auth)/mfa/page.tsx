@@ -3,16 +3,25 @@
 import { applyFieldErrors } from "@/lib/api/form-error-mapper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { identityFetch } from "@keel/api-client";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Form,
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  RHFFormField,
+} from "@keel/ui";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { defaultAppUrl, navigateTo } from "@/lib/navigation";
-
-import { FormError } from "../_components/form-error";
-import { FormField } from "../_components/form-field";
-import { SubmitButton } from "../_components/submit-button";
 
 // `POST /_allauth/browser/v1/auth/2fa/authenticate` only exists in the
 // generated client's spec when `KEEL_MFA_ENABLED` is on at generation
@@ -40,12 +49,11 @@ function MfaChallengeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<MfaFormValues>({ resolver: zodResolver(mfaFormSchema) });
+  const form = useForm<MfaFormValues>({
+    resolver: zodResolver(mfaFormSchema),
+    defaultValues: { code: "" },
+  });
+  const { isSubmitting } = form.formState;
 
   async function onSubmit(values: MfaFormValues) {
     setFormError(null);
@@ -57,34 +65,49 @@ function MfaChallengeForm() {
       });
       navigateTo(router, searchParams.get("next") ?? defaultAppUrl());
     } catch (error) {
-      setFormError(applyFieldErrors(error, setError));
+      setFormError(applyFieldErrors(error, form.setError));
     }
   }
 
   return (
     <>
-      <h1 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Two-factor authentication
-      </h1>
-      <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
+      <h1 className="mb-2 text-lg font-semibold text-foreground">Two-factor authentication</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Enter the 6-digit code from your authenticator app.
       </p>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        <FormError message={formError} />
-        <FormField
-          label="Code"
-          id="code"
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={6}
-          error={errors.code?.message}
-          {...register("code")}
-        />
-        <SubmitButton disabled={isSubmitting}>
-          {isSubmitting ? "Verifying…" : "Verify"}
-        </SubmitButton>
-      </form>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+          {formError ? (
+            <Alert variant="destructive">
+              <AlertCircle />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <RHFFormField
+            control={form.control}
+            name="code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Code</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : null}
+            {isSubmitting ? "Verifying…" : "Verify"}
+          </Button>
+        </form>
+      </Form>
     </>
   );
 }

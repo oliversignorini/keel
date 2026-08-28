@@ -40,13 +40,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         }}
       />
       <article>
-        <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {post.title}
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+        <h1 className="text-3xl font-semibold text-foreground">{post.title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           {post.date} · {post.author}
         </p>
-        <div className="mt-8 flex flex-col gap-4 text-neutral-700 dark:text-neutral-300 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-neutral-900 dark:[&_h2]:text-neutral-100">
+        <div className="mt-8 flex flex-col gap-4 text-foreground/80 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-foreground">
           <MDXContent code={post.mdx} />
         </div>
       </article>

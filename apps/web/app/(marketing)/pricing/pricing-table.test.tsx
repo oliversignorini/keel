@@ -32,13 +32,13 @@ describe("<PricingTable>", () => {
 
     expect(screen.getByText("$19")).toBeInTheDocument();
     expect(screen.getByText("$9")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Monthly" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("tab", { name: "Monthly" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("switches to the annual price for each plan when toggled", () => {
     render(<PricingTable plans={PLANS} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Annual" }));
 
     expect(screen.getByText("$190")).toBeInTheDocument();
     expect(screen.getByText("/ year")).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("<PricingTable>", () => {
     render(<PricingTable plans={PLANS} />);
     expect(screen.getByText("Solo")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Annual" }));
 
     expect(screen.queryByText("Solo")).not.toBeInTheDocument();
     expect(screen.getByText("Starter")).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe("<PricingTable>", () => {
   it("says so when nothing is purchasable on an interval", () => {
     render(<PricingTable plans={[PLANS[1]!]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Annual" }));
 
     expect(
       screen.getByText("No plans are available on this billing interval."),

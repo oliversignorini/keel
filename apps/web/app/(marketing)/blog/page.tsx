@@ -12,18 +12,18 @@ export default function BlogIndexPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">Blog</h1>
+      <h1 className="text-3xl font-semibold text-foreground">Blog</h1>
       <ul className="mt-8 flex flex-col gap-8">
         {posts.map((post) => (
           <li key={post.slug}>
             <Link href={`/blog/${post.slug}`} className="block">
-              <h2 className="text-xl font-semibold text-neutral-900 hover:underline dark:text-neutral-100">
+              <h2 className="text-xl font-semibold text-foreground hover:underline">
                 {post.title}
               </h2>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {post.date} · {post.author}
               </p>
-              <p className="mt-2 text-neutral-600 dark:text-neutral-400">{post.description}</p>
+              <p className="mt-2 text-muted-foreground">{post.description}</p>
             </Link>
           </li>
         ))}
