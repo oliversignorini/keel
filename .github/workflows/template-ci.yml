@@ -1,0 +1,193 @@
+name: template-ci
+
+# Phase 17 (docs/plans/phase-17.md): `init` is untested unless something
+# actually runs it. This runs it against two fixture instantiations on
+# every push — a non-synonym tenant noun each time, per the phase's own
+# acceptance note that a synonym ("org" -> "workspace") can pass by
+# coincidence in a way a genuinely different noun can't — and then runs
+# each fixture's own full gate suite. That last part is the only check
+# here that actually matters; the rest exist to say why it failed.
+#
+# This workflow, like scripts/init.ts itself, is deleted by `init` on a
+# real instantiation (deleteTemplateAuthoringDocs()) — it tests the
+# template, not the project a real run produces.
+
+on:
+  push:
+  pull_request:
+
+env:
+  PNPM_VERSION: "9.5.0"
+  NODE_VERSION: "22"
+
+jobs:
+  init-fixture:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Exercises: marketing site kept, demo slice kept as reference,
+          # both billing shapes on, the pure domain layer.
+          - name: acme
+            tenant_noun: team
+            marketing_site: "yes"
+            billing: both
+            demo_slice: keep
+            domain_layer: "yes"
+          # Exercises: marketing site declined, demo slice deleted
+          # outright, billing off, no domain layer — the other side of
+          # every toggle above.
+          - name: globex
+            tenant_noun: practice
+            marketing_site: "no"
+            billing: neither
+            demo_slice: delete
+            domain_layer: "no"
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: ${{ matrix.name }}
+          POSTGRES_USER: ${{ matrix.name }}
+          POSTGRES_PASSWORD: ${{ matrix.name }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ${{ matrix.name }} -d ${{ matrix.name }}"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Run init against a fixture copy
+        run: |
+          node --experimental-strip-types scripts/init.ts \
+            --name ${{ matrix.name }} \
+            --tenant-noun ${{ matrix.tenant_noun }} \
+            --app-domain app.${{ matrix.name }}.example \
+            --marketing-domain ${{ matrix.name }}.example \
+            --api-domain api.${{ matrix.name }}.example \
+            --marketing-site ${{ matrix.marketing_site }} \
+            --billing ${{ matrix.billing }} \
+            --demo-slice ${{ matrix.demo_slice }} \
+            --domain-layer ${{ matrix.domain_layer }} \
+            --yes
+
+      - name: Assert no stale "keel" references
+        run: |
+          hits=$(grep -ril "keel" --exclude-dir=.git --exclude-dir=node_modules \
+            --exclude-dir=.venv --exclude-dir=__pycache__ --exclude-dir=.mypy_cache \
+            --exclude-dir=.ruff_cache --exclude-dir=.pytest_cache . || true)
+          if [ -n "$hits" ]; then
+            echo "Stale 'keel' reference(s) survived instantiation:"
+            echo "$hits"
+            exit 1
+          fi
+
+      - name: Assert the tenant noun rewrite is complete
+        run: |
+          hits=$(grep -ril "organi[sz]ation" --exclude-dir=.git --exclude-dir=node_modules \
+            --exclude-dir=.venv --exclude-dir=__pycache__ . || true)
+          if [ -n "$hits" ]; then
+            echo "'organization'/'organisation' survived the tenant-noun rewrite:"
+            echo "$hits"
+            exit 1
+          fi
+          test -d "apps/api/${{ matrix.name }}/${{ matrix.tenant_noun }}s"
+
+      - name: Assert the demo slice landed where it should have
+        run: |
+          if [ "${{ matrix.demo_slice }}" = "delete" ]; then
+            test ! -d "apps/api/${{ matrix.name }}/widgets"
+            test ! -d "docs/reference-slice"
+          else
+            test ! -d "apps/api/${{ matrix.name }}/widgets"
+            test -d "docs/reference-slice"
+          fi
+
+      - name: Assert the marketing site landed where it should have
+        run: |
+          if [ "${{ matrix.marketing_site }}" = "no" ]; then
+            test ! -d "apps/web/app/(marketing)"
+            ! grep -q "content-collections" apps/web/package.json
+          else
+            test -d "apps/web/app/(marketing)"
+          fi
+
+      - name: apps/api — install
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: apps/api — ruff / mypy / permission lint / import-linter
+        working-directory: apps/api
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy .
+          uv run python ../../scripts/check_permission_lint.py
+          uv run lint-imports
+
+      - name: apps/api — makemigrations --check --dry-run
+        working-directory: apps/api
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build email templates
+        run: pnpm --filter "@${{ matrix.name }}/emails" build
+
+      - name: apps/api — pytest
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgres://${{ matrix.name }}:${{ matrix.name }}@localhost:5432/${{ matrix.name }}
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+        run: |
+          uv run pytest
+          uv run python ../../scripts/check_coverage.py
+
+      - name: apps/web — typecheck, test, lint
+        run: |
+          pnpm --filter web run typecheck
+          pnpm --filter web run test
+          pnpm --filter web run lint
+
+      - name: prettier --check
+        run: pnpm exec prettier --check .
+
+      - name: OpenAPI / client drift
+        working-directory: apps/api
+        run: |
+          uv run python ../../scripts/merge_openapi.py
+          git diff --exit-code -- ../../openapi.merged.json
+          pnpm --filter "@${{ matrix.name }}/api-client" generate
+          git diff --exit-code -- ../../packages/api-client/src/generated
