@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { splicePermission, spliceInstalledApps, spliceRouter } from "../anchors.js";
+import { planUi } from "./ui.js";
 import type { Field } from "../fields.js";
 import {
   displayField,
@@ -29,6 +30,7 @@ import {
   renderServiceCallKwargs,
 } from "../fields.js";
 import { formatPython } from "../format.js";
+import { formatTs } from "../format-ts.js";
 import type { Names } from "../naming.js";
 import { namesFor } from "../naming.js";
 import { Plan, reportPlan } from "../plan.js";
@@ -297,15 +299,6 @@ export function generateResource(options: ResourceOptions): number {
   const fields = parseFields(options.fields);
   const appDir = path.join(repo.packageDir, names.app);
 
-  if (options.ui) {
-    console.error(
-      `--ui is not implemented in this slice. Frontend templates land with ` +
-        `slice 19.C (docs/plans/phase-19.md); pass --no-ui, or run without it. ` +
-        `Nothing was written.`,
-    );
-    return 2;
-  }
-
   if (fs.existsSync(appDir) && !options.force) {
     console.error(
       `${rel(repo, appDir)} already exists. Re-running the generator over an existing ` +
@@ -366,6 +359,23 @@ export function generateResource(options: ResourceOptions): number {
     ),
   );
 
+  if (options.ui) {
+    try {
+      planUi(
+        repo,
+        names,
+        fields,
+        { permissionScheme: options.permissionScheme },
+        options.readonly,
+        plan,
+        options.dryRun,
+      );
+    } catch (error) {
+      console.error(`gen resource --ui: ${error instanceof Error ? error.message : String(error)}`);
+      return 2;
+    }
+  }
+
   if (options.dryRun) {
     if (!migrationExists) {
       plan.skip(
@@ -389,9 +399,23 @@ export function generateResource(options: ResourceOptions): number {
     plan.add(migrationPath, "");
   }
 
-  const formatted = formatPython(repo, [appDir, ...new Set(plan.splices.map((s) => s.file))]);
+  const spliceFiles = [...new Set(plan.splices.map((s) => s.file))];
+  const pythonSpliceFiles = spliceFiles.filter((f) => f.endsWith(".py"));
+  const tsSpliceFiles = spliceFiles.filter((f) => f.endsWith(".ts") || f.endsWith(".tsx"));
+
+  const formatted = formatPython(repo, [appDir, ...pythonSpliceFiles]);
   if (!formatted.ok) {
     plan.note(`  note: ${formatted.message}`);
+  }
+
+  if (options.ui) {
+    const webFiles = [...plan.files.filter((f) => !f.skipReason).map((f) => f.absolutePath)].filter(
+      (f) => f.includes(`${path.sep}apps${path.sep}web${path.sep}`),
+    );
+    const formattedTs = formatTs(repo, [...webFiles, ...tsSpliceFiles]);
+    if (!formattedTs.ok) {
+      plan.note(`  note: ${formattedTs.message}`);
+    }
   }
 
   reportPlan(repo, plan, false);

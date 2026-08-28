@@ -1,8 +1,8 @@
 import { Skeleton } from "@keel/ui";
 
-/** Shaped like the widgets table — filter bar, header row, five body
+/** Shaped like the __resources__ table — filter bar, header row, five body
  * rows — instead of a bare "Loading…" string. */
-export function WidgetsTableSkeleton() {
+export function __Resources__TableSkeleton() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">

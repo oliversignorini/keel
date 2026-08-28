@@ -1,8 +1,8 @@
 import { Skeleton } from "@keel/ui";
 
 /** Shaped like `<ResourceForm>` — a card with labeled fields and a footer
- * button — instead of blanking to nothing while the widget loads. */
-export function WidgetFormSkeleton() {
+ * button — instead of blanking to nothing while the __resource__ loads. */
+export function __Resource__FormSkeleton() {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border p-6">
       {Array.from({ length: 3 }).map((_, index) => (

@@ -84,7 +84,7 @@ jobs:
         working-directory: apps/api
         run: uv sync --frozen
 
-      - name: Regenerate apps/api/keel/widgets and diff against what is committed
+      - name: Regenerate the Widget reference slice (backend + frontend) and diff against what is committed
         run: |
           # `init --demo-slice delete` (or `keep`, which moves it to
           # docs/reference-slice/) removes the reference slice from an
@@ -98,9 +98,9 @@ jobs:
           fi
           pnpm gen resource Widget \
             --fields "name:str,description:text?,status:str(32)?" \
-            --permissions manage --force --no-verify
-          git diff --exit-code -- apps/api || {
-            echo "::error::apps/api/keel/widgets is no longer a faithful render of templates/resource.";
+            --permissions manage --force --ui --no-verify
+          git diff --exit-code -- apps/api apps/web || {
+            echo "::error::apps/api/keel/widgets or apps/web/.../widgets is no longer a faithful render of templates/resource and templates/ui.";
             echo "Improvements belong in the template, not in the reference slice — regenerate and commit.";
             exit 1;
           }
@@ -174,21 +174,42 @@ jobs:
         # refuses to collect tests until packages/emails/dist exists, and
         # it is a gitignored build artifact.
 
-      - name: gen resource — every field type, and the DB-free gates it runs itself
+      - name: gen resource --ui — every field type, and the DB-free gates it runs itself
         run: |
-          pnpm gen resource Gizmo --fields \
+          pnpm gen resource Gizmo --ui --fields \
             "name:str,code:str(32),note:text?,qty:int,price:decimal,active:bool,\
           due_on:date,seen_at:datetime,status:choice(draft,live),owner:fk(accounts.User)?"
         # No --no-verify: the generator runs makemigrations --check,
         # lint-imports and check_permission_lint.py itself and exits
         # non-zero on any of them, so this step is also the DB-free gate
-        # assertion.
+        # assertion. --ui exercises every field kind's frontend renderer
+        # (fields-ui.ts), including the choice-field component and the fk
+        # column, the same way the backend fields already cover every kind.
 
       - name: gen readonly-resource — the no-write-path variant
         run: pnpm gen readonly-resource Gauge --fields "period:str(32),total:decimal"
 
       - name: gen permission — a bespoke code on top of the generated CRUD four
         run: pnpm gen permission gizmo.export
+
+      - name: gen email — template plus sender
+        run: pnpm gen email GizmoReady --subject "Your gizmo is ready" --tokens "ORGANIZATION_NAME,GIZMO_URL"
+
+      - name: Rebuild email templates — the generated one must render too
+        run: pnpm --filter @keel/emails build
+
+      - name: Frontend lint and format — the whole app, including the generated --ui slice
+        run: |
+          pnpm --filter web lint
+          pnpm exec prettier --check apps/web
+        # Not a full `tsc`: the generated page imports GizmoOut etc. from
+        # @keel/api-client, and this slice deliberately never runs
+        # `gen sync-client` (ADR 0004 — that stays a separate, lock-guarded
+        # generator). eslint's parser doesn't need those types to resolve,
+        # so it still catches real mistakes in the generated JSX/TS; full
+        # type-correctness against a real client is what
+        # reference-slice-is-a-render proves, because Widget's types
+        # already exist in the committed generated client.
 
       - name: Invariant 1 — domain purity
         working-directory: apps/api

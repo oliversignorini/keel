@@ -14,6 +14,7 @@
  * that the copy read less often is the copy that goes stale.
  */
 
+import { generateEmail } from "./generators/email.js";
 import { generatePermission } from "./generators/permission.js";
 import { generateResource } from "./generators/resource.js";
 import { syncClient } from "./generators/sync-client.js";
@@ -41,6 +42,13 @@ Generators:
                              TypeScript client. The only generator that
                              touches them, and it takes a lock in the
                              shared .git directory so two worktrees cannot.
+  email <Name>                A transactional email: the react-email
+                             template (props, {{TOKEN}} defaults, and a
+                             button + fallback link for a URL token) and
+                             the Python sender in keel/notifications/
+                             emails.py. The body copy and the call site
+                             (a Tier-1 task on transaction.on_commit())
+                             are judgement, left as a TODO.
 
 Flags for resource / readonly-resource:
   --fields <spec>   Comma-separated name:type list. Types: str, str(N),
@@ -50,8 +58,12 @@ Flags for resource / readonly-resource:
                     Everything past this — constraints, indexes, Meta,
                     validators — is judgement and is left to a marked
                     insertion point in models.py.
-  --ui / --no-ui    Generate the frontend pages. --ui lands in slice 19.C;
-                    today it exits non-zero rather than pretending.
+  --ui / --no-ui    Generate the frontend pages: a list, create and detail
+                    route under apps/web/app/(app)/app/[org]/<resources>/,
+                    assembled from @keel/ui's data-table/resource-form/
+                    form-field/empty-state/page-header primitives, plus a
+                    thin apps/web/lib/<resources>/api.ts wrapper around the
+                    generated client. Not supported on readonly-resource yet.
   --permissions <crud|manage>
                     crud (default) emits <resource>.view/.create/.update/
                     .delete. manage emits the coarser
@@ -67,11 +79,24 @@ Flags for sync-client:
   --dry-run         Print the steps, run nothing.
   --force           Break a lock left behind by a crashed run.
 
+Flags for email:
+  --subject <text>  Required. The email's subject line, and the default
+                    <Layout preview/heading>.
+  --tokens <spec>   Comma-separated UPPER_SNAKE placeholder names, e.g.
+                    "ORGANIZATION_NAME,ACCEPT_URL". Defaults to a single
+                    ACTION_URL token. A token ending in _URL gets a button
+                    and a plain-text fallback link; every token becomes a
+                    template prop and a keyword arg on the Python sender.
+  --force           Overwrite an existing template file / append another
+                    sender of the same name.
+  --dry-run         Print the file plan, write nothing.
+
 Examples:
   pnpm gen resource Invoice --fields "number:str(32),amount:decimal,due_on:date,note:text?"
   pnpm gen readonly-resource AuditExport --fields "requested_for:date"
   pnpm gen permission invoice.export
   pnpm gen sync-client
+  pnpm gen email InvoiceOverdue --subject "Your invoice is overdue" --tokens "ORGANIZATION_NAME,INVOICE_URL"
 `;
 
 interface ParsedArgs {
@@ -165,6 +190,14 @@ function main(): number {
     }
     case "sync-client":
       return syncClient({ dryRun, force });
+    case "email":
+      return generateEmail({
+        name: requireName(positional, generator),
+        subject: stringFlag(flags, "subject"),
+        tokens: stringFlag(flags, "tokens"),
+        dryRun,
+        force,
+      });
     default:
       console.error(`Unknown generator "${generator}".\n`);
       console.log(HELP.trim());

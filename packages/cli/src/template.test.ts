@@ -58,6 +58,32 @@ describe("keel:if", () => {
   });
 });
 
+describe("keel:if — TypeScript and JSX comment syntax", () => {
+  it("accepts `//` markers, for real .ts/.tsx template files", () => {
+    const source = ["a", "// keel:if fk", "b", "// keel:endif", "c"].join("\n");
+    expect(render(source, ctx(["fk"]), "t")).toBe("a\nb\nc");
+    expect(render(source, ctx([]), "t")).toBe("a\nc");
+  });
+
+  it("accepts `{/* ... */}` markers, for inside JSX children", () => {
+    const source = ["a", "{/* keel:if fk */}", "b", "{/* keel:endif */}", "c"].join("\n");
+    expect(render(source, ctx(["fk"]), "t")).toBe("a\nb\nc");
+    expect(render(source, ctx([]), "t")).toBe("a\nc");
+  });
+
+  it("accepts `{/* keel:insert slot */}` inside JSX children", () => {
+    const source = ["<div>", "  {/* keel:insert body */}", "</div>"].join("\n");
+    expect(render(source, ctx([], { body: ["  <Child />"] }), "t")).toBe(
+      "<div>\n  <Child />\n</div>",
+    );
+  });
+
+  it("does not treat an ordinary comment as a marker", () => {
+    expect(render("// just a comment", ctx(), "t")).toBe("// just a comment");
+    expect(render("{/* just a comment */}", ctx(), "t")).toBe("{/* just a comment */}");
+  });
+});
+
 describe("keel:insert", () => {
   it("replaces the marker line with the supplied block", () => {
     const source = ["def f():", "    # keel:insert body"].join("\n");
