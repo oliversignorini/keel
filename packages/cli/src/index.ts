@@ -14,6 +14,8 @@
  * that the copy read less often is the copy that goes stale.
  */
 
+import { generateE2e } from "./generators/e2e.js";
+import { generateJob } from "./generators/job.js";
 import { generatePermission } from "./generators/permission.js";
 import { generateResource } from "./generators/resource.js";
 import { syncClient } from "./generators/sync-client.js";
@@ -41,6 +43,17 @@ Generators:
                              TypeScript client. The only generator that
                              touches them, and it takes a lock in the
                              shared .git directory so two worktrees cannot.
+  job <Name>                 A job type. --tier 1 appends one @task
+                             delegation to an existing app's tasks.py.
+                             --tier 2 emits a keel/jobs/<name>.py module
+                             (steps, registration) plus tests, following
+                             keel/jobs/demo.py's shape. --tier is required
+                             — this generator does not guess it.
+  e2e <Resource>              Not a scaffolder: writes a Playwright spec
+                             for the happy CRUD path against the --ui
+                             pages, then runs the full /check-invariants
+                             suite including pytest. The ship gate — run
+                             it when the feature is finished.
 
 Flags for resource / readonly-resource:
   --fields <spec>   Comma-separated name:type list. Types: str, str(N),
@@ -67,11 +80,34 @@ Flags for sync-client:
   --dry-run         Print the steps, run nothing.
   --force           Break a lock left behind by a crashed run.
 
+Flags for job:
+  --tier <1|2>      Required. 1: fire-and-forget, needs --app. 2:
+                    multi-step, resumable.
+  --app <app>       Tier 1 only: the existing app whose tasks.py gets the
+                    new task.
+  --service <name>  Tier 1 only: the services.py function to delegate to.
+                    Defaults to the job's own name.
+  --steps <names>   Tier 2 only: comma-separated step names, e.g.
+                    "fetch,transform,publish". Defaults to one "run" step.
+  --force           Tier 2 only: overwrite an existing job module.
+  --dry-run         Print the file plan and the splice, write nothing.
+  --no-verify       Skip the DB-free gates.
+
+Flags for e2e:
+  --fields <spec>   Same DSL as resource, used only to pick which field the
+                    spec fills in and asserts on. Defaults to "name".
+  --force           Overwrite an existing spec file.
+  --dry-run         Print the file plan, write nothing, and skip the gate
+                    suite.
+
 Examples:
   pnpm gen resource Invoice --fields "number:str(32),amount:decimal,due_on:date,note:text?"
   pnpm gen readonly-resource AuditExport --fields "requested_for:date"
   pnpm gen permission invoice.export
   pnpm gen sync-client
+  pnpm gen job SendInvoiceReminder --tier 1 --app invoices
+  pnpm gen job RollupMonthlyUsage --tier 2 --steps "fetch,aggregate,publish"
+  pnpm gen e2e Invoice --fields "number:str(32)"
 `;
 
 interface ParsedArgs {
@@ -165,6 +201,29 @@ function main(): number {
     }
     case "sync-client":
       return syncClient({ dryRun, force });
+    case "job": {
+      const tierRaw = stringFlag(flags, "tier");
+      if (tierRaw !== "1" && tierRaw !== "2") {
+        throw new Error(`\`gen job\` needs --tier 1 or --tier 2 (got ${tierRaw ?? "nothing"}).`);
+      }
+      return generateJob({
+        name: requireName(positional, generator),
+        tier: tierRaw === "1" ? 1 : 2,
+        steps: stringFlag(flags, "steps"),
+        app: stringFlag(flags, "app"),
+        service: stringFlag(flags, "service"),
+        dryRun,
+        force,
+        verify,
+      });
+    }
+    case "e2e":
+      return generateE2e({
+        name: requireName(positional, generator),
+        fields: stringFlag(flags, "fields"),
+        dryRun,
+        force,
+      });
     default:
       console.error(`Unknown generator "${generator}".\n`);
       console.log(HELP.trim());

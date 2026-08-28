@@ -1,51 +1,32 @@
 Regenerate the TypeScript API client from the current Django + allauth
-OpenAPI specs, and confirm it matches what CI will produce. Run this any
-time a viewset, serializer, or URL changed.
+OpenAPI specs. Run this any time a view, schema, or route changed.
 
-**Before running:** confirm no other worktree is regenerating
-`openapi.merged.json` or `packages/api-client/src/generated` right now —
-only one may at a time (`docs/review-2026-08.md`); a collision here is an
-unresolvable merge conflict, not a bug to fix.
+## Run the generator
 
-1. Merge the specs:
+```
+pnpm gen sync-client
+```
 
-   ```
-   cd apps/api && uv run python ../../scripts/merge_openapi.py
-   ```
+This is the _only_ command allowed to touch `openapi.merged.json` or
+`packages/api-client/src/generated` (`docs/plans/WORKTREES.md` rule 3) —
+it takes a lock in the shared `.git` directory (worktrees share it) and
+refuses to run if another worktree already holds it, rather than relying
+on remembering the rule. If it refuses, wait for that run to finish; pass
+`--force` only if you're certain a crashed run left the lock behind.
 
-   This regenerates `openapi.merged.json` at the repo root from
-   drf-spectacular's DRF spec and allauth headless's `/_allauth/openapi.json`.
+It runs, in order: merge the DRF and allauth specs into
+`openapi.merged.json`, run orval over the merged spec, typecheck the
+generated client, typecheck `apps/web` against the new types. It then
+reports which of `openapi.merged.json` / `packages/api-client/src/generated`
+changed — **never hand-edit anything under `generated/`**; if the output
+looks wrong, the fix is in the Django view/schema or in
+`orval.config.ts`, not in the generated file.
 
-2. Generate the client:
+## Finish
 
-   ```
-   cd packages/api-client && pnpm generate
-   ```
-
-   Runs orval against `openapi.merged.json`, writing
-   `packages/api-client/src/generated`. **Never hand-edit anything under
-   `generated/`** — if the output looks wrong, the fix is in the Django
-   view/serializer or in `orval.config.ts`, not in the generated file.
-
-3. Confirm nothing is stale:
-
-   ```
-   git diff --exit-code -- openapi.merged.json packages/api-client/src/generated
-   ```
-
-   A clean diff means the client was already in sync. A diff means
-   commit it — this is exactly what CI's `api-client-generation` and
-   `contracts` jobs check, and a PR with drift here fails both.
-
-4. Typecheck the result:
-
-   ```
-   pnpm --filter @keel/api-client typecheck
-   ```
-
-5. If `apps/web` consumes the changed endpoint, update its call sites and
-   run `pnpm --filter web typecheck` to catch anything the new types
-   broke.
-
-Report which files changed (new endpoints, changed shapes, or none) —
-don't just say "regenerated."
+If the client changed, commit it — CI's `api-client-generation` and
+`contracts` jobs both fail on drift here, so commit alongside the change
+that caused it. If `apps/web` consumes the changed endpoint, update its
+call sites (the typecheck step above will have already told you what
+broke). Report which files changed (new endpoints, changed shapes, or
+none) — don't just say "regenerated."

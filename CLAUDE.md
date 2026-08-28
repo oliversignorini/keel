@@ -38,6 +38,33 @@ contains a business rule is a bug, not a style choice.
 | 6   | Every viewset declares `organization_scoped = True` + `test_factory`, or `organization_scoped = False` + `GLOBAL_JUSTIFICATION`. Cross-org access on a scoped viewset returns 404, not 403.                                                               | `OrgScopedViewSet.__init_subclass__` (`keel/core/authz.py`) fails at import if neither is present; `keel/organizations/tests/test_meta_router_wiring.py` walks the router; `tenant_isolation.py` asserts 404 | `cd apps/api && uv run pytest keel/organizations/tests/test_meta_router_wiring.py keel/organizations/tests/test_tenant_isolation.py` |
 | 7   | Every mutating service is `@audited("action.name")` or `@not_audited(reason=...)`. Coverage is gated per directory (`[tool.keel.coverage]` in `apps/api/pyproject.toml`), not by one global number.                                                       | `keel/audit` meta-test fails on a service decorated with neither; `scripts/check_coverage.py` reads `coverage.json` after pytest                                                                             | `cd apps/api && uv run pytest && python3 ../../scripts/check_coverage.py`                                                            |
 
+## Generator catalogue
+
+Before hand-writing a slice, check whether `pnpm gen` already provisions
+it (ADR 0004, `docs/plans/phase-19.md`). `pnpm gen --help` is the full
+reference for flags; this table is only "what exists and which command
+provisions it" — for a brief spanning more than one row, run
+`/plan-feature` first rather than working through this table by hand.
+
+| Provisions                                 | Command                                            | Slash command that adds judgement |
+| ------------------------------------------ | -------------------------------------------------- | --------------------------------- |
+| Full CRUD vertical slice                   | `pnpm gen resource <Name> --fields "..."`          | `/new-resource`                   |
+| Read-only vertical slice                   | `pnpm gen readonly-resource <Name> --fields "..."` | `/new-readonly-resource`          |
+| One permission code                        | `pnpm gen permission <resource.action>`            | `/new-permission`                 |
+| A job type (Tier 1 or 2)                   | `pnpm gen job <Name> --tier 1\|2`                  | `/new-job`                        |
+| TypeScript API client regen                | `pnpm gen sync-client`                             | `/sync-client`                    |
+| Ship gate: e2e spec + full invariant suite | `pnpm gen e2e <Resource>`                          | run once the feature is finished  |
+| Third-party OAuth provider                 | — (no mechanical core to extract)                  | `/new-connection`                 |
+| Multi-generator feature plan               | —                                                  | `/plan-feature`                   |
+
+Everything past the field list, the step list, or the permission code
+itself — business rules, bespoke validation, subject-aware guards — is
+judgement the generator leaves at a marked insertion point and the slash
+command drives you through. A generator's DB-free gates passing is not
+the same as the slice being done; run `/check-invariants` (or
+`pnpm gen e2e <Resource>`, which runs it for you) before considering it
+finished.
+
 ## Other things that will bite you
 
 - `packages/api-client/src/generated` is never hand-edited. It is produced
