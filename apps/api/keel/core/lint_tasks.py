@@ -137,3 +137,53 @@ def discover_shim_tasks(dotted_prefix: str) -> Iterable[Task]:
         for value in vars(module).values():
             if isinstance(value, Task):
                 yield value
+
+
+def discover_shared_tasks(dotted_prefix: str) -> Iterable[typing.Any]:
+    """Every Celery ``Task`` instance (``@shared_task``) bound to a
+    module-level name anywhere under ``dotted_prefix`` — Tier 2's own
+    territory (module docstring above). Unlike ``discover_shim_tasks``
+    this isn't limited to ``tasks.py`` modules: ``keel.jobs.runner`` is
+    Tier 2's canonical home for ``run_job_task``/``sweep_stuck_jobs_task``
+    and isn't named ``tasks.py``, so every non-test, non-migration module
+    is walked."""
+    from celery.app.task import Task as CeleryTask
+
+    package = importlib.import_module(dotted_prefix)
+    for module_info in pkgutil.walk_packages(package.__path__, prefix=f"{dotted_prefix}."):
+        name_parts = module_info.name.split(".")
+        if "tests" in name_parts or "migrations" in name_parts:
+            continue
+        module = importlib.import_module(module_info.name)
+        for value in vars(module).values():
+            if isinstance(value, CeleryTask):
+                yield value
+
+
+def check_shared_task_takes_ids_not_instances(shared_task: typing.Any) -> None:
+    """Tier 2 equivalent of ``check_takes_ids_not_instances``: a Celery
+    ``@shared_task`` isn't wrapped in the Tier-1 ``Task`` shim, so this
+    works off ``.__wrapped__`` (the plain function Celery decorated,
+    preserved via ``functools.wraps``) instead of ``keel.core.tasks.Task``.
+    Tier 2 tasks are otherwise unconstrained (module docstring above) —
+    this only checks the one acceptance criterion PRD §5 makes universal:
+    tasks take ids, never model instances."""
+    from django.db import models
+
+    func = getattr(shared_task, "__wrapped__", None)
+    if func is None:
+        return
+    try:
+        hints = typing.get_type_hints(func)
+    except NameError:
+        return
+
+    for name, hint in hints.items():
+        if name in ("return", "self"):
+            continue
+        if isinstance(hint, type) and issubclass(hint, models.Model):
+            raise TaskLintViolation(
+                getattr(shared_task, "name", func.__name__),
+                f"parameter {name!r} is annotated {hint.__name__!r}, "
+                "a Django Model subclass — tasks take ids, not instances",
+            )

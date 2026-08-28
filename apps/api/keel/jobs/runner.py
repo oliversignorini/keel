@@ -33,6 +33,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from keel.billing import credits
+from keel.core.tasks import report_to_sentry
 from keel.jobs.concurrency import OrgConcurrencyLimiter
 from keel.jobs.models import FailedTask, Job, JobStep
 from keel.jobs.pubsub import publish_job_event, publish_step_event
@@ -219,6 +220,11 @@ def _dead_letter(task_name: str, job_id: Any, exc: Exception) -> None:
         traceback=traceback_text,
         attempts=MAX_RETRIES,
     )
+    # docs/boundary-guardrails.md "Async boundary": mirrors the Tier-1
+    # shim's dead-letter policy (keel/core/tasks.py) — a FailedTask row
+    # alone is invisible until someone thinks to look at the admin;
+    # Sentry is what actually pages on-call.
+    report_to_sentry(task_name, str(exc), traceback_text, exc=exc)
     logger.error("job %s dead-lettered after %s attempts", job_id, MAX_RETRIES)
 
 
