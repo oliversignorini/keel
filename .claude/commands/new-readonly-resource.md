@@ -1,54 +1,50 @@
 Generate a read-only vertical slice for the resource named in
-`$ARGUMENTS` — same shape as `/new-resource` minus every write path.
+`$ARGUMENTS` — `pnpm gen readonly-resource` instead of `pnpm gen
+resource`, minus every write path (ADR 0004, `docs/plans/phase-19.md`).
 Use this for reference data, computed views, or anything the API only
-ever lists and retrieves (a `GlobalViewSet` with no org scoping is also
-valid here if the data is genuinely global — see below).
+ever lists and retrieves.
 
 **Ask first** whether this resource is org-scoped or global if it isn't
 obvious. A resource that is legitimately identical across every tenant
 (enrichment data, shared taxonomies) is a `GlobalViewSet` with a
-`GLOBAL_JUSTIFICATION`; get that justification from the caller rather
-than inventing one — invariant 6 requires it to be a real paragraph, not
+`GLOBAL_JUSTIFICATION` — the generator does not emit that path; get the
+justification from the caller and wire it by hand rather than inventing
+one, since invariant 6 requires it to be a real paragraph, not
 boilerplate.
 
-## Backend (`apps/api/keel/<app>/`)
+## 1. Run the generator
 
-1. `models.py`, `migrations/0001_initial.py`.
-2. `selectors.py` — `list_<resource>s(...)`, `get_<resource>(...)`. No
-   `services.py` is needed unless something writes this data
-   out-of-band (a sync task, an import job) — if so, add `services.py`
-   with `@audited`/`@not_audited` on the writer, per `/new-job` if it's
-   task-driven.
-3. `serializers.py` — one read serializer.
-4. `views.py` — `<Resource>ViewSet(mixins.ListModelMixin,
-mixins.RetrieveModelMixin, OrgScopedViewSet)` (or `GlobalViewSet`).
-   Org-scoped: `organization_scoped = True` + `test_factory`. Global:
-   `organization_scoped = False` + `GLOBAL_JUSTIFICATION` naming why no
-   tenant leak is possible.
-5. `urls.py`, `admin.py`.
+```
+pnpm gen readonly-resource __Resource__ --fields "period:str(32),total:decimal"
+```
 
-## Permissions
+Same `--fields` DSL as `/new-resource`. This emits `models.py`,
+`migrations/0001_initial.py`, `selectors.py`, list/retrieve-only
+`schemas.py`/`views.py`, `admin.py`, a factory, and tests — no
+`services.py`, no write schemas, one `<resource>.view` permission code
+instead of the CRUD four — and runs the same DB-free gates `/new-resource`
+does.
 
-Add one `<RESOURCE>_VIEW` code only — no `_MANAGE`. Register it in
-`organizations/permissions.py` next to the existing `_VIEW` codes, and
-add it to `_MEMBER_CODES` in `roles.py`.
+## 2. Do the judgement work
 
-## Tests
+- If something writes this data out-of-band (a sync task, an import job),
+  add `services.py` by hand with `@audited`/`@not_audited` on the writer —
+  the generator has no flag for "read-only API, but not read-only data".
+  Run `/new-job` if the write is task-driven.
+- If this is genuinely global (not org-scoped), swap the generated
+  `OrgScopedViewSet` base for `GlobalViewSet` and write the
+  `GLOBAL_JUSTIFICATION` — see PRD §4 invariant 7, "Where a global table
+  has a tenant-scoped companion" for the shape of the accompanying test
+  that proves no tenant-private relationship leaks through its id space.
 
-- `factories.py` with a `<resource>_factory` (required even for a global
-  viewset's fixture data, unless nothing ever needs to build one, which
-  is unusual).
-- `test_api_<app>.py` — allow-path list/retrieve test and a deny-path
-  test asserting the `reason`. If org-scoped, no separate cross-org test
-  is needed — the meta-tests cover it once `test_factory` is set. If
-  global, write the explicit test that a viewset's id space doesn't leak
-  an org-private relationship (see the pattern in PRD §4 invariant 7,
-  "Where a global table has a tenant-scoped companion").
+## 3. Sync the client
 
-## Frontend
+`pnpm gen sync-client` in whichever worktree owns the generated client
+this wave.
 
-`page.tsx` (list) and `[id]/page.tsx` (detail) only — no `new/page.tsx`.
+## 4. Finish
 
-## Finish
-
-`/sync-client`, then `/check-invariants`.
+`/check-invariants`, then `pnpm gen e2e __Resource__` once the feature is
+actually finished (list/retrieve path only — there's no create/edit/
+delete flow to exercise on a read-only resource, so treat its happy path
+as list-then-retrieve).

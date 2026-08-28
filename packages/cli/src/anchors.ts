@@ -324,3 +324,103 @@ export function spliceNavItem(
     dryRun,
   );
 }
+
+export interface JobRegistrationInput {
+  /** The module under `keel/jobs/` to import, e.g. `invoice_rollup`. */
+  module: string;
+  /** Text for the trailing `# noqa: F401 — registers the ... job type` comment. */
+  comment: string;
+}
+
+/**
+ * The import inside `JobsConfig.ready()` that registers a Tier-2 job
+ * type (`gen job --tier 2`, docs/plans/phase-19.md 19.B) — mirrors how
+ * `keel/jobs/demo.py` is registered. A job module that is never imported
+ * is a job type nothing ever registers, which fails loudly the first time
+ * something tries to create a job of that type rather than at generation
+ * time, so this splice exists for the same reason the other four do.
+ *
+ * Not `applySpec`: after a second `gen job --tier 2` run, `formatPython`'s
+ * `ruff check --select I --fix` merges the two separate
+ * `from keel.jobs import X` lines it finds into one parenthesized
+ * `from keel.jobs import (\n    X,\n    Y,\n)` group — a shape `applySpec`'s
+ * single fixed `insert` can't both detect (`present`) and correctly extend
+ * (`locate`, which would need to insert *inside* the group at a different
+ * indent than a standalone line needs). This splices around that shape
+ * explicitly instead.
+ */
+export function spliceJobRegistration(
+  appsFile: string,
+  input: JobRegistrationInput,
+  dryRun: boolean,
+): Splice {
+  if (!fs.existsSync(appsFile)) {
+    throw new AnchorError(
+      `Cannot register the ${input.module} job type: ${appsFile} does not exist. ` +
+        `The generator expects a Keel-shaped repository.`,
+    );
+  }
+  const description = `keel/jobs/apps.py ready() imports keel.jobs.${input.module}`;
+  const content = fs.readFileSync(appsFile, "utf8");
+
+  // Bounded lookahead, not an unbounded scan: `ready()` is a handful of
+  // lines, and bounding this keeps a coincidentally-matching module name
+  // elsewhere in the file (there shouldn't be one, but this is a splice
+  // into a file the generator does not fully own) from producing a false
+  // "already present".
+  const alreadyPresent = new RegExp(
+    `from keel\\.jobs import\\b[\\s\\S]{0,800}?\\b${input.module}\\b`,
+  ).test(content);
+  if (alreadyPresent) {
+    return { file: appsFile, description, changed: false };
+  }
+
+  const lines = content.split("\n");
+  const groupStart = lines.findIndex((line) => /^\s{8}from keel\.jobs import \(\s*$/.test(line));
+
+  let at = -1;
+  let insert: string[];
+  if (groupStart !== -1) {
+    let closeIdx = -1;
+    for (let i = groupStart + 1; i < lines.length; i++) {
+      if (/^\s{8}\)\s*$/.test(lines[i]!)) {
+        closeIdx = i;
+        break;
+      }
+    }
+    if (closeIdx === -1) {
+      throw new AnchorError(
+        `Cannot register the ${input.module} job type: unterminated ` +
+          `"from keel.jobs import (" group in ${appsFile}.`,
+      );
+    }
+    at = closeIdx;
+    insert = [
+      `            ${input.module},  # noqa: F401 — registers the ${input.comment} job type`,
+    ];
+  } else {
+    const last = lastIndexMatching(
+      lines,
+      /^\s{8}from keel\.jobs import [a-zA-Z_][a-zA-Z0-9_]*\s*(#.*)?$/,
+    );
+    if (last !== -1) {
+      at = last + 1;
+    } else {
+      const readyIdx = lines.findIndex((line) => /^\s{4}def ready\(self\) -> None:\s*$/.test(line));
+      if (readyIdx === -1) {
+        throw new AnchorError(
+          `Cannot register the ${input.module} job type: could not find ` +
+            `"def ready(self) -> None:" in ${appsFile}.`,
+        );
+      }
+      at = readyIdx + 1;
+    }
+    insert = [
+      `        from keel.jobs import ${input.module}  # noqa: F401 — registers the ${input.comment} job type`,
+    ];
+  }
+
+  lines.splice(at, 0, ...insert);
+  if (!dryRun) fs.writeFileSync(appsFile, lines.join("\n"), "utf8");
+  return { file: appsFile, description, changed: true };
+}
