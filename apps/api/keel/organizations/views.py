@@ -17,6 +17,7 @@ needs org name + locked email to drive signup before there's a session).
 
 from typing import Any
 
+from django.db import IntegrityError
 from django.http import Http404, HttpResponse
 from django.utils import timezone
 from ninja import Status
@@ -79,11 +80,19 @@ def list_organizations(request: Any, cursor: str | None = None, limit: int | Non
 )
 @idempotent
 def create_organization(request: Any, payload: OrganizationCreateIn) -> Any:
-
     slug = resolve_create_slug(payload)
-    organization = services.create_organization(
-        created_by=request.auth, name=payload.name, slug=slug
-    )
+    try:
+        organization = services.create_organization(
+            created_by=request.auth, name=payload.name, slug=slug
+        )
+    except IntegrityError as exc:
+        # slug's unique=True constraint is the single source of truth
+        # (docs/boundary-guardrails.md "Validation boundary") — a caller
+        # that supplied an explicit, already-taken slug lands here rather
+        # than on a check-then-act race in a schema validator.
+        raise Conflict(
+            code="slug_taken", message="An organisation with this slug already exists."
+        ) from exc
     return Status(201, organization)
 
 

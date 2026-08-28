@@ -54,6 +54,10 @@ jobs:
         working-directory: apps/api
         run: uv run python ../../scripts/check_permission_lint.py
 
+      - name: check_unsafe_rendering.py
+        working-directory: apps/api
+        run: uv run python ../../scripts/check_unsafe_rendering.py
+
       - name: bandit
         working-directory: apps/api
         run: uv run bandit -c pyproject.toml -r keel -x '*/tests/*,*/migrations/*'

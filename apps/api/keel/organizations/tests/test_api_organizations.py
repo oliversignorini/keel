@@ -59,6 +59,20 @@ def test_create_and_list_organizations() -> None:
     assert "acme-co" in slugs
 
 
+def test_create_organization_rejects_taken_slug_as_conflict() -> None:
+    _org, _creator = _org_with_owner()
+    other = _user("other")
+    client = _client_for(other)
+
+    response = client.post(
+        "/api/v1/orgs/",
+        {"name": "Acme Duplicate", "slug": _org.slug},
+        content_type="application/json",
+    )
+    assert response.status_code == 409, response.json()
+    assert response.json()["error"]["code"] == "slug_taken"
+
+
 def test_organization_detail_404s_for_nonmember_and_nonexistent_slug() -> None:
     org, _creator = _org_with_owner()
     outsider = _user("outsider")

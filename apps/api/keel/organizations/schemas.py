@@ -8,7 +8,7 @@ from uuid import UUID
 from django.utils import timezone
 from django.utils.text import slugify
 from ninja import Schema
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from keel.billing.schemas import EntitlementsOut
 from keel.organizations.models import Membership, Organization
@@ -47,15 +47,18 @@ class OrganizationOut(Schema):
 
 
 class OrganizationCreateIn(Schema):
+    """Shape only (docs/boundary-guardrails.md "Validation boundary"):
+    slug uniqueness used to be enforced here via a ``field_validator`` that
+    queried ``Organization`` directly — an ORM read outside
+    ``selectors.py`` (invariant 1) and a check-then-act race outside the
+    service's transaction (the DB could accept a second identical slug
+    between this validator running and ``create_organization``'s insert).
+    The view now lets the ``slug`` column's own ``unique=True`` constraint
+    be the single source of truth and translates the resulting
+    ``IntegrityError`` into a 409."""
+
     name: str = Field(max_length=255)
     slug: str | None = Field(default=None, max_length=255)
-
-    @field_validator("slug")
-    @classmethod
-    def _slug_not_taken(cls, value: str | None) -> str | None:
-        if value and Organization.objects.filter(slug=value).exists():
-            raise ValueError("An organisation with this slug already exists.")
-        return value
 
 
 def unique_slug(base: str) -> str:

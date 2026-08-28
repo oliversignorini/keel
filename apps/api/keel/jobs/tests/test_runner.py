@@ -4,9 +4,12 @@ resolution including ``partial`` and its credit settlement."""
 from unittest.mock import patch
 
 import pytest
+import sentry_sdk
 
 from keel.billing.models import CreditLedgerEntry
 from keel.billing.tests.factories import make_organization, make_user
+from keel.core.sentry import init_sentry
+from keel.core.tests.sentry_stub import CapturingTransport
 from keel.jobs.models import FailedTask, Job, JobStep
 from keel.jobs.registry import JobStepSpec, JobTypeSpec, registry
 from keel.jobs.runner import run_job, run_job_task
@@ -208,6 +211,38 @@ def test_run_job_task_dead_letters_after_exhausting_retries(settings) -> None:
     failed = FailedTask.objects.get()
     assert failed.task_name == "keel.jobs.runner.run_job_task"
     assert "boom" in failed.error
+
+
+def test_run_job_task_dead_lettering_reports_the_exception_to_sentry(settings) -> None:
+    """docs/boundary-guardrails.md "Async boundary": ``_dead_letter``
+    used to write a ``FailedTask`` row and nothing else — an asymmetry
+    with the Tier-1 shim's dead-letter policy (see
+    ``keel.core.tests.test_tasks_retry.
+    test_dead_lettering_reports_the_exception_to_sentry``), which this
+    mirrors so a stuck job actually pages on-call instead of waiting for
+    someone to check the admin."""
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = False
+    transport = CapturingTransport()
+    init_sentry(transport=transport, release="test-sha")
+    try:
+        with _Registered("t.task-fails-sentry", (JobStepSpec(name="a", run=lambda ctx: "ok"),)):
+            org = make_organization()
+            job = _job(org, "t.task-fails-sentry")
+
+            with (
+                patch("keel.jobs.runner.run_job", side_effect=RuntimeError("boom")),
+                patch("keel.jobs.runner._backoff_seconds", return_value=0),
+            ):
+                run_job_task.delay(str(job.id))
+
+        sentry_sdk.get_client().flush()
+        assert len(transport.envelopes) == 1
+        event = transport.envelopes[0].get_event()
+        assert event["exception"]["values"][-1]["type"] == "RuntimeError"
+        assert event["tags"]["task_name"] == "keel.jobs.runner.run_job_task"
+    finally:
+        init_sentry()
 
 
 def test_run_job_renews_the_concurrency_lease_at_each_step_boundary() -> None:
