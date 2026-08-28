@@ -144,8 +144,14 @@ function parseArgs(argv: string[]): Partial<Config> & { configFile?: string; hel
 }
 
 const DEFAULTS: Partial<Config> = {
-  stripeSecretKey: "sk_test_placeholder",
-  stripePublishableKey: "pk_test_placeholder",
+  // Deliberately not shaped like a real Stripe key (no "sk" + "_test_" +
+  // alnum-run prefix): gitleaks' stripe-access-token rule matches on that
+  // shape alone regardless of what follows, so a placeholder that merely
+  // *looks* like a real key still flags as a leaked secret. Fixed by
+  // making the placeholder unable to pattern-match, not by allowlisting
+  // a match a scanner correctly found.
+  stripeSecretKey: "changeme-stripe-secret-key",
+  stripePublishableKey: "changeme-stripe-publishable-key",
   marketingSite: true,
   billing: "neither",
   demoSlice: "keep",
@@ -1365,18 +1371,34 @@ function regenerate(config: Config): void {
 
   // Renaming shifts import alphabetization (e.g. "Organization" sorted
   // before "Role"; "Team" sorts after it) and occasionally a line past the
-  // 100-column limit by however many characters the tenant noun grew —
-  // ruff's own --fix handles the former; the latter is rare enough, and
-  // risky enough to wrap automatically, that it's left for CI/pre-push to
-  // catch and a human to wrap by hand.
+  // 100-column limit by however many characters the tenant noun grew.
+  // Format *first*: it rewraps those overlong lines, so `check` sees them
+  // as already fixed rather than reporting an E501 `--fix` can't touch
+  // (line-wrapping isn't one of ruff check's autofixes) — reversing this
+  // order once left real, un-reported lint errors sitting in a project
+  // `init` had just claimed was clean.
+  run("uv", ["run", "ruff", "format", "."], apiDir);
   try {
     run("uv", ["run", "ruff", "check", "--fix", "."], apiDir);
   } catch {
-    warn("ruff --fix reported remaining issues in apps/api — see its output above.");
+    // --fix's own remaining-issues exit is expected mid-pipeline — the
+    // reformat below plus the unguarded check after it is the real gate.
   }
+  // --fix's import reordering can itself leave a line for format to
+  // rewrap again.
   run("uv", ["run", "ruff", "format", "."], apiDir);
+  // Deliberately not wrapped in try/catch: a project must not come out of
+  // `init` with lint errors already baked in. Anything still failing here
+  // fails the whole run instead of a silent warning nobody reads.
+  run("uv", ["run", "ruff", "check", "."], apiDir);
   run("uv", ["run", "python", mergeOpenapiRel], apiDir);
-  run("pnpm", ["install"], REPO_ROOT);
+  // CI runs with CI=true, under which pnpm defaults to --frozen-lockfile —
+  // and package renames (e.g. @keel/tsconfig -> @acme/tsconfig) are
+  // exactly the importer-name change frozen-lockfile mode exists to
+  // reject. This install is legitimately rewriting the lockfile to match
+  // the renamed packages, not drifting from a lockfile that should have
+  // been committed alongside a source change.
+  run("pnpm", ["install", "--no-frozen-lockfile"], REPO_ROOT);
   run("pnpm", ["--filter", `@${config.name}/api-client`, "generate"], REPO_ROOT);
   // apps/api's conftest.py refuses to collect tests until this exists
   // (docs/pre-push.md, docs/plans/phase-8.md 8.4's "build artefact the
