@@ -1,12 +1,12 @@
-"""The audit meta-test (PRD v1.2 §8 Phase 8, "The service registry,
-specified"; docs/plans/phase-8.md 8.1): every public, mutating
-``services.py`` callable across the whole backend must be decorated
-``@audited`` or ``@not_audited(reason=...)``.
+"""The audit meta-test (PRD v1.2 §8, "The service registry, specified"):
+every public, mutating ``services.py`` callable across the whole backend
+must be decorated ``@audited`` or ``@not_audited(reason=...)``.
 
 The mechanism is proven directly first — against a deliberately
 undecorated fixture function — the same way
-``test_tenant_isolation.py`` proves ``assert_cross_org_404`` against a
-deliberately leaky fixture viewset before trusting it to walk real code.
+``test_ninja_tenant_isolation.py`` proves ``assert_cross_org_404`` against
+a deliberately leaky fixture resource before trusting it to walk real
+code.
 """
 
 from typing import Any
@@ -91,17 +91,14 @@ def test_a_decorated_service_is_not_reported_as_a_gap(monkeypatch: pytest.Monkey
 
 
 def test_every_public_mutating_service_is_audited_or_justified() -> None:
-    """The failing-then-passing criterion (docs/plans/phase-8.md 8.1,
-    "Demonstrate it failing"): this test fails, by name, listing every
-    gap, the moment any ``services.py`` gains a public mutating function
-    with neither marker. See the worktree report for the pasted failure
-    from stripping ``@audited`` off ``widgets.services.create_widget``
-    and restoring it."""
+    """The failing-then-passing criterion ("Demonstrate it failing"): this
+    test fails, by name, listing every gap, the moment any ``services.py``
+    gains a public mutating function with neither marker."""
     gaps = find_undecorated_services()
 
     assert not gaps, (
         "The following public services.py callables are decorated with "
-        "neither @audited nor @not_audited(reason=...) (PRD v1.2 §8 Phase 8): "
+        "neither @audited nor @not_audited(reason=...) (PRD v1.2 §8): "
         f"{gaps}. Add one or the other — an @not_audited reason is a valid "
         "answer, a silent gap is not."
     )

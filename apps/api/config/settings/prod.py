@@ -9,8 +9,7 @@ DEBUG = False
 # name, because dev/test also run with DEBUG effectively False in CI
 # without a real SECRET_KEY configured (config/settings/test.py), and
 # inferring from either would either miss real deployments or fail the
-# test suite. docs/plans/phase-16.md 16.B: "Production must fail to start
-# on the default SECRET_KEY."
+# test suite: production must fail to start on the default SECRET_KEY.
 KEEL_ENFORCE_PRODUCTION_CHECKS = True
 
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
@@ -33,9 +32,8 @@ X_FRAME_OPTIONS = "DENY"
 # deploy inspecting the header Railway's edge actually sends.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Resend (docs/plans/phase-5.md 5.5) — see
-# keel.notifications.resend_backend for why this is a backend rather
-# than a bespoke send path.
+# Resend — see keel.notifications.resend_backend for why this is a
+# backend rather than a bespoke send path.
 EMAIL_BACKEND = "keel.notifications.resend_backend.ResendEmailBackend"
 
 # --- Database connection pooling (docs/deploy-railway.md "Pooling") -------

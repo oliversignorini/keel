@@ -1,4 +1,4 @@
-"""Meta-test (PRD §5; docs/plans/phase-5.md 5.3): every Tier-1 ``@task``
+"""Meta-test (PRD §5): every Tier-1 ``@task``
 in the project has a single-service-call body and takes ids, never model
 instances — and the checks in ``keel.core.lint_tasks`` actually catch a
 deliberate violation of each, not just pass vacuously on real code."""

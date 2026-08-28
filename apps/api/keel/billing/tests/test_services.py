@@ -1,4 +1,4 @@
-"""``sync_plans_from_stripe`` (docs/plans/phase-4.md B.1) — pure logic over
+"""``sync_plans_from_stripe`` — pure logic over
 recorded fixture dicts shaped like ``stripe_client.fetch_products_and_prices``
 returns. No real Stripe call, no stripe-mock: PRD §4 "No credentials.
 stripe-mock or recorded fixtures throughout.\""""

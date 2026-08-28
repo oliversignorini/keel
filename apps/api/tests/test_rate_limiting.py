@@ -1,7 +1,7 @@
-"""General API rate limiting (PRD §3 NFR "Security"; docs/plans/phase-8.md
-8.6): "Rate limits return 429 with Retry-After" in the standard error
-envelope. allauth's own limiter covers /_allauth/*; this is the general
-path every ``/api/v1/`` request runs through — ``keel.core.throttle``'s
+"""General API rate limiting (PRD §3 NFR "Security"): "Rate limits return
+429 with Retry-After" in the standard error envelope. allauth's own
+limiter covers /_allauth/*; this is the general path every
+``/api/v1/`` request runs through — ``keel.core.throttle``'s
 ``UserRateThrottle`` / ``AnonRateThrottle``, applied by
 ``ThrottleMiddleware`` ahead of routing.
 

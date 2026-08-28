@@ -1,4 +1,4 @@
-"""End-to-end auth flows through the real HTTP stack (PRD §8 Phase 2 A.4).
+"""End-to-end auth flows through the real HTTP stack (PRD §8).
 
 Every test goes through django.test.Client against the actual URLconf —
 no mocking of allauth's own views — because the thing worth verifying is
@@ -50,7 +50,7 @@ def _signup_and_verify(client, email: str, password: str) -> None:
 
 def test_signup_leaves_the_address_unverified_until_the_link_is_clicked() -> None:
     """Regression test: a fresh signup's ``EmailAddress`` must come back
-    ``verified=False`` — the actual finding behind the Phase 11 report's
+    ``verified=False`` — the actual finding behind an earlier report's
     "verified=True immediately" claim turned out to be a misdiagnosis
     (see docs/review-2026-08.md's e2e/auth-flows.spec.ts entry and this
     fix's commit): the address genuinely starts unverified, and the
@@ -278,7 +278,7 @@ def test_unsafe_request_without_csrf_header_is_rejected() -> None:
 
 
 def test_google_oauth_token_login_creates_a_user_and_authenticates() -> None:
-    """Mocks the provider at allauth's adapter layer (PRD §8 Phase 2 A.4):
+    """Mocks the provider at allauth's adapter layer (PRD §8):
     GoogleProvider.verify_token is what would call out to Google to decode
     a real id_token — patched here so no network call happens, while the
     rest of allauth's social-login pipeline (SocialLogin construction,

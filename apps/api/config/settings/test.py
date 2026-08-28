@@ -1,8 +1,8 @@
 """Test settings.
 
-Uses a real Postgres, not sqlite: tenant-isolation and ledger tests in
-later phases depend on Postgres semantics (row locking, JSONB, etc.), and
-switching test backends mid-build is a trap. Django creates and tears
+Uses a real Postgres, not sqlite: tenant-isolation and ledger tests
+depend on Postgres semantics (row locking, JSONB, etc.), and switching
+test backends mid-build is a trap. Django creates and tears
 down a `test_<name>` database automatically against the same server.
 """
 
@@ -55,7 +55,7 @@ STORAGES["files"]["OPTIONS"]["bucket"] = R2_BUCKET  # noqa: F405
 ACCOUNT_RATE_LIMITS = False  # type: ignore[assignment]
 
 # Same reasoning as ACCOUNT_RATE_LIMITS above, for the general API
-# throttle (docs/plans/phase-8.md 8.6): keel.core.throttle's
+# throttle: keel.core.throttle's
 # counters live in the same real Redis cache, keyed by client ident/user
 # id, and persist across the whole test run — hundreds of tests hitting
 # the same endpoints would otherwise trip an unrelated test's rate limit

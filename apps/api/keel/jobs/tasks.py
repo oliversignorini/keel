@@ -1,5 +1,5 @@
-"""The six scheduled jobs (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-5.4), wired into ``CELERY_BEAT_SCHEDULE`` (config/settings/base.py).
+"""The six scheduled jobs (PRD §5 "Scheduled jobs"), wired into
+``CELERY_BEAT_SCHEDULE`` (config/settings/base.py).
 
 Each is a Tier-1 ``@task`` whose body is a single call into the service
 that actually does the work — the services themselves (in

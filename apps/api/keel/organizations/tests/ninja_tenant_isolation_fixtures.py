@@ -1,8 +1,6 @@
 """Fixture resources proving ``ninja_tenant_isolation.assert_cross_org_404``
-itself works (PRD §4 invariant 7; phase-10.md 10.B) — one well-scoped,
-one deliberately leaky, the direct Ninja counterpart to
-``tenant_isolation.py``'s ``WellScopedDemoViewSet`` / ``LeakyDemoViewSet``
-in ``test_tenant_isolation.py``.
+itself works (PRD §4 invariant 7) — one well-scoped, one deliberately
+leaky.
 
 Mounted only via ``urls_ninja_tenant_fixture.py``, a test-only URLconf —
 this never touches the real, production URL surface.

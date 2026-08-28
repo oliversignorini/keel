@@ -1,7 +1,7 @@
 # Deploying Keel to Railway
 
-Status as of Phase 12 (`docs/plans/phase-12.md`): every config, script and
-doc a deploy needs is written and, where it doesn't require a live Railway
+Status: every config, script and doc a deploy needs is written and,
+where it doesn't require a live Railway
 account, verified locally against a real Postgres/Redis and a real Docker
 build (see "What was verified without a Railway account" below). **The
 actual first deploy from a clean Railway account has not happened** — no
@@ -81,8 +81,7 @@ Checked via Railway's public documentation and community help station
   which is reassuring for parity but is a **different service** from the
   default Postgres plugin — provisioning the wrong one is the actual risk.
 
-**Open item — the exact question to answer before Phase 5.5, with an
-account:**
+**Open item — the exact question to answer with a Railway account:**
 
 > When provisioning Postgres for this project on Railway, deploy the
 > `pgvector` template (or the PostgreSQL Extensions template with
@@ -93,7 +92,7 @@ account:**
 > image is recorded above.
 
 Do not provision the default Postgres plugin for this project and
-discover the gap during Phase 5.5 — the PRD flags this exact trap.
+discover the gap after deploying — the PRD flags this exact trap.
 
 ## Auth cookie domain and Vercel preview deployments
 
@@ -130,14 +129,13 @@ constraint has a specific consequence for **Vercel preview deployments**.
   cookie is host-only and this constraint doesn't apply — see
   `apps/api/.env.example`'s `KEEL_APP_DOMAIN` comment).
 
-## Service topology and `railway.json` (Phase 5.5, Dockerfile added Phase 12)
+## Service topology and `railway.json`
 
 `infra/railway.json` declares four services, all built from the same
-`apps/api` image (`apps/api/Dockerfile`, added in Phase 12 — a multi-stage
-`uv`-based build, non-root runtime user, `collectstatic` run at build time.
-Not needed by `infra/compose.prod.yml`'s TODO comment any more; that
-comment is now stale and should be removed the next time someone touches
-that file, but this phase does not own it):
+`apps/api` image (`apps/api/Dockerfile` — a multi-stage `uv`-based build,
+non-root runtime user, `collectstatic` run at build time. Not needed by
+`infra/compose.prod.yml`'s TODO comment any more; that comment is now
+stale and should be removed the next time someone touches that file):
 
 | Service  | Command                                                       | Why it's separate                                                                                                                                                                                                                                                        |
 | -------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -189,11 +187,11 @@ since docs/adr/0002-auth-bff-shape.md — the browser no longer talks to
 server process at whichever port `stream` is actually running on.
 
 Env var provisioning beyond what's already in `.env.example` arrives
-with Phase 9 (`init`).
+with `init`.
 
 ## Static files
 
-The Django admin (and drf-spectacular's schema UI) need their CSS/JS
+The Django admin (and Ninja's own `/api/v1/docs` schema UI) need their CSS/JS
 served somehow in production; `DEBUG=True` serves `STATIC_ROOT` directly
 in dev, which stops working the moment `prod.py` sets `DEBUG = False`.
 `apps/api/config/settings/prod.py` adds `whitenoise.middleware.
@@ -251,8 +249,8 @@ means a build that succeeds says nothing about whether the migration
 against production data will.
 
 **Why not manual:** a manual step is a step someone forgets, and it
-reintroduces exactly the race this phase is trying to close — a service
-starting against a schema its own code doesn't expect yet.
+reintroduces exactly the race `preDeployCommand` exists to close — a
+service starting against a schema its own code doesn't expect yet.
 
 **Rollback story.** Two failure shapes, handled differently:
 
@@ -271,16 +269,16 @@ starting against a schema its own code doesn't expect yet.
   is the recovery path — rolling the schema back too is a last resort,
   since a `migrate <app> <previous_number>` against data written by the
   rolled-forward schema can itself be destructive (dropped columns lose
-  data on reverse). **Not tested against a real failing migration in this
-  phase** — no Railway account to deploy a deliberately-broken migration
-  against — see the human checklist below.
+  data on reverse). **Not tested against a real failing migration** — no
+  Railway account to deploy a deliberately-broken migration against —
+  see the human checklist below.
 
 ## Environment variables — reconciled
 
 `.env.example` was read end-to-end against every `env(...)` /
 `env.bool(...)` / `env.int(...)` / `env.list(...)` call in
 `apps/api/config/settings/`. Every variable Django reads has an entry;
-nothing in `.env.example` was found unused. New in Phase 12:
+nothing in `.env.example` was found unused:
 
 | Variable                                | Required in prod?                                                                                      | What breaks without it                                                                                                                                                                           |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -289,7 +287,7 @@ nothing in `.env.example` was found unused. New in Phase 12:
 
 **Full env-var-to-provider reconciliation (which variables a real Railway
 deploy needed vs. `.env.example`'s existing set) is a blocked step** — it
-needs the actual deploy this phase could not perform. What's true from
+needs an actual deploy, which hasn't happened yet. What's true from
 reading the settings code alone:
 
 - `DATABASE_URL`, `REDIS_URL` — not set by hand on Railway. Railway
@@ -304,7 +302,7 @@ reading the settings code alone:
   `apps/api/config/settings/base.py` (`SENTRY_RELEASE`).
 - Every other variable in `.env.example` is either read directly by
   `base.py`/`prod.py` (verified by the grep above) or is a
-  `NEXT_PUBLIC_*` Next.js/Vercel variable, out of this phase's scope
+  `NEXT_PUBLIC_*` Next.js/Vercel variable, out of this doc's scope
   (Vercel project settings, not `infra/`).
 
 ## Postgres provider neutrality — Railway vs. Neon
@@ -312,8 +310,8 @@ reading the settings code alone:
 `DATABASE_URL` is already the only thing `apps/api/config/settings/base.py`
 reads to configure the database (`env.db("DATABASE_URL", ...)`, parsed by
 `django-environ`) — no code path branches on which provider issued the
-URL. That was true before this phase; what this phase adds is the pooling
-behavior that makes it _safely_ true rather than just _nominally_ true.
+URL. This section documents the pooling behavior that makes it _safely_
+true rather than just _nominally_ true.
 
 **Railway Postgres — the documented quick path.** Provision via "Add
 Database → PostgreSQL" (or the `pgvector` template if `pgvector` is
@@ -392,8 +390,8 @@ Before the first real deploy goes live for real users:
       be freshly generated per environment, never the `.env.example`
       placeholder values, and never reused between staging and production.
       `DJANGO_SECRET_KEY` failing this is now a hard boot failure, not
-      just `security.W009` (`keel.core.checks.check_secret_key_not_default`,
-      phase 16.B). `KEEL_ENCRYPTION_KEY` rotates safely (ddia#27,
+      just `security.W009` (`keel.core.checks.check_secret_key_not_default`).
+      `KEEL_ENCRYPTION_KEY` rotates safely (ddia#27,
       `apps/api/keel/core/crypto.py`): set it to `<new-key>,<old-key>`
       (comma-separated, newest first — every configured key can decrypt,
       only the first encrypts), then run
@@ -415,9 +413,9 @@ Before the first real deploy goes live for real users:
       — that runs on every deploy and `createsuperuser` isn't idempotent.
 - [ ] **`manage.py check --deploy` clean** (or every warning explicitly
       accepted) against `config.settings.prod` with real production env vars
-      — `docs/plans/phase-9.md` 9.C wires this into CI against placeholder
-      vars; run it again by hand against the real ones before the first
-      deploy, since a placeholder passing doesn't prove a real secret does.
+      — CI already wires this in against placeholder vars; run it again
+      by hand against the real ones before the first deploy, since a
+      placeholder passing doesn't prove a real secret does.
 - [ ] **Sentry, PostHog, Stripe, Resend, Google OAuth** credentials set
       (`SENTRY_DSN`, `POSTHOG_PROJECT_API_KEY`, `STRIPE_SECRET_KEY` +
       `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GOOGLE_OAUTH_CLIENT_ID` +
@@ -468,10 +466,10 @@ documented under "Postgres provider neutrality."
 
 ## Vercel (frontend)
 
-Out of this phase's file-ownership (`apps/web` and Vercel project
-settings belong to whichever phase actually deploys the frontend — see
-`docs/review-2026-08.md` on the BFF gap this repo currently has), but
-part of "deploy it, for real" as the plan states it. What's needed,
+Frontend deployment (`apps/web`, Vercel project settings) is separate
+from this doc's Railway focus — see `docs/review-2026-08.md` on the BFF
+gap this repo currently has — but is part of "deploy it, for real." What's
+needed,
 documented here since `docs/deploy-railway.md` is where the cross-service
 auth-cookie constraint already lives:
 
@@ -499,7 +497,7 @@ below.
 
 Everything below requires a live Railway account (or Vercel/Neon account)
 and could not be attempted in this environment. Each is otherwise fully
-prepared by the config/docs/scripts in this phase's diff.
+prepared by the config/docs/scripts already in this repo.
 
 1. **Create a Railway account and project**, connect this repo (or a fork
    of it) via GitHub.

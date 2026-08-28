@@ -1,5 +1,5 @@
-"""Always-visible CI output for the tenant-isolation meta-test (phase-3.md
-A.5; PRD §4 invariant 7): "CI prints every GLOBAL_JUSTIFICATION in the
+"""Always-visible CI output for the tenant-isolation meta-test (PRD §4
+invariant 7): "CI prints every GLOBAL_JUSTIFICATION in the
 test output" — using ``pytest_terminal_summary`` rather than plain
 ``print()`` because it renders regardless of pytest's default output
 capturing, so it shows up in a normal (non ``-s``) CI run.

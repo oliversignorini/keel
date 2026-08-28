@@ -1,10 +1,10 @@
-"""The Ninja counterpart to ``tenant_isolation.py`` (PRD §4 invariant 7;
-docs/plans/phase-10.md 10.B). Ninja operations are plain functions with no
-``.registry`` to walk and no ``retrieve`` action to call directly — so
-this drives the real, mounted URL with Django's test ``Client`` instead of
-``APIRequestFactory``, which the phase-10 plan calls "closer to the truth
-anyway": it goes through the actual URLconf, the real auth callable, and
-the real middleware stack, not a bare view function.
+"""Drives the cross-org 404 check for Ninja resources (PRD §4 invariant
+7). Ninja operations are plain functions with no ``.registry`` to walk
+and no ``retrieve`` action to call directly — so this drives the real,
+mounted URL with Django's test ``Client``, closer to the truth than
+introspecting Ninja internals would be: it goes through the actual
+URLconf, the real auth callable, and the real middleware stack, not a
+bare view function.
 
 ``OrgScopedResource.detail_url_template`` (``keel/core/authz.py``)
 is what makes this possible without introspecting Ninja's internal

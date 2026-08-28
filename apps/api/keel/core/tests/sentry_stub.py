@@ -1,4 +1,4 @@
-"""A capturing Sentry ``Transport`` (docs/plans/phase-8.md 8.4) — no DSN
+"""A capturing Sentry ``Transport`` — no DSN
 exists for this project, so every Sentry-shape assertion in the test
 suite swaps this in via ``keel.core.sentry.init_sentry(transport=...)``
 instead of requiring a live project."""

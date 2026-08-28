@@ -1,7 +1,7 @@
 """The one place secret-shaped values get scrubbed before they leave the
-process — docs/plans/phase-16.md 16.B: "redaction of auth headers,
-cookies, CSRF and session IDs, OAuth tokens, API keys, Stripe secrets,
-passwords and sensitive request fields." ``keel.core.logging.JSONFormatter``
+process — redaction of auth headers, cookies, CSRF and session IDs,
+OAuth tokens, API keys, Stripe secrets, passwords and sensitive request
+fields. ``keel.core.logging.JSONFormatter``
 and ``keel.core.sentry``'s ``before_send`` scrubber both call
 ``redact_mapping`` rather than each maintaining their own denylist, so the
 vocabulary of "what counts as a secret" can't drift between the two

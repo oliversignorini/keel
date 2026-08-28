@@ -96,7 +96,7 @@ sequenceDiagram
 Every app-shell page load calls this once to resolve auth state — there is
 no client-side session cache that outlives the cookie itself.
 
-## The Next.js BFF proxy (Phase 11)
+## The Next.js BFF proxy
 
 Every `/api/v1/…` and `/_allauth/…` call the browser makes is same-origin
 against Next.js, which forwards it to Django itself — the browser never
@@ -165,7 +165,7 @@ i.e. unset `Domain`, on plain `localhost`, which is why the project uses
 This is what lets one session cookie authenticate both the marketing/app
 Next.js host and the app host — a browser<->Next.js concern the BFF
 proxy above doesn't change. `CORS_ALLOWED_ORIGINS` is empty by default
-since Phase 11 (`docs/adr/0002-auth-bff-shape.md`): the browser<->Django
+(`docs/adr/0002-auth-bff-shape.md`): the browser<->Django
 hop shown here no longer exists for a programmatic call — only the BFF's
 own server-to-server request does, which isn't subject to CORS at all.
 

@@ -1,7 +1,7 @@
 """``GET /orgs/<slug>/billing/credits/`` (PRD §7's credits
-endpoint list; docs/plans/phase-4.md Worktree C's ``<CreditMeter>``).
+endpoint list; feeds the frontend's ``<CreditMeter>``).
 
-Both flag states are covered, which is the point of A.5: with
+Both flag states are covered: with
 ``BILLING_CREDITS`` off there is *no endpoint*, not an endpoint returning
 zero — the web meter renders nothing at all in that state.
 """

@@ -1,8 +1,8 @@
 """Proves the acceptance criterion "switching storage backend is a
-settings change only" (docs/plans/phase-13.md): the exact same upload ->
-complete -> download round trip as ``test_uploads.py``'s moto-backed
-suite, run against ``LocalFileSystemStorage`` instead, with nothing
-touched but ``STORAGES["files"]["BACKEND"]``."""
+settings change only": the exact same upload -> complete -> download
+round trip as ``test_uploads.py``'s moto-backed suite, run against
+``LocalFileSystemStorage`` instead, with nothing touched but
+``STORAGES["files"]["BACKEND"]``."""
 
 import hashlib
 import shutil

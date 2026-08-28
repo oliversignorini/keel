@@ -1,4 +1,4 @@
-"""Checkout, portal, subscription (PRD §7; docs/plans/phase-4.md B.2).
+"""Checkout, portal, subscription (PRD §7).
 Stripe calls are monkeypatched on ``stripe_client`` — no real Stripe call,
 no stripe-mock (PRD §4, "No credentials")."""
 
@@ -143,7 +143,7 @@ def test_checkout_rejects_inactive_price() -> None:
 
 
 def test_checkout_blocks_a_downgrade_below_current_usage(monkeypatch: pytest.MonkeyPatch) -> None:
-    """docs/plans/phase-4.md B.4: plan downgrade below current usage is
+    """Plan downgrade below current usage is
     blocked, naming what's over — and no Stripe call is made."""
     from keel.billing import entitlements
 

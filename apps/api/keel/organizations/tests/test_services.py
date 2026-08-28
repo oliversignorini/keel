@@ -1,4 +1,4 @@
-"""Services (PRD §8 Phase 3 acceptance; phase-3.md B.1)."""
+"""Services (PRD §8 acceptance criteria)."""
 
 import pytest
 from django.utils import timezone
@@ -217,8 +217,8 @@ def _subscribe_to_plan_with_seat_limit(org: Organization, seats: int) -> None:
 
 
 def test_accept_invitation_denies_beyond_the_seat_entitlement() -> None:
-    """docs/plans/phase-4.md B.4 acceptance: adding a member beyond the
-    seat entitlement returns 402 with upgrade context."""
+    """Adding a member beyond the seat entitlement returns 402 with
+    upgrade context."""
     org, owner_membership = _sole_owner_org()
     _subscribe_to_plan_with_seat_limit(org, seats=1)  # the owner already fills the one seat
     member_role = Role.objects.get(organization=None, name=PRESET_MEMBER)

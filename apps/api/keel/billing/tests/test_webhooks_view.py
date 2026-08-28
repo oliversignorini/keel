@@ -1,5 +1,5 @@
-"""``POST /api/v1/stripe/webhook/`` (PRD §6; docs/plans/phase-4.md B.3) —
-signature verification and the enqueue boundary. Processing behaviour and
+"""``POST /api/v1/stripe/webhook/`` (PRD §6) — signature verification and
+the enqueue boundary. Processing behaviour and
 the "replayed twice, identical state" requirement live in
 ``test_webhooks_replay.py``. Signatures are generated locally via
 ``stripe.WebhookSignature`` (pure HMAC, no network) — no real Stripe call,

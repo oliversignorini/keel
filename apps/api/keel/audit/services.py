@@ -1,5 +1,5 @@
-"""Audit log retention (PRD §5 "Scheduled jobs"; docs/plans/phase-5.md
-5.4), weekly. A system action — no actor to record."""
+"""Audit log retention (PRD §5 "Scheduled jobs"), weekly. A system
+action — no actor to record."""
 
 from datetime import timedelta
 

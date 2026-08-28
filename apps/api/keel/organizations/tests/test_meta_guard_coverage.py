@@ -1,4 +1,4 @@
-"""Meta-test 1 (phase-3.md A.5; PRD §4 invariant 2): every registered
+"""Meta-test 1 (PRD §4 invariant 2): every registered
 guard has both an allow test and a deny test, and the deny test asserts
 the ``reason``.
 

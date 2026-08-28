@@ -1,5 +1,5 @@
-"""Django admin for billing (PRD §4 "Data model"; docs/plans/phase-4.md
-A.4). ``CreditLedgerEntry`` is append-only, so its admin is read-only —
+"""Django admin for billing (PRD §4 "Data model").
+``CreditLedgerEntry`` is append-only, so its admin is read-only —
 the sole way an adjustment entry gets written is
 ``keel.billing.credits.adjust``, reached here through
 ``CreditBalanceAdmin``'s "Adjust balance" action, which requires a

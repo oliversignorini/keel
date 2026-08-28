@@ -1,5 +1,5 @@
-"""``dispatch_stripe_event`` / ``process_stripe_event`` (docs/plans/phase-4.md
-B.3): atomic dispatch, unhandled event types are marked processed as a
+"""``dispatch_stripe_event`` / ``process_stripe_event``:
+atomic dispatch, unhandled event types are marked processed as a
 no-op, a raising handler records ``StripeEvent.error`` and retries, and an
 already-processed event is a no-op on redelivery."""
 
@@ -99,7 +99,7 @@ def test_dispatch_stripe_event_retries_then_gives_up_after_max_retries(
 def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
     monkeypatch: pytest.MonkeyPatch, settings
 ) -> None:
-    """The real path (docs/plans/phase-8.md 8.4), not the monkeypatched
+    """The real path, not the monkeypatched
     ``_report_to_sentry`` the test above uses to isolate retry counting."""
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = False

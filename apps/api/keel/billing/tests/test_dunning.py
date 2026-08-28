@@ -1,4 +1,4 @@
-"""Dunning (docs/plans/phase-4.md B.6): ``invoice.payment_failed`` puts the
+"""Dunning: ``invoice.payment_failed`` puts the
 organisation into a dunning state (``Subscription.status = "past_due"``,
 which ``GET .../billing/subscription/`` surfaces for the frontend banner
 — PRD §7). Access is deliberately **not** revoked: entitlements resolve

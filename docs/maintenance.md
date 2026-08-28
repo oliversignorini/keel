@@ -24,16 +24,15 @@ the boundary the upgrade checklist below exists for.
 - **Python/Node patch and minor releases** — apply opportunistically, no
   fixed schedule. Neither has broken this codebase across a minor bump
   historically.
-- **Django and DRF** — check for a new minor release monthly; Django's own
+- **Django and django-ninja** — check for a new minor release monthly; Django's own
   security-release calendar (published ahead of time on
   [djangoproject.com](https://www.djangoproject.com/download/)) takes
   priority over the monthly cadence — apply a security release within the
   week it ships, not at the next scheduled check.
-- **Dependencies generally (`uv.lock`, `pnpm-lock.yaml`)** — `docs/plans/phase-9.md`'s 9.A
-  slice adds `.github/dependabot.yml` for pip/npm/github-actions/docker,
-  weekly, grouped minor+patch. Once that lands, Dependabot PRs are the
-  cadence; this section stops being the mechanism and starts being the
-  record of what it covers.
+- **Dependencies generally (`uv.lock`, `pnpm-lock.yaml`)** — `.github/dependabot.yml`
+  covers pip/npm/github-actions/docker, weekly, grouped minor+patch.
+  Dependabot PRs are the cadence; this section is the record of what it
+  covers, not the mechanism itself.
 - **PostgreSQL and Redis major versions** — no fixed schedule. Bump when
   the hosting provider (Railway, Neon) deprecates the running major, or
   when a feature this repo wants (e.g. a newer `pgvector` release) needs
@@ -53,21 +52,19 @@ notes for removed features before starting.
    features" sections.
 2. Bump `django~=X.Y` in `apps/api/pyproject.toml`, run `uv lock`, and let
    `uv sync` resolve the rest of the dependency graph (`django-allauth`,
-   `djangorestframework`, `drf-spectacular`, `django-stubs` all pin ranges
-   against Django — a resolver conflict here is the checklist doing its
-   job, not a bug).
+   `django-ninja`, `django-stubs` all pin ranges against Django — a
+   resolver conflict here is the checklist doing its job, not a bug).
 3. Run the full test suite locally (`uv run pytest` from `apps/api`) before
    touching CI — this repo's coverage floors (`[tool.keel.coverage]` in
    `pyproject.toml`) mean a version bump that changes ORM behavior under
    the hood shows up as a red test, not a silent regression.
 4. Run `python manage.py check --deploy` under `config.settings.prod`
-   locally (see `.github/workflows/ci.yml`'s `test-api` job, once
-   `docs/plans/phase-9.md` 9.C lands it, for the exact invocation and
-   required env vars) — a new Django release occasionally adds a new
-   deploy check.
+   locally (see `.github/workflows/ci.yml`'s `test-api` job for the exact
+   invocation and required env vars) — a new Django release occasionally
+   adds a new deploy check.
 5. Regenerate the OpenAPI schema and the TS client
-   (`scripts/merge_openapi.py`, then orval) — a Django/DRF/drf-spectacular
-   bump can change generated schema shape even with no application code
+   (`scripts/merge_openapi.py`, then orval) — a Django/django-ninja bump
+   can change generated schema shape even with no application code
    changes. The `api-client-generation` CI job fails on drift; do this
    locally first so the diff is reviewable instead of a surprise.
 6. Read `apps/api/keel/**/migrations/` for anything the new Django version

@@ -5,8 +5,8 @@ sync ``config.urls`` test client, matching how it is actually deployed
 
 The acceptance criterion this file exists to prove: **first event
 reaches the client in under one second** — the only assertion that
-catches a reverse proxy silently buffering ``text/event-stream``
-(docs/plans/phase-5.5.md 5.5.5, footgun 2). ``job_stream`` writes a
+catches a reverse proxy silently buffering ``text/event-stream``.
+``job_stream`` writes a
 leading ``: connected`` comment before ever touching Redis, specifically
 so there is a first byte to measure this against even before any job
 event exists.

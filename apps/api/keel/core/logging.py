@@ -5,7 +5,7 @@ is this module's ``request_id_var`` contextvar.
 
 Any structured data a call site attaches via ``logger.info(msg,
 extra={...})`` is redacted through ``keel.core.redaction.redact_mapping``
-before serialisation (docs/plans/phase-16.md 16.B) — a log line is exactly
+before serialisation — a log line is exactly
 as much of a leak surface as a Sentry event, and both go through the same
 denylist so "what counts as a secret" can't drift between them."""
 

@@ -1,10 +1,9 @@
 """FileUpload (PRD §4 "Data model"). Presigned direct upload from the
 browser to storage; Django issues the upload URL and records this row.
 
-Five states, not two (ddia#21 — the phase-5 model had only ``pending`` /
-``complete``, "the state set Phase 13 will need most of those, and
-adding states to a machine that already has rows in it is harder than
-designing them in"):
+Five states, not two (ddia#21 — an earlier model had only ``pending`` /
+``complete``; adding states to a machine that already has rows in it is
+harder than designing them in):
 
     pending --> available   (services.complete_upload: checksum verified,
                               size/content_type/etag taken from the

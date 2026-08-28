@@ -1,5 +1,4 @@
-"""Schema for the audit read surface (PRD §7; docs/plans/phase-8.md 8.2;
-phase-10.md 10.C)."""
+"""Schema for the audit read surface (PRD §7)."""
 
 from datetime import datetime
 from typing import Any

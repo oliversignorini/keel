@@ -1,5 +1,4 @@
-"""Per-organisation concurrency limits via a Redis semaphore (PRD §5.5.4;
-docs/plans/phase-5.5.md 5.5.4).
+"""Per-organisation concurrency limits via a Redis semaphore (PRD §5.5.4).
 
 The acceptance criterion is fairness, not throughput: one organisation
 saturating its limit must not delay another organisation's job. A

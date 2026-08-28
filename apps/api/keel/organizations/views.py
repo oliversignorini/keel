@@ -1,4 +1,4 @@
-"""Views (PRD Â§7; phase-3.md B.3; phase-10.md 10.C).
+"""Views (PRD Â§7).
 
 ``MembershipResource``/``RoleResource``/``InvitationResource`` declare
 ``required_permissions``, ``organization_scoped = True``, ``test_factory``
@@ -11,8 +11,8 @@ below call ``resolve_and_authorize`` directly rather than declaring an
 routes.
 
 ``invite_router`` uses ``optional_session_auth``: ``GET
-/invite/<token>/`` must work signed-out (phase-3.md B.4 â€” the client
-needs org name + locked email to drive signup before there's a session).
+/invite/<token>/`` must work signed-out â€” the client needs org name +
+locked email to drive signup before there's a session.
 """
 
 from typing import Any
@@ -373,6 +373,6 @@ def invite_accept(request: Any, token: str) -> Any:
     invitation = _resolve_valid_invitation(token)
     if invitation.email.lower() != request.auth.email.lower():
         # Wrong email: rejected without disclosing who was actually
-        # invited (phase-3.md B.4).
+        # invited.
         raise Conflict(code="invalid_or_expired", message="This invitation is no longer valid.")
     return services.accept_invitation(invitation=invitation, user=request.auth)

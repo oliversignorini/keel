@@ -1,4 +1,4 @@
-"""The demo job type (PRD §5.5.7; docs/plans/phase-5.5.md 5.5.7) — three
+"""The demo job type (PRD §5.5.7) — three
 steps, kept in its own module (registered from ``keel.jobs.apps.JobsConfig
 .ready()``) so it can be lifted straight off the ``init`` removal list
 alongside the rest of the demo resource (``keel/widgets/``) without

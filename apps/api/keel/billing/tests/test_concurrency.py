@@ -1,4 +1,4 @@
-"""The named acceptance criterion for docs/plans/phase-4.md A.2: "three
+"""The named acceptance criterion: "three
 concurrent holds against a balance sufficient for two produce exactly
 two holds and one 402." Run against a real Postgres with real threads —
 not mocked locking, which would prove nothing about the

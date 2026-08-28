@@ -1,7 +1,7 @@
 # Removing the marketing site
 
-PRD §8 Phase 9: `init` asks whether the project wants a public marketing
-site. On "no", it must delete everything below — nothing else in the repo
+PRD §8: `init` asks whether the project wants a public marketing site.
+On "no", it must delete everything below — nothing else in the repo
 depends on it.
 
 ## Routes

@@ -1,7 +1,7 @@
-"""The storage seam (docs/plans/phase-13.md "Introduce the storage
-seam via Django's ``STORAGES`` setting"). ``keel.files.r2_client`` (phase
-5) was a concrete boto3 client, not an adapter — every call site imported
-it directly, so swapping providers meant editing code. This module
+"""The storage seam ("Introduce the storage seam via Django's
+``STORAGES`` setting"). ``keel.files.r2_client`` was a concrete boto3
+client, not an adapter — every call site imported it directly, so
+swapping providers meant editing code. This module
 replaces it with ``ObjectStorage``, a small protocol every provider
 implements, selected through Django's own ``STORAGES["files"]`` alias
 (``config/settings/base.py``): change ``KEEL_FILES_STORAGE_BACKEND`` and
@@ -10,8 +10,8 @@ nothing in ``services.py`` or ``views.py`` changes.
 Two implementations ship:
 
 - ``S3CompatibleStorage`` — boto3 against any S3-compatible endpoint.
-  MinIO in dev, R2 in production, moto in tests (unchanged from phase
-  5's ``r2_client.py``, just reorganised behind the protocol).
+  MinIO in dev, R2 in production, moto in tests (unchanged from the
+  earlier ``r2_client.py``, just reorganised behind the protocol).
 - ``LocalFileSystemStorage`` — plain disk, for a developer who wants
   ``python manage.py runserver`` to work without also running MinIO.
   There is no S3-shaped "presign a PUT" primitive for a local disk, so
@@ -81,7 +81,7 @@ class ObjectStorage(Protocol):
         moto — this project's test double — accepts the header
         as-supplied without checking it, so a test asserting rejection
         would only be proving moto trusts the client, the opposite of
-        the property phase 13 needs). Acceptable for the document sizes
+        the property this check needs). Acceptable for the document sizes
         this template targets; a provider whose checksum feature is
         trustworthy in production is a future optimisation, not a
         correctness requirement — see docs/storage.md."""

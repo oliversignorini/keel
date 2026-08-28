@@ -1,11 +1,11 @@
 """The dedicated ASGI stream service's entrypoint (PRD §4 system
 architecture: "same image, separate service. SSE only.
-Proxy buffering OFF. Phase 5.5.").
+Proxy buffering OFF.").
 
 Run with ``uvicorn config.asgi_stream:application`` — never gunicorn:
 the whole point of this second service is that SSE's held-open
 connections must not occupy the sync worker pool that serves ordinary
-request/response traffic (docs/plans/phase-5.5.md 5.5.5, footgun 1).
+request/response traffic.
 
 Same settings module and same Django app registry as ``config.asgi`` /
 ``config.wsgi`` — only ``ROOT_URLCONF`` differs, swapped to

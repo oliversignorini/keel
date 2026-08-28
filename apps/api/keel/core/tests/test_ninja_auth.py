@@ -95,7 +95,7 @@ def test_safe_method_on_an_authenticated_session_skips_the_csrf_check() -> None:
 
 def test_optional_session_auth_route_works_signed_out() -> None:
     """``GET /invite/<token>/`` is the one route that must answer without
-    a session (phase-3.md B.4) — it reaches its own handler rather than
+    a session — it reaches its own handler rather than
     ``session_auth``'s 401."""
     response = Client().get("/api/v1/invite/no-such-token/")
 

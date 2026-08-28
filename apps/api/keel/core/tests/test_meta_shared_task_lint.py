@@ -1,4 +1,4 @@
-"""Meta-test (docs/plans/phase-16.md 16.C "async boundary"): every Tier-2
+"""Meta-test (the async-tier boundary, PRD §4 invariant 5): every Tier-2
 Celery ``@shared_task`` in the project takes ids, never model instances —
 the one PRD §5 acceptance criterion that applies regardless of tier.
 ``discover_shim_tasks``/``check_takes_ids_not_instances``

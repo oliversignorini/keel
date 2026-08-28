@@ -1,5 +1,5 @@
-"""The resumable base task class (PRD §5.5.2; docs/plans/phase-5.5.md
-5.5.2) — Tier 2, used directly against Celery per PRD invariant 5
+"""The resumable base task class (PRD §5.5.2) — Tier 2, used directly
+against Celery per PRD invariant 5
 rather than through ``keel/core/tasks.py``'s Tier 1 shim: step-level
 commits, resumption, and per-organisation fairness are exactly the
 surface that shim exists to *not* cover.

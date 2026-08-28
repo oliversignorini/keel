@@ -1,12 +1,11 @@
-# Rendering, validation and async boundaries (Phase 16.C)
+# Rendering, validation and async boundaries
 
-Source: docs/plans/phase-16.md 16.C. Companion to docs/query-patterns.md
-(16.A) and 16.B's settings/secrets hardening — this file covers the third
-leg: unsafe rendering, the validation boundary, and the async boundary.
+Companion to docs/query-patterns.md — this file covers the other two
+legs: unsafe rendering, the validation boundary, and the async boundary.
 
 ## Unsafe rendering
 
-**Before this phase:** one `dangerouslySetInnerHTML`
+**Before this audit:** one `dangerouslySetInnerHTML`
 (`apps/web/components/json-ld.tsx`), correctly justified in a comment, but
 nothing stopped a second one. Zero `mark_safe`/`SafeString`/`|safe` in
 `apps/api` — bandit already catches the first two in `.py` files
@@ -47,10 +46,10 @@ over the real tree, confirming `json-ld.tsx`'s existing use survives.
 **Sanitizer wrapper:** not written. There is no path in this repo that
 renders user- or externally-supplied HTML or Markdown — the only Markdown
 is the blog (`apps/web/content-collections.ts`), compiled at **build
-time** from `content/blog/*.mdx` files in the repo, not user input. Per
-the plan's own fallback ("document that no such path exists and the rule
-is preventative"), the two guardrails above are the deliverable; a
-sanitizer wrapper would have no caller.
+time** from `content/blog/*.mdx` files in the repo, not user input.
+Documenting that no such path exists and that the rule is preventative:
+the two guardrails above are the deliverable; a sanitizer wrapper would
+have no caller.
 
 **Lint reach caveat:** only `apps/web` has an ESLint config and a `lint`
 script; `packages/ui`, `packages/api-client` and `packages/emails` have
@@ -94,12 +93,9 @@ validation being bypassed.
 slug=candidate).exists()`, looped) to auto-generate a free slug when
    none is supplied. This is real domain logic (collision-avoiding slug
    generation), not shape validation, and belongs in
-   `selectors.py`/`services.py` — but this phase's path ownership
-   (docs/plans/phase-16.md: "Nobody touches `services.py` or models";
-   `selectors.py` is 16.A's) puts the actual fix outside 16.C's reach.
-   Left in place with this note; a follow-up should add a selector for
-   the existence check and move slug derivation into
-   `create_organization` itself.
+   `selectors.py`/`services.py`, not `schemas.py`. Left in place with
+   this note; a follow-up should add a selector for the existence check
+   and move slug derivation into `create_organization` itself.
 
 3. **Documented, mitigated** — `_resolve_valid_invitation` (`views.py`)
    duplicates the pending/accepted/revoked/expired check that
@@ -109,7 +105,8 @@ slug=candidate).exists()`, looped) to auto-generate a free slug when
    way `GET /invite/<token>/` (which never calls a service) can reject an
    invalid token. Two sources of the same predicate is still a
    maintenance hazard if they're ever edited independently; not fixed
-   here for the same file-ownership reason as (2).
+   here for the same reason as (2) — it belongs in `services.py`, not
+   this pass.
 
 4. **Documented, unfixed gap** — the email-match check
    (`invitation.email.lower() != request.auth.email.lower()`,
@@ -198,10 +195,10 @@ KeelAccountAdapter.send_mail` overrides allauth's synchronous send
   `keel/notifications/resend_backend.py`). This is allauth's synchronous
   adapter contract, not a bug introduced anywhere in this repo, and
   deferring it would mean either overriding more of allauth's flow than
-  this phase's file ownership allows or accepting weaker signup-flow
-  feedback (no immediate "email sent" confirmation) — a real tradeoff,
-  not a drop-in fix. Flagged for a deliberate decision in a later phase
-  rather than fixed here.
+  this doc's scope covers or accepting weaker signup-flow feedback (no
+  immediate "email sent" confirmation) — a real tradeoff, not a drop-in
+  fix. Flagged for a deliberate follow-up decision rather than fixed
+  here.
 - `send_invitation_email`/`send_seat_added_email` are defined but never
   called from production code (only tests) — no request-path email send
   there today.
@@ -218,8 +215,8 @@ KeelAccountAdapter.send_mail` overrides allauth's synchronous send
   `transaction.on_commit()`, with `sweep_stale_uploads` as the
   backstop for a dispatch that never landed.
 
-**Known gap, out of scope here:** Phase 15 added a per-organisation `seq`
-counter to every SSE event (`keel/jobs/pubsub.py`), documented as letting
+**Known gap, out of scope here:** a per-organisation `seq` counter was
+added to every SSE event (`keel/jobs/pubsub.py`), documented as letting
 a reconnecting client detect a gap and refetch
 `GET /orgs/<slug>/jobs/` to resync. The client half was never built —
 `apps/web/lib/jobs/types.ts`'s hand-written event types have no `seq`

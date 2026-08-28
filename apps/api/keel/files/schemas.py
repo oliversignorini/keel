@@ -1,5 +1,4 @@
-"""Schemas for the file-upload endpoints (PRD §5; docs/plans/
-phase-5.md 5.6; docs/plans/phase-13.md)."""
+"""Schemas for the file-upload endpoints (PRD §5)."""
 
 from datetime import datetime
 from typing import Literal

@@ -1,5 +1,5 @@
 """Blocks MFA management during an impersonated session (PRD §6 "cannot
-... manage MFA"; docs/plans/phase-8.md 8.3).
+... manage MFA").
 
 ``allauth.mfa`` is installed only when ``KEEL_MFA_ENABLED`` is set
 (``config/settings/base.py``), so this module is imported and wired from

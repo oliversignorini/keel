@@ -1,5 +1,5 @@
-"""TOTP enrolment and challenge, run only with the flag on (PRD §8 Phase 2
-A.4). ``allauth.mfa`` is only in INSTALLED_APPS when KEEL_MFA_ENABLED was
+"""TOTP enrolment and challenge, run only with the flag on (PRD §8).
+``allauth.mfa`` is only in INSTALLED_APPS when KEEL_MFA_ENABLED was
 true at settings-load time (see config/settings/test_mfa.py's docstring),
 so this whole module is skipped under the default test settings rather
 than collected-and-failing.
@@ -117,12 +117,12 @@ def test_totp_challenge_on_next_login() -> None:
     assert challenge_response.json()["meta"]["is_authenticated"] is True
 
 
-# --- Impersonation restriction (PRD §6; docs/plans/phase-8.md 8.3) -----
+# --- Impersonation restriction (PRD §6) ---------------------------------
 
 
 def test_authenticator_writes_are_blocked_while_impersonating() -> None:
     """Direct, model-layer proof (the "call the service directly with an
-    impersonated session" test docs/plans/phase-8.md 8.3 asks for) —
+    impersonated session" test PRD §6 asks for) —
     every add/replace/remove of an ``Authenticator`` goes through
     ``Authenticator.save()``/``.delete()``, which ``keel.accounts.mfa_guard``
     hooks unconditionally. No HTTP request needed to prove the block; the

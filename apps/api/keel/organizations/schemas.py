@@ -1,5 +1,4 @@
-"""Schemas for the organisations/members/roles/invitations API (PRD §7;
-phase-10.md 10.C)."""
+"""Schemas for the organisations/members/roles/invitations API (PRD §7)."""
 
 from datetime import datetime
 from typing import Any, Literal

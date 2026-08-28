@@ -8,8 +8,8 @@ class AccountsConfig(AppConfig):
 
     def ready(self) -> None:
         # Wires the impersonation restriction onto MFA management (PRD
-        # §6; docs/plans/phase-8.md 8.3) — only meaningful, and only
-        # importable, once allauth.mfa itself is installed.
+        # §6) — only meaningful, and only importable, once allauth.mfa
+        # itself is installed.
         if getattr(settings, "KEEL_MFA_ENABLED", False):
             from keel.accounts import mfa_guard
 

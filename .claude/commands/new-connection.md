@@ -23,13 +23,13 @@ authorization-code flow or something provider-specific.
    other service.
 3. **`selectors.py`** — `list_connections(organization)`,
    `get_connection(organization, id)`. Never return `access_token` /
-   `refresh_token` from a selector used by a serializer — see step 4.
-4. **`serializers.py`** — the read serializer excludes both token fields
+   `refresh_token` from a selector used by a schema — see step 4.
+4. **`schemas.py`** — the read schema excludes both token fields
    entirely, mirroring `connections/admin.py`'s existing exclusion.
-5. **`views.py`** — `ConnectionViewSet(OrgScopedViewSet)`,
+5. **`views.py`** — `ConnectionResource(OrgScopedResource)`,
    `organization_scoped = True`, `test_factory` set. OAuth callback is a
-   separate thin view (not part of the CRUD viewset) that calls
-   `services.connect_<provider>`.
+   separate thin route function (not part of the CRUD resource's router)
+   that calls `services.connect_<provider>`.
 6. **`permissions.py`** — reuse `Perm.CONNECTIONS_VIEW` /
    `Perm.CONNECTIONS_MANAGE` if they exist; otherwise run
    `/new-permission` for both first.
@@ -44,7 +44,7 @@ authorization-code flow or something provider-specific.
   60% adapter coverage floor applies here).
 - Assert a decrypted token is never present in a serialized response or
   a log line.
-- Allow/deny tests for the viewset per invariant 2.
+- Allow/deny tests for the resource per invariant 2.
 
 ## Finish
 

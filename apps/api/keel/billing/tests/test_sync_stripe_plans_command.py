@@ -1,4 +1,4 @@
-"""``manage.py sync_stripe_plans`` (docs/plans/phase-4.md B.1) — wires
+"""``manage.py sync_stripe_plans`` — wires
 ``stripe_client.fetch_products_and_prices`` to ``sync_plans_from_stripe``.
 The Stripe I/O itself is monkeypatched: no real Stripe call, no
 stripe-mock (PRD §4, "No credentials")."""

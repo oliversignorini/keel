@@ -1,7 +1,7 @@
-"""``billing/credits.py`` — the arithmetic (docs/plans/phase-4.md A.1,
-A.3, A.5). Concurrency (A.2) and the rebuild command (A.3) each get
-their own module: concurrency needs real transactions across threads,
-and the rebuild command exercises `manage.py`, not just the module.
+"""``billing/credits.py`` — the arithmetic. Concurrency and the rebuild
+command each get their own module: concurrency needs real transactions
+across threads, and the rebuild command exercises `manage.py`, not just
+the module.
 """
 
 import pytest

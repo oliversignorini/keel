@@ -43,4 +43,4 @@ to confirm the registry meta-test sees both cases.
 ## Finish
 
 `/check-invariants` step 2 and step 4 (permission lint, tenant scoping)
-should both be re-run if this permission gates a viewset action.
+should both be re-run if this permission gates a resource action.

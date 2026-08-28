@@ -1,5 +1,5 @@
-"""The four impersonation restrictions (PRD §6 "Impersonation";
-docs/plans/phase-8.md 8.3), each tested by calling the service directly
+"""The four impersonation restrictions (PRD §6 "Impersonation"), each
+tested by calling the service directly
 with an impersonated session — never through the UI, which "proves
 nothing" per the brief. MFA's equivalent test lives in
 ``keel.accounts.tests.test_mfa_flow`` (it needs ``allauth.mfa``
@@ -110,8 +110,8 @@ def test_create_portal_session_is_blocked_while_impersonating(
 
 
 def test_password_change_is_blocked_while_impersonating() -> None:
-    """``set_password`` (docs/plans/phase-8.md 8.3) is the one call point
-    every allauth password flow — change, reset-confirm — goes through
+    """``set_password`` is the one call point every allauth password
+    flow — change, reset-confirm — goes through
     (``keel.notifications.adapter.KeelAccountAdapter``). ``self.request``
     on an allauth adapter comes from ``allauth.core.context.request`` —
     a contextvar allauth's own middleware populates on every real

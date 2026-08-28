@@ -1,5 +1,4 @@
-"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7; docs/plans/
-phase-8.md 8.2)."""
+"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7)."""
 
 import pytest
 from django.test import Client

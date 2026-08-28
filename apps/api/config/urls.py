@@ -20,11 +20,10 @@ from keel.organizations.views import nested_router as org_nested_router
 from keel.organizations.views import org_router
 from keel.widgets.views import router as widgets_router
 
-# Every app's Ninja router mounts on this one shared api instance (stage
-# 10.A/10.D's note in keel/core/api.py). "/orgs", not
-# "/organizations" — PRD §7 names the segment "orgs"; the implementation
-# used the longer form until this rename (phase-10.md's second "allowed
-# change", done in one sweep across every route here).
+# Every app's Ninja router mounts on this one shared api instance (see
+# keel/core/api.py). "/orgs", not "/organizations" — PRD §7 names the
+# segment "orgs"; the implementation used the longer form until this
+# rename, done in one sweep across every route here.
 ninja_api.add_router("/orgs", widgets_router)
 ninja_api.add_router("/orgs", audit_router)
 ninja_api.add_router("", audit_impersonation_router)
@@ -75,8 +74,8 @@ urlpatterns = [
     # /api/v1/schema/ is gone with DRF).
     path("api/v1/", ninja_api.urls),
     # Headed accounts/ URLs are still required even in HEADLESS_ONLY mode:
-    # the social-provider OAuth handshake redirects through them (PRD §8
-    # Phase 2 A.1; allauth headless installation docs).
+    # the social-provider OAuth handshake redirects through them (PRD §8;
+    # allauth headless installation docs).
     path("accounts/", include("allauth.urls")),
     path("_allauth/", include("allauth.headless.urls")),
 ]

@@ -1,5 +1,5 @@
-"""Stripe webhook handlers (PRD §6 "Stripe webhook"; docs/plans/phase-4.md
-B.3). Each handler takes the Stripe object embedded at
+"""Stripe webhook handlers (PRD §6 "Stripe webhook"). Each handler takes
+the Stripe object embedded at
 ``event["data"]["object"]`` — a plain dict, the shape ``StripeEvent.payload``
 stores it in — and is idempotent by construction: replaying the same event
 twice must leave state identical, since Stripe redelivers on a timeout even
@@ -96,7 +96,7 @@ def _handle_subscription_event(subscription: dict[str, Any], event_created: int 
 
 
 def _handle_invoice_paid(invoice: dict[str, Any], event_created: int | None) -> None:
-    """Clears dunning (docs/plans/phase-4.md B.6): a paid invoice means the
+    """Clears dunning: a paid invoice means the
     organisation is no longer past due. No-op if there's no local
     ``Subscription`` row yet — e.g. the very first invoice on a trial
     that never required payment.
@@ -119,10 +119,9 @@ def _handle_invoice_paid(invoice: dict[str, Any], event_created: int | None) -> 
 
 
 def _handle_invoice_payment_failed(invoice: dict[str, Any], event_created: int | None) -> None:
-    """Puts the organisation into a dunning state (docs/plans/phase-4.md
-    B.6). This is the state the banner reads, and access is deliberately
-    *not* revoked here — B.6 is explicit that a failed payment degrades to
-    a warning, not a lockout."""
+    """Puts the organisation into a dunning state. This is the state the
+    banner reads, and access is deliberately *not* revoked here — a failed
+    payment degrades to a warning, not a lockout."""
     Subscription.objects.filter(organization__stripe_customer_id=invoice["customer"]).update(
         status="past_due"
     )

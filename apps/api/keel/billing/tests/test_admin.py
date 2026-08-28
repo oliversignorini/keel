@@ -1,6 +1,6 @@
-"""Django admin — the operator adjustment flow (docs/plans/phase-4.md
-A.4): requires a reason, records the actor, and is the only way an
-adjustment entry gets written."""
+"""Django admin — the operator adjustment flow: requires a reason,
+records the actor, and is the only way an adjustment entry gets
+written."""
 
 import pytest
 from django.test import Client
@@ -108,6 +108,6 @@ def test_adjust_form_rejects_a_clawback_exceeding_the_balance():
 
 
 def test_credit_ledger_entry_plural_is_grammatical() -> None:
-    """docs/plans/phase-8.md 8.8: Django admin's default pluralisation
-    (append "s") renders "Credit ledger entrys"."""
+    """Django admin's default pluralisation (append "s") renders "Credit
+    ledger entrys"."""
     assert CreditLedgerEntry._meta.verbose_name_plural == "Credit ledger entries"

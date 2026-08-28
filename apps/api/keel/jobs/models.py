@@ -1,6 +1,7 @@
-"""Job / JobStep / FailedTask — schema only in Phase 1 (PRD v1.2 change 2).
+"""Job / JobStep / FailedTask — schema only (PRD v1.2 change 2).
 
-No task base class, no step transitions. Behaviour is Phase 5.5.
+No task base class, no step transitions; behaviour lives in
+``keel.jobs.runner`` and the job registry.
 """
 
 from django.db import models

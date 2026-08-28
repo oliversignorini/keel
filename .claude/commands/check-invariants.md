@@ -18,9 +18,9 @@ covers. Run them for real — do not guess from reading code.
    Fails if a model changed without a committed migration.
 
 4. **Invariant 6 — tenant scoping.**
-   `cd apps/api && uv run pytest keel/organizations/tests/test_meta_router_wiring.py keel/organizations/tests/test_tenant_isolation.py keel/organizations/tests/test_meta_guard_coverage.py -v`
-   The first fails if a scoped viewset isn't reachable from the router.
-   The second fails if cross-org access on any scoped viewset returns
+   `cd apps/api && uv run pytest keel/organizations/tests/test_meta_router_wiring.py keel/organizations/tests/test_ninja_tenant_isolation.py keel/organizations/tests/test_meta_guard_coverage.py -v`
+   The first fails if a scoped resource isn't reachable from the router.
+   The second fails if cross-org access on any scoped resource returns
    anything but 404. The third fails if a registered guard is missing an
    allow or a deny test.
 
@@ -34,7 +34,7 @@ covers. Run them for real — do not guess from reading code.
 6. **Client drift — not a numbered invariant, but a hard CI gate.**
    `cd packages/api-client && pnpm generate && git diff --exit-code -- src/generated`
    Fails if the generated client is stale against `openapi.merged.json`.
-   Run only if you changed a view, serializer, or route — this mutates
+   Run only if you changed a view, schema, or route — this mutates
    `packages/api-client/src/generated`, and only one worktree at a time
    may regenerate it.
 

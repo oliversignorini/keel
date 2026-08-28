@@ -1,8 +1,8 @@
-"""__Resource__ job type (docs/plans/phase-19.md 19.B; CLAUDE.md invariant
-5, Tier 2 — multi-step, resumable, streams progress, can partially
-succeed). Registered from ``keel.jobs.apps.JobsConfig.ready()``; nothing
-else should import this module directly (see ``keel/jobs/demo.py`` for the
-shape this was copied from).
+"""__Resource__ job type (CLAUDE.md invariant 5, Tier 2 — multi-step,
+resumable, streams progress, can partially succeed). Registered from
+``keel.jobs.apps.JobsConfig.ready()``; nothing else should import this
+module directly (see ``keel/jobs/demo.py`` for the shape this was copied
+from).
 
 Wire creation through ``keel.jobs.services``'s job-creation service — don't
 hand-roll ``Job``/``JobStep`` row creation elsewhere. If this job needs

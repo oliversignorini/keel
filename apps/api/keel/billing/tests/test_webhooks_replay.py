@@ -1,7 +1,7 @@
 """Every handled Stripe webhook event type, replayed twice through the
-real endpoint — "deliver the webhook twice the way Stripe would"
-(docs/plans/phase-4.md B.3), not just calling a handler function twice in
-one transaction. Signatures are generated locally via
+real endpoint — "deliver the webhook twice the way Stripe would", not
+just calling a handler function twice in one transaction. Signatures are
+generated locally via
 ``stripe.WebhookSignature`` — no real Stripe call, no stripe-mock.
 No coverage exemption for this module (PRD §7 coverage table).
 """

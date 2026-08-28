@@ -1,6 +1,5 @@
 """PostHog — server-side capture (PRD §4 Integration points: "Client-
-side, with a server-side capture helper for billing events";
-docs/plans/phase-8.md 8.5).
+side, with a server-side capture helper for billing events").
 
 No project key exists for this project yet. ``posthog.Posthog(...,
 disabled=True)`` is a documented no-op — every event is dropped rather

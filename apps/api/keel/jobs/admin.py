@@ -13,7 +13,7 @@ admin.site.register(JobArtifact)
 
 @admin.register(FailedTask)
 class FailedTaskAdmin(admin.ModelAdmin):
-    """Re-drivable from Django admin (PRD §5; docs/plans/phase-5.md 5.3)."""
+    """Re-drivable from Django admin (PRD §5)."""
 
     list_display = ("task_name", "attempts", "created_at", "redriven_at")
     list_filter = ("task_name",)

@@ -10,11 +10,11 @@ or a request field from becoming newly required, even though Django on
 Railway and Next.js on Vercel deploy independently and there is always a
 window where old browser JS talks to a new API.
 
-Per ``docs/plans/phase-16.md`` 16.D's philosophy ("the repo runs on a free
-GitHub Actions plan ... run gates before they reach CI, not by adding more
-Actions minutes for them") this is a plain local script, not a new
-workflow job — wire it into the pre-push hook layer phase 16 adds, or run
-it by hand before opening a PR that touches ``/api/v1``:
+Per this repo's philosophy ("the repo runs on a free GitHub Actions plan
+... run gates before they reach CI, not by adding more Actions minutes
+for them") this is a plain local script, not a new workflow job — wire it
+into the pre-push hook layer, or run it by hand before opening a PR that
+touches ``/api/v1``:
 
     uv run --project apps/api python scripts/check_openapi_compat.py [--against REF]
 

@@ -1,5 +1,5 @@
 """Rate limiting for Ninja routes (PRD §3 NFR "Security": "Rate limiting
-... on the API generally"; docs/plans/phase-8.md 8.6).
+... on the API generally").
 
 A cache-backed sliding window over Django's cache (Redis in production),
 configured by ``KEEL_API_THROTTLE_USER_RATE`` / ``_ANON_RATE``, answering

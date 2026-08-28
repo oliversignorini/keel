@@ -1,5 +1,4 @@
-"""File-upload endpoints (PRD §5; docs/plans/phase-5.md 5.6;
-docs/plans/phase-13.md). Each resolves ``org_slug`` via
+"""File-upload endpoints (PRD §5). Each resolves ``org_slug`` via
 ``resolve_and_authorize`` and every query below is filtered by that
 organisation, which is what makes a cross-tenant lookup 404 instead of
 ever exposing another organisation's row.

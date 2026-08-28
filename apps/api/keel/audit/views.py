@@ -1,6 +1,5 @@
-"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7; docs/plans/
-phase-8.md 8.2; phase-10.md 10.C). Read-only, behind ``audit.view``,
-cursor-paginated.
+"""``GET /api/v1/orgs/<org_slug>/audit/`` (PRD §7). Read-only, behind
+``audit.view``, cursor-paginated.
 
 ``AuditLogResource`` declares a ``detail_url_template`` even though the
 audit settings page only lists — an ``OrgScopedResource`` with no detail

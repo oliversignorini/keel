@@ -1,6 +1,6 @@
-"""Database-level guarantees (ddia#12) and the provenance hook
-(phase-15's "smallest thing that answers what produced this row, from
-what input, by which job run")."""
+"""Database-level guarantees (ddia#12) and the provenance hook (the
+smallest thing that answers what produced this row, from what input,
+by which job run)."""
 
 import pytest
 from django.db import IntegrityError

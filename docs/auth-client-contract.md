@@ -1,10 +1,10 @@
-# Auth client contract (Phase 2, worktree A → worktree B)
+# Auth client contract
 
-What `p2-auth-web` needs to build against `p2-auth-api`'s allauth headless
+What the frontend needs to build against the API's allauth headless
 configuration. Source of truth for exact request/response shapes is
 allauth's own spec at `/_allauth/openapi.json` (merged into the generated
-client per A.3) — this document is the map that makes that spec readable,
-plus the things the spec alone won't tell you: which cookie carries the
+client) — this document is the map that makes that spec readable, plus
+the things the spec alone won't tell you: which cookie carries the
 session, how to get a CSRF token, and how a 401 differs from a 403.
 
 ## Base URL and client type
@@ -17,8 +17,8 @@ cookie-based and CSRF-protected; the app client is bearer-token based via
 unused"). Every request below assumes `/_allauth/browser/v1/` and
 `credentials: 'include'`.
 
-**Since Phase 11** (`docs/adr/0002-auth-bff-shape.md`), that path is
-always same-origin against Next.js, not Django directly —
+**Since `docs/adr/0002-auth-bff-shape.md`**, that path is always
+same-origin against Next.js, not Django directly —
 `packages/api-client/src/http/mutator.ts`'s `API_BASE_URL` is the empty
 string unconditionally. The Next.js BFF proxy
 (`apps/web/app/api/v1/[...path]/route.ts`,
@@ -60,7 +60,7 @@ that calls `django.middleware.csrf.get_token()` — and every headless
    name are unchanged from Django's defaults).
 3. `GET` requests never need the header.
 
-## Response envelope — two shapes on the wire, one after Phase 11
+## Response envelope — two shapes on the wire, one after the BFF
 
 **This is the thing most likely to bite the client if missed** — for a
 raw request against Django. What actually reaches the browser is
@@ -89,7 +89,7 @@ On failure, allauth adds an `errors` array instead of (or alongside) `data`:
 `status` inside the body always matches the HTTP status code. There is no
 `error.code` / `error.message` / `error.details` shape here.
 
-### What the BFF normalizes (Phase 11, api-patterns review finding 16)
+### What the BFF normalizes
 
 The shapes above are what Django answers with — but the browser talks to
 the Next.js BFF, not Django directly (see "Base URL and client type"
@@ -108,15 +108,14 @@ you're calling Django directly (tests, `curl`, a future non-browser
 client) — it just isn't something `apps/web`'s own code has to branch on
 any more.
 
-### `/api/v1/…` (DRF, this project's own endpoints)
+### `/api/v1/…` (Django Ninja, this project's own endpoints)
 
 ```json
 { "error": { "code": "SEAT_LIMIT_EXCEEDED", "message": "...", "details": [...] } }
 ```
 
-This is `keel/core/exceptions.py`'s envelope (PRD §7), unchanged from
-Phase 1. `/api/v1/me/` and everything under `/api/v1/orgs/…` (Phase 3+)
-uses this shape, not allauth's.
+This is `keel/core/exceptions.py`'s envelope (PRD §7). `/api/v1/me/` and
+everything under `/api/v1/orgs/…` uses this shape, not allauth's.
 
 ## 401 vs 403 vs 409 on `/_allauth/browser/v1/…`
 
@@ -140,13 +139,14 @@ uses this shape, not allauth's.
   not as a field-level validation error.
 - **429** — rate limited (`ACCOUNT_RATE_LIMITS`, base.py). Standard
   `Retry-After` header semantics are not guaranteed by allauth the way
-  they are by `/api/v1/`'s DRF throttling — poll `data.flows` / retry
-  after a client-chosen backoff rather than relying on a header.
+  they are by `/api/v1/`'s own throttling (`keel/core/throttle.py`) —
+  poll `data.flows` / retry after a client-chosen backoff rather than
+  relying on a header.
 
 `/api/v1/…` 401/403 follow the PRD §7 table exactly (401 = no/expired
 session, 403 = authenticated but denied, `code` = `Decision.reason`).
 
-## Endpoints in use (Phase 2 scope)
+## Endpoints in use
 
 ```
 GET    /_allauth/browser/v1/config                       # capabilities, no auth required
@@ -200,8 +200,8 @@ the confirmation/reset emails. The route reads `key` from the URL and
 `/_allauth/browser/v1/auth/password/reset` respectively — the emailed link
 is not itself an API call the browser makes automatically.
 
-`/invite/[token]` is **not** an allauth concept — it's Phase 3
-(organizations). Do not wire it against `HEADLESS_FRONTEND_URLS`.
+`/invite/[token]` is **not** an allauth concept — it's an organizations
+route. Do not wire it against `HEADLESS_FRONTEND_URLS`.
 
 ## MFA flag
 
@@ -226,8 +226,8 @@ here that alters allauth's exposed surface (flipping `KEEL_MFA_ENABLED`,
 adding a social provider, etc.) — CI fails if the checked-in client is
 stale relative to a fresh merge.
 
-Since Phase 11 (api-patterns review finding 5), the merged document also
-declares how a caller authenticates — `components.securitySchemes.
+The merged document also declares how a caller authenticates —
+`components.securitySchemes.
 sessionCookie` (the `sessionid` cookie) and `.csrfHeader` (`X-CSRFToken`,
 required on unsafe methods) — applied per operation, and a top-level
 `servers: [{"url": "/"}]` documenting that the BFF is the intended

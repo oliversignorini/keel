@@ -1,5 +1,5 @@
 """``ensure_stripe_customer`` / ``create_checkout_session`` /
-``create_portal_session`` (docs/plans/phase-4.md B.2). Stripe calls are
+``create_portal_session``. Stripe calls are
 monkeypatched — no real Stripe call, no stripe-mock (PRD §4, "No
 credentials"). Also proves PRD §4 invariant 3: no Stripe call happens
 inside an open transaction.

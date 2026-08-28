@@ -3,7 +3,7 @@
 ``OrgScopedModel.organization`` points at ``"organizations.Organization"``
 by string reference rather than an import — the same trick Django's own
 ``AUTH_USER_MODEL`` uses — so this module never imports ``keel.organizations``
-and the Phase 0 import-linter contract stays green (PRD §4 invariant 2).
+and the import-linter contract stays green (PRD §4 invariant 2).
 """
 
 from typing import Any
@@ -69,7 +69,7 @@ class OrgScopedModel(UUIDv7PrimaryKeyModel, TimestampedModel):
 
 class ProvenanceMixin(models.Model):
     """Nullable link from a produced record back to the job run and the
-    input that produced it (phase-15 provenance hook).
+    input that produced it.
 
     Future document-ingestion work needs to answer "what produced this
     row, from what input, by which job run" — this is the smallest thing
@@ -79,8 +79,8 @@ class ProvenanceMixin(models.Model):
     this mixin without ever importing ``keel.jobs`` (PRD §4 invariant 2)
     and without ``keel.jobs`` knowing a single one of its consumers
     exists. ``keel/jobs/models.py::JobArtifact`` demonstrates the shape
-    against the demo job; a real ingestion pipeline (out of this phase's
-    scope) would add this mixin to whatever model it produces rows into
+    against the demo job; a real ingestion pipeline (not built here) would
+    add this mixin to whatever model it produces rows into
     and set the two fields from inside its own job steps."""
 
     produced_by_job = models.ForeignKey(

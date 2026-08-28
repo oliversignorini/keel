@@ -1,5 +1,5 @@
 """URLconf for the dedicated ASGI stream service (PRD §4 system
-architecture; docs/plans/phase-5.5.md 5.5.5). Deliberately minimal —
+architecture). Deliberately minimal —
 this process exists to hold open SSE connections, not to serve the
 rest of the API; everything else stays on ``config.urls`` /
 ``config.wsgi``, behind gunicorn."""

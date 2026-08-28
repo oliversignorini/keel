@@ -1,4 +1,4 @@
-"""``rebuild_credit_balances`` (docs/plans/phase-4.md A.3): "a management
+"""``rebuild_credit_balances``: "a management
 command rebuilds ``CreditBalance`` from the ledger and reproduces the
 same number.\""""
 

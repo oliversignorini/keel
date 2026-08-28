@@ -1,8 +1,8 @@
 """Authorization vocabulary made real (PRD §4 invariant 2, "Where is
-authorization expressed?"; phase-3.md A.1, A.2).
+authorization expressed?").
 
 ``Decision``, the ``Guard`` protocol and the registry live in
-``keel.core.authz`` — a base class built in Phase 1 that ``keel.core``
+``keel.core.authz`` — a base class that ``keel.core``
 cannot import its own dependent from. This module is the file that
 invariant means: the ``Perm`` codes and every guard implementation live
 here, registered at import time, and ``has_perm`` is re-exported so call
@@ -126,7 +126,7 @@ def is_last_active_owner(subject: Any) -> bool:
 
 
 def _members_remove_guard(user: Any, organization: Any, subject: Any | None = None) -> Decision:
-    """The subject-inspecting guard (phase-3.md A.2): denies removing the
+    """The subject-inspecting guard: denies removing the
     organisation's last owner. Registered and declared exactly like any
     other guard — the distinction from ``_role_guard`` is implementation
     depth, not category (PRD §4 invariant 2)."""

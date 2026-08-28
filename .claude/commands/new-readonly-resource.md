@@ -1,12 +1,11 @@
 Generate a read-only vertical slice for the resource named in
 `$ARGUMENTS` — `pnpm gen readonly-resource` instead of `pnpm gen
-resource`, minus every write path (ADR 0004, `docs/plans/phase-19.md`).
-Use this for reference data, computed views, or anything the API only
-ever lists and retrieves.
+resource`, minus every write path (ADR 0004). Use this for reference
+data, computed views, or anything the API only ever lists and retrieves.
 
 **Ask first** whether this resource is org-scoped or global if it isn't
 obvious. A resource that is legitimately identical across every tenant
-(enrichment data, shared taxonomies) is a `GlobalViewSet` with a
+(enrichment data, shared taxonomies) is a `GlobalResource` with a
 `GLOBAL_JUSTIFICATION` — the generator does not emit that path; get the
 justification from the caller and wire it by hand rather than inventing
 one, since invariant 6 requires it to be a real paragraph, not
@@ -32,7 +31,7 @@ does.
   the generator has no flag for "read-only API, but not read-only data".
   Run `/new-job` if the write is task-driven.
 - If this is genuinely global (not org-scoped), swap the generated
-  `OrgScopedViewSet` base for `GlobalViewSet` and write the
+  `OrgScopedResource` base for `GlobalResource` and write the
   `GLOBAL_JUSTIFICATION` — see PRD §4 invariant 7, "Where a global table
   has a tenant-scoped companion" for the shape of the accompanying test
   that proves no tenant-private relationship leaks through its id space.
@@ -40,7 +39,7 @@ does.
 ## 3. Sync the client
 
 `pnpm gen sync-client` in whichever worktree owns the generated client
-this wave.
+lock.
 
 ## 4. Finish
 

@@ -1,5 +1,4 @@
-"""Redis pub/sub publication of step transitions (PRD §5.5.5;
-docs/plans/phase-5.5.md 5.5.5).
+"""Redis pub/sub publication of step transitions (PRD §5.5.5).
 
 One channel per organisation rather than per job: ``<JobTray>`` shows
 every job an organisation has in flight at once, and a single

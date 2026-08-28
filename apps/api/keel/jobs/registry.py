@@ -1,4 +1,4 @@
-"""The job registry (PRD §5.5.1; docs/plans/phase-5.5.md 5.5.1).
+"""The job registry (PRD §5.5.1).
 
 Each job type declares its steps, its queue, and its credit estimate.
 This is the one part a project is expected to replace, so it stays

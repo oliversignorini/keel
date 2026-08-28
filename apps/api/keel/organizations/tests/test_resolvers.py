@@ -1,5 +1,5 @@
 """The KEEL_ORGANIZATION_RESOLVER implementation (PRD §4, "The
-membership-resolution seam"; phase-3.md A.3).
+membership-resolution seam").
 
 Returning ``None`` must mean *both* "no such slug" and "you are not an
 active member" — indistinguishably, per PRD invariant 7's tenant-isolation

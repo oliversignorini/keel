@@ -1,7 +1,7 @@
-"""Preset role seeding (PRD §4 "Tenancy and permissions"; phase-3.md A.4).
+"""Preset role seeding (PRD §4 "Tenancy and permissions").
 
-``seed_preset_roles()`` is the function ``p3-orgs-api`` calls inside its
-atomic organisation-creation service — this worktree owns and tests the
+``seed_preset_roles()`` is the function the organisation-creation service
+calls inside its atomic transaction — this module owns and tests the
 function itself, not the transaction that calls it.
 """
 

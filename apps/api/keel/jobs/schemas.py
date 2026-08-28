@@ -1,4 +1,4 @@
-"""Shape validation at the edge (PRD §4 invariant 6; phase-10.md 10.C)."""
+"""Shape validation at the edge (PRD §4 invariant 6)."""
 
 from datetime import datetime
 from typing import Any, Literal

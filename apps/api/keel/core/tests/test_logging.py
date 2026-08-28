@@ -78,7 +78,7 @@ def test_get_request_id_reads_the_contextvar() -> None:
         request_id_var.reset(token)
 
 
-# --- Redaction (docs/plans/phase-16.md 16.B) --------------------------------
+# --- Redaction -----------------------------------------------------------
 
 
 def test_no_extra_key_when_nothing_was_attached() -> None:

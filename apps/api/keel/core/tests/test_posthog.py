@@ -1,5 +1,5 @@
-"""PostHog server-side capture (PRD §4 Integration points; docs/plans/
-phase-8.md 8.5). No project key exists for this project — what's provable
+"""PostHog server-side capture (PRD §4 Integration points). No project
+key exists for this project — what's provable
 without one is the call shape, asserted here against the real client's
 ``capture`` method, patched rather than replaced (the client itself is
 harmless to construct: ``disabled=True`` makes it a documented no-op with

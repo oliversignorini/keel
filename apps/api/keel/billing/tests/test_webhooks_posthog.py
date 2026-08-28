@@ -1,6 +1,6 @@
 """Billing webhook handlers capture to PostHog (PRD §4 Integration
-points: "server-side capture helper for billing events"; docs/plans/
-phase-8.md 8.5). Handlers called directly — same shape as
+points: "server-side capture helper for billing events").
+Handlers called directly — same shape as
 ``test_tasks.py``'s handler-level tests — with ``capture_billing_event``
 patched to assert the call shape, since no PostHog key exists (see
 ``keel.core.posthog``'s docstring)."""

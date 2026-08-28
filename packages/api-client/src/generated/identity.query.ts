@@ -6791,7 +6791,7 @@ export const useCreateCheckoutSession = <TError = ErrorEnvelope,
     }
     
 /**
- * Behind ``BILLING_CREDITS``, off by default (phase-4.md A.5). Off is
+ * Behind ``BILLING_CREDITS``, off by default. Off is
 a **404**, not a zero balance — a disabled feature has no balance to
 report, and a zero balance is a real, distinguishable state once the
 feature is on.

@@ -1,7 +1,6 @@
-# Phase 13 (docs/plans/phase-13.md): the one migration this phase is
-# allowed to declare, covering every field it adds. See keel/files/models.py
-# for the state machine this backs and the reasoning behind each
-# constraint below (ddia#21, ddia review "Schema evolution" §23).
+# See keel/files/models.py for the state machine this backs and the
+# reasoning behind each constraint below (ddia#21, ddia review "Schema
+# evolution" §23).
 
 import django.db.models.deletion
 from django.db import migrations, models

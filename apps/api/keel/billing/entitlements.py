@@ -1,4 +1,4 @@
-"""Entitlements (PRD §7; docs/plans/phase-4.md B.4).
+"""Entitlements (PRD §7).
 
 ``Plan.entitlements`` is shaped ``{"features": [...], "limits": {resource:
 int | None}}``. A missing key in ``limits`` means that resource isn't
@@ -63,8 +63,8 @@ def _count_usage(organization: Any, resource: str) -> int:
 
 
 def resolve_entitlements(organization: Any) -> dict[str, Any]:
-    """Feeds ``GET /api/v1/me/`` (docs/plans/phase-4.md B.4: "Resolution
-    feeds GET /api/v1/me/ ... coordinate rather than duplicating it")."""
+    """Feeds ``GET /api/v1/me/`` — resolution coordinates with that
+    endpoint rather than duplicating it."""
     subscription = (
         Subscription.objects.filter(organization=organization).select_related("plan").first()
     )
@@ -109,8 +109,8 @@ def check_feature(organization: Any, feature: str) -> None:
 
 
 def requires_entitlement(feature: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Gates a service function on a feature code (docs/plans/phase-4.md
-    B.4: "``@requires_entitlement('api_access')`` gates features"). The
+    """Gates a service function on a feature code —
+    ``@requires_entitlement('api_access')`` gates features. The
     decorated function must be called with ``organization`` as a keyword
     argument — every service in this codebase already uses keyword-only
     arguments (PRD §4 "Where is authorization expressed?" applies the same
@@ -136,8 +136,8 @@ def requires_entitlement(feature: str) -> Callable[[Callable[..., Any]], Callabl
 
 
 def check_limit(organization: Any, resource: str, requested: int = 1) -> None:
-    """Gates a quantity (docs/plans/phase-4.md B.4: "``check_limit(org,
-    'widgets')`` gates quantities"). A missing or ``None`` limit for
+    """Gates a quantity — ``check_limit(org, 'widgets')`` gates
+    quantities. A missing or ``None`` limit for
     ``resource`` means *not capped* — see module docstring.
 
     ``resource`` must be a registered counter regardless of what the
@@ -164,9 +164,8 @@ def check_limit(organization: Any, resource: str, requested: int = 1) -> None:
 
 def enforce_downgrade_limits(organization: Any, new_plan: Any) -> None:
     """Blocks a plan change that would leave current usage over the new
-    plan's limits, naming what's over (docs/plans/phase-4.md B.4: "Plan
-    downgrade below current usage is blocked with a message that names
-    what is over")."""
+    plan's limits, naming what's over — plan downgrade below current
+    usage is blocked with a message that names what is over."""
     limits: dict[str, int | None] = (new_plan.entitlements or {}).get("limits", {})
     over_limit = []
     for resource, limit in limits.items():

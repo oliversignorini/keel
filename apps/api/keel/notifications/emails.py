@@ -1,4 +1,4 @@
-"""The six transactional emails (PRD §5, docs/plans/phase-5.md 5.5).
+"""The six transactional emails (PRD §5).
 
 Templates are authored in react-email under ``packages/emails/templates``
 and rendered to static HTML **once, at build time**
@@ -27,8 +27,7 @@ class EmailTemplateMissing(Exception):
     """Raised when ``packages/emails/dist/<name>.html`` doesn't exist —
     i.e. ``pnpm --filter @keel/emails build`` has not been run. Raised
     rather than silently falling back to some runtime-rendered
-    alternative (docs/plans/phase-5.md 5.5 is explicit that a build
-    failure must be reported, not papered over)."""
+    alternative — a build failure must be reported, not papered over."""
 
     def __init__(self, name: str) -> None:
         self.name = name

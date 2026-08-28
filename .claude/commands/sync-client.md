@@ -11,10 +11,11 @@ This is the _only_ command allowed to touch `openapi.merged.json` or
 `packages/api-client/src/generated` (`docs/plans/WORKTREES.md` rule 3) —
 it takes a lock in the shared `.git` directory (worktrees share it) and
 refuses to run if another worktree already holds it, rather than relying
-on remembering the rule. If it refuses, wait for that run to finish; pass
-`--force` only if you're certain a crashed run left the lock behind.
+on remembering the rule.
+If it refuses, wait for that run to finish; pass `--force` only if you're
+certain a crashed run left the lock behind.
 
-It runs, in order: merge the DRF and allauth specs into
+It runs, in order: merge the Ninja and allauth specs into
 `openapi.merged.json`, run orval over the merged spec, typecheck the
 generated client, typecheck `apps/web` against the new types. It then
 reports which of `openapi.merged.json` / `packages/api-client/src/generated`

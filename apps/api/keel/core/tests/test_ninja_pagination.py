@@ -1,6 +1,6 @@
 """Proves ``keel.core.pagination.CursorPaginator`` carries the tie-safe
 guarantee its module docstring describes (see ``keel/core/pagination.py``).
-ADR 0001 / phase-10.md 10.A: "a hand-rolled 'cursor = last id seen' will
+ADR 0001: "a hand-rolled 'cursor = last id seen' will
 pass a naive test and fail this one" — so this uses ≥60 rows sharing a
 single tied sort value and walks every page end to end, which a naive
 implementation cannot survive.
@@ -59,7 +59,7 @@ def test_ninja_cursor_pagination_across_sixty_tied_rows() -> None:
         for _ in range(65):
             # A single tied rank — the run a naive "cursor = last id
             # seen" implementation cannot survive without skipping or
-            # repeating rows (phase-10.md 10.A).
+            # repeating rows.
             expected_ids.add(Row.objects.create(rank=1).id)  # type: ignore[attr-defined]
 
         class RowCursorPaginator(CursorPaginator):
