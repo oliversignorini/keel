@@ -2,7 +2,7 @@
   "name": "@keel/api-client",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "./src/index.ts",
   "scripts": {
     "generate": "orval --config ./orval.config.ts",

@@ -2,9 +2,8 @@
 
 How a product built on Keel plugs into `keel/billing/`: what a credit
 means, how to add a plan, how to meter an operation, how to gate a
-feature on an entitlement. See `keel-prd.md` §4 "Credits — the
-metered-billing primitive" and "Billing flow" for the design rationale;
-this file is the how-to a Keel consumer actually needs.
+feature on an entitlement. See `docs/architecture.md` for the
+design rationale; this file is the how-to a Keel consumer actually needs.
 
 ---
 
@@ -156,7 +155,8 @@ returning a zero balance — tested both ways in
 single-tenant-per-user project has no seats to price, and seat sync
 running on every membership write for such a project is code that does
 nothing useful and can still fail. Turn it on for any project with an
-invite flow that matters — see `keel-prd.md` §4 "Billing flow".
+invite flow that matters — see `docs/architecture.md` for the design
+rationale.
 
 ---
 

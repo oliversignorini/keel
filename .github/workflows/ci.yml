@@ -264,8 +264,8 @@ jobs:
         run: |
           pnpm generate
           git diff --exit-code -- src/generated
-        # A stale src/generated is a build error (keel-prd.md §4 "Type
-        # synchronisation"), not a runtime surprise — package.json says
+        # A stale src/generated is a build error, not a runtime surprise
+        # — package.json says
         # never hand-edit it, and this is what makes that true. Once
         # p2-auth-api lands the merged spec and orval.config.ts's
         # input.target moves to it, this job also proves the merge is
@@ -274,8 +274,7 @@ jobs:
 
   e2e:
     # Was "e2e-accessibility" — renamed because it now also runs
-    # e2e/auth-flows.spec.ts against a live API, not only axe-core
-    # (docs/plans/phase-9.md 9.C).
+    # e2e/auth-flows.spec.ts against a live API, not only axe-core.
     runs-on: ubuntu-latest
     services:
       postgres:

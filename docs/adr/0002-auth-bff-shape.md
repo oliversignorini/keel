@@ -1,9 +1,8 @@
 # ADR 0002 — The Next.js BFF terminates every browser API call
 
 **Status:** Accepted — 2026-08-28
-**Decides:** `docs/plans/phase-11.md` "The decision this phase must make
-first" — which of the three request-path shapes the auth BFF hardening
-phase implements.
+**Decides:** which of the three request-path shapes the auth BFF hardening
+work implements.
 **Depends on:** ADR 0001 (Django Ninja).
 
 ---
@@ -168,11 +167,11 @@ which isn't true here, so this ADR doesn't make that argument.
   still correct" rather than "unnormalized, wrong."
 - **ddia finding 25** (nothing checks the merged spec is backward
   compatible run to run): `scripts/check_openapi_compat.py`, a local
-  script per `docs/plans/phase-16.md` 16.D's philosophy ("run gates
-  before they reach CI, not by adding more Actions minutes") rather than
-  a new GitHub Actions job. Phase 16 is where the pre-push hook layer
-  that would actually invoke it gets built; this phase adds the script
-  itself and documents the additive-only rule it enforces for `/api/v1`.
+  script in keeping with the project's philosophy of running gates
+  before they reach CI, rather than adding more Actions minutes. The
+  pre-push hook layer that invokes it is built separately; this phase adds
+  the script itself and documents the additive-only rule it enforces for
+  `/api/v1`.
 
 **posd finding 5** (`GlobalResource`/`OrgScopedResource` are declaration
 bags) is _not_ touched here. It's tagged fold-into-phase-11 in the
@@ -181,9 +180,8 @@ rewrite inside an existing global (non-org-scoped) route body — it does
 not touch the resource-declaration mechanism the finding is about, which
 only applies to org-scoped routes. Folding in the decorator/registry
 redesign the finding actually asks for would mean touching every app's
-`views.py` for a mechanism this phase's own scope (`docs/plans/phase-11.md`
-"Boundary") doesn't reach. Left for whichever phase actually adds a
-route through that seam next.
+`views.py` for a mechanism this phase's own scope doesn't reach. Left for
+whichever phase actually adds a route through that seam next.
 
 ## Consequences
 

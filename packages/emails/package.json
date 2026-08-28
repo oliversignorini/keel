@@ -2,7 +2,7 @@
   "name": "@keel/emails",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "email export --dir templates --outDir dist"
   },

@@ -2,7 +2,7 @@
 
 Keel is a Django 6 + Next.js 15 SaaS template. Full detail lives in
 `docs/architecture.md` (the seven invariants, request path, type
-synchronisation) and `keel-prd.md` §4; this file is the short version an
+synchronisation); this file is the short version an
 agent needs before writing a line here.
 
 ## Per-app file shape
@@ -76,7 +76,7 @@ finished.
   patch the output.
 - Only one worktree at a time regenerates `openapi.merged.json` or the
   generated client. Two in flight is an unresolvable merge conflict.
-- No migrations outside a phase that declares one — see `docs/review-2026-08.md`.
+- No migrations outside a phase that declares one.
 - **ADR 0001 replaced DRF with Django Ninja.** The commands
   below and the invariant table above describe today's Ninja reality:
   resources built on `keel/core/authz.py`'s `GlobalResource` /

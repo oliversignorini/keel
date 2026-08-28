@@ -1,4 +1,4 @@
-# gitleaks config (docs/plans/phase-9.md 9.C). Extends the default
+# gitleaks config. Extends the default
 # ruleset rather than replacing it — Keel has no rules of its own to add,
 # only known false positives to allowlist.
 [extend]

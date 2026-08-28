@@ -1,7 +1,7 @@
 name: template-ci
 
-# Phase 17 (docs/plans/phase-17.md): `init` is untested unless something
-# actually runs it. This runs it against two fixture instantiations on
+# `init` is untested unless something actually runs it. This runs it
+# against two fixture instantiations on
 # every push — a non-synonym tenant noun each time, per the phase's own
 # acceptance note that a synonym ("org" -> "workspace") can pass by
 # coincidence in a way a genuinely different noun can't — and then runs
@@ -12,8 +12,8 @@ name: template-ci
 # real instantiation (deleteTemplateAuthoringDocs()) — it tests the
 # template, not the project a real run produces.
 
-# Paths-filtered (free Actions plan, docs/plans/phase-16.md 16.D's
-# constraint): the two-fixture matrix below runs a full gate suite twice,
+# Paths-filtered (the repo runs on a free Actions plan): the two-fixture
+# matrix below runs a full gate suite twice,
 # so it triggers only when the init machinery itself changes — everything
 # else is already covered by CI on the un-instantiated template. The
 # pre-push hook layer is the every-push guard; workflow_dispatch covers

@@ -2,7 +2,7 @@
   "name": "@keel/eslint-config",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./base.mjs",

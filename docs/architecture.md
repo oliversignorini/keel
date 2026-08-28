@@ -1,11 +1,11 @@
 # Architecture
 
-The seven invariants, verbatim from `keel-prd.md` §4 "Architecture
-Invariants" — this file states each plainly, names what enforces it, and
-then walks the request path and the layout that follow from them.
+The seven invariants that hold this template's architecture together —
+this file states each plainly, names what enforces it, and then walks the
+request path and the layout that follow from them.
 
-If a section here and `keel-prd.md` §4 ever disagree, the PRD wins; this
-file is meant to stay a faithful restatement, not a second source of truth.
+This file is the source of truth for the invariants; if code and this
+document ever disagree, fix whichever one is wrong.
 
 ---
 
@@ -335,7 +335,5 @@ source of the Django-side spec moved.
   Postgres, Redis, Celery, Stripe, storage).
 - `docs/auth-client-contract.md` — the wire-level contract (cookies,
   headers, response envelopes, 401/403/409) for allauth headless.
-- `keel-prd.md` §4 — the source these invariants are drawn from, and the
-  place to look if this file and the code ever disagree.
 - `docs/adr/0004-generators-as-the-agent-capability-surface.md` — why the
   generator CLI exists and what it deliberately leaves to judgement.

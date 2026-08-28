@@ -1,16 +1,17 @@
 # ADR 0001 — Move the API layer from DRF to Django Ninja
 
 **Status:** Accepted — 2026-08-27
-**Decides:** the open checklist item on Notion "Keel Phase 10 — Architecture review and implementation plan": _"Record an ADR: use Django Ninja instead of DRF for Keel's API layer, or explicitly reject if migration cost is too high."_
-**Implemented by:** `docs/plans/phase-10.md`
+**Decides:** whether to use Django Ninja instead of DRF for Keel's API
+layer, or explicitly reject it if migration cost is too high.
 
 ---
 
 ## Context
 
-Keel's API layer is Django REST Framework. That was never argued for in
-`keel-prd.md` — §2 selects the stack and DRF arrives with it, unexamined.
-The architecture direction proposal reopened it, on the grounds that Ninja's
+Keel's API layer was originally Django REST Framework, never argued for
+on its own merits — it was just the stack's default and DRF arrived with
+it, unexamined. The architecture direction proposal reopened it, on the
+grounds that Ninja's
 Pydantic schemas and native type hints are a better fit for a template whose
 whole selling point is that the TypeScript client is generated, never
 hand-written, and that a drifted client is a build error.
@@ -79,7 +80,7 @@ DRF's, with Retry-After behaviour the error envelope depends on.
 jobs authority; Ninja becomes the typed API layer. DRF is removed from the
 dependency manifest when the migration completes, not before.
 
-The migration is its own phase (`docs/plans/phase-10.md`) and is a
+The migration is its own phase and is a
 serialisation point: while it runs, no other worktree may add or change a
 view, serializer, route, or generated-client call site.
 
@@ -118,8 +119,7 @@ Brein is built on top — is the cheapest this will ever be.
   primitives and the first migrated app, the invariant meta-tests cannot be
   made to hold with equal force, the correct outcome is to stop, revert, and
   supersede this ADR — not to weaken the invariants to fit the framework.
-- `keel-prd.md` §2 gains a revision note; DRF is no longer the selected API
-  layer.
+- DRF is no longer the selected API layer.
 
 ## Alternatives considered
 

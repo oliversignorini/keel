@@ -1,6 +1,6 @@
 # System diagram
 
-The deployed shape, from `keel-prd.md` §4 "System architecture" redrawn as
+The deployed shape, redrawn as
 Mermaid so it renders on GitHub. See `docs/architecture.md` for the
 request-level walk-through and `docs/auth-flow.md` for the auth sequences.
 

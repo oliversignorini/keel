@@ -1,7 +1,7 @@
-# Two hook types share this one file (docs/plans/phase-16.md 16.D):
-# pre-commit (fast, changed-files-only formatting/lint, unchanged from
-# before this phase) and pre-push (a local mirror of the blocking CI
-# gates, running against the whole repo — see docs/pre-push.md).
+# Two hook types share this one file:
+# pre-commit (fast, changed-files-only formatting/lint) and pre-push (a
+# local mirror of the blocking CI gates, running against the whole repo —
+# see docs/pre-push.md).
 #
 # `default_stages` alone is not enough to keep pre-commit/pre-commit-hooks'
 # built-in hooks (end-of-file-fixer, trailing-whitespace, check-merge-conflict)
@@ -93,9 +93,9 @@ repos:
       - id: check-merge-conflict
         stages: [pre-commit]
 
-  # Pre-push mirror of the blocking CI gates (docs/plans/phase-16.md
-  # 16.D). Runs the project's own tools (uv, pnpm) rather than a
-  # pre-commit-managed environment, so results match `apps/api/.venv`
+  # Pre-push mirror of the blocking CI gates. Runs the project's own
+  # tools (uv, pnpm) rather than a pre-commit-managed environment, so
+  # results match `apps/api/.venv`
   # and CI exactly instead of a second, differently-pinned toolchain.
   # See docs/pre-push.md for what this excludes and the --no-verify
   # escape hatch; CI stays authoritative either way.

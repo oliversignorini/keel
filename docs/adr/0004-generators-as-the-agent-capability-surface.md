@@ -3,7 +3,6 @@
 **Status:** Accepted — 2026-08-28
 **Decides:** whether `.claude/commands/*.md` remain the mechanism by which a
 new vertical slice is created, or become thin wrappers over a shipped CLI.
-**Implemented by:** `docs/plans/phase-19.md`
 
 ---
 
@@ -91,8 +90,8 @@ feature, not about the file shape.
 
 - `gen resource` **never** regenerates `openapi.merged.json` or the
   TypeScript client. That stays a separate `gen sync-client` subcommand,
-  because `docs/plans/WORKTREES.md` rule 3 allows exactly one worktree at a
-  time to write those paths. `sync-client` takes a lock in the shared `.git`
+  because only one worktree at a time may write those paths (see
+  `CLAUDE.md`). `sync-client` takes a lock in the shared `.git`
   directory, turning a convention that existed only in Markdown into
   something the machine enforces.
 - The generator is **not dogfooded inside keel**. Every run emits a

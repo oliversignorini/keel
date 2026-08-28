@@ -53,8 +53,8 @@ services:
       timeout: 5s
       retries: 10
 
-  # Stands in for R2 in dev (docs/plans/phase-5.md 5.6: "no R2 credentials
-  # exist"). MinIO speaks the same S3 API R2 does, so keel.files.r2_client
+  # Stands in for R2 in dev (no R2 credentials exist locally). MinIO
+  # speaks the same S3 API R2 does, so keel.files.r2_client
   # needs no dev-only branch — only the endpoint URL differs from prod.
   minio:
     image: minio/minio:latest

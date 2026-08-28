@@ -1,7 +1,7 @@
 name: Generators
 
-# Deliberately NOT path-filtered (docs/plans/phase-19.md 19.A "CI
-# harness"). A change to keel/core/authz.py, to the permission registry,
+# Deliberately NOT path-filtered. A change to keel/core/authz.py, to the
+# permission registry,
 # or to the shape OrgScopedResource demands can break every future
 # generated slice without touching a single file under templates/ or
 # packages/cli/ — and the failure would then first appear in a downstream

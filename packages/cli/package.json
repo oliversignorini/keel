@@ -2,7 +2,7 @@
   "name": "@keel/cli",
   "version": "0.0.0",
   "private": false,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "keel-gen": "./dist/index.js"
