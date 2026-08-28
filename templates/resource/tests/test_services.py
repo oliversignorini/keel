@@ -1,11 +1,13 @@
 import pytest
 
+from keel.__app__ import services
+from keel.__app__.models import __Resource__
 from keel.accounts.models import User
 from keel.billing.models import Plan, Price, Subscription
 from keel.core.exceptions import PaymentRequired
 from keel.organizations.models import Organization
-from keel.widgets import services
-from keel.widgets.models import Widget
+
+# keel:insert service_test_imports
 
 pytestmark = pytest.mark.django_db
 
@@ -16,22 +18,20 @@ def _org() -> tuple[Organization, User]:
     return org, creator
 
 
-def test_create_widget_creates_a_row() -> None:
+def test_create___resource___creates_a_row() -> None:
     org, creator = _org()
 
-    row = services.create_widget(
+    row = services.create___resource__(
         organization=org,
         created_by=creator,
-        name="A name",
-        description="",
-        status="",
+        # keel:insert service_call_kwargs
     )
 
     assert row.pk is not None
-    assert Widget.objects.filter(pk=row.pk, organization=org).exists()
+    assert __Resource__.objects.filter(pk=row.pk, organization=org).exists()
 
 
-def test_create_widget_enforces_the_widgets_limit() -> None:
+def test_create___resource___enforces_the___app___limit() -> None:
     """CLAUDE.md invariant 3's ordering, proved: ``check_limit`` runs
     before anything is written, so the second create raises rather than
     inserting a row and rolling it back."""
@@ -40,7 +40,7 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
         code="starter",
         name="Starter",
         stripe_product_id="prod_starter",
-        entitlements={"features": [], "limits": {"widgets": 1}},
+        entitlements={"features": [], "limits": {"__app__": 1}},
     )
     price = Price.objects.create(
         plan=plan,
@@ -56,53 +56,41 @@ def test_create_widget_enforces_the_widgets_limit() -> None:
         price=price,
         status="active",
     )
-    services.create_widget(
+    services.create___resource__(
         organization=org,
         created_by=creator,
-        name="A name",
-        description="",
-        status="",
+        # keel:insert service_call_kwargs
     )
 
     with pytest.raises(PaymentRequired) as exc_info:
-        services.create_widget(
+        services.create___resource__(
             organization=org,
             created_by=creator,
-            name="A name",
-            description="",
-            status="",
+            # keel:insert service_call_kwargs
         )
 
     assert exc_info.value.code == "limit_exceeded"
 
 
-def test_update_widget_updates_only_given_fields() -> None:
+def test_update___resource___updates_only_given_fields() -> None:
     org, creator = _org()
-    row = services.create_widget(
+    row = services.create___resource__(
         organization=org,
         created_by=creator,
-        name="A name",
-        description="",
-        status="",
+        # keel:insert service_call_kwargs
     )
 
-    updated = services.update_widget(widget=row, actor=creator, description="changed")
-
-    updated.refresh_from_db()
-    assert updated.description == "changed"
-    assert updated.name == row.name  # untouched fields stay untouched
+    # keel:insert update_assertions
 
 
-def test_delete_widget_removes_the_row() -> None:
+def test_delete___resource___removes_the_row() -> None:
     org, creator = _org()
-    row = services.create_widget(
+    row = services.create___resource__(
         organization=org,
         created_by=creator,
-        name="A name",
-        description="",
-        status="",
+        # keel:insert service_call_kwargs
     )
 
-    services.delete_widget(widget=row, actor=creator)
+    services.delete___resource__(__resource__=row, actor=creator)
 
-    assert not Widget.objects.filter(pk=row.pk).exists()
+    assert not __Resource__.objects.filter(pk=row.pk).exists()

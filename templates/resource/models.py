@@ -1,4 +1,4 @@
-"""Widget — data shape only (PRD §4 "Data model"; CLAUDE.md's
+"""__Resource__ — data shape only (PRD §4 "Data model"; CLAUDE.md's
 per-app file shape). No queries and no business rules: reads live in
 ``selectors.py``, writes in ``services.py``.
 
@@ -13,16 +13,13 @@ from django.db import models
 from keel.core.models import OrgScopedModel
 
 
-class Widget(OrgScopedModel):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default="")
-    status = models.CharField(max_length=32, blank=True, default="")
+class __Resource__(OrgScopedModel):
+    # keel:insert model_fields
     created_by = models.ForeignKey(
-        "accounts.User", on_delete=models.PROTECT, related_name="widgets_created"
+        "accounts.User", on_delete=models.PROTECT, related_name="__resources___created"
     )
 
     class Meta:
         indexes = (models.Index(fields=["organization", "created_at"]),)
 
-    def __str__(self) -> str:
-        return self.name
+    # keel:insert model_str

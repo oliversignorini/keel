@@ -16,7 +16,7 @@ comment; text meant for an API consumer belongs in a docstring, on
 purpose.
 """
 
-from datetime import datetime
+# keel:insert schema_imports
 
 from ninja import Schema
 from pydantic import Field
@@ -27,10 +27,8 @@ from keel.core.schemas import KeelSchema
 # What the API returns. Relations are serialized as their id, never as a
 # nested object — expanding one is a client decision, and nesting it here
 # is how a list endpoint quietly becomes an N+1.
-class WidgetOut(KeelSchema):
-    name: str
-    description: str
-    status: str
+class __Resource__Out(KeelSchema):
+    # keel:insert out_fields
     created_by: str
     created_at: datetime
     updated_at: datetime
@@ -43,16 +41,18 @@ class WidgetOut(KeelSchema):
 # Create payload. A required field has no default; an optional one
 # defaults to empty rather than to ``None`` so the column never holds two
 # different spellings of "nothing".
-class WidgetIn(Schema):
-    name: str = Field(min_length=1, max_length=255)
-    description: str = ""
-    status: str = ""
+class __Resource__In(Schema):
+    # keel:if template_only
+    pass
+    # keel:endif
+    # keel:insert in_fields
 
 
 # Update payload — every field optional. ``views.py`` reads it with
 # ``exclude_unset=True``, so omitting a field leaves it unchanged, and
 # sending it as ``null`` is a different request from not sending it.
-class WidgetPatchIn(Schema):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = None
-    status: str | None = None
+class __Resource__PatchIn(Schema):
+    # keel:if template_only
+    pass
+    # keel:endif
+    # keel:insert patch_fields

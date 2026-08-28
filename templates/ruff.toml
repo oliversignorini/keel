@@ -1,0 +1,40 @@
+# Ruff over the templates themselves (ADR 0004: "Templates are real .py
+# and .tsx files using token substitution rather than a template language,
+# so ruff, mypy, eslint and tsc lint the templates themselves. A .hbs file
+# is unlintable text.")
+#
+# Extends apps/api's real configuration rather than restating it, so the
+# templates are held to the same line length, target version and rule
+# selection as the code they render into — and cannot drift from it.
+extend = "../apps/api/pyproject.toml"
+
+[lint.isort]
+# Ruff infers first-party packages by looking for the directory on disk.
+# `keel.__app__` is not a directory until the template is rendered, so
+# without this every template's own-project imports are classified as
+# third party and sorted into the wrong block — and "fixing" the templates
+# to match would put them in the wrong block in the *render*, which is the
+# file that has to pass apps/api's real ruff.
+known-first-party = ["keel"]
+
+[lint]
+# Two rules that a token-substituted template file cannot satisfy by
+# construction, and that are enforced on the *render* instead — the CI
+# harness generates a slice and runs the repo's real `ruff check` and
+# `mypy` over it, which is a strictly stronger check than either would be
+# here:
+#
+#   F821  undefined-name. `schemas.py` gets its `datetime`/`Decimal`/`UUID`
+#         imports from a `# keel:insert` slot, because which of them the
+#         output needs depends on the field list — and an import the output
+#         doesn't need is an F401 failure in the generated app. One of the
+#         two has to be unsatisfiable in the template; this is the one
+#         whose absence is caught downstream.
+#   F401  unused-import, for the mirror-image case: a template that imports
+#         everything a conditional region might need has imports that are
+#         unused when that region is dropped.
+#   F841  unused-variable. A template binds a name that only the lines from
+#         a `# keel:insert` slot go on to read (`row` in
+#         tests/test_services.py), so it is genuinely unused in the
+#         template text and genuinely used in every render.
+ignore = ["F821", "F401", "F841"]

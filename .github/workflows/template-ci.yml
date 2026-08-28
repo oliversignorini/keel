@@ -182,6 +182,20 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Assert the generators shipped, renamed and working
+        run: |
+          # ADR 0004: the CLI is a product feature of the instantiated
+          # project, not template-authoring scaffolding — `init` renames it
+          # and must never delete it. The repo-wide "no stale keel" check
+          # above already covers the rename; this covers the deletion, and
+          # that the renamed package still builds and runs.
+          test -d packages/cli
+          test -d templates
+          test -f .github/workflows/generators.yml
+          grep -q "\"@${{ matrix.name }}/cli\"" package.json \
+            || grep -q "@${{ matrix.name }}/cli" package.json
+          pnpm gen --help | grep -q "readonly-resource"
+
       - name: Build email templates
         run: pnpm --filter "@${{ matrix.name }}/emails" build
 

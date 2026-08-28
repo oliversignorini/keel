@@ -11,15 +11,15 @@ helper to reach for.
 import pytest
 from django.test import Client
 
+from keel.__app__.models import __Resource__
+from keel.__app__.views import _VIEW
 from keel.accounts.models import User
 from keel.organizations import services as org_services
 from keel.organizations.models import Role
-from keel.widgets.models import Widget
-from keel.widgets.views import _VIEW
 
 pytestmark = pytest.mark.django_db
 
-_CREATE_BODY = {"name": "A name"}
+# keel:insert api_create_body
 
 _counter = 0
 
@@ -62,32 +62,26 @@ def test_owner_can_create_list_retrieve_update_and_delete() -> None:
     client = _client_for(owner)
 
     response = client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/__resources__/",
         _CREATE_BODY,
         content_type="application/json",
     )
     assert response.status_code == 201, response.content
     row_id = response.json()["id"]
 
-    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/__resources__/")
     assert response.status_code == 200
     assert [row["id"] for row in response.json()["results"]] == [row_id]
 
-    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/{row_id}/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/__resources__/{row_id}/")
     assert response.status_code == 200
-    assert response.json()["name"] == _CREATE_BODY["name"]
+    # keel:insert api_retrieve_assertions
 
-    response = client.patch(
-        f"/api/v1/orgs/{org.slug}/widgets/{row_id}/",
-        {"description": "changed"},
-        content_type="application/json",
-    )
-    assert response.status_code == 200, response.content
-    assert response.json()["description"] == "changed"
+    # keel:insert api_patch_assertions
 
-    response = client.delete(f"/api/v1/orgs/{org.slug}/widgets/{row_id}/")
+    response = client.delete(f"/api/v1/orgs/{org.slug}/__resources__/{row_id}/")
     assert response.status_code == 204
-    assert not Widget.objects.filter(pk=row_id).exists()
+    assert not __Resource__.objects.filter(pk=row_id).exists()
 
 
 def test_put_is_not_registered_only_patch_is() -> None:
@@ -99,14 +93,14 @@ def test_put_is_not_registered_only_patch_is() -> None:
     org, owner = _org_with_owner()
     client = _client_for(owner)
     response = client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/__resources__/",
         _CREATE_BODY,
         content_type="application/json",
     )
     row_id = response.json()["id"]
 
     response = client.put(
-        f"/api/v1/orgs/{org.slug}/widgets/{row_id}/",
+        f"/api/v1/orgs/{org.slug}/__resources__/{row_id}/",
         _CREATE_BODY,
         content_type="application/json",
     )
@@ -120,7 +114,7 @@ def test_view_only_member_cannot_create() -> None:
     client = _client_for(member)
 
     response = client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/__resources__/",
         _CREATE_BODY,
         content_type="application/json",
     )
@@ -134,16 +128,16 @@ def test_view_only_member_can_list_and_retrieve() -> None:
     member = _member_with_permissions(org, [_VIEW])
     owner_client = _client_for(owner)
     response = owner_client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/__resources__/",
         _CREATE_BODY,
         content_type="application/json",
     )
     row_id = response.json()["id"]
 
     member_client = _client_for(member)
-    response = member_client.get(f"/api/v1/orgs/{org.slug}/widgets/")
+    response = member_client.get(f"/api/v1/orgs/{org.slug}/__resources__/")
     assert response.status_code == 200
-    response = member_client.get(f"/api/v1/orgs/{org.slug}/widgets/{row_id}/")
+    response = member_client.get(f"/api/v1/orgs/{org.slug}/__resources__/{row_id}/")
     assert response.status_code == 200
 
 
@@ -152,7 +146,7 @@ def test_member_with_no_permissions_gets_403_on_list() -> None:
     member = _member_with_permissions(org, [])
     client = _client_for(member)
 
-    response = client.get(f"/api/v1/orgs/{org.slug}/widgets/")
+    response = client.get(f"/api/v1/orgs/{org.slug}/__resources__/")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "insufficient_role"
@@ -164,7 +158,7 @@ def test_nonmember_gets_404_not_403_for_a_row_in_another_org() -> None:
     org, owner = _org_with_owner()
     owner_client = _client_for(owner)
     response = owner_client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
+        f"/api/v1/orgs/{org.slug}/__resources__/",
         _CREATE_BODY,
         content_type="application/json",
     )
@@ -173,21 +167,9 @@ def test_nonmember_gets_404_not_403_for_a_row_in_another_org() -> None:
     other_org, other_owner = _org_with_owner()
     other_client = _client_for(other_owner)
 
-    response = other_client.get(f"/api/v1/orgs/{other_org.slug}/widgets/{row_id}/")
+    response = other_client.get(f"/api/v1/orgs/{other_org.slug}/__resources__/{row_id}/")
 
     assert response.status_code == 404
 
 
-def test_create_rejects_a_blank_required_field_with_400() -> None:
-    org, owner = _org_with_owner()
-    client = _client_for(owner)
-
-    response = client.post(
-        f"/api/v1/orgs/{org.slug}/widgets/",
-        {**_CREATE_BODY, "name": ""},
-        content_type="application/json",
-    )
-
-    assert response.status_code == 400
-    fields = {row["field"] for row in response.json()["error"]["details"]}
-    assert "name" in fields
+# keel:insert api_validation_test

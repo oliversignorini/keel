@@ -4,12 +4,12 @@ fire-and-forget / multi-step boundary. A task that grows a second step
 belongs in ``keel/jobs/``, not here.
 """
 
+from keel.__app__ import services
+from keel.__app__.models import __Resource__
 from keel.core.tasks import task
-from keel.widgets import services
-from keel.widgets.models import Widget
 
 
 @task
-def notify_widget_created_task(widget_id: str) -> None:
-    widget = Widget.objects.get(pk=widget_id)
-    services._notify_widget_created(widget.id)
+def notify___resource___created_task(__resource___id: str) -> None:
+    __resource__ = __Resource__.objects.get(pk=__resource___id)
+    services._notify___resource___created(__resource__.id)

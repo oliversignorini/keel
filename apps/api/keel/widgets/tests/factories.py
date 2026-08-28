@@ -1,6 +1,6 @@
-"""Row factory used both by ``WidgetResource.test_factory`` (PRD §4
-invariant 7 — the cross-org meta-test walk) and directly by this app's
-own tests."""
+"""Row factory used both by ``WidgetResource.test_factory`` (the
+cross-org meta-test walk, CLAUDE.md invariant 6) and directly by this
+app's own tests."""
 
 from django.utils.crypto import get_random_string
 
@@ -16,7 +16,7 @@ def widget_factory(organization: Organization) -> Widget:
     )
     return Widget.objects.create(
         organization=organization,
-        name="A widget",
+        name="A name",
         description="",
         status="",
         created_by=creator,
