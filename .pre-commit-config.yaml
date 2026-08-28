@@ -77,9 +77,16 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      # exclude: orval's raw output carries trailing whitespace and its
+      # own EOF shape, and the drift gates (CI api-client-generation, the
+      # pre-push mirror) diff a fresh regeneration against what's
+      # committed — a fixer that rewrites the committed copy makes that
+      # diff permanently non-empty. Same for the committed merged spec.
       - id: end-of-file-fixer
+        exclude: ^(packages/api-client/src/generated/|openapi\.merged\.json$)
         stages: [pre-commit]
       - id: trailing-whitespace
+        exclude: ^(packages/api-client/src/generated/|openapi\.merged\.json$)
         stages: [pre-commit]
       - id: check-merge-conflict
         stages: [pre-commit]
