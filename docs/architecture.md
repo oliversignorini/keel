@@ -29,7 +29,9 @@ there.
 **Enforced by:** convention plus code review, not a CI gate — this is the
 one invariant with no automated check today. `apps/api/keel/widgets/`
 (`services.py`, `selectors.py`) is the reference shape every other app
-follows.
+follows; since Phase 19 it is a generated render of `templates/resource`
+rather than hand-maintained (see "Generators" below), so the shape stays
+correct by construction for anything provisioned with `pnpm gen`.
 
 ### 2. Authorization is expressed only in `organizations/permissions.py`
 
@@ -242,6 +244,47 @@ Where business logic lives is not per-app discretion: **writes go through
 
 ---
 
+## Generators (Phase 19, ADR 0004)
+
+`packages/cli` (`pnpm gen ...`) is the primary way a resource, permission,
+job, transactional email, or e2e ship gate gets added — see CLAUDE.md's
+generator catalogue for the full command list and the `/new-resource`
+etc. slash commands that drive the judgement work each generator
+deliberately leaves at a marked insertion point. `templates/` holds the
+generators' source material as real, lintable Python and TypeScript (no
+template-engine syntax); `pnpm gen resource` and `pnpm gen readonly-resource`
+render it into a new app under `apps/api/keel/`, and `--ui` renders
+`templates/ui` into the matching Next.js route group.
+
+`apps/api/keel/widgets/` and `apps/web/app/(app)/app/[org]/widgets/` are
+not hand-maintained reference code — they are a committed **render** of
+`templates/resource` and `templates/ui`, held in place the same way
+`packages/api-client/src/generated` is: improve the template, regenerate,
+commit the diff. Three CI jobs in `.github/workflows/generators.yml` make
+this an enforced property rather than a convention:
+
+- **`templates-lint`** — ruff-checks and ruff-formats everything under
+  `templates/` and fails if any template-engine file extension
+  (`.hbs`, `.eta`, `.j2`, …) shows up, proving the templates are real
+  source the repo's own linter reads.
+- **`reference-slice-is-a-render`** — re-runs `pnpm gen resource Widget
+  --force --ui` in place and fails on any diff against what's committed
+  under `apps/api/keel/widgets` and the widgets frontend route.
+- **`generated-slice-passes-the-invariants`** — generates a throwaway
+  resource, readonly-resource, permission, and email into the CI checkout
+  and runs the full invariant suite (`lint-imports`,
+  `check_permission_lint.py`, `makemigrations --check`, ruff, mypy,
+  `pytest` including the tenant-isolation and permission-guard
+  meta-tests) against it, so a generator regression is caught before it
+  reaches a downstream project.
+
+None of this is path-filtered — a change to `keel/core/authz.py` or the
+permission registry shape can break every future generated slice without
+touching `templates/` or `packages/cli/` at all, so `generators.yml` runs
+on every push and PR like `ci.yml` does.
+
+---
+
 ## Type synchronisation pipeline (today)
 
 ```
@@ -292,3 +335,5 @@ description of the post-Phase-10 state.
   headers, response envelopes, 401/403/409) for allauth headless.
 - `keel-prd.md` §4 — the source these invariants are drawn from, and the
   place to look if this file and the code ever disagree.
+- `docs/adr/0004-generators-as-the-agent-capability-surface.md` — why the
+  generator CLI exists and what it deliberately leaves to judgement.

@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Entries are grouped by the phase they landed in. Phase numbers and plans
 are in `docs/plans/`.
 
+## [Unreleased]
+
+### Phase 19 — Generators as the agent capability surface (ADR 0004)
+
+- **19.A** — `packages/cli` (`pnpm gen ...`), `templates/` as the source
+  of the reference slice, `resource`/`readonly-resource`/`permission`/
+  `sync-client` generators; `apps/api/keel/widgets/` becomes a committed
+  render of `templates/resource` rather than hand-maintained; new
+  `templates-lint` and `reference-slice-is-a-render` CI gates
+  (`.github/workflows/generators.yml`)
+- **19.B** — `job` generator (Tier 1 and Tier 2), `e2e` ship-gate
+  generator, `generated-slice-passes-the-invariants` CI gate, every
+  `.claude/commands/new-*.md` rewritten as a thin wrapper over the CLI,
+  and a new `/plan-feature` command for briefs spanning more than one
+  generator
+- **19.C** — `--ui` frontend templates (list/detail/create pages,
+  `fields-ui.ts`) so `pnpm gen resource --ui` provisions the Next.js
+  route group too, and an `email` generator for transactional emails
+
 ## [1.0.0] - 2026-08-28
 
 First tagged release. Phases 0–18: a working, instantiable multi-tenant

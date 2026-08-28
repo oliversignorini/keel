@@ -28,6 +28,25 @@ Every PR runs (`.github/workflows/ci.yml`):
 - **`contracts`** — `lint-imports` (the `keel/domain` and `keel/core`
   import contracts) and re-derives `openapi.merged.json`, failing on drift
 
+Every PR also runs (`.github/workflows/generators.yml`), not path-filtered
+since a change to shared authz/permission code can break every future
+generated slice:
+
+- **`templates-lint`** — ruff over `templates/`, and asserts no
+  template-engine syntax crept in
+- **`reference-slice-is-a-render`** — regenerates `apps/api/keel/widgets`
+  and its frontend route from `templates/resource`/`templates/ui` and
+  fails on any diff against what's committed
+- **`generated-slice-passes-the-invariants`** — generates a throwaway
+  resource, readonly-resource, permission, and email into the CI checkout
+  and runs the full invariant suite against them
+
+If you're adding a resource, permission, job, or email, use `pnpm gen`
+(see CLAUDE.md's generator catalogue) rather than hand-copying
+`apps/api/keel/widgets/` — that directory is a generated render, not a
+template to copy by hand, and CI's `reference-slice-is-a-render` job will
+reject drift between it and `templates/resource`.
+
 ## Invariants a PR must not break
 
 These are `keel-prd.md` §4's seven architecture invariants, restated as

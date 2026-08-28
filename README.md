@@ -197,8 +197,13 @@ scripts/        init.ts, coverage gate, permission lint, OpenAPI merge
 
 Every Django app under `apps/api/keel/` shares the same seven-file shape:
 `models.py` `services.py` `selectors.py` `permissions.py` `serializers.py`
-`views.py` `tasks.py` plus `tests/`. `.claude/commands/new-resource.md`
-and `new-email.md` generate a new one following that shape.
+`views.py` `tasks.py` plus `tests/`. `pnpm gen resource` (or
+`pnpm gen readonly-resource`) generates a new one following that shape,
+reading from `templates/` — `.claude/commands/new-resource.md` is a thin
+wrapper that runs the generator and then does the judgement work it
+deliberately leaves undone. `apps/api/keel/widgets/` is a committed render
+of `templates/resource`, kept honest by CI rather than hand-maintained;
+see CLAUDE.md's generator catalogue for the full command list.
 
 ## Documentation
 
