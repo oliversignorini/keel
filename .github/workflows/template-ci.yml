@@ -12,9 +12,22 @@ name: template-ci
 # real instantiation (deleteTemplateAuthoringDocs()) — it tests the
 # template, not the project a real run produces.
 
+# Paths-filtered (free Actions plan, docs/plans/phase-16.md 16.D's
+# constraint): the two-fixture matrix below runs a full gate suite twice,
+# so it triggers only when the init machinery itself changes — everything
+# else is already covered by CI on the un-instantiated template. The
+# pre-push hook layer is the every-push guard; workflow_dispatch covers
+# an on-demand run before a release.
 on:
   push:
+    paths:
+      - scripts/init.ts
+      - .github/workflows/template-ci.yml
   pull_request:
+    paths:
+      - scripts/init.ts
+      - .github/workflows/template-ci.yml
+  workflow_dispatch:
 
 env:
   PNPM_VERSION: "9.5.0"
