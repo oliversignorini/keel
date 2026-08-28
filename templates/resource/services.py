@@ -11,6 +11,8 @@ transaction.
 
 from __future__ import annotations
 
+# keel:insert service_imports
+
 from typing import Any
 
 from django.db import transaction

@@ -12,7 +12,7 @@ import pytest
 from django.test import Client
 
 from keel.__app__.models import __Resource__
-from keel.__app__.views import _CREATE, _VIEW
+from keel.__app__.views import _VIEW
 from keel.accounts.models import User
 from keel.organizations import services as org_services
 from keel.organizations.models import Role

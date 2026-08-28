@@ -18,7 +18,7 @@ describe("parseFields", () => {
   it("parses every supported type", () => {
     const fields = parseFields(
       "a:str,b:str(32),c:text,d:int,e:decimal,f:bool,g:date,h:datetime," +
-        "i:choice(draft,sent),j:fk(accounts.User)",
+        "i:choice(draft,sent),j:fk(accounts.User)?",
     );
     expect(fields.map((f) => f.kind)).toEqual([
       "str",
@@ -56,9 +56,13 @@ describe("parseFields", () => {
   });
 
   it("rejects a malformed fk target", () => {
-    expect(() => parseFields("a:fk(User)")).toThrow(InvalidFieldSpec);
-    expect(() => parseFields("a:fk(accounts.user)")).toThrow(InvalidFieldSpec);
-    expect(() => parseFields("a:fk()")).toThrow(InvalidFieldSpec);
+    expect(() => parseFields("a:fk(User)?")).toThrow(InvalidFieldSpec);
+    expect(() => parseFields("a:fk(accounts.user)?")).toThrow(InvalidFieldSpec);
+    expect(() => parseFields("a:fk()?")).toThrow(InvalidFieldSpec);
+  });
+
+  it("rejects a non-null fk, because the factory cannot invent a related row", () => {
+    expect(() => parseFields("owner:fk(accounts.User)")).toThrow(InvalidFieldSpec);
   });
 
   it("returns nothing for an absent or empty spec", () => {
@@ -90,11 +94,13 @@ describe("renderModelFields", () => {
   });
 
   it("renders a foreign key with a collision-free related_name", () => {
-    expect(renderModelFields(parseFields("owner:fk(accounts.User)"), names)).toEqual([
+    expect(renderModelFields(parseFields("owner:fk(accounts.User)?"), names)).toEqual([
       "    owner = models.ForeignKey(",
       '        "accounts.User",',
       "        on_delete=models.PROTECT,",
       '        related_name="invoices_by_owner",',
+      "        null=True,",
+      "        blank=True,",
       "    )",
     ]);
   });

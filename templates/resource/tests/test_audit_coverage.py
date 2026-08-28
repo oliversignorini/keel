@@ -23,6 +23,12 @@ def test_every_mutating_service_is_audited_or_explicitly_not_audited() -> None:
     for name, func in inspect.getmembers(services, inspect.isfunction):
         if func.__module__ != services.__name__:
             continue
+        # Private helpers are not the service surface — same rule the
+        # repo-wide walk in keel/core/tests/service_audit_registry.py
+        # applies. A `_dispatch_x` that only enqueues a task has no effect
+        # of its own to record; the audited service that calls it does.
+        if name.startswith("_"):
+            continue
         key = f"{func.__module__}.{func.__qualname__}"
         # The @audited wrapper registers under the *wrapped* function's
         # qualname, which functools.wraps preserves — so a decorated

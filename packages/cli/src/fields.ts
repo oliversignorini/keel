@@ -162,6 +162,20 @@ function parseField(raw: string): Field {
   }
 
   if (kind === "fk") {
+    if (!optional) {
+      throw new InvalidFieldSpec(
+        `fk field "${name}" must be declared optional — write it as ` +
+          `"${name}:${type}?".\n\n` +
+          `A non-null relation needs the factory to produce a related row, and the ` +
+          `generator cannot invent one: it does not know which of the target model's ` +
+          `own fields are required. It also cannot: ` +
+          `OrgScopedResource.test_factory must be callable with an organisation and ` +
+          `nothing else, because that is how the cross-org meta-test walks it.\n\n` +
+          `Generate it nullable, give the factory a real row, then tighten the column ` +
+          `to null=False with a migration — which is a schema decision, and one this ` +
+          `generator deliberately leaves to you.`,
+      );
+    }
     if (args.length !== 1) {
       throw new InvalidFieldSpec(`fk takes exactly one target: "${raw}" — e.g. fk(accounts.User).`);
     }

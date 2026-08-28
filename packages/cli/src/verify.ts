@@ -27,10 +27,10 @@ export interface GateResult {
 }
 
 function runUv(repo: Repo, args: string[]): { ok: boolean; output: string } {
+  // Deliberately not `shell: true` — see the note in format.ts::ruff.
   const result = spawnSync("uv", args, {
     cwd: repo.apiDir,
     encoding: "utf8",
-    shell: process.platform === "win32",
   });
   if (result.error) {
     return { ok: false, output: `could not run "uv ${args.join(" ")}": ${result.error.message}` };

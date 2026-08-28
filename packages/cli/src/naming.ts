@@ -1,11 +1,19 @@
 /**
- * The five substitution tokens (docs/plans/phase-19.md 19.A "Templates")
+ * The substitution tokens (docs/plans/phase-19.md 19.A "Templates")
  * derived from one PascalCase singular resource name.
  *
- * There are exactly five and there will not be a sixth: every other shape
- * a template needs (a permission code, a related_name, a URL segment) is
- * one of these five with a fixed suffix, and adding tokens for those is
- * how a token substituter turns into a template language.
+ * The plan names five. There are seven, and the two extra ones are the
+ * UPPER_SNAKE cases — added because a `Perm` constant is UPPER_SNAKE
+ * (`Perm.INVOICE_VIEW`), the generated `views.py` has to name four of
+ * them, and `.toUpperCase()` is not something a token substituter can do.
+ * The alternative was an insertion slot per permission reference, which
+ * would have put five generator-rendered lines into the one file whose
+ * readability matters most.
+ *
+ * Seven is where this stops. Every other shape a template needs (a
+ * related_name, a URL segment, an operation id) is one of these seven with
+ * a fixed suffix, and adding tokens for those is how a token substituter
+ * turns into a template language.
  */
 
 export interface Names {
@@ -17,6 +25,10 @@ export interface Names {
   resources: string;
   /** __Resources__ — PascalCase plural. `Invoices` */
   Resources: string;
+  /** __RESOURCE__ — UPPER_SNAKE singular, for Perm constants. `INVOICE` */
+  RESOURCE: string;
+  /** __RESOURCES__ — UPPER_SNAKE plural, for Perm constants. `INVOICES` */
+  RESOURCES: string;
   /** __app__ — the Django app label. `invoices` */
   app: string;
 }
@@ -67,6 +79,8 @@ export function namesFor(rawName: string): Names {
     resource: snake,
     resources: snakePlural,
     Resources: snakeToPascal(snakePlural),
+    RESOURCE: snake.toUpperCase(),
+    RESOURCES: snakePlural.toUpperCase(),
     app: snakePlural,
   };
 }

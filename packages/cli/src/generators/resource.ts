@@ -158,6 +158,7 @@ function buildInserts(
     out_fields: renderOutFields(fields),
     in_fields: renderInFields(fields),
     patch_fields: renderPatchFields(fields),
+    service_imports: sampleImports(fields, { includeUtc: false }),
     create_params: renderCreateParams(fields),
     create_kwargs: renderCreateKwargs(fields),
     create_call_args: renderCreateCallArgs(fields),
@@ -174,11 +175,18 @@ function buildInserts(
   return inserts;
 }
 
-/** Imports the generated sample values need (Decimal, date, UTC). */
-function sampleImports(fields: Field[]): string[] {
+/**
+ * The `datetime`/`decimal` imports a rendered file needs. Tests also need
+ * `UTC` to build an aware datetime literal; `services.py` only names the
+ * types in annotations, so it does not.
+ */
+function sampleImports(fields: Field[], opts: { includeUtc: boolean } = { includeUtc: true }) {
   const datetimeParts: string[] = [];
   if (fields.some((f) => f.kind === "date")) datetimeParts.push("date");
-  if (fields.some((f) => f.kind === "datetime")) datetimeParts.push("UTC", "datetime");
+  if (fields.some((f) => f.kind === "datetime")) {
+    datetimeParts.push("datetime");
+    if (opts.includeUtc) datetimeParts.push("UTC");
+  }
   const lines: string[] = [];
   if (datetimeParts.length > 0) {
     lines.push(`from datetime import ${[...new Set(datetimeParts)].sort().join(", ")}`);

@@ -39,14 +39,17 @@ const IF_RE = /^\s*#\s*keel:if\s+([a-z0-9_-]+)\s*$/;
 const ENDIF_RE = /^\s*#\s*keel:endif\s*$/;
 const INSERT_RE = /^\s*#\s*keel:insert\s+([a-z0-9_-]+)\s*$/;
 
-/** Substitutes the five tokens. Longest-first so `__Resources__` is never
- * matched as `__Resource__` followed by a stray `s__`. */
+/** Substitutes the tokens. Plural before singular within each case, so
+ * `__Resources__` is never matched as `__Resource__` followed by a stray
+ * `s__`. */
 export function substituteTokens(input: string, names: Names): string {
   return input
     .replaceAll("__Resources__", names.Resources)
     .replaceAll("__resources__", names.resources)
+    .replaceAll("__RESOURCES__", names.RESOURCES)
     .replaceAll("__Resource__", names.Resource)
     .replaceAll("__resource__", names.resource)
+    .replaceAll("__RESOURCE__", names.RESOURCE)
     .replaceAll("__app__", names.app);
 }
 

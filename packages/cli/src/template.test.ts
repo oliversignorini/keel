@@ -14,7 +14,14 @@ describe("substituteTokens", () => {
   it("prefers the longer token so __Resources__ is never read as __Resource__ + s", () => {
     expect(substituteTokens("__Resources__", names)).toBe("Widgets");
     expect(substituteTokens("__resources__", names)).toBe("widgets");
+    expect(substituteTokens("__RESOURCES__", names)).toBe("WIDGETS");
     expect(substituteTokens("__Resource__", names)).toBe("Widget");
+    expect(substituteTokens("__RESOURCE__", names)).toBe("WIDGET");
+  });
+
+  it("substitutes the UPPER_SNAKE tokens a Perm constant needs", () => {
+    expect(substituteTokens("Perm.__RESOURCE___VIEW", names)).toBe("Perm.WIDGET_VIEW");
+    expect(substituteTokens("Perm.__RESOURCES___MANAGE", names)).toBe("Perm.WIDGETS_MANAGE");
   });
 
   it("substitutes a token that is a prefix of a longer identifier", () => {

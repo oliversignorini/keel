@@ -15,12 +15,14 @@ describe("pluralize", () => {
 });
 
 describe("namesFor", () => {
-  it("derives all five tokens from a single-word name", () => {
+  it("derives every token from a single-word name", () => {
     expect(namesFor("Widget")).toEqual({
       Resource: "Widget",
       resource: "widget",
       resources: "widgets",
       Resources: "Widgets",
+      RESOURCE: "WIDGET",
+      RESOURCES: "WIDGETS",
       app: "widgets",
     });
   });
@@ -31,6 +33,8 @@ describe("namesFor", () => {
       resource: "invoice_line",
       resources: "invoice_lines",
       Resources: "InvoiceLines",
+      RESOURCE: "INVOICE_LINE",
+      RESOURCES: "INVOICE_LINES",
       app: "invoice_lines",
     });
   });
