@@ -1,6 +1,6 @@
-// Sentry, browser runtime (PRD §4 Integration points: "Both runtimes,
-// releases tied to git SHA, source maps uploaded"; docs/plans/phase-8.md
-// 8.4). No DSN exists for this project yet — Sentry.init() with a blank
+// Sentry, browser runtime. Both runtimes (browser and server) are
+// instrumented, releases are tied to the git SHA, and source maps are
+// uploaded. No DSN exists for this project yet — Sentry.init() with a blank
 // dsn is a documented no-op (same treatment as keel/core/sentry.py on
 // the backend), so this file is always safe to load. See
 // NEXT_PUBLIC_SENTRY_RELEASE below for how the release is set without a

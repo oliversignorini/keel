@@ -1,8 +1,7 @@
-"""``billing/credits.py`` — the credit ledger arithmetic (PRD §4 "Credits
-— the metered-billing primitive"). Gated at 100% coverage (PRD invariant
-7): this module is pure arithmetic over
-rows, and if it were doing more than that, it would be too hard to reach
-100% honestly.
+"""``billing/credits.py`` — the credit ledger arithmetic behind the
+metered-billing primitive. Gated at 100% coverage: this module is pure
+arithmetic over rows, and if it were doing more than that, it would be
+too hard to reach 100% honestly.
 
 ``CreditLedgerEntry`` (append-only, never UPDATEd or DELETEd) is the
 source of truth. ``CreditBalance`` is a summary index, written in the
@@ -242,7 +241,7 @@ def adjust(organization: Any, amount: int, *, reason: str, actor: Any) -> Credit
     be negative (a clawback) or positive (a goodwill credit); zero and
     a blank reason are both rejected so every adjustment is explicit.
 
-    A clawback cannot take the balance below zero (ddia#5/#23): this
+    A clawback cannot take the balance below zero: this
     used to have no floor at all, unlike every other debit path in this
     module (``_debit``'s affordability check) — the database's
     ``CHECK (balance >= 0)`` would have caught it as an ``IntegrityError``

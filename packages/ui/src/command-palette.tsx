@@ -21,9 +21,8 @@ export interface CommandItem {
 }
 
 /** `<CommandPalette>` — ⌘K navigation, resource search, and actions
- * (PRD §5 component inventory; docs/plans/phase-6.md 6.C: "Must be fully
- * keyboard-reachable — it is a first-class navigation path per the
- * accessibility floor, not a power-user extra").
+ * — fully keyboard-reachable, because it is a first-class navigation
+ * path under the accessibility floor, not a power-user extra.
  *
  * Built on shadcn's `<Command>` (cmdk) — correct listbox ARIA by
  * construction (finding 8). The caller still owns what `items` *are*

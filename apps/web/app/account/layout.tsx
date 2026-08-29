@@ -14,10 +14,10 @@ const TABS = [
 ];
 
 /**
- * Renders outside `<AppShell>` (Phase 6) on purpose — account settings
+ * Renders outside `<AppShell>` on purpose — account settings
  * aren't scoped to an organisation, so the org switcher and nav have
  * nothing to show here. Still needs the shell's tokens and a way back
- * into the product (finding 5, 6): a minimal header with the logo and an
+ * into the product: a minimal header with the logo and an
  * explicit "Back to app" link, rather than stranding the user on
  * browser Back.
  */

@@ -35,7 +35,7 @@ class Job(OrgScopedModel):
     idempotency_key = models.CharField(max_length=255, blank=True, default="")
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
-    # Pinned at creation from the registry's step list (ddia#24) — the
+    # Pinned at creation from the registry's step list — the
     # runner totals against this column, never the live registry, so
     # re-registering `type` with a different step count never re-prices
     # a job already in flight. Nullable only for rows written before this
@@ -48,7 +48,7 @@ class Job(OrgScopedModel):
             models.Index(fields=["organization", "status"]),
         )
         constraints = (
-            # ddia#11: the real uniqueness guarantee — select_for_update
+            # The real uniqueness guarantee — select_for_update
             # in keel.jobs.services.create_job and the cache claim in
             # keel.core.idempotency both narrow the race window but
             # neither is a substitute for this. Empty keys are excluded:
@@ -77,7 +77,7 @@ class JobStep(UUIDv7PrimaryKeyModel):
 
     class Meta:
         constraints = (
-            # ddia#12: an index alone doesn't stop two runners on the same
+            # An index alone doesn't stop two runners on the same
             # job (a duplicate delivery, a manual re-drive) from both
             # get_or_create-ing ordinal 0 and forking the step set that
             # _settle_credits' proportional cost is computed against.

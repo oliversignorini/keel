@@ -215,7 +215,7 @@ class TestAdjust:
         assert _balance_row(org).balance == _ledger_sum(org)
 
     def test_adjust_cannot_take_the_balance_below_zero(self):
-        """ddia#5/#23: unlike every other debit in this module, a
+        """Unlike every other debit in this module, a
         clawback used to have no floor at all — the database's
         ``CHECK (balance >= 0)`` is the backstop; this is the readable
         ``PaymentRequired`` the caller actually gets."""

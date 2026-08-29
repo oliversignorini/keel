@@ -1,9 +1,9 @@
-"""``POST /api/v1/stripe/webhook/`` (PRD §6) — signature verification and
+"""``POST /api/v1/stripe/webhook/`` — signature verification and
 the enqueue boundary. Processing behaviour and
 the "replayed twice, identical state" requirement live in
 ``test_webhooks_replay.py``. Signatures are generated locally via
 ``stripe.WebhookSignature`` (pure HMAC, no network) — no real Stripe call,
-no stripe-mock (PRD §4, "No credentials")."""
+no stripe-mock, so the suite needs no credentials."""
 
 import json
 
@@ -125,7 +125,7 @@ def test_webhook_replay_of_an_already_processed_event_is_a_200_noop_and_does_not
 def test_webhook_replay_of_an_unprocessed_event_re_enqueues(
     settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """ddia#7: a replay whose first delivery's row committed but whose
+    """A replay whose first delivery's row committed but whose
     ``.delay()`` never reached the broker (simulated here by never
     actually running the mocked task) must re-enqueue on redelivery,
     since Stripe stops retrying once it gets a 200 and nothing else

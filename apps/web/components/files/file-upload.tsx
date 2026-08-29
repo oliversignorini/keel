@@ -32,8 +32,8 @@ interface FileUploadProps {
 }
 
 /**
- * `<FileUpload>` (PRD §5 component inventory; docs/plans/phase-5.md 5.6):
- * presign → direct PUT to storage with progress → complete → reconcile.
+ * `<FileUpload>`: presign → direct PUT to storage with progress →
+ * complete → reconcile.
  *
  * "Reconciliation" here means the component never trusts its own
  * in-memory belief that an upload finished — the `complete` call

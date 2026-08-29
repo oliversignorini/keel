@@ -56,7 +56,7 @@ class DenialReason:
     not just used as inline string literals, so
     ``registered_denial_reasons`` below can publish the set through
     ``GET /api/v1/permissions/`` instead of a client having to learn it by
-    reading this file (api-patterns finding 18)."""
+    reading this file."""
 
     INSUFFICIENT_ROLE = "insufficient_role"
     CANNOT_REMOVE_LAST_OWNER = "cannot_remove_last_owner"

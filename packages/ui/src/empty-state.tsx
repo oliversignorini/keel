@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-/** `<EmptyState>` — every empty state offers a primary action
- * (docs/plans/phase-6.md 6.C, acceptance). */
+/** `<EmptyState>` — every empty state offers a primary action; `action`
+ * is required, not optional. */
 export function EmptyState({
   icon,
   title,

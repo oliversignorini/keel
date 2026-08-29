@@ -1,5 +1,4 @@
-"""Cursor pagination for Ninja routes (PRD §7 conventions): ``{ results,
-next, previous }``.
+"""Cursor pagination for Ninja routes: ``{ results, next, previous }``.
 
 Deliberately not a hand-rolled "cursor = last id seen" approach — that is
 subtly wrong: the within-tie offset encoded alongside the ordering value
@@ -66,7 +65,7 @@ def _replace_query_param(url: str, key: str, val: Any) -> str:
 
 
 class InvalidPagination(UnprocessableEntity):
-    """One code for both pagination parameters (api-patterns finding 8):
+    """One code for both pagination parameters:
     a malformed ``cursor`` and a non-positive or non-integer ``limit`` are
     the same class of client error and now answer the same way, rather
     than a cursor error raising 422 while a bad ``limit`` was silently
@@ -83,7 +82,7 @@ class CursorPaginator:
     cursor_query_param = "cursor"
     page_size_query_param = "limit"
     page_size = 25
-    # api-patterns finding 9 / ddia finding 26: uncapped, a client-supplied
+    # Uncapped, a client-supplied
     # `limit` was pagination a client could opt out of entirely
     # (`?limit=1000000` returned the full collection in one query).
     max_page_size = 100
@@ -329,7 +328,7 @@ def paginated(
     ordering: Sequence[str] | None = None,
     **route_kwargs: Any,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Declares a paginated list route in one place (posd finding 8, for
+    """Declares a paginated list route in one place (used by
     ``keel.jobs``/``keel.audit`` — the heaviest list surfaces): the
     response schema (``Page[schema]``) and the ordering are stated once
     here instead of the two or three places a hand-rolled

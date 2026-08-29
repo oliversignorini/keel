@@ -1,4 +1,4 @@
-"""``python manage.py rotate_connection_tokens`` (ddia#27). Run after
+"""``python manage.py rotate_connection_tokens``. Run after
 prepending a new key to ``KEEL_ENCRYPTION_KEY`` (comma-separated, newest
 first — see ``config/settings/base.py``'s ``KEEL_ENCRYPTION_KEYS``) — moves
 every ``Connection`` row's ``access_token`` / ``refresh_token`` onto that

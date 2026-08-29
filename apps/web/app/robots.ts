@@ -5,10 +5,10 @@ import { SITE_URL } from "@/lib/site";
 import { isAppHost } from "@/lib/host";
 
 /** Disallows the authenticated app and account surfaces; everything under
- * the (marketing) group is indexable (phase-7.md 7.5). Deleted along with
+ * the (marketing) group is indexable. Deleted along with
  * the rest of the marketing site by `init` — see docs/marketing-removal.md.
  *
- * Host-aware since plan 6.A split the app onto its own subdomain:
+ * Host-aware since the app moved onto its own subdomain:
  * `robots.txt` is served per-host, so a single static rule list no
  * longer covers both — the apex's `Disallow: /app/` never matched
  * anything on the app host to begin with, since the app host's visible

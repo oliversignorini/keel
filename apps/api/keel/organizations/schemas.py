@@ -13,7 +13,7 @@ from keel.billing.schemas import EntitlementsOut
 from keel.core.schemas import KeelSchema
 from keel.organizations.models import Membership, Organization
 
-# api-patterns finding 14: a published vocabulary, not a bare `str` — must
+# A published vocabulary, not a bare `str` — must
 # match Membership.STATUS_CHOICES (keel/organizations/models.py).
 MembershipStatus = Literal["active", "suspended"]
 assert set(MembershipStatus.__args__) == {choice for choice, _ in Membership.STATUS_CHOICES}  # type: ignore[attr-defined]
@@ -117,8 +117,8 @@ class TransferIn(Schema):
 
 
 # --- /me/, /permissions/, /invite/<token>/ response shapes -----------------
-# (api-patterns finding 4: these routes previously returned a bare dict, so
-# the generated client typed them `void`.)
+# (Declared as real schemas rather than bare dicts, so the generated client
+# types them instead of falling back to `void`.)
 
 
 class MeUserOut(Schema):
@@ -148,7 +148,7 @@ class MeOut(Schema):
 
 class PermissionCodesOut(Schema):
     codes: list[str]
-    # api-patterns finding 18: the enumerable set of 403 `code` values a
+    # The enumerable set of 403 `code` values a
     # denial can answer with — published alongside the permission codes
     # themselves, same Reference Data Holder, same reasoning.
     denial_reasons: list[str]

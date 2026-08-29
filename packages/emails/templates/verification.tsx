@@ -3,8 +3,7 @@ import * as React from "react";
 import { Layout } from "./Layout";
 
 /**
- * Rendered to static HTML at build time (docs/plans/phase-5.md 5.5) with
- * these defaults left as literal ``{{TOKEN}}`` placeholders in the
+ * Rendered to static HTML at build time with these defaults left as literal ``{{TOKEN}}`` placeholders in the
  * output — Django substitutes them per-recipient at send time
  * (keel/notifications/emails.py). Do not pass real props when building;
  * the defaults *are* the template.

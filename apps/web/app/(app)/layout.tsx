@@ -31,10 +31,10 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 /**
- * `<AppShell>` (PRD §5 Layout; docs/plans/phase-6.md 6.B) — top bar with
+ * `<AppShell>` — top bar with
  * the org switcher, primary nav, command palette, dark-mode toggle and
- * account menu, wrapping every `/app/[org]/*` (visible: `/[org]/*` on
- * the app host — plan 6.A) page.
+ * account menu, wrapping every `/app/[org]/*` page (visible as
+ * `/[org]/*` on the app host).
  *
  * `<OrgProvider>` wraps the whole group (not just `/[org]/*`) so
  * `<OrgSwitcher>` has the caller's organisation list even on the bare
@@ -108,7 +108,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await authLogout();
-    // /login only exists on the apex (plan 6.A).
+    // /login only exists on the apex host.
     window.location.href = `${window.location.protocol}//${toApexHost(window.location.host)}/login`;
   }
 

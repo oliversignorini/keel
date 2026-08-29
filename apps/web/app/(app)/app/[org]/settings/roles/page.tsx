@@ -24,7 +24,7 @@ import { Check, Minus } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
 /**
- * `/app/[org]/settings/roles` (PRD §5 Routes). Read-only: the three
+ * `/app/[org]/settings/roles`. Read-only: the three
  * preset roles (Owner/Admin/Member — organizations/roles.py) and the
  * codes each holds, as a matrix — one row per permission, one column per
  * role (finding 19). The previous wall of 54 chips could not answer the
@@ -32,8 +32,8 @@ import { Fragment, useEffect, useMemo, useState } from "react";
  * Member doesn't?") without scanning three ragged blocks; a matrix
  * answers it by reading across one line.
  *
- * Custom roles are a per-project feature flag, off by default (PRD §4
- * "Tenancy and permissions"; phase-3.md A.4) — `organizations/viewsets.py`
+ * Custom roles are a per-project feature flag, off by default —
+ * `organizations/viewsets.py`
  * currently only wires up `list`/`retrieve` on `RoleViewSet`, no
  * create/update, which matches "off by default" exactly: there is nothing
  * to build a create-role form against yet. This page says so rather than

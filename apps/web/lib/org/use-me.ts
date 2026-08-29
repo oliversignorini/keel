@@ -13,16 +13,15 @@ interface UseMeResult {
   loading: boolean;
   /** Re-fetches `/api/v1/me/` — call after creating an organisation,
    * accepting an invitation, or switching organisations, so the client
-   * never renders permissions or entitlements from a stale response
-   * (phase-3.md Worktree C: "Switching organisation ... refetches all
-   * data"). */
+   * never renders permissions or entitlements from a stale response —
+   * switching organisation must refetch all data. */
   refetch: () => Promise<void>;
 }
 
 /**
- * `GET /api/v1/me/` (PRD §7) is what the whole client renders from: the
+ * `GET /api/v1/me/` is what the whole client renders from: the
  * user, their organisations, and — per organisation — the resolved role,
- * permission codes, and entitlements. Like useCurrentUser (Phase 2), the
+ * permission codes, and entitlements. Like useCurrentUser, the
  * API is the enforcement point; this hook exists to drive *rendering*
  * only, never to gate a request.
  */

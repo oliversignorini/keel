@@ -9,7 +9,7 @@ from pydantic import Field
 from keel.core.schemas import KeelSchema
 from keel.jobs.models import Job
 
-# api-patterns finding 14: a published vocabulary, not a bare `str` — must
+# A published vocabulary, not a bare `str` — must
 # match Job.STATUS_CHOICES (keel/jobs/models.py). JobStep shares the same
 # vocabulary (JobStep.status has no separate choices of its own).
 JobStatus = Literal["queued", "running", "succeeded", "partial", "failed"]

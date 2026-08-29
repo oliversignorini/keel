@@ -7,11 +7,11 @@ export const PENDING_FLOW_MESSAGES: Record<string, string> = {
 };
 
 /**
- * Three error shapes reach the client during Phase 2:
- *  - Keel's own envelope (keel-prd.md §7): { error: { code, message, details } }
+ * Three error shapes reach the client:
+ *  - Keel's own envelope: { error: { code, message, details } }
  *  - allauth headless's field-error envelope: { status, errors: [{ code, param, message }] }
  *  - allauth headless's pending-flow envelope: { status: 401, data: { flows: [{ id, is_pending }] } } —
- *    the PRD's "401 + pending email verification flow" (§6 Signup). This is
+ *    a 401 carrying a pending email-verification flow, as signup emits. This is
  *    not an authentication failure; it becomes an UnauthorizedError whose
  *    `code` is the pending flow's id (e.g. "verify_email"), so callers can
  *    branch on `error.code` instead of re-parsing the response body.

@@ -55,8 +55,8 @@ describe("<DunningBanner>", () => {
   it("appears when the subscription is past_due, without threatening loss of access", () => {
     render(<DunningBanner subscription={subscription({ status: "past_due" })} orgSlug="acme" />);
 
-    // phase-4.md B.6: dunning does not revoke access, and the copy must
-    // not claim otherwise.
+    // Dunning does not revoke access, and the copy must not claim
+    // otherwise.
     expect(screen.getByRole("alert")).toHaveTextContent(/Your organisation keeps working/);
     expect(screen.getByRole("link", { name: "Update payment details" })).toHaveAttribute(
       "href",

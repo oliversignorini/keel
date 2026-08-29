@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 /**
  * The (marketing) route group's own Playwright specs — kept separate from
  * e2e/accessibility.spec.ts (auth/account routes) so `init` can delete
- * this one file when the marketing site is declined (PRD §8 Phase 9; see
+ * this one file when the marketing site is declined (see
  * docs/marketing-removal.md).
  */
 const MARKETING_ROUTES = [

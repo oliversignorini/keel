@@ -1,6 +1,6 @@
-"""The real ``AuditLog`` writer, wired at app-ready time (PRD v1.2 §8's
-acceptance criterion: "An audited service writes exactly one audit row
-per call, on commit, carrying actor and impersonator")."""
+"""The real ``AuditLog`` writer, wired at app-ready time: an audited
+service writes exactly one audit row per call, carrying actor and
+impersonator."""
 
 import pytest
 from django.db import transaction
@@ -36,7 +36,7 @@ def test_audited_service_writes_exactly_one_row_on_commit_with_actor(
 
 
 def test_audit_row_rolls_back_with_the_effect_it_records() -> None:
-    """ddia#17: the audit write is inline, inside the same transaction as
+    """The audit write is inline, inside the same transaction as
     the effect it describes — not a dual write via ``on_commit()``. If
     the surrounding transaction rolls back, the audit row must roll back
     with it; there is no window where the effect is durable and the
@@ -58,10 +58,10 @@ def test_audit_row_rolls_back_with_the_effect_it_records() -> None:
 
 def test_audited_service_records_the_impersonator(django_capture_on_commit_callbacks) -> None:
     """Proves the recorder's impersonator handling against a service the
-    PRD §6 restrictions don't cover — widget
-    CRUD isn't one of the four restricted actions, so an impersonated
-    session performing it is exactly the case PRD §6 says must still be
-    recorded ("every subsequent AuditLog row carries impersonator")."""
+    impersonation restrictions don't cover — widget CRUD isn't one of the
+    four restricted actions, so an impersonated session performing it
+    must still be recorded: every AuditLog row written under an
+    impersonated session carries the impersonator."""
     from keel.widgets import services as widget_services
     from keel.widgets.models import Widget
 

@@ -1,10 +1,10 @@
 /**
- * Content-Security-Policy for the app (docs/plans/phase-8.md 8.6;
- * narrowed by docs/adr/0002-auth-bff-shape.md). Every programmatic
+ * Content-Security-Policy for the app (narrowed by
+ * docs/adr/0002-auth-bff-shape.md). Every programmatic
  * `fetch()`/`XMLHttpRequest` this app makes is now same-origin — the
  * Next.js BFF proxies `/api/v1/…` and `/_allauth/…` to Django itself —
  * so `connect-src 'self'` (plus Sentry/PostHog) is now sufficient; it no
- * longer needs the API/stream origins the way it did pre-phase-11.
+ * longer needs the API/stream origins it did before the BFF existed.
  *
  * `GoogleContinueLink`'s real `<form method="post">` is now also a
  * same-origin relative action, proxied by the BFF like everything else

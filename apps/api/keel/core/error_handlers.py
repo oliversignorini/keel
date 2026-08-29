@@ -1,5 +1,4 @@
-"""Ninja exception handlers producing the error envelope PRD §7
-specifies:
+"""Ninja exception handlers producing the API's error envelope:
 
     { "error": { "code": ..., "message": ..., "details": [...] } }
 
@@ -21,11 +20,11 @@ class ErrorBodyOut(Schema):
     message: str
     # list[{field, message}] for validation errors, None otherwise —
     # never the dict shape a 403's structured denial context used to
-    # overload this field with (api-patterns finding 17).
+    # overload this field with.
     details: list[dict[str, Any]] | None = None
     # Present only on a 403 raised via PermissionDeniedWithReason —
     # Decision.details, i.e. what permission code was required or which
-    # invariant blocked the action (api-patterns finding 17 / 18).
+    # invariant blocked the action.
     denial: dict[str, Any] | None = None
 
 
@@ -44,8 +43,8 @@ def _validation_details(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Ninja's ``ValidationError.errors`` is a list of pydantic-derived
     dicts, each with a ``loc`` tuple whose first element names the
     parameter source (``body`` / ``query`` / ``path`` / ...) and the rest
-    the field path. Reshape to the flat ``{field, message}`` list PRD §7's
-    envelope specifies."""
+    the field path. Reshape to the flat ``{field, message}`` list the
+    error envelope specifies."""
     details = []
     for error in errors:
         loc = error.get("loc", ())
@@ -68,7 +67,7 @@ def _envelope(
 
 
 def domain_error_response(exc: DomainError) -> HttpResponse:
-    """Render a ``DomainError`` as PRD §7's envelope. Shared by the Ninja
+    """Render a ``DomainError`` as the error envelope. Shared by the Ninja
     exception handler below and ``keel.core.throttle.ThrottleMiddleware``,
     which raises/catches ``Throttled`` outside Ninja's own dispatch."""
     response = _envelope(

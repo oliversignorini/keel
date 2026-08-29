@@ -1,6 +1,5 @@
 /**
- * The template engine, in full (docs/plans/phase-19.md 19.A "Templates";
- * ADR 0004).
+ * The template engine, in full (ADR 0004).
  *
  * Templates are real `.py` files, so ruff and mypy lint the templates
  * themselves — a `.hbs` file is unlintable text. That constraint is what
@@ -47,8 +46,8 @@ export interface RenderContext {
 export class TemplateError extends Error {}
 
 // `#` for Python; `//` for TypeScript; `{/* ... */}` for TSX markup
-// (19.C — templates/ui is real .tsx, and neither `#` nor `//` is a legal
-// comment inside JSX children).
+// (templates/ui is real .tsx, and neither `#` nor `//` is a legal comment
+// inside JSX children).
 const COMMENT_RE = /^\s*(?:#\s*(.*?)|\/\/\s*(.*?)|\{\/\*\s*(.*?)\s*\*\/\})\s*$/;
 const IF_ARG_RE = /^keel:if\s+([a-z0-9_-]+)$/;
 const ENDIF_ARG_RE = /^keel:endif$/;

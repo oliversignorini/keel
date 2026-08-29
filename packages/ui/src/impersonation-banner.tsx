@@ -3,9 +3,9 @@ import { LogOut, UserCog } from "lucide-react";
 import { Button } from "./components/ui/button";
 
 /**
- * `<ImpersonationBanner>` (PRD §5 component inventory: "Persistent,
- * unmissable, with an exit action"; PRD §6 "Impersonation";
- * docs/plans/phase-8.md 8.3). Renders only when `impersonatorEmail` is
+ * `<ImpersonationBanner>` — persistent, unmissable, and always carrying
+ * an exit action, for as long as a session is impersonated.
+ * Renders only when `impersonatorEmail` is
  * given — the caller (apps/web's app layout) decides that from
  * `/api/v1/me/`'s `impersonator` field, which is non-null only for an
  * impersonated session.

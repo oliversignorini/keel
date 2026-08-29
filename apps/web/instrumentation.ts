@@ -1,6 +1,6 @@
-// Next.js instrumentation hook — Sentry, server + edge runtimes (PRD §4
-// Integration points: "Both runtimes, releases tied to git SHA, source
-// maps uploaded"; docs/plans/phase-8.md 8.4).
+// Next.js instrumentation hook — Sentry, server + edge runtimes. Both
+// runtimes are instrumented, releases are tied to the git SHA, and source
+// maps are uploaded.
 //
 // @sentry/nextjs 8.x requires Sentry.init() to run from here (a runtime
 // warning otherwise) rather than the legacy sentry.server.config.ts /

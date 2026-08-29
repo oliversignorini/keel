@@ -29,8 +29,8 @@ import {
 import { Loader2 } from "lucide-react";
 
 /**
- * `/app/[org]/settings/audit` (PRD §5 Routes; PRD §7's audit endpoint;
- * docs/plans/phase-8.md 8.2). Gated by `audit.view` — `<Can>` here is
+ * `/app/[org]/settings/audit`, over the audit log endpoint. Gated by
+ * `audit.view` — `<Can>` here is
  * presentation only, same as every other settings tab (components/org/can.tsx):
  * `AuditLogViewSet` enforces `audit.view` server-side regardless of
  * whether this renders.

@@ -14,20 +14,19 @@ import {
   SheetTrigger,
 } from "./components/ui/sheet";
 
-/** `<AppShell>` — top bar, no sidebar, sticky, 56px (PRD §5 Layout):
+/** `<AppShell>` — top bar, no sidebar, sticky, 56px:
  *
  *   [Logo] [Org ▾] │ Dashboard  Widgets  Settings │ [⌘K] [◐] [avatar]
  *
  * `orgSwitcher` sits immediately after the logo — tenant context must
- * always be visible (PRD §5: "the single most common source of 'wrong
- * data' confusion in multi-tenant apps"). On mobile, `nav` collapses
- * into a `<Sheet>`; the org switcher stays in the bar regardless of
- * viewport.
+ * always be visible, since an invisible active organization is the most
+ * common source of "wrong data" confusion in multi-tenant apps. On
+ * mobile, `nav` collapses into a `<Sheet>`; the org switcher stays in
+ * the bar regardless of viewport.
  *
- * `jobTraySlot` is a named slot for Phase 5.5's `<JobTray>`
- * (`useJobStream`, SSE) — that worktree owns the tray itself; this
- * phase only reserves where it mounts. Renders nothing when Phase 5.5
- * hasn't landed yet.
+ * `jobTraySlot` is a named slot for a `<JobTray>` (`useJobStream`, SSE).
+ * The shell only reserves where the tray mounts; it renders nothing when
+ * no tray is supplied.
  */
 export function AppShell({
   logo,

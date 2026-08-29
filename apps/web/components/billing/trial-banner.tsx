@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/billing/format";
 import type { Subscription } from "@/lib/billing/types";
 
 /**
- * Trial banner (phase-4.md Worktree C). `status === "trialing"` is the
+ * Trial banner. `status === "trialing"` is the
  * only trigger: `trial_end` outlives the trial on the Stripe object, so a
  * banner keyed on the date alone would keep showing after the first
  * successful payment.

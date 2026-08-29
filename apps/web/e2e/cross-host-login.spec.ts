@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Plan 6.A's acceptance, driven in a real browser rather than reasoned
- * about (docs/plans/phase-6.md 6.A: "the single most likely thing to
- * break"; the plan's own instructions: "Drive this in a real browser
- * with Playwright. Do not reason about it."):
+ * Cross-host login, driven in a real browser rather than reasoned about.
+ * Session cookies spanning the apex and the app subdomain are the single
+ * most likely thing to break, so this is exercised with Playwright rather
+ * than argued about on paper:
  *
  *   Log in on the apex domain and land authenticated on the app
  *   subdomain.

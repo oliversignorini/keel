@@ -8,9 +8,9 @@ import { useSubscription } from "@/lib/billing/use-subscription";
  * Both billing banners, mounted once per organisation at the
  * `/app/[org]` layout level rather than on the billing settings page.
  *
- * That placement is the point of them. "The banner appears" (phase-4.md
- * B.6 / the dunning acceptance box) has to mean *while you are using the
- * product* — a dunning notice only visible on the settings page you have
+ * That placement is the point of them. A banner appearing has to mean it
+ * appears *while you are using the product* — a dunning notice only
+ * visible on the settings page you have
  * no reason to open is a notice nobody sees, and dunning is precisely the
  * state where the product keeps working and the user has no other signal
  * that anything is wrong. Same for a trial about to end.

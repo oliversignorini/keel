@@ -87,7 +87,7 @@ def test_audited_records_with_actor_target_impersonator_metadata() -> None:
 
 @pytest.mark.django_db(transaction=True)
 def test_audited_records_inline_not_deferred_to_commit() -> None:
-    """ddia#17: the recorder runs inline, inside the same transaction as
+    """The recorder runs inline, inside the same transaction as
     the effect it records, rather than via ``transaction.on_commit()``.
     AuditLog lives in the same Postgres as everything it describes, so a
     dual write across a commit boundary buys nothing but a window where

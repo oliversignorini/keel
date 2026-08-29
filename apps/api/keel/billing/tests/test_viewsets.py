@@ -1,4 +1,4 @@
-"""``GET /api/v1/plans/`` (PRD §7) — public, cursor-paginated, lists only
+"""``GET /api/v1/plans/`` — public, cursor-paginated, lists only
 active plans and their active prices.
 
 Cursor-paginated like every other collection — see
@@ -62,8 +62,8 @@ def test_list_plans_returns_active_plans_with_nested_active_prices() -> None:
 
 
 def test_list_plans_is_cursor_paginated() -> None:
-    """The bare-array deviation from PRD §7's "all collections are
-    cursor-paginated" convention is fixed here, not carried over."""
+    """This collection is not exempt from the "all collections are
+    cursor-paginated" convention — no bare array here."""
     _plan("starter")
 
     response = Client().get("/api/v1/plans/")
@@ -97,7 +97,7 @@ def test_plan_serializer_exposes_entitlements() -> None:
 
 
 def test_list_plans_sets_cache_control_and_etag() -> None:
-    """api-patterns finding 13: /plans/ is a Reference Data Holder —
+    """/plans/ is a Reference Data Holder —
     unauthenticated, long-lived, read by every pricing-page visit."""
     _plan("starter")
 
@@ -118,7 +118,7 @@ def test_plan_resource_justification_is_printed_regardless_of_router() -> None:
     """``PlanResource`` is registered on its own public router, not any
     router at all in the DRF-router sense — the justification print
     must find it anyway, because it walks the ``GlobalResource``
-    registry (PRD §4 invariant 7)."""
+    registry (invariant 7)."""
     justifications = list(iter_global_justifications())
 
     assert ("PlanResource", PlanResource.GLOBAL_JUSTIFICATION) in justifications

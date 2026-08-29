@@ -1,4 +1,4 @@
-"""Presigned direct upload (PRD §5). Uses ``moto``'s mocked S3 rather than a real
+"""Presigned direct upload. Uses ``moto``'s mocked S3 rather than a real
 MinIO/R2 — see ``keel.files.storage.S3CompatibleStorage`` and
 ``infra/compose.dev.yml``'s ``minio`` service for the two real-environment
 stand-ins this project uses instead of real R2 credentials, which don't
@@ -231,9 +231,9 @@ def test_create_upload_rejects_a_disallowed_content_type(settings: Any) -> None:
 
 
 def test_completing_reports_the_server_observed_size_not_the_clients_claim() -> None:
-    """ddia#21: "take size/content_type/etag from HeadObject not the
-    client" — the client under-declares the size at create time; what
-    actually lands in storage is what the completed row reports."""
+    """size/content_type/etag come from ``HeadObject``, not the client —
+    the client under-declares the size at create time; what actually
+    lands in storage is what the completed row reports."""
     org, owner = _org_with_owner()
     client = _client_for(owner)
 

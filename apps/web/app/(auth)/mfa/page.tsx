@@ -26,8 +26,8 @@ import { defaultAppUrl, navigateTo } from "@/lib/navigation";
 // `POST /_allauth/browser/v1/auth/2fa/authenticate` only exists in the
 // generated client's spec when `KEEL_MFA_ENABLED` is on at generation
 // time (docs/auth-client-contract.md "MFA endpoints") — it's off by
-// default (PRD §8 Phase 2: "MFA scaffolded and disabled by a settings
-// flag"), so `packages/api-client` has no typed `authMfaAuthenticate` or
+// default — MFA is scaffolded and disabled by a settings flag — so
+// `packages/api-client` has no typed `authMfaAuthenticate` or
 // `identitySchemas.authMfaAuthenticateBody` to import right now. This
 // calls the same route directly through the generated transport
 // (identityFetch — same CSRF handling, same typed errors) with a

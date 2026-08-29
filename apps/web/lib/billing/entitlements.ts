@@ -1,7 +1,7 @@
 /**
- * Reading entitlements on the client (phase-4.md Worktree C: "The client
- * renders from the permission and entitlement lists in `/me`. It is never
- * the enforcement point.").
+ * Reading entitlements on the client. The client renders from the
+ * permission and entitlement lists in `/me`; it is never the enforcement
+ * point.
  *
  * Everything here decides what to *show*. The API decides what is
  * allowed: `billing/entitlements.py`'s `check_feature` / `check_limit`
@@ -43,8 +43,8 @@ export function hasFeature(org: MeOrganization | null, feature: string): boolean
 
 /**
  * The cheapest plan in the catalogue that includes `feature` — what an
- * upgrade prompt names, since phase-4.md asks the gate to name "the
- * required plan instead of the feature". Cheapest is by lowest monthly
+ * upgrade prompt names: the gate names the required plan rather than the
+ * feature. Cheapest is by lowest monthly
  * price (falling back to a plan's lowest price of any interval), with
  * `sort_order` breaking ties, so the answer is the *entry* plan that
  * unlocks the feature rather than whichever plan happens to sort first.

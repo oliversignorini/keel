@@ -1,20 +1,19 @@
-"""Domain exception hierarchy behind the error envelope specified in
-PRD §7:
+"""Domain exception hierarchy behind the API's error envelope:
 
     { "error": { "code": ..., "message": ..., "details": [...] } }
 
-Every status code in that section's table maps here: 400 (validation —
+Every status code the API answers maps here: 400 (validation —
 raised by Ninja itself and translated in ``keel.core.error_handlers``),
 401 (NotAuthenticated / AuthenticationFailed), 402 (PaymentRequired), 403
 (PermissionDeniedWithReason — carries Decision.reason as ``code`` and
-Decision.details as its own ``denial`` envelope key, PRD §4 invariant 2),
+Decision.details as its own ``denial`` envelope key),
 404 (Http404), 409 (Conflict), 422 (UnprocessableEntity), 429 (Throttled,
 whose ``wait`` becomes the ``Retry-After`` header, plus the
 ``X-RateLimit-*`` headers ``keel.core.throttle`` computes).
 
 These are framework-independent by design: they carry ``status_code`` /
 ``code`` / ``message`` / ``details`` and nothing else (``details`` is
-always ``list[{field, message}] | None`` — api-patterns finding 17 — a
+always ``list[{field, message}] | None``; a
 subclass that needs other structured context, like
 ``PermissionDeniedWithReason``, publishes it through
 ``extra_envelope_fields`` instead of overloading ``details`` with a
@@ -51,8 +50,7 @@ class DomainError(Exception):
         response, empty by default. ``Throttled`` overrides this instead
         of the handler reaching for ``getattr(exc, "wait", None)`` — a
         private fact about one subclass leaking into the one place that's
-        supposed to render any ``DomainError`` uniformly (posd finding
-        12)."""
+        supposed to render any ``DomainError`` uniformly."""
         return {}
 
     @property
@@ -63,14 +61,14 @@ class DomainError(Exception):
         ``PermissionDeniedWithReason`` overrides this to carry structured
         denial context under its own ``denial`` key rather than overloading
         ``details``, which validation errors already use for a different
-        shape (``list[{field, message}]``) — api-patterns finding 17."""
+        shape (``list[{field, message}]``)."""
         return {}
 
 
 class NotAuthenticated(DomainError):
     """Framework-independent counterpart to DRF's own ``NotAuthenticated``
-    (used by ``keel.core.auth``, PRD §7: anonymous request to a
-    protected route answers 401, never 403)."""
+    (used by ``keel.core.auth``): an anonymous request to a
+    protected route answers 401, never 403."""
 
     status_code = 401
     default_code = "not_authenticated"
@@ -81,7 +79,7 @@ class AuthenticationFailed(DomainError):
     """Framework-independent counterpart to DRF's own ``AuthenticationFailed``
     — used by ``keel.core.auth`` for a CSRF failure on an
     otherwise-authenticated session: 401, not the 403 Django's own CSRF
-    middleware would give a plain view (PRD §7)."""
+    middleware would give a plain view."""
 
     status_code = 401
     default_code = "authentication_failed"
@@ -107,8 +105,8 @@ class PermissionDeniedWithReason(DomainError):
     ) -> None:
         # `details` stays None here — a permission denial has no per-field
         # validation errors, only the structured `denial` context below
-        # (api-patterns finding 17: `details` is one shape, list[{field,
-        # message}], everywhere; a 403's own context is a sibling key).
+        # (`details` is one shape, list[{field, message}], everywhere; a
+        # 403's own context is a sibling key).
         super().__init__(code=code, message=message, details=None)
         self.denial = denial
 
@@ -146,7 +144,7 @@ class Throttled(DomainError):
         headers: dict[str, str] | None = None,
     ) -> None:
         self.wait = wait
-        # api-patterns finding 7: the three X-RateLimit-* headers, computed
+        # The three X-RateLimit-* headers, computed
         # by keel.core.throttle.RateThrottle.check from the same
         # window state that decided this request was over-limit —
         # threaded through here so the 429 response carries them too, not

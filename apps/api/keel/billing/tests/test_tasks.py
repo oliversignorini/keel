@@ -125,7 +125,7 @@ def test_dispatch_stripe_event_exhaustion_reports_to_sentry_with_the_real_sdk(
     assert event["tags"]["stripe_event_id"] == "evt_sentry"
 
 
-# --- sweep_unprocessed_stripe_events (ddia#7) -------------------------------
+# --- sweep_unprocessed_stripe_events -----------------------------------
 
 
 def test_sweeper_redispatches_only_stale_unprocessed_events(monkeypatch) -> None:
@@ -154,7 +154,7 @@ def test_sweeper_redispatches_only_stale_unprocessed_events(monkeypatch) -> None
     assert dispatched == ["evt_stale"]
 
 
-# --- prune_stripe_event_payloads (ddia#10) ----------------------------------
+# --- prune_stripe_event_payloads --------------------------------------------
 
 
 def test_prune_nulls_the_payload_of_old_processed_events() -> None:
@@ -199,7 +199,7 @@ def test_prune_leaves_unprocessed_events_alone_regardless_of_age() -> None:
     assert unprocessed.payload != {}
 
 
-# --- check_credit_balances_task (ddia#4) ------------------------------------
+# --- check_credit_balances_task ---------------------------------------------
 
 
 def test_check_credit_balances_task_reports_drift_via_sentry() -> None:

@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME, resolveGuardRedirect } from "./lib/auth/route-guar
 import { isAppHost, toApexHost, toAppHost } from "./lib/host";
 
 // This middleware is a redirect convenience, not the enforcement point —
-// the API is (keel-prd.md §4 "Auth architecture"). It only checks whether
+// the API is. It only checks whether
 // a session cookie is present, never whether that session is still valid,
 // because the cookie is HttpOnly and its validity can only be decided by
 // Django. A visitor who clears cookies mid-session, or whose session

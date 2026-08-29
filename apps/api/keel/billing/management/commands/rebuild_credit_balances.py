@@ -1,6 +1,6 @@
-"""Rebuild ``CreditBalance`` from ``CreditLedgerEntry`` (PRD §4 "Credits
-— the metered-billing primitive"): a management command rebuilds
-``CreditBalance`` from the ledger and reproduces the same number.
+"""Rebuild ``CreditBalance`` from ``CreditLedgerEntry``: a management
+command rebuilds ``CreditBalance`` from the ledger and reproduces the
+same number.
 
 The ledger is the truth; the balance row is only ever an index of it, so
 this command exists to prove — and, if the index has ever drifted, to
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             action="store_true",
             help=(
                 "Compare the ledger against the current CreditBalance without writing; "
-                "exit non-zero if any organisation has drifted (ddia#4: report, don't repair)."
+                "exit non-zero if any organisation has drifted (report, don't repair)."
             ),
         )
 
@@ -41,7 +41,7 @@ class Command(BaseCommand):
 
         if check:
             # Shared with the nightly check_credit_balances_task beat task
-            # (ddia#4) — one comparison, two callers.
+            # — one comparison, two callers.
             drifted = check_credit_balances(organization_id=organization_id)
             for row in drifted:
                 self.stderr.write(
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         rebuilt = 0
         for organization in organizations.iterator():
             with transaction.atomic():
-                # Lock before SUM (ddia#3): the balance row must be locked
+                # Lock before SUM: the balance row must be locked
                 # before the ledger is aggregated, not after, or a debit
                 # that commits in between is silently erased by the write
                 # below — the exact thing this command exists to catch.

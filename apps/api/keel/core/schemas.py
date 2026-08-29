@@ -1,4 +1,4 @@
-"""Shared Ninja schema base (posd#9). Every ``*Out`` schema across the six
+"""Shared Ninja schema base. Every ``*Out`` schema across the six
 apps declared its own ``id: str`` field plus a ``resolve_id`` static
 method whose body was always ``return str(obj.id)`` — thirteen identical
 copies restating one design decision: UUID primary keys serialize as

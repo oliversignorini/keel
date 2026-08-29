@@ -87,8 +87,7 @@ def test_a_non_entitling_status_resolves_to_no_entitlements(status: str) -> None
 @pytest.mark.parametrize("status", sorted(ENTITLING_STATUSES))
 def test_an_entitling_status_resolves_to_the_plans_entitlements(status: str) -> None:
     """``past_due`` is in here on purpose: dunning is a warning, not a
-    lockout (``docs/plans/phase-4.md`` §B.6) — see also
-    ``test_dunning.py``."""
+    lockout — see also ``test_dunning.py``."""
     org = _org()
     plan = _plan_with_entitlements({"features": ["api_access"], "limits": {"seats": 5}})
     _subscribe(org, plan, status=status)
@@ -242,7 +241,7 @@ def test_check_limit_raises_unregistered_resource_for_an_unknown_resource() -> N
 
 
 def test_check_limit_raises_unregistered_resource_even_when_absent_from_limits() -> None:
-    """ddia#24: a typo'd resource name must not fail open just because
+    """A typo'd resource name must not fail open just because
     the plan's ``limits`` dict happens not to mention it — that used to
     be indistinguishable from a deliberately uncapped, *known* resource.
     No subscription at all is the sharpest case: `entitlements["limits"]`

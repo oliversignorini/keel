@@ -119,7 +119,7 @@ def test_flag_off_no_stripe_call_and_membership_write_succeeds(
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         membership = services.accept_invitation(invitation=invitation, actor=invitee)
 
-    # @audited writes its row inline now (ddia#17), so no on_commit
+    # @audited writes its row inline, so no on_commit
     # callback is registered for it — with the flag off, the seat-sync
     # Stripe call isn't registered either, so there is nothing deferred
     # to commit at all. _fail not raising above is what proves it.

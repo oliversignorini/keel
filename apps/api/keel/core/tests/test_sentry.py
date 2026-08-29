@@ -1,4 +1,4 @@
-"""Sentry wiring (PRD §4 Integration points).
+"""Sentry wiring.
 
 No DSN exists for this project (assert against a stub transport, see
 module docstring below), so what these tests actually prove is the
@@ -46,8 +46,7 @@ def test_report_exception_captures_the_exception_type_and_message() -> None:
     exception_values = event["exception"]["values"]
     assert exception_values[-1]["type"] == "ValueError"
     assert exception_values[-1]["value"] == "boom"
-    # A readable stack — frames with file/line info, not just a message
-    # (PRD's "readable stack" criterion).
+    # A readable stack — frames with file/line info, not just a message.
     assert exception_values[-1]["stacktrace"]["frames"]
 
 
@@ -65,7 +64,7 @@ def test_report_exception_tags_the_event() -> None:
 
 
 def test_report_message_captures_the_message_and_tags() -> None:
-    """The non-exception seam (ddia#4) — a beat task can report a fact
+    """The non-exception seam — a beat task can report a fact
     about state (e.g. credit balance drift) with no exception to attach."""
     transport = _init_with_stub(release="abc123", environment="test")
 

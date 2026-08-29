@@ -32,8 +32,8 @@ describe("<CreditMeter> with credits disabled", () => {
 
     const { container } = render(<CreditMeter orgSlug="acme" />);
 
-    // phase-4.md A.5: with the flag off there is "no meter" *and* no cost —
-    // an empty DOM is only half of that; the request must not happen either.
+    // With the flag off there is no meter *and* no cost — an empty DOM is
+    // only half of that; the request must not happen either.
     expect(container).toBeEmptyDOMElement();
     await Promise.resolve();
     expect(getCreditBalanceMock).not.toHaveBeenCalled();

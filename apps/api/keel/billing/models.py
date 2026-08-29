@@ -1,5 +1,5 @@
-"""Plans, prices, subscriptions, Stripe events, and the credit ledger
-(PRD §4 "Data model" and "Credits — the metered-billing primitive")."""
+"""Plans, prices, subscriptions, Stripe events, and the credit ledger —
+the metered-billing primitive."""
 
 from typing import Any
 
@@ -12,7 +12,7 @@ from keel.core.models import TimestampedModel, UUIDv7PrimaryKeyModel
 
 
 class EntitlementsSpec(BaseModel):
-    """The schema ``Plan.entitlements`` is documented as (ddia#24):
+    """The schema ``Plan.entitlements`` is documented as:
     ``{"features": [...], "limits": {resource: int | None}, "daily_credit_cap":
     int | None}``. Validated here — a typo'd top-level key (e.g.
     ``"limmits"``) is rejected at save time instead of silently doing
@@ -88,7 +88,7 @@ class Subscription(UUIDv7PrimaryKeyModel, TimestampedModel):
         null=True,
         blank=True,
         help_text=(
-            "The originating Stripe event's `created` timestamp (ddia#9) — "
+            "The originating Stripe event's `created` timestamp — "
             "an LWW version guard. A webhook write only applies when its "
             "event is newer than the one that wrote this row last, so an "
             "out-of-order redelivery can't resurrect a stale status."
@@ -101,7 +101,7 @@ class Subscription(UUIDv7PrimaryKeyModel, TimestampedModel):
 
 class StripeEvent(models.Model):
     """id is the Stripe event id itself — idempotency depends on it being
-    the primary key, not a surrogate UUID (PRD §4, task 1.10)."""
+    the primary key, not a surrogate UUID."""
 
     id = models.CharField(max_length=255, primary_key=True)
     type = models.CharField(max_length=255)
@@ -135,7 +135,7 @@ class CreditLedgerEntry(UUIDv7PrimaryKeyModel):
 
     organization = models.ForeignKey(
         "organizations.Organization",
-        # ddia#5/#23: PROTECT, not CASCADE — an append-only financial
+        # PROTECT, not CASCADE — an append-only financial
         # record must outlive the organisation row it references.
         # Organisations are soft-deleted (Organization.deleted_at) in this
         # codebase's own service layer, so nothing here ever hits this
@@ -147,7 +147,7 @@ class CreditLedgerEntry(UUIDv7PrimaryKeyModel):
     )
     job = models.ForeignKey(
         "jobs.Job",
-        # ddia#5/#23: PROTECT, not SET_NULL — severing the link between a
+        # PROTECT, not SET_NULL — severing the link between a
         # hold and the job it paid for makes after-the-fact reconciliation
         # of holds-to-settlements impossible. null=True is unrelated to
         # this: a hold/consume/grant/adjustment may simply have no job.
@@ -171,7 +171,7 @@ class CreditLedgerEntry(UUIDv7PrimaryKeyModel):
     class Meta:
         indexes = (models.Index(fields=["organization", "created_at"]),)
         constraints = (
-            # ddia#5/#23: kind decides amount's sign — a hold/consume can
+            # The kind decides amount's sign — a hold/consume can
             # never be storable as a credit, nor a grant/release/refund as
             # a debit. adjustment is the one kind allowed either sign
             # (credits.adjust already rejects zero at the service layer;
@@ -199,8 +199,8 @@ class CreditLedgerEntry(UUIDv7PrimaryKeyModel):
 
 class CreditBalance(models.Model):
     """One-to-one with Organization; the FK *is* the primary key —
-    ``SELECT ... FOR UPDATE`` on this row serialises concurrent holds
-    (PRD §4, task 1.10). The ledger is the truth; this is an index."""
+    ``SELECT ... FOR UPDATE`` on this row serialises concurrent holds.
+    The ledger is the truth; this is an index."""
 
     organization = models.OneToOneField(
         "organizations.Organization",
@@ -213,7 +213,7 @@ class CreditBalance(models.Model):
 
     class Meta:
         constraints = (
-            # ddia#5/#23: the index can never say a negative balance —
+            # The index can never say a negative balance —
             # service discipline (`credits._debit`'s affordability check)
             # is what's supposed to guarantee this; the constraint is what
             # makes it true regardless of which code path wrote the row.

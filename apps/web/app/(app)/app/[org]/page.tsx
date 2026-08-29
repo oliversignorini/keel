@@ -20,7 +20,7 @@ const WIDGET_STATUS_VARIANT: Record<string, "default" | "secondary" | "outline">
   paused: "outline",
 };
 
-/** `/[org]` dashboard (PRD §5 Routes; docs/plans/phase-6.md 6.B) — a
+/** `/[org]` dashboard — a
  * `<Card>` grid over the four data sources already fetched elsewhere in
  * the product (finding 28), rather than the single "View widgets →"
  * link this route shipped with. */

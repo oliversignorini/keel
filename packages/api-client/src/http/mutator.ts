@@ -7,8 +7,8 @@ import { CSRF_HEADER_NAME, isUnsafeMethod, readCsrfCookie } from "./csrf";
  * Every generated operation's response type is a union of its success
  * variant(s) and one member per declared error status (400/401/403/404/
  * 409/422/429 — `keel.core.authz`'s router-level default, added so
- * the OpenAPI document publishes the error envelope; api-patterns finding
- * 3). `identityFetch` below never actually returns one of those error
+ * the OpenAPI document publishes the error envelope).
+ * `identityFetch` below never actually returns one of those error
  * members — it throws instead — so this strips them from `T` structurally
  * rather than by name: any union member whose `data` is shaped like
  * `ErrorEnvelope` is excluded, leaving only the success member(s) a caller
@@ -34,9 +34,9 @@ export const API_BASE_URL = "";
  * `{ data, status, headers }` (orval's fetch-client response union) — but
  * we deliberately never return the error-shaped members of that union.
  * Any non-2xx response throws a typed ApiError (./errors.ts) instead, so
- * callers use try/catch + `instanceof`, not `.status` narrowing. That is
- * what B.1 asks for: 401/402/403/404/409/422/429 as distinct types the
- * caller cannot accidentally treat alike.
+ * callers use try/catch + `instanceof`, not `.status` narrowing:
+ * 401/402/403/404/409/422/429 become distinct types the caller cannot
+ * accidentally treat alike.
  */
 export async function identityFetch<T>(
   url: string,
@@ -78,7 +78,7 @@ export async function identityFetch<T>(
  * Narrows a generated call's result to its success member and returns
  * `.data` — every generated request function's own *declared* return type
  * is still the full success-or-error union (orval types each declared
- * error status, api-patterns finding 3), even though `identityFetch`
+ * error status), even though `identityFetch`
  * above never actually produces one of the error members at runtime.
  * Callers under `lib/*\/api.ts` use this instead of a bare `result.data`
  * so that narrowing is one shared, documented cast rather than a

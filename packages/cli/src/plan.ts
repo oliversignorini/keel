@@ -1,11 +1,10 @@
 /**
- * The write plan and the output contract (docs/plans/phase-19.md 19.A
- * "Output contract").
+ * The write plan and the output contract.
  *
- * "On success, print every file written and every anchor spliced, as an
- * explicit list. This is the single highest-value behaviour in the phase:
- * it means the calling agent never re-reads the tree to discover what
- * happened, and knows exactly which files are its to edit next."
+ * On success, print every file written and every anchor spliced, as an
+ * explicit list. This is the single highest-value behaviour the generator
+ * has: it means the calling agent never re-reads the tree to discover what
+ * happened, and knows exactly which files are its to edit next.
  *
  * So the plan is built in full before a single byte is written — which is
  * also what makes `--dry-run` the same code path as a real run rather than

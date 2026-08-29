@@ -17,8 +17,8 @@ attempt — a worker that crashes while holding a slot self-heals after
 single Lua script so the prune-count-add sequence is atomic against
 concurrent acquire attempts from other workers.
 
-Time is read from Redis's own ``TIME`` command inside the script
-(ddia#15), never from the calling worker's clock: a client-supplied
+Time is read from Redis's own ``TIME`` command inside the script,
+never from the calling worker's clock: a client-supplied
 ``time.time()`` lets a worker with a skewed clock either prune other
 workers' live slots (its clock runs fast) or write a score that never
 expires (its clock runs slow) — one Redis instance's clock is the only

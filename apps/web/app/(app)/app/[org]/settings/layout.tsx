@@ -5,10 +5,8 @@ import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 
 /**
- * Secondary horizontal tab row (PRD §5 "Layout — top bar navigation":
- * "Settings uses a secondary horizontal tab row rather than a nested
- * sidebar"): General · Members · Roles · Billing · Audit. Audit is
- * Phase 8's (docs/plans/phase-8.md 8.2) — the fifth tab PRD §5 lists.
+ * Secondary horizontal tab row rather than a nested sidebar:
+ * General · Members · Roles · Billing · Audit.
  *
  * The row is a Radix `<Tabs>` whose triggers are `asChild` `<Link>`s:
  * navigation stays real (each tab is a route, middle-clickable and

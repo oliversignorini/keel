@@ -26,7 +26,7 @@ const INTERVALS: { value: BillingInterval; label: string }[] = [
 ];
 
 /**
- * The monthly/annual toggle (phase-4.md Worktree C). The only interactive
+ * The monthly/annual toggle. The only interactive
  * part of the pricing page, and therefore the only client component on it
  * — the plan data itself is rendered on the server (see ./page.tsx) and
  * arrives as a prop, so switching interval is local state, not a refetch.
@@ -37,7 +37,7 @@ const INTERVALS: { value: BillingInterval; label: string }[] = [
  *
  * A plan with no price at the selected interval is *hidden* for that
  * interval rather than shown priced at the other one: Stripe is the
- * source of truth for what is purchasable (phase-4.md B.1), and showing a
+ * source of truth for what is purchasable, and showing a
  * monthly price under an "Annual" heading would misstate what checkout
  * would actually charge.
  */

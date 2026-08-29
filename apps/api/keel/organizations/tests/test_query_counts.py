@@ -27,8 +27,8 @@ def test_me_query_count(django_assert_num_queries: object) -> None:
     # 1: session -> session_key. 2: session_key -> User. 3: the user's
     # organisations (``list_organizations_for_user``). 4: every one of
     # those organisations' active membership + role, in one
-    # ``organization__in`` query (api-patterns finding 12 — this used to
-    # be one query per organisation). 5: entitlements resolved in bulk
+    # ``organization__in`` query, rather than one query per
+    # organisation. 5: entitlements resolved in bulk
     # for every organisation (``resolve_entitlements_bulk``) — one query
     # regardless of how many organisations the user belongs to.
     with django_assert_num_queries(5):  # type: ignore[operator]

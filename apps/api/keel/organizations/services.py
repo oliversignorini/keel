@@ -166,7 +166,7 @@ def accept_invitation(*, invitation: Invitation, actor: Any) -> Membership:
     The accepting user is ``actor``: they are who ``@audited`` records
     against the ``invitation.accepted`` row.
 
-    Re-checks the invitation's validity inside this transaction (ddia#22)
+    Re-checks the invitation's validity inside this transaction
     rather than trusting the view's pre-transaction check: an accept
     racing a revoke, or two accepts of the same token, must not both
     succeed just because both read "still valid" before either wrote."""
@@ -216,7 +216,7 @@ def change_member_role(*, membership: Membership, role: Role, actor: Any) -> Mem
     remove-guard, never off a role name.
 
     Locks the ``Organization`` row before evaluating the last-owner check
-    (ddia#22): the read (``is_last_active_owner``) and the write (this
+    first: the read (``is_last_active_owner``) and the write (this
     role change) are otherwise not materialised against each other, so
     two concurrent demotions of the organisation's last two owners could
     both observe "another owner exists" and both proceed, leaving zero
@@ -264,7 +264,7 @@ def remove_member(*, membership: Membership, actor: Any) -> Membership:
     subject rather than reimplementing the last-owner check — the
     guard, not this function, is authorization's source of truth.
 
-    Locks the ``Organization`` row before the guard runs (ddia#22): the
+    Locks the ``Organization`` row before the guard runs: the
     guard's last-owner read and this function's delete are otherwise
     unserialised, so two concurrent removals of the organisation's last
     two owners could both pass the check and both proceed. The lock,

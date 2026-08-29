@@ -1,14 +1,14 @@
 /**
- * Files the generator does not own, spliced rather than written
- * (docs/plans/phase-19.md 19.A "Files it does not own").
+ * Files the generator does not own, spliced rather than written.
  *
- * The plan proposed anchor *comments* (`# keel:generated-apps — do not
+ * The obvious design is anchor *comments* (`# keel:generated-apps — do not
  * remove`). This implements the same idea without them: each splice finds
  * its insertion point structurally — the last entry of the `INSTALLED_APPS`
  * list, the last `ninja_api.add_router(...)` call, the closing paren of
  * `_MEMBER_CODES` — because those four files carry no anchor comments today
- * and adding them is outside 19.A's path list. Structural location also
- * survives a user reordering the list, which an anchor comment does not.
+ * and littering them with markers is not this generator's business.
+ * Structural location also survives a user reordering the list, which an
+ * anchor comment does not.
  *
  * Every splice is idempotent: if the entry is already present the splice
  * is a no-op and reports itself as "already present". That is what lets
@@ -261,7 +261,7 @@ export interface WebSpliceTargets {
 }
 
 /**
- * The frontend half of a permission code (19.C — `--ui`), spliced into
+ * The frontend half of a permission code (`--ui`), spliced into
  * `apps/web/lib/org/permissions.ts`'s `Perm` object literal. That file
  * carries no logic (its own docstring: "the actual source of truth" is
  * the Python `Perm`) — this only keeps the two spellings from drifting,
@@ -334,7 +334,7 @@ export interface JobRegistrationInput {
 
 /**
  * The import inside `JobsConfig.ready()` that registers a Tier-2 job
- * type (`gen job --tier 2`, docs/plans/phase-19.md 19.B) — mirrors how
+ * type (`gen job --tier 2`) — mirrors how
  * `keel/jobs/demo.py` is registered. A job module that is never imported
  * is a job type nothing ever registers, which fails loudly the first time
  * something tries to create a job of that type rather than at generation

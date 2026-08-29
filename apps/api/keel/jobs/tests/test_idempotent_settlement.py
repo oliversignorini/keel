@@ -1,4 +1,4 @@
-"""ddia#1/#2/#14: settlement must be idempotent under re-delivery, and
+"""Settlement must be idempotent under re-delivery, and
 these tests are the guard for that — each calls a supposedly-idempotent
 function twice (or races cancel against completion) and asserts the
 ledger and job state are identical to a single call, with no broker and
@@ -101,7 +101,7 @@ def test_run_job_called_twice_on_a_fully_failed_job_refunds_exactly_once(setting
 def test_settle_credits_called_twice_directly_settles_once(settings) -> None:
     """Exercises ``_settle_credits`` directly, bypassing ``run_job``'s own
     guard — the lock-and-check inside ``_settle_credits`` itself
-    (ddia#1) must hold even if some future caller forgets the guard."""
+    must hold even if some future caller forgets the guard."""
     settings.BILLING_CREDITS = True
     org = make_organization()
     job = _job(org, "t.direct-settle")
@@ -136,7 +136,7 @@ def test_cancel_job_called_twice_refunds_exactly_once(settings) -> None:
 
 
 def test_cancel_after_run_job_already_settled_does_not_double_refund(settings) -> None:
-    """cancel-vs-complete (ddia#2/#14): a cancel landing after the runner
+    """cancel-vs-complete: a cancel landing after the runner
     already settled the hold (e.g. the cancel request was in flight while
     the last step finished) must not also refund it."""
     settings.BILLING_CREDITS = True

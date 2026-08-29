@@ -1,10 +1,10 @@
-"""``Idempotency-Key`` handling (PRD §5.5.3), scoped by user + a
+"""``Idempotency-Key`` handling, scoped by user + a
 caller-supplied scope + key so one user's
 replayed key can never surface another user's cached response, and one
 endpoint's key can never collide with another endpoint's.
 
 Originally lived in ``keel/jobs/idempotency.py`` — it was never actually
-jobs-specific (api-patterns finding 10): a retried POST over a flaky
+jobs-specific: a retried POST over a flaky
 connection can duplicate a Stripe checkout session, an invitation email,
 an upload row, or an organisation exactly the way it can duplicate a job.
 This module is the generalised mechanism; ``@idempotent`` below is what a
@@ -15,7 +15,7 @@ Real duplicate-row prevention still lives in each service that has one
 (e.g. ``keel/jobs/services.py::create_job`` looks up an existing ``Job``
 by the same key, inside the same transaction as the credit hold, before
 creating a row, and now backs that with a database
-``UniqueConstraint`` — ddia#11) — this module's job is to make a replay
+``UniqueConstraint``) — this module's job is to make a replay
 cheap (skip the view and the service call entirely) and to close the
 race between two near-simultaneous replays of the same key, via the
 atomic ``cache.add()`` claim below.
@@ -76,7 +76,7 @@ def check_and_claim(request: HttpRequest, scope: str) -> HttpResponse | None:
     immediately (a cached replay) or ``None`` to proceed — in which case
     ``request.idempotency_cache_key`` is set so ``IdempotencyKeyMiddleware``
     records the eventual response against it. Raises ``Conflict`` (409,
-    through the standard error envelope — api-patterns finding 11) for a
+    through the standard error envelope) for a
     concurrent in-flight replay."""
     idempotency_key = request.headers.get("Idempotency-Key")
     if not idempotency_key:
@@ -93,7 +93,7 @@ def check_and_claim(request: HttpRequest, scope: str) -> HttpResponse | None:
     if cache.add(cache_key, _CLAIMED, timeout=IDEMPOTENCY_TTL_SECONDS):
         request.idempotency_cache_key = cache_key  # type: ignore[attr-defined]
         return None
-    # cache.add lost the race (ddia#11): another request claimed this key
+    # cache.add lost the race: another request claimed this key
     # between our cache.get above and this cache.add — the exact
     # concurrent-replay case _CLAIMED above exists to catch. Falling
     # through to None here would let this request proceed and create a
@@ -106,7 +106,7 @@ def _in_progress_conflict() -> Conflict:
     # second row is created either way; asking this one to retry is
     # simpler and just as correct as a spin-wait. Raised, not
     # hand-returned, so it goes through keel.core.error_handlers like
-    # every other domain error (api-patterns finding 11) instead of a
+    # every other domain error, instead of a
     # second, untested copy of the envelope shape.
     return Conflict(
         code="idempotency_key_in_progress",
@@ -115,8 +115,8 @@ def _in_progress_conflict() -> Conflict:
 
 
 def idempotent(view_func: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator form of ``check_and_claim`` for a Ninja route function
-    (api-patterns finding 10): apply to any side-effectful POST with a
+    """Decorator form of ``check_and_claim`` for a Ninja route function:
+    apply to any side-effectful POST with a
     real external effect worth deduplicating. Scopes the cache key by the
     decorated function's own identity plus ``org_slug`` (when the route
     has one) so two different endpoints — or the same endpoint called for

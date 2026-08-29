@@ -21,7 +21,7 @@ from keel.jobs.registry import UnknownJobType, registry
 from keel.jobs.runner import hold_already_settled, locked_hold_entry, run_job_task
 
 # Bumped only if Job.params's shape changes in a way old step code can't
-# read (ddia#24) — stamped on every job at creation so a resumed job can
+# read — stamped on every job at creation so a resumed job can
 # tell which shape its own params are in. Nothing reads this yet; it
 # exists so the first breaking params change has somewhere to check.
 PARAMS_VERSION = 1
@@ -47,7 +47,7 @@ def create_job(
             # replaying the same key inside the same transaction window;
             # keel.core.idempotency's cache claim covers the same race at
             # the HTTP layer, cheaper, ahead of ever reaching here. The
-            # database UniqueConstraint below (ddia#11) is the final
+            # database UniqueConstraint below is the final
             # backstop if both of those are somehow bypassed — caught as
             # IntegrityError just below.
             existing = (
@@ -67,7 +67,7 @@ def create_job(
                     type=type,
                     requested_by=actor,
                     params=job_params,
-                    # Pinned at creation (ddia#24): re-registering `type`
+                    # Pinned at creation: re-registering `type`
                     # with a different step list later must not re-price
                     # (or re-total) a job already in flight — the runner
                     # reads this column, never `len(spec.steps)`, once the
@@ -77,7 +77,7 @@ def create_job(
                 )
         except IntegrityError:
             # The UniqueConstraint on (organization, idempotency_key)
-            # (ddia#11) caught a race the two softer guards above
+            # caught a race the two softer guards above
             # (select_for_update over a row that didn't exist yet when
             # this request read it, and keel.core.idempotency's cache
             # claim) both missed — two concurrent requests with the same
@@ -106,7 +106,7 @@ def cancel_job(*, job: Job, actor: Any) -> Job:
     ``keel.jobs.runner.run_job``'s per-step loop.
 
     Locks the ``Job`` row and re-checks terminal status inside the
-    transaction (ddia#2): the caller's in-memory ``job`` may be stale, and
+    transaction: the caller's in-memory ``job`` may be stale, and
     without this lock two concurrent cancels of the same job — or a
     cancel racing the runner's own settlement — can both pass the
     terminal-status check and both refund the hold."""

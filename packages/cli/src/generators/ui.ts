@@ -1,6 +1,6 @@
 /**
- * `--ui` (docs/plans/phase-19.md 19.C). `apps/web/app/(app)/app/[org]/
- * widgets/` **is** the template — extracted, not designed — and
+ * `--ui`. `apps/web/app/(app)/app/[org]/widgets/` **is** the template —
+ * extracted, not designed — and
  * `packages/ui`'s `data-table`, `resource-form`, `form-field`,
  * `empty-state` and `page-header` are the only primitives a generated
  * page is allowed to assemble. If a field kind ever needed a component

@@ -61,7 +61,7 @@ def locked_hold_entry(job: Job) -> Any:
     concurrent settlement attempts (a retried delivery and a cancel, or
     two retried deliveries) both read "not yet settled" and both write.
     Migration-free stand-in for a ``settles`` FK plus a unique
-    constraint (ddia#1): there is no row to key uniqueness off, so the
+    constraint: there is no row to key uniqueness off, so the
     lock on the hold itself is what serialises the check."""
     from keel.billing.models import CreditLedgerEntry
 
@@ -75,7 +75,7 @@ def locked_hold_entry(job: Job) -> Any:
 
 def hold_already_settled(job: Job) -> bool:
     """Whether a ``release`` or ``refund`` entry already exists for
-    ``job`` — the "no operation id" gap ddia#1 calls out. Must only be
+    ``job`` — the settlement has no operation id of its own. Must only be
     called while ``locked_hold_entry`` holds its lock, inside the same
     transaction."""
     from keel.billing.models import CreditLedgerEntry
@@ -92,7 +92,7 @@ def _settle_credits(job: Job, succeeded: int, total: int) -> None:
     that fails outright (no step succeeded) is a full refund rather than
     a release — nothing was delivered.
 
-    Idempotent by lock-and-check (ddia#1): the hold row is locked before
+    Idempotent by lock-and-check: the hold row is locked before
     settlement is decided, and a hold that already has a release/refund
     entry against it is left alone — a re-delivered ``run_job`` call
     settles at most once."""
@@ -126,7 +126,7 @@ def run_job(job_id: Any) -> None:
 
     results: dict[str, Any] = {}
     succeeded = 0
-    # Pinned at creation (ddia#24), not the live registry's step count —
+    # Pinned at creation, not the live registry's step count —
     # a job created before `type` was re-registered with a different step
     # list must still total against the count it was actually held
     # credits for. Falls back to the registry for rows written before
@@ -142,7 +142,7 @@ def run_job(job_id: Any) -> None:
             # step rather than resuming or overwriting its outcome.
             return
 
-        # Step-boundary heartbeat (ddia#15): the concurrency slot this
+        # Step-boundary heartbeat: the concurrency slot this
         # job holds (acquired by run_job_task before run_job was called)
         # has a 1-hour lease with no renewal otherwise — any job whose
         # steps together take longer than that silently loses its slot
@@ -197,7 +197,7 @@ def run_job(job_id: Any) -> None:
     else:
         final_status = Job.STATUS_PARTIAL
 
-    # Guarded compare-and-set (ddia#2): if a concurrent cancel_job already
+    # Guarded compare-and-set: if a concurrent cancel_job already
     # moved this job out of RUNNING (e.g. a cancel landing on the final
     # step), this update matches zero rows and settlement is skipped
     # entirely — cancel_job already refunded the hold, so this loop must
@@ -249,7 +249,7 @@ def run_job_task(self: Any, job_id: Any) -> None:
 
 
 def sweep_stuck_jobs(*, threshold_minutes: int = STUCK_JOB_THRESHOLD_MINUTES) -> int:
-    """Beat sweeper (ddia#13): ``task_acks_late`` means a worker killed
+    """Beat sweeper: ``task_acks_late`` means a worker killed
     mid-job re-delivers the message and ``run_job`` resumes correctly —
     but a worker that hangs, or is killed *after* the broker's ack, never
     gets a re-delivery, and the ``Job`` row is then stuck in ``running``

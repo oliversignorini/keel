@@ -1,5 +1,5 @@
-"""keel.files.tasks (ddia#21: "a beat sweeper for stale pending rows" and
-"a deleted tombstone state driving R2 object cleanup"). Every scheduled
+"""keel.files.tasks — the beat sweeper for stale pending rows, and the
+tombstone-driven storage-object cleanup. Every scheduled
 job in this codebase is run twice and asserted idempotent
 (keel.jobs.tasks's own convention) — both halves of the sweep here get
 that treatment."""

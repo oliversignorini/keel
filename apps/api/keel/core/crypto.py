@@ -1,5 +1,5 @@
-"""The encryption seam for ``Connection`` tokens (PRD, "Third-party OAuth
-connections"): ``access_token`` / ``refresh_token`` are encrypted at rest,
+"""The encryption seam for third-party OAuth ``Connection`` tokens:
+``access_token`` / ``refresh_token`` are encrypted at rest,
 backed by environment keys today, upgradeable to KMS. Every call site
 only ever imports ``encrypt`` / ``decrypt`` / ``rotate`` from this module,
 so a KMS backend replaces the body of all three without touching call
@@ -9,7 +9,7 @@ Fernet (AES-128-CBC + HMAC) is used because it authenticates as well as
 encrypts: a wrong key or corrupted ciphertext raises rather than quietly
 decrypting to garbage, which is the property "fails loudly" requires.
 
-``MultiFernet``, not a single ``Fernet`` (ddia#27): a single key with no
+``MultiFernet``, not a single ``Fernet``: a single key with no
 rotation path means rotating ``KEEL_ENCRYPTION_KEY`` makes every
 previously-encrypted value permanently undecryptable, with no way to tell
 which key wrote a given row. ``MultiFernet`` encrypts with the first key

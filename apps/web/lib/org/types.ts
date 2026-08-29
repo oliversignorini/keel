@@ -3,7 +3,7 @@
  * (@keel/api-client, from packages/api-client/src/generated/identity.query.ts —
  * see orval.config.ts).
  *
- * Phase 10 (DRF -> Django Ninja) gave `/me/`, `/permissions/`,
+ * The DRF -> Django Ninja migration gave `/me/`, `/permissions/`,
  * `/invite/{token}/` and every request body a real, generated schema —
  * the hand-transcribed duplicates this file used to carry existed only
  * because drf-spectacular could not type a plain `APIView` with no

@@ -28,7 +28,7 @@ async function handle(request: NextRequest): Promise<Response> {
   return proxyRequest(request, {
     upstreamOrigin: API_INTERNAL_ORIGIN,
     upstreamPath,
-    // api-patterns finding 16: allauth's two error shapes
+    // allauth's two error shapes
     // ({status,errors} and {status,data:{flows}}) get re-emitted as
     // Keel's own {error:{code,message,details}} here, server-side, so the
     // browser sees exactly one error contract regardless of which half of
