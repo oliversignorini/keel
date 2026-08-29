@@ -48,11 +48,11 @@ def create_widget(
     status: str,
     actor: Any,
 ) -> Widget:
-    """The person creating the widget is ``actor``, not ``created_by``:
+    """The person creating the row is ``actor``, not ``created_by``:
     ``@audited`` reads the actor out of the call's ``actor`` kwarg, so a
     service that names it after the model field it lands in writes every
-    ``widget.created`` row with ``actor=NULL``. The model field is still
-    ``created_by`` — the rename is at the service boundary only."""
+    ``widget.created`` row with ``actor=NULL``. The model field is
+    still ``created_by`` — the rename is at the service boundary only."""
     check_limit(organization, "widgets")
     with transaction.atomic():
         widget = Widget.objects.create(
@@ -77,8 +77,8 @@ def update_widget(*, widget: Widget, actor: Any, impersonator: Any = None, **fie
 
 @audited("widget.deleted")
 def delete_widget(*, widget: Widget, actor: Any, impersonator: Any = None) -> Widget:
-    """Returns the deleted widget so the ``widget.deleted`` audit row can
-    say *which* widget in *which* organisation was deleted: ``@audited``
+    """Returns the deleted row so the ``widget.deleted`` audit row
+    can say *which* row in *which* organisation was deleted: ``@audited``
     falls back to the return value for its target, and a service
     returning ``None`` records an empty ``target_type``/``target_id``
     and a null ``organization``. Django's ``Model.delete()`` clears the
