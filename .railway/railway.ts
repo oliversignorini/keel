@@ -28,6 +28,10 @@ import {
 } from "railway/iac";
 
 const REPO = "oliversignorini/keel";
+// IaC defaults the branch to "main"; this repo's default is "master",
+// and the default is not read from GitHub. KEEL_RAILWAY_BRANCH overrides
+// it so a branch can be deployed and smoke-tested before it lands.
+const BRANCH = process.env.KEEL_RAILWAY_BRANCH ?? "master";
 
 export default defineRailway((ctx) => {
   const db = postgres("Postgres");
@@ -35,9 +39,7 @@ export default defineRailway((ctx) => {
 
   // All four services build the same apps/api image and differ only in
   // startCommand — see docs/deploy-railway.md "Service topology".
-  // IaC defaults the branch to "main"; this repo's default is "master",
-  // and the default is not read from GitHub.
-  const source = github(REPO, { branch: "master", rootDirectory: "apps/api" });
+  const source = github(REPO, { branch: BRANCH, rootDirectory: "apps/api" });
   const build = { builder: "DOCKERFILE" as const, dockerfilePath: "Dockerfile" };
   const watchPatterns = ["/apps/api/**"];
   // restartPolicy* are only read under `deploy` — as top-level service
@@ -70,8 +72,13 @@ export default defineRailway((ctx) => {
     // session cookie has to be shared with the Next.js app on the same
     // registrable domain (docs/deploy-railway.md "Auth cookie domain").
     DJANGO_ALLOWED_HOSTS: "${{RAILWAY_PUBLIC_DOMAIN}}",
-    DJANGO_CSRF_TRUSTED_ORIGINS: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
     KEEL_APP_DOMAIN: "${{RAILWAY_PUBLIC_DOMAIN}}",
+    // CSRF is validated against the browser-facing origin, which is the
+    // Next.js app, not this service — the BFF forwards the Origin it
+    // received (docs/adr/0002-auth-bff-shape.md).
+    DJANGO_CSRF_TRUSTED_ORIGINS: "https://${{web.RAILWAY_PUBLIC_DOMAIN}}",
+    KEEL_FRONTEND_URL: "https://${{web.RAILWAY_PUBLIC_DOMAIN}}",
+    KEEL_APP_FRONTEND_URL: "https://${{web.RAILWAY_PUBLIC_DOMAIN}}",
     SENTRY_ENVIRONMENT: ctx.environment,
     SENTRY_DSN: preserve(),
     RESEND_API_KEY: preserve(),
@@ -81,14 +88,21 @@ export default defineRailway((ctx) => {
     source,
     build,
     watchPatterns,
-    start: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT",
+    // Railway execs the start command directly — it is NOT run through a
+    // shell, so a bare $PORT reaches gunicorn as the literal four
+    // characters and it exits with "'$PORT' is not a valid port number".
+    // The `sh -c` wrapper is what expands it.
+    start: 'sh -c "exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"',
     healthcheck: "/healthz/",
     healthcheckTimeout: 30,
     // Only `api` migrates. All four services deploy on the same push;
     // repeating this would race four concurrent `migrate` runs.
     preDeploy: "python manage.py migrate --no-input",
     deploy: restart,
-    env: appEnv,
+    // Railway assigns $PORT per service, but the Next.js BFF has to dial
+    // a *known* port on api.railway.internal — so pin it rather than
+    // letting it float.
+    env: { ...appEnv, PORT: "8080" },
   });
 
   // SSE only (keel/jobs/sse.py). Never gunicorn: a held-open SSE
@@ -97,11 +111,11 @@ export default defineRailway((ctx) => {
     source,
     build,
     watchPatterns,
-    start: "uvicorn config.asgi_stream:application --host 0.0.0.0 --port $PORT",
+    start: 'sh -c "exec uvicorn config.asgi_stream:application --host 0.0.0.0 --port $PORT"',
     healthcheck: "/healthz/",
     healthcheckTimeout: 30,
     deploy: restart,
-    env: appEnv,
+    env: { ...appEnv, PORT: "8081" },
   });
 
   const worker = service("worker", {
@@ -122,7 +136,30 @@ export default defineRailway((ctx) => {
     env: appEnv,
   });
 
+  // The Next.js app. Built from the repository root, not apps/web: it
+  // depends on workspace packages that live outside its own directory.
+  // Its BFF reaches api and stream over the private network, so neither
+  // of those hops crosses the public internet or counts as egress.
+  const web = service("web", {
+    source: github(REPO, { branch: BRANCH }),
+    build: { builder: "DOCKERFILE" as const, dockerfilePath: "apps/web/Dockerfile" },
+    watchPatterns: ["/apps/web/**", "/packages/**"],
+    start: "node apps/web/server.js",
+    healthcheck: "/",
+    healthcheckTimeout: 30,
+    deploy: restart,
+    env: {
+      // Server-only (ADR 0002) — the browser never learns Django's
+      // address. http, not https: private traffic is already Wireguard
+      // encrypted, and there is no TLS terminator inside the network.
+      KEEL_API_INTERNAL_URL: "http://api.railway.internal:8080",
+      KEEL_API_STREAM_INTERNAL_URL: "http://stream.railway.internal:8081",
+      NEXT_PUBLIC_SITE_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+      NEXT_PUBLIC_BILLING_CREDITS: "false",
+    },
+  });
+
   return project("keel", {
-    resources: [group("Backend", [db, cache, api, stream, worker, beat])],
+    resources: [group("Backend", [db, cache, api, stream, worker, beat]), web],
   });
 });

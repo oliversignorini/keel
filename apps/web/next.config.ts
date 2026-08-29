@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { withContentCollections } from "@content-collections/next";
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -12,6 +14,13 @@ process.env.NEXT_PUBLIC_SENTRY_RELEASE ??=
   process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_SHA || "dev";
 
 const nextConfig: NextConfig = {
+  // Traced, self-contained server bundle — what apps/web/Dockerfile's
+  // runtime stage copies instead of the whole pnpm workspace install.
+  // outputFileTracingRoot has to point at the monorepo root or the trace
+  // stops at apps/web and misses the workspace packages below.
+  output: "standalone",
+  outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
+
   // @keel/ui ships TSX source, no build step of its own (a plain internal
   // workspace package) — Next transpiles it as part of this app's build.
   transpilePackages: ["@keel/ui"],
@@ -70,6 +79,11 @@ const configWithContentCollections: NextConfig = {
   ...withContentCollections(nextConfig),
   headers: nextConfig.headers,
   skipTrailingSlashRedirect: nextConfig.skipTrailingSlashRedirect,
+  // Same passthrough gap, found the same way: with these left to the
+  // wrapper, `next build` silently emits no .next/standalone at all and
+  // the container image has nothing to run.
+  output: nextConfig.output,
+  outputFileTracingRoot: nextConfig.outputFileTracingRoot,
 };
 
 // Source-map upload needs SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT —
