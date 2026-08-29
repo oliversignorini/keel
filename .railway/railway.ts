@@ -33,6 +33,11 @@ const REPO = "oliversignorini/keel";
 // it so a branch can be deployed and smoke-tested before it lands.
 const BRANCH = process.env.KEEL_RAILWAY_BRANCH ?? "master";
 
+// Pinned rather than left to Railway's per-service $PORT — see the note
+// on api's start command below.
+const API_PORT = "8080";
+const STREAM_PORT = "8081";
+
 export default defineRailway((ctx) => {
   const db = postgres("Postgres");
   const cache = redis("Redis");
@@ -71,7 +76,11 @@ export default defineRailway((ctx) => {
     // overrides all three with the custom domain — and must, because the
     // session cookie has to be shared with the Next.js app on the same
     // registrable domain (docs/deploy-railway.md "Auth cookie domain").
-    DJANGO_ALLOWED_HOSTS: "${{RAILWAY_PUBLIC_DOMAIN}}",
+    // healthcheck.railway.app is the Host header Railway's own health
+    // checker sends — not the service's domain. Without it Django answers
+    // the check with 400 DisallowedHost and every deploy fails its
+    // healthcheck while the app is running perfectly well.
+    DJANGO_ALLOWED_HOSTS: "${{RAILWAY_PUBLIC_DOMAIN}},healthcheck.railway.app",
     KEEL_APP_DOMAIN: "${{RAILWAY_PUBLIC_DOMAIN}}",
     // CSRF is validated against the browser-facing origin, which is the
     // Next.js app, not this service — the BFF forwards the Origin it
@@ -88,11 +97,14 @@ export default defineRailway((ctx) => {
     source,
     build,
     watchPatterns,
-    // Railway execs the start command directly — it is NOT run through a
-    // shell, so a bare $PORT reaches gunicorn as the literal four
-    // characters and it exits with "'$PORT' is not a valid port number".
-    // The `sh -c` wrapper is what expands it.
-    start: 'sh -c "exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"',
+    // The port is literal, not $PORT. Railway execs the start command
+    // without a shell, so $PORT arrives at gunicorn as four literal
+    // characters — "'$PORT' is not a valid port number", then a
+    // crashloop. Wrapping it in `sh -c` does not help; the wrapper is
+    // not given a shell either. Since the BFF has to dial a known port
+    // on api.railway.internal anyway, the number is pinned here and PORT
+    // is set to match so Railway's own port detection agrees.
+    start: `gunicorn config.wsgi:application --bind 0.0.0.0:${API_PORT}`,
     healthcheck: "/healthz/",
     healthcheckTimeout: 30,
     // Only `api` migrates. All four services deploy on the same push;
@@ -102,7 +114,7 @@ export default defineRailway((ctx) => {
     // Railway assigns $PORT per service, but the Next.js BFF has to dial
     // a *known* port on api.railway.internal — so pin it rather than
     // letting it float.
-    env: { ...appEnv, PORT: "8080" },
+    env: { ...appEnv, PORT: API_PORT },
   });
 
   // SSE only (keel/jobs/sse.py). Never gunicorn: a held-open SSE
@@ -111,11 +123,11 @@ export default defineRailway((ctx) => {
     source,
     build,
     watchPatterns,
-    start: 'sh -c "exec uvicorn config.asgi_stream:application --host 0.0.0.0 --port $PORT"',
+    start: `uvicorn config.asgi_stream:application --host 0.0.0.0 --port ${STREAM_PORT}`,
     healthcheck: "/healthz/",
     healthcheckTimeout: 30,
     deploy: restart,
-    env: { ...appEnv, PORT: "8081" },
+    env: { ...appEnv, PORT: STREAM_PORT },
   });
 
   const worker = service("worker", {
@@ -152,8 +164,8 @@ export default defineRailway((ctx) => {
       // Server-only (ADR 0002) — the browser never learns Django's
       // address. http, not https: private traffic is already Wireguard
       // encrypted, and there is no TLS terminator inside the network.
-      KEEL_API_INTERNAL_URL: "http://api.railway.internal:8080",
-      KEEL_API_STREAM_INTERNAL_URL: "http://stream.railway.internal:8081",
+      KEEL_API_INTERNAL_URL: `http://api.railway.internal:${API_PORT}`,
+      KEEL_API_STREAM_INTERNAL_URL: `http://stream.railway.internal:${STREAM_PORT}`,
       NEXT_PUBLIC_SITE_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
       NEXT_PUBLIC_BILLING_CREDITS: "false",
     },
