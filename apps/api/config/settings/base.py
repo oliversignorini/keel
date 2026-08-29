@@ -516,6 +516,18 @@ HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
     "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=provider",
+    # Needed by allauth's enumeration-prevention path, not by any
+    # redirect: signing up with an address that already has an account
+    # sends *that* address a "you already have an account" mail, and
+    # building it calls get_signup_url(). Without this key allauth raises
+    # ImproperlyConfigured and the request 500s — so the one flow whose
+    # entire purpose is to be indistinguishable from a fresh signup was
+    # instead the only one that returned an error. Found on a live
+    # deploy by signing up twice with the same address.
+    "account_signup": f"{FRONTEND_URL}/signup",
+    # Same path: that mail's body offers "reset your password" and builds
+    # the link from this key.
+    "account_reset_password": f"{FRONTEND_URL}/reset-password",
 }
 # `/invite/[token]` also appears in this settings-doc's PRD passage but is
 # an organizations concept, not an allauth flow — it is not a
