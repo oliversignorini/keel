@@ -20,7 +20,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
-EMAILS_DIST_DIR = Path(settings.BASE_DIR).parent.parent / "packages" / "emails" / "dist"
+EMAILS_DIST_DIR = Path(settings.KEEL_EMAILS_DIST_DIR)
 
 
 class EmailTemplateMissing(Exception):

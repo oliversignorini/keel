@@ -347,6 +347,18 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
 # raises ImproperlyConfigured if a send is actually attempted without it.
 # Only wired as the ``default`` mailer's BACKEND in prod.py; dev/test keep
 # sending through Mailpit / locmem via the stock Django backends.
+# Where keel/notifications/emails.py reads the react-email build output
+# from. Defaults to the repo layout, which is what a dev checkout and the
+# test suite both have. A container image has no repo above the app, so
+# apps/api/Dockerfile builds the templates in a Node stage, copies just
+# the rendered HTML in, and points this at it — without the override,
+# every transactional email raises EmailTemplateMissing at send time and
+# signup answers 500.
+KEEL_EMAILS_DIST_DIR = env(
+    "KEEL_EMAILS_DIST_DIR",
+    default=str(BASE_DIR.parent.parent / "packages" / "emails" / "dist"),
+)
+
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 
 # R2 presigned direct upload (PRD §5). No R2

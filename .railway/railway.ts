@@ -44,9 +44,18 @@ export default defineRailway((ctx) => {
 
   // All four services build the same apps/api image and differ only in
   // startCommand — see docs/deploy-railway.md "Service topology".
-  const source = github(REPO, { branch: BRANCH, rootDirectory: "apps/api" });
-  const build = { builder: "DOCKERFILE" as const, dockerfilePath: "Dockerfile" };
-  const watchPatterns = ["/apps/api/**"];
+  // Repo root as the build context, not apps/api: the image builds
+  // packages/emails in a Node stage because Django reads that rendered
+  // HTML at send time. With an apps/api context the templates cannot be
+  // in the image and every transactional email raises
+  // EmailTemplateMissing — a 500 on signup that a dev checkout, with the
+  // whole repo on disk, never reproduces.
+  const source = github(REPO, { branch: BRANCH });
+  const build = {
+    builder: "DOCKERFILE" as const,
+    dockerfilePath: "apps/api/Dockerfile",
+  };
+  const watchPatterns = ["/apps/api/**", "/packages/emails/**"];
   // restartPolicy* are only read under `deploy` — as top-level service
   // keys they are silently dropped.
   const restart = { restartPolicyType: "ON_FAILURE" as const, restartPolicyMaxRetries: 5 };
