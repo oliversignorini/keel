@@ -87,8 +87,7 @@ def test_a_non_entitling_status_resolves_to_no_entitlements(status: str) -> None
 @pytest.mark.parametrize("status", sorted(ENTITLING_STATUSES))
 def test_an_entitling_status_resolves_to_the_plans_entitlements(status: str) -> None:
     """``past_due`` is in here on purpose: dunning is a warning, not a
-    lockout (``docs/plans/phase-4.md`` §B.6) — see also
-    ``test_dunning.py``."""
+    lockout — see also ``test_dunning.py``."""
     org = _org()
     plan = _plan_with_entitlements({"features": ["api_access"], "limits": {"seats": 5}})
     _subscribe(org, plan, status=status)
