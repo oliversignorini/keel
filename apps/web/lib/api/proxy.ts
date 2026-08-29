@@ -89,6 +89,22 @@ export async function proxyRequest(request: NextRequest, options: ProxyOptions):
     requestHeaders.delete(name);
   }
 
+  // Having stripped the browser's claim above, assert the real one. This
+  // hop is the only thing that knows it: the browser's TLS terminates at
+  // this server, and the connection onward is plain http:// to a private
+  // address, because that network is already encrypted and carries no
+  // TLS terminator to speak https to.
+  //
+  // Django reads exactly this header (SECURE_PROXY_SSL_HEADER in
+  // apps/api/config/settings/prod.py). Without it, prod's
+  // SECURE_SSL_REDIRECT=True sees a plain-http request and answers every
+  // proxied call with a 301 to https://<internal-host>/… , which this
+  // proxy dutifully hands back to the browser — an API that returns
+  // redirects instead of JSON, with nothing logged as an error.
+  // Confirmed live on Railway: without this line, /_allauth/browser/v1/
+  // config through the BFF is a 301; with it, a 200.
+  requestHeaders.set("x-forwarded-proto", request.nextUrl.protocol === "http:" ? "http" : "https");
+
   const hasBody = !["GET", "HEAD"].includes(request.method);
   const init: RequestInit = {
     method: request.method,

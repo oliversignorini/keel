@@ -106,7 +106,6 @@ describe("proxyRequest", () => {
     const headers = fetchSpy.mock.calls[0]![1].headers as Headers;
     for (const name of [
       "x-forwarded-for",
-      "x-forwarded-proto",
       "x-forwarded-host",
       "x-forwarded-port",
       "x-real-ip",
@@ -114,8 +113,30 @@ describe("proxyRequest", () => {
     ]) {
       expect(headers.has(name)).toBe(false);
     }
+    // X-Forwarded-Proto is the exception: dropped as a caller claim, then
+    // re-asserted from the scheme this hop actually served, which is the
+    // only thing that knows it. Here the incoming request is http://, so
+    // the browser's "https" claim must not survive.
+    expect(headers.get("x-forwarded-proto")).toBe("http");
     // Everything else still rides along.
     expect(headers.get("Cookie")).toBe("sessionid=abc");
+  });
+
+  it("tells Django the browser's scheme, not the one it dials upstream with", async () => {
+    // The hop to Django is plain http:// over the private network, which
+    // is already encrypted. Django's SECURE_SSL_REDIRECT would 301 every
+    // proxied call unless this header reports the browser's real scheme
+    // (confirmed live on Railway: without it, a 301 instead of JSON).
+    fetchSpy.mockResolvedValue(upstreamJson(200, { ok: true }));
+    const request = new NextRequest("https://app.example.com/api/v1/me/");
+
+    await proxyRequest(request, {
+      upstreamOrigin: "http://api.railway.internal:8080",
+      upstreamPath: "/api/v1/me/",
+    });
+
+    const headers = fetchSpy.mock.calls[0]![1].headers as Headers;
+    expect(headers.get("x-forwarded-proto")).toBe("https");
   });
 
   it("relays every Set-Cookie header individually — Django often sets two in one response", async () => {

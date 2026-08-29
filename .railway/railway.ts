@@ -80,7 +80,16 @@ export default defineRailway((ctx) => {
     // checker sends — not the service's domain. Without it Django answers
     // the check with 400 DisallowedHost and every deploy fails its
     // healthcheck while the app is running perfectly well.
-    DJANGO_ALLOWED_HOSTS: "${{RAILWAY_PUBLIC_DOMAIN}},healthcheck.railway.app",
+    // Three hosts, all required, for three different callers:
+    //   RAILWAY_PUBLIC_DOMAIN  — the browser, via the edge
+    //   healthcheck.railway.app — Railway's health checker, which sends
+    //     its own Host rather than the service's
+    //   RAILWAY_PRIVATE_DOMAIN — the Next.js BFF. It strips the incoming
+    //     Host (it names the wrong server), so fetch sets it from the
+    //     internal URL and Django sees api.railway.internal. Without it
+    //     every proxied /api/v1 and /_allauth call answers 400.
+    DJANGO_ALLOWED_HOSTS:
+      "${{RAILWAY_PUBLIC_DOMAIN}},${{RAILWAY_PRIVATE_DOMAIN}},healthcheck.railway.app",
     // The *app's* host — the Next.js service — not Django's own. Setting
     // it to this service's domain trips keel.core.E004 at boot, since it
     // then has no matching entry in CSRF_TRUSTED_ORIGINS.
