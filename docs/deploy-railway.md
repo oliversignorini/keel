@@ -1,551 +1,410 @@
 # Deploying Keel to Railway
 
-Status: every config, script and doc a deploy needs is written and,
-where it doesn't require a live Railway
-account, verified locally against a real Postgres/Redis and a real Docker
-build (see "What was verified without a Railway account" below). **The
-actual first deploy from a clean Railway account has not happened** — no
-Railway account was available in this environment, and provisioning one is
-listed as a blocked step. Everything in this doc that depends on that is
-marked so explicitly; treat those sections as the best-effort account of
-what should happen, not as evidence that it does.
+Status: **deployed, for real.** Django and Next.js both run on Railway,
+serving over HTTPS, against Railway-managed Postgres and Redis, with
+migrations applied by `preDeployCommand` and the Next.js BFF reaching
+Django over the private network. Everything below is written from that
+deploy. Where something has *not* been exercised it says so in those
+words — the previous version of this document was written from Railway's
+documentation without an account, and most of what it asserted turned out
+to be wrong in ways that each failed a deploy.
 
-## What was verified without a Railway account
+Verified live at the time of writing:
 
-Real, reproducible evidence — not documentation-reading — for the parts
-that don't require Railway itself:
+| Check                                                             | Result                                                       |
+| ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| `apps/api/Dockerfile` builds on Railway                           | 115MB image, `collectstatic` 141 files / 421 post-processed  |
+| `preDeployCommand` migrations                                     | every app applied cleanly, idempotent on redeploy            |
+| `/healthz/`                                                       | `200 {"status": "ok"}`                                       |
+| Django admin, `/api/v1/docs`, `/_allauth/browser/v1/config`       | `200`                                                        |
+| WhiteNoise hashed asset (`/static/admin/css/base.<hash>.css`)     | `200`                                                        |
+| Next.js app on Railway                                            | `200`, standalone server, non-root                           |
+| BFF to Django over `api.railway.internal`                         | `200` JSON                                                   |
+| `pgvector` on Railway's managed Postgres                          | `CREATE EXTENSION vector` succeeds, `vector 0.8.6`           |
+| HTTPS redirect on, healthcheck still passing                      | both, via `SECURE_REDIRECT_EXEMPT`                           |
 
-- `apps/api/Dockerfile` builds successfully (`docker build -f
-apps/api/Dockerfile apps/api`), including the `collectstatic` step run
-  at build time.
-- The built image, run against `infra/compose.dev.yml`'s real Postgres and
-  Redis containers:
-  - `python manage.py migrate --no-input` applies cleanly.
-  - `gunicorn config.wsgi:application` (the `api` service's exact
-    `startCommand`) serves `/healthz/` → `200 {"status": "ok"}`, the Django
-    admin login page → `200`, and a `/static/...` asset → `200` (WhiteNoise
-    serving the `collectstatic` output — see "Static files" below).
-  - `uvicorn config.asgi_stream:application` (the `stream` service's exact
-    `startCommand`) serves its own `/healthz/` → `200`.
-  - `celery -A config worker -Q default,email,external,scheduled` (the
-    `worker` service's exact `startCommand`) connects to Redis and reports
-    all ten registered tasks.
-- `uv lock` resolves cleanly with `gunicorn` and `whitenoise` added as
-  dependencies (`apps/api/pyproject.toml`, `apps/api/uv.lock`).
-- `apps/api/.dockerignore` (new) keeps a local `.env` and dev caches out
-  of the build context — confirmed the build still succeeds with it in
-  place.
+Not yet exercised: `worker`, `beat` and `stream` as deployed services
+(see "Service count" below), Celery processing a real job, SSE through
+Railway's edge, a deliberately-broken migration, and Neon as the
+database.
 
-None of this proves Railway's own build/deploy/proxy layer behaves the
-same way — see the open questions under "Service topology" below, which
-are exactly the parts only a real account can answer.
+## Configuration: `.railway/railway.ts`, not `railway.json`
 
-## pgvector
+**Railway's Config as Code (`railway.json` / `railway.toml`) is
+deprecated. New services cannot opt into it at all, and existing files
+stop being read on 2026-12-01.** The replacement is Infrastructure as
+Code: one `.railway/railway.ts` per project, applied with the CLI.
 
-### Dev image (verified)
-
-`CREATE EXTENSION vector;` succeeds against the dev compose Postgres.
-
-- Image: `pgvector/pgvector:pg17`
-- Resolved digest at verification time:
-  `pgvector/pgvector@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f`
-- Server: `PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2)`
-- Extension version installed: `vector 0.8.6`
-
-```
-$ psql -h localhost -p 5433 -U keel -d keel -c "CREATE EXTENSION IF NOT EXISTS vector; SELECT extname, extversion FROM pg_extension WHERE extname='vector';"
-CREATE EXTENSION
- extname | extversion
----------+------------
- vector  | 0.8.6
-(1 row)
+```bash
+railway login && railway link
+railway config plan          # preview
+railway config apply         # apply after confirmation
 ```
 
-### Target host (Railway) — **not directly verified, no Railway account available in this environment**
+The repo previously carried `infra/railway.json` with a top-level
+`{"services": {...}}` map. That shape was never a schema Railway read —
+Config as Code was per-*service*, with `build`/`deploy` at the top level
+and no way to describe four services at once. The four services it
+described could not have been provisioned from it. It has been deleted.
 
-Checked via Railway's public documentation and community help station
-(no account needed for this much):
+Things worth knowing about the IaC DSL, all found by using it:
 
-- **Railway's standard Postgres plugin — the one you get from "Add
-  Database → PostgreSQL" — does not include `pgvector` by default.**
-  A Railway moderator's stated guidance on the help station is that
-  "enabling pgvector isn't as straightforward" on that default service.
-  ([Railway Help Station](https://station.railway.com/questions/enable-pgvector-extension-for-postgre-sql-e861e033))
-- Railway instead publishes dedicated templates that ship `pgvector`
-  pre-installed, e.g. a "pgvector" template and a "PostgreSQL Extensions"
-  template (`EXTENSIONS` env var, pre-compiled extensions including
-  `vector`). ([Railway: pgvector template](https://railway.com/deploy/pgvector-latest),
-  [Railway: PostgreSQL Extensions template](https://railway.com/deploy/postgresql-extensions))
-- One of Railway's official pgvector templates runs the same image family
-  we use in dev (`pgvector/pgvector`, e.g. `pgvector/pgvector:0.8.6-pg18`),
-  which is reassuring for parity but is a **different service** from the
-  default Postgres plugin — provisioning the wrong one is the actual risk.
+- `restartPolicyType` / `restartPolicyMaxRetries` are only read under
+  `deploy:`. As top-level service keys they are silently dropped — the
+  plan showed `restartPolicyMaxRetries 5 -> null`.
+- `github(repo)` defaults the branch to `main` and does **not** read the
+  repository's actual default branch. This repo's is `master`. Pass
+  `branch` explicitly.
+- `railway config apply` **exits 0 when the apply fails** and prints
+  nothing about it. The failure is only visible with `--json`, under
+  `applyResult.status` / `applyResult.diagnostics`. Anything running this
+  in CI must check that, not the exit code.
+- An apply is atomic: if any one resource exceeds a plan limit, the whole
+  change set fails and *nothing* is created. Creating services one at a
+  time gets further on a constrained plan.
+- A failed apply can still leave service rows behind that exist at
+  project level with no environment instance. `railway service delete`
+  cannot see them ("not found in environment"), IaC does not track them
+  (`0 to destroy`), and they still count against the plan's service
+  limit. Deleting them needs the dashboard, because the API path requires
+  2FA that an API token cannot satisfy.
 
-**Open item — the exact question to answer with a Railway account:**
+## Service count — the topology does not fit on Hobby
 
-> When provisioning Postgres for this project on Railway, deploy the
-> `pgvector` template (or the PostgreSQL Extensions template with
-> `vector` in `EXTENSIONS`) instead of the default "Add Database →
-> PostgreSQL" plugin, and confirm `CREATE EXTENSION vector;` succeeds on
-> whatever image tag that template resolves to at deploy time. Record
-> the resolved image tag/digest here once done, the same way the dev
-> image is recorded above.
+Keel is seven Railway resources: `api`, `stream`, `worker`, `beat`,
+`web`, Postgres, Redis.
 
-Do not provision the default Postgres plugin for this project and
-discover the gap after deploying — the PRD flags this exact trap.
+**Hobby caps a project at 5 services.** Not the Trial — Hobby. Confirmed
+against the live plan limits (`project.services: 5`). The error Railway
+returns says "Free plan resource provision limit exceeded" regardless of
+which plan the account is actually on, which makes it look like a Trial
+problem when it is not. Pro is required for the full topology.
 
-## Auth cookie domain and Vercel preview deployments
+The deploy this document describes ran `api`, `web`, Postgres and Redis —
+four of the seven — which is what fits.
 
-PRD §4 "Auth architecture" / §10 first named risk: the session cookie is
-`Domain=.<registrable-domain>` so it is shared between the Next.js app
-(`acme.com`, on Vercel) and this API (`api.acme.com`, on Railway). That
-constraint has a specific consequence for **Vercel preview deployments**.
+## Start commands take a literal port
 
-- Every PR/branch preview Vercel builds gets a random `*.vercel.app`
-  hostname by default. `*.vercel.app` is **not** a subdomain of
-  `acme.com`, so a `Domain=.acme.com` cookie set by the API is never sent
-  back to a preview deploy — auth silently fails there even though it
-  works in production, and it fails in exactly the way `manage.py check`
-  (`keel.core.E001`/`E002`, see `apps/api/keel/core/checks.py`) cannot
-  catch, because the _server-side_ config is correct; the mismatch is
-  between the server's configured domain and whichever preview URL Vercel
-  handed out for that request.
-- **Resolution: a wildcard preview domain.** Configure Vercel to serve
-  previews at `*.preview.acme.com` instead of `*.vercel.app` — this
-  **requires a Vercel Pro plan** (wildcard domains are not available on
-  the Hobby tier). Pair it with a staging API at `api.preview.acme.com`,
-  sharing `Domain=.acme.com` with the app the same way production does
-  (or `Domain=.preview.acme.com` if staging is meant to be cookie-isolated
-  from production — pick one and keep the API's `KEEL_APP_DOMAIN` /
-  `DJANGO_SESSION_COOKIE_DOMAIN` consistent with whichever choice is
-  made).
-- `init` is expected to prompt for and configure both the production and
-  preview domains up front (PRD §4), since retrofitting a domain choice
-  after cookies are already in use in production is disruptive.
-- Without Vercel Pro (or before the wildcard domain is set up), expect
-  preview deployments to be unauthenticated-only — fine for reviewing UI,
-  not for testing the auth flow itself. Test auth against a real
-  `api.<domain>` + `<domain>` pair (or `localhost` in dev, where the
-  cookie is host-only and this constraint doesn't apply — see
-  `apps/api/.env.example`'s `KEEL_APP_DOMAIN` comment).
+**Railway execs a service's start command without a shell.** `$PORT`
+arrives at gunicorn as five literal characters and it exits:
 
-## Service topology and `railway.json`
-
-`infra/railway.json` declares four services, all built from the same
-`apps/api` image (`apps/api/Dockerfile` — a multi-stage `uv`-based build,
-non-root runtime user, `collectstatic` run at build time. Not needed by
-`infra/compose.prod.yml`'s TODO comment any more; that comment is now
-stale and should be removed the next time someone touches that file):
-
-| Service  | Command                                                       | Why it's separate                                                                                                                                                                                                                                                        |
-| -------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `api`    | `gunicorn config.wsgi:application`                            | Ordinary request/response traffic, sync workers                                                                                                                                                                                                                          |
-| `stream` | `uvicorn config.asgi_stream:application`                      | SSE only — `keel/jobs/sse.py`, reachable at `.../jobs/stream/`. Never gunicorn: a held-open SSE connection occupies a sync worker for its entire life, exhausting the pool at a user count far below what request/response load testing suggests (PRD §5.5.5, footgun 1) |
-| `worker` | `celery -A config worker -Q default,email,external,scheduled` | Tier 1 shim tasks and Tier 2 job runner (`keel/jobs/runner.py`)                                                                                                                                                                                                          |
-| `beat`   | `celery -A config beat`                                       | The six scheduled jobs (PRD §5)                                                                                                                                                                                                                                          |
-
-**Not directly verified against a live Railway account or the Railway
-CLI.** `infra/railway.json`'s shape (`services` keyed by name, each with
-`build`/`deploy`) matches Railway's documented config-as-code schema
-(`docs.railway.com/config-as-code/reference`, checked 2026-08), and each
-service's exact `startCommand` was run locally against the built image
-(see "What was verified without a Railway account" above) — but neither
-of those proves Railway's own build pipeline, edge proxy, or per-service
-networking behaves the same way. Before the first real deploy, confirm
-against `railway up`/the dashboard that:
-
-- Railway actually reads a multi-service `railway.json` this shape
-  (vs. requiring one config file per service, set via each service's
-  "Config File Path")
-- `$PORT` is available to `stream` as its own distinct port the way it
-  is to `api` — Railway assigns one `$PORT` per _service_, not per
-  container, so this should hold, but is worth confirming once
-  `stream` is a real deployed service rather than a local `uvicorn`
-  process
-- the proxy in front of `stream`'s public domain does not buffer
-  `text/event-stream` by default. `keel/jobs/sse.py` sets
-  `X-Accel-Buffering: no` (the nginx-family signal) and flushes a
-  leading `: connected` comment before ever touching Redis; Railway's
-  own edge proxy has not been checked against either of those. If it
-  does buffer, the symptom is exactly the one PRD §5.5.5 warns about:
-  not an error, a tray that shows nothing for minutes then everything
-  at once.
-- `api` and `stream` are given **different public hostnames or paths**
-  so `stream`'s healthcheck and TLS termination don't collide with
-  `api`'s — the PRD's own diagram shows one hostname with path routing
-  (`api.acme.com/…/stream`), which is a reverse-proxy rule Railway's
-  edge would need to be configured with, not something `railway.json`
-  alone expresses.
-
-Dev runs `stream` as a second local process, not via Railway or
-Docker Compose: `pnpm --filter api dev:stream` (wraps `uv run uvicorn
-config.asgi_stream:application --port 8001 --reload`), alongside the
-usual `pnpm --filter api dev` (gunicorn's dev equivalent, `runserver`,
-on 8000). `KEEL_API_STREAM_INTERNAL_URL` (`.env.example`; server-only
-since docs/adr/0002-auth-bff-shape.md — the browser no longer talks to
-`stream` directly, the Next.js BFF proxy does) points the web app's
-server process at whichever port `stream` is actually running on.
-
-Env var provisioning beyond what's already in `.env.example` arrives
-with `init`.
-
-## Static files
-
-The Django admin (and Ninja's own `/api/v1/docs` schema UI) need their CSS/JS
-served somehow in production; `DEBUG=True` serves `STATIC_ROOT` directly
-in dev, which stops working the moment `prod.py` sets `DEBUG = False`.
-`apps/api/config/settings/prod.py` adds `whitenoise.middleware.
-WhiteNoiseMiddleware` (inserted right after `SecurityMiddleware`, matching
-WhiteNoise's own documented placement) and sets `STORAGES["staticfiles"]`
-to `whitenoise.storage.CompressedManifestStaticFilesStorage`.
-`apps/api/Dockerfile` runs `collectstatic` at build time, so the compiled,
-hashed, gzip/brotli-compressed assets are already in the image before the
-container starts — no static-file step at deploy time, no separate CDN or
-object-storage bucket for what is, today, only framework-provided pages.
-Verified locally: see "What was verified without a Railway account" above.
-
-This is not a general-purpose asset pipeline — Next.js on Vercel serves
-the actual application's static assets, entirely separately. WhiteNoise
-here covers only what Django itself renders.
-
-## Migration strategy
-
-**Decision: `preDeployCommand`, not `migrate` hidden in the image build,
-not a manual step.**
-
-`infra/railway.json`'s `api` service sets:
-
-```json
-"preDeployCommand": ["python manage.py migrate --no-input"]
+```
+Error: '$PORT' is not a valid port number.
 ```
 
-Railway runs a service's `preDeployCommand` after a successful build and
-before that deploy's `startCommand`, in its own container with the
-deploy's environment variables and private-network access, but **no
-persistent filesystem and no mounted volumes** — irrelevant here since
-`migrate` only needs `DATABASE_URL`. If it exits non-zero, the deploy is
-aborted and the previous deploy keeps serving traffic; it is not retried
-automatically. (`docs.railway.com/deployments/pre-deploy-command`,
-checked 2026-08 — Railway's own docs don't say whether a service with
-zero replicas or a service that's never been deployed before runs it
-differently; that is a real-account open item, listed below.)
+Wrapping it as `sh -c "... $PORT"` does **not** help; the wrapper is not
+given a shell either. Every `startCommand` in the old `infra/railway.json`
+used `$PORT`, so all four would have crashlooped on first boot.
 
-**Only the `api` service declares it — `stream`, `worker` and `beat` do
-not.** All four services build from the same image and would each run
-their own copy of `preDeployCommand` on every deploy if it were repeated;
-since Railway deploys are triggered per-service (a push that changes
-`apps/api/**` redeploys all four), that would mean up to four concurrent
-`migrate` invocations racing on every deploy. Django wraps each migration
-in its own transaction on Postgres, so a second concurrent `migrate` run
-mid-migration blocks on a lock rather than corrupting anything — but
-"blocks and eventually times out or serializes" is not a property to rely
-on when "runs exactly once" is available for free by picking one service
-to own it.
+`.railway/railway.ts` pins the port literally instead, and sets `PORT` to
+match so Railway's own port detection agrees:
 
-**Why not hidden in the image build (`docker build` running `migrate`):**
-a migration needs a live database connection and the _target_ environment's
-credentials, neither of which exist at build time — and coupling the two
-means a build that succeeds says nothing about whether the migration
-against production data will.
+```ts
+const API_PORT = "8080";
+start: `gunicorn config.wsgi:application --bind 0.0.0.0:${API_PORT}`,
+env: { ...appEnv, PORT: API_PORT },
+```
 
-**Why not manual:** a manual step is a step someone forgets, and it
-reintroduces exactly the race `preDeployCommand` exists to close — a
-service starting against a schema its own code doesn't expect yet.
+A fixed port is needed anyway: the Next.js BFF dials
+`api.railway.internal` and has to know which port to use.
 
-**Rollback story.** Two failure shapes, handled differently:
+## `ALLOWED_HOSTS` needs three hosts, for three different callers
 
-- **The migration itself fails (bad SQL, a broken constraint against real
-  data).** `preDeployCommand` failing aborts the deploy — the previous
-  `api`/`stream`/`worker`/`beat` deploys keep running against the
-  unmigrated (and therefore still-consistent) schema. No code from the
-  failed deploy ever goes live. Fix the migration, redeploy.
-- **The migration succeeds but the new application code is broken.**
-  This is the shape Django migrations are meant to survive: every
-  migration in this codebase must be backward-compatible with the
-  previous release's code for at least one deploy (add-nullable-column,
-  not rename-and-drop-in-one-step — the standard Django "expand/contract"
-  pattern). Rolling back the _code_ (Railway's dashboard has a one-click
-  "redeploy a previous build") while leaving the _schema_ migrated forward
-  is the recovery path — rolling the schema back too is a last resort,
-  since a `migrate <app> <previous_number>` against data written by the
-  rolled-forward schema can itself be destructive (dropped columns lose
-  data on reverse). **Not tested against a real failing migration** — no
-  Railway account to deploy a deliberately-broken migration against —
-  see the human checklist below.
+Setting it to the public hostname alone — what the previous version of
+this document told you to do — fails the deploy.
 
-## Environment variables — reconciled
+```
+DJANGO_ALLOWED_HOSTS = ${{RAILWAY_PUBLIC_DOMAIN}},${{RAILWAY_PRIVATE_DOMAIN}},healthcheck.railway.app
+```
 
-`.env.example` was read end-to-end against every `env(...)` /
-`env.bool(...)` / `env.int(...)` / `env.list(...)` call in
-`apps/api/config/settings/`. Every variable Django reads has an entry;
-nothing in `.env.example` was found unused:
+- `RAILWAY_PUBLIC_DOMAIN` — the browser, through Railway's edge.
+- `healthcheck.railway.app` — **Railway's health checker sends its own
+  Host header**, not the service's domain. Without this entry Django
+  answers every check with `400 DisallowedHost` and the deploy fails
+  while the application is serving perfectly well.
+- `RAILWAY_PRIVATE_DOMAIN` — the Next.js BFF. It strips the incoming
+  `Host` (it names the wrong server), so `fetch` sets it from the
+  internal URL and Django sees `api.railway.internal`. Without it every
+  proxied `/api/v1` and `/_allauth` call answers 400.
 
-| Variable                                | Required in prod?                                                                                      | What breaks without it                                                                                                                                                                           |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DJANGO_DB_CONN_MAX_AGE`                | No — defaults to `0` (no persistent connections), which is the safe default for Neon's pooled endpoint | On Railway Postgres (no pooler in front of it), leaving this at `0` costs a fresh TCP+TLS handshake per request; see "Pooling" below                                                             |
-| `DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS` | No — defaults to `False`                                                                               | On Neon's pooled endpoint, leaving this `False` risks a server-side cursor opened in one pooled transaction and used in another that got a different underlying connection — see "Pooling" below |
+## HTTPS redirect vs. the health checker
 
-**Full env-var-to-provider reconciliation (which variables a real Railway
-deploy needed vs. `.env.example`'s existing set) is a blocked step** — it
-needs an actual deploy, which hasn't happened yet. What's true from
-reading the settings code alone:
+`prod.py` defaults `SECURE_SSL_REDIRECT` to `True`. Railway's health
+checker reaches the container **directly**, not through the edge, so the
+request carries no `X-Forwarded-Proto` for `SECURE_PROXY_SSL_HEADER` to
+read. Django sees plain HTTP and 301s the check. The checker never sees a
+200, the deploy is failed for an unhealthy service that is fine, and
+**nothing is logged** — a redirect is not an error.
 
-- `DATABASE_URL`, `REDIS_URL` — not set by hand on Railway. Railway
-  injects them automatically when a Postgres/Redis plugin is attached to
-  the project and the service references it via `${{Postgres.DATABASE_URL}}`
-  / `${{Redis.REDIS_URL}}` (Railway's variable-reference syntax, set in
-  the dashboard's Variables tab — this is not expressible in
-  `railway.json`; see the human checklist).
-- `PORT` — set automatically by Railway per service; `infra/railway.json`'s
-  `startCommand`s already read `$PORT` rather than hardcoding 8000/8001.
-- `RAILWAY_GIT_COMMIT_SHA` — set automatically by Railway; already read by
-  `apps/api/config/settings/base.py` (`SENTRY_RELEASE`).
-- Every other variable in `.env.example` is either read directly by
-  `base.py`/`prod.py` (verified by the grep above) or is a
-  `NEXT_PUBLIC_*` Next.js/Vercel variable, out of this doc's scope
-  (Vercel project settings, not `infra/`).
+`prod.py` now exempts the health endpoint, which is what makes the
+default survivable:
+
+```python
+SECURE_REDIRECT_EXEMPT = [r"^healthz/$"]
+```
+
+Verified both ways on the same commit: redirect on with no exemption ->
+healthcheck fails; exemption in place -> `/healthz/` 200 while
+`http://.../admin/` still 301s to HTTPS.
+
+This also answers the old document's open question about
+`SECURE_PROXY_SSL_HEADER`. The edge does send `X-Forwarded-Proto`. The
+health checker does not, and that distinction is the entire bug.
+
+## The BFF must assert the browser's scheme
+
+The BFF dials `http://api.railway.internal:8080` — correctly, since the
+private network is already Wireguard-encrypted and has no TLS terminator
+to speak HTTPS to. Django then sees a plain-HTTP request and
+`SECURE_SSL_REDIRECT` 301s it, and the proxy hands that redirect back to
+the browser: an API answering with redirects instead of JSON, again with
+nothing logged as an error.
+
+`apps/web/lib/api/proxy.ts` still strips `X-Forwarded-Proto` as an
+untrusted caller claim, then re-asserts it from the scheme it actually
+served. It is the only party that knows: the browser's TLS terminates
+there. Django already reads exactly that header.
+
+## Transactional emails must be built into the API image
+
+The six emails are authored in `packages/emails` and rendered to static
+HTML by react-email; Django reads that output at send time. Building the
+API image with `apps/api` as its context means the templates can never be
+in it, and `EMAILS_DIST_DIR` resolved to a path *above* the app root that
+does not exist in a container at all:
+
+```
+EmailTemplateMissing: packages/emails/dist/verification.html not found
+```
+
+Every transactional email was broken in production — signup, password
+reset, invitations, billing notices — while working perfectly in a dev
+checkout, where the whole repo is on disk, and in the test suite, where
+the same path resolves.
+
+`apps/api/Dockerfile` now builds **from the repository root** and renders
+the templates in a Node stage, copying only the resulting HTML (no Node,
+no `node_modules`) into the runtime layer. `KEEL_EMAILS_DIST_DIR` points
+Django at it. The default still resolves to the repo layout, so dev and
+tests are unchanged.
+
+The Railway service must therefore have root directory `/` and Dockerfile
+path `apps/api/Dockerfile`.
+
+## `.dockerignore` at the repository root
+
+Both images build from the root, and nothing was excluding anything. The
+context was ~600MB, and worse, `COPY . .` dropped the **host's**
+`node_modules` and `.venv` on top of the ones installed inside the image
+— native binaries built for the wrong platform, and a build failure the
+Dockerfile itself does not explain. `apps/api/.dockerignore` only ever
+covered the old `apps/api` context.
+
+## Next.js: bind to every interface
+
+Next's standalone server binds `process.env.HOSTNAME || "0.0.0.0"`, and
+**Docker sets `HOSTNAME` to the container id**. Without an override the
+server binds that single hostname and nothing reaching the container by
+IP gets through. The symptom is the app logging `Ready in 189ms` and then
+not one request, while the healthcheck fails. `docker run -p` hides it
+completely on a local smoke test.
+
+`apps/web/Dockerfile` sets `ENV HOSTNAME=0.0.0.0`.
+
+`apps/web` also needs `output: "standalone"` — and note that
+`withContentCollections()` silently drops `output` and
+`outputFileTracingRoot` the same way it already drops `headers` and
+`rewrites`. `next build` then reports success and emits no
+`.next/standalone` at all, leaving the image with nothing to run. Both
+are re-applied explicitly in `next.config.ts`.
+
+## Railway blocks the build on dependency CVEs
+
+Railway scans dependencies **before** building and refuses outright:
+
+```
+SECURITY VULNERABILITIES DETECTED
+  next@15.1.2   Source: pnpm-lock.yaml   Severity: CRITICAL
+```
+
+It reads the **root** `pnpm-lock.yaml` regardless of which service is
+building, so a frontend CVE blocks the Python API, which never installs
+Node. The offender was transitive (`react-email` -> `next@15.1.2`); a
+`pnpm.overrides` entry lifts it. Budget for this: a lockfile CVE stops
+every deploy in the repo, not just the affected app.
+
+## pgvector — available, no special template
+
+The previous version of this document warned at length that Railway's
+managed Postgres does not ship `pgvector`, and that provisioning the
+default plugin instead of a `pgvector` template was "the actual risk".
+**That is not true.** Against the Postgres Railway provisions today:
+
+```
+PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2)
+pg_available_extensions: vector | 0.8.6
+CREATE EXTENSION -> vector | 0.8.6
+```
+
+Image: `ghcr.io/railwayapp-templates/postgres-ssl:18`. Same extension
+version as dev's `pgvector/pgvector:pg17`. No template selection needed.
+
+Nothing in Keel uses `pgvector` today; this matters only when something
+does.
+
+## Private networking
+
+Services reach each other at `<service>.railway.internal`. Use `http://`,
+not `https://` — the traffic is already Wireguard-encrypted, there is no
+TLS terminator inside, and internal traffic does not count as egress.
+
+Environments created after October 2025 resolve internal DNS to **both**
+IPv4 and IPv6, so `--bind 0.0.0.0` is fine. On a legacy IPv6-only
+environment it would not be — that is the case where a service must bind
+`::`.
+
+Private networking is runtime-only. It does not exist during a build.
+
+## Migrations
+
+`preDeployCommand`, on `api` only:
+
+```ts
+preDeploy: "python manage.py migrate --no-input",
+```
+
+Verified: Railway runs it after a successful build and before the start
+command, in its own container with the deploy's environment and private
+network access. Every app applied cleanly on first deploy and reported
+`No migrations to apply` on subsequent ones. A failing pre-deploy aborts
+the deploy — the previous one keeps serving.
+
+Only `api` declares it. All services build the same image and would each
+run their own copy on every deploy, racing concurrent `migrate` runs.
+
+**Still not tested:** a deliberately-broken migration, and therefore the
+rollback story. Django wraps each migration in a transaction on Postgres,
+and Railway's dashboard offers one-click redeploy of a previous build, so
+rolling the *code* back while leaving the schema forward is the intended
+path — but that is reasoning, not evidence.
+
+## Environment variables
+
+Secrets are `preserve()` in `.railway/railway.ts` — they live in Railway,
+never in the file. Set them once per environment.
+
+Beyond the hosts and ports above, the ones that actually bite:
+
+| Variable                                | Why                                                                                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DJANGO_DEBUG`                          | **No default.** `base.py` reads `env("DJANGO_DEBUG")` with no fallback, so omitting it is a hard boot failure, not a safe default.                                         |
+| `KEEL_APP_DOMAIN`                       | The **Next.js app's** host, not Django's. Pointing it at the API's own domain trips `keel.core.E004` at boot, because it then has no matching entry in CSRF trusted origins. |
+| `DJANGO_CSRF_TRUSTED_ORIGINS`           | The browser-facing origin — the Next.js service — since the BFF forwards the browser's `Origin` unchanged.                                                                 |
+| `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` | Generated per environment. A default `SECRET_KEY` is a hard boot failure (`keel.core.checks`).                                                                          |
+| `DJANGO_DB_CONN_MAX_AGE=60`             | Railway Postgres has no pooler in front of it, so persistent connections are safe. Leave at `0` for Neon (below).                                                          |
+| `KEEL_EMAILS_DIST_DIR`                  | Set by the Dockerfile. Only override it if you relocate the rendered templates.                                                                                            |
+
+`DATABASE_URL` and `REDIS_URL` come from `${{Postgres.DATABASE_URL}}` /
+`${{Redis.REDIS_URL}}`; `PORT` and `RAILWAY_GIT_COMMIT_SHA` are set by
+Railway.
 
 ## Postgres provider neutrality — Railway vs. Neon
 
-`DATABASE_URL` is already the only thing `apps/api/config/settings/base.py`
-reads to configure the database (`env.db("DATABASE_URL", ...)`, parsed by
-`django-environ`) — no code path branches on which provider issued the
-URL. This section documents the pooling behavior that makes it _safely_
-true rather than just _nominally_ true.
+`DATABASE_URL` is the only thing `base.py` reads, and no code path
+branches on the provider. The pooling settings differ:
 
-**Railway Postgres — the documented quick path.** Provision via "Add
-Database → PostgreSQL" (or the `pgvector` template if `pgvector` is
-needed — see the pgvector section above). No connection pooler sits in
-front of it by default, so:
+- **Railway Postgres** has no pooler in front of it:
+  `DJANGO_DB_CONN_MAX_AGE=60`,
+  `DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS=false`.
+- **Neon**'s default endpoint is PgBouncer in transaction mode: leave
+  `DJANGO_DB_CONN_MAX_AGE=0` and set
+  `DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS=true`. Session state, including
+  server-side cursors, does not survive a pooled transaction boundary.
 
-```
-DJANGO_DB_CONN_MAX_AGE=60
-DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS=false
-```
+Both are the repo's defaults, so Neon is safe with nothing set and
+Railway is the one that needs the two values above. **The Neon half is
+still unverified** — deploying the same commit against both providers and
+diffing nothing else has not been done.
 
-Sixty seconds, not "forever" (`None`/`-1`): Railway's default Postgres
-plan connection limit is finite and shared across `api` + `worker` +
-`beat` (`stream` doesn't touch the database directly), and a persistent
-connection per gunicorn sync worker adds up quickly under
-`--workers`/`--threads` scaling. Sixty seconds amortizes the handshake
-cost without holding connections indefinitely.
+## Static files
 
-**Neon — the advanced option reserved for Brein.** Neon's dashboard hands
-out a **pooled** connection string by default (hostname contains
-`-pooler`), which is PgBouncer in transaction-pooling mode — the
-underlying Postgres connection is returned to Neon's own pool at the end
-of every transaction, not held for the life of the client connection.
-Combined with Django's own `CONN_MAX_AGE` (which pools at the
-_application_ layer, reusing one psycopg connection across requests) this
-interacts badly in two ways, both documented by Neon
-(`neon.com/docs/connect/connection-pooling`, checked 2026-08):
+`whitenoise.middleware.WhiteNoiseMiddleware` plus
+`CompressedManifestStaticFilesStorage`; `collectstatic` runs at image
+build time. Verified live: a hashed asset served 200 from the Django
+admin's own CSS. This covers only what Django renders — Next.js serves
+the application's assets.
 
-1. A Django-side persistent connection on top of a transaction-mode pooler
-   pools nothing extra — it just holds a slot in Neon's own limited
-   pooler for no benefit, working against the thing the pooler exists to
-   provide.
-2. Transaction-mode pooling does not preserve session state (`SET`,
-   `LISTEN`/`NOTIFY`, and SQL-level server-side cursors) across pooled
-   transaction boundaries — a cursor opened in one transaction can be
-   handed a _different_ underlying connection on its next fetch.
+## Auth cookies without a shared registrable domain
 
-So, for Neon:
+The deploy this document describes runs the app and the API on two
+unrelated `*.up.railway.app` hostnames, with `SESSION_COOKIE_DOMAIN`
+unset (host-only cookies). Since `docs/adr/0002-auth-bff-shape.md` the
+browser only ever talks to the Next.js origin — the BFF forwards to
+Django server-side — so a shared registrable domain is not needed for the
+browser's session cookie in this configuration.
 
-```
-DJANGO_DB_CONN_MAX_AGE=0
-DJANGO_DB_DISABLE_SERVER_SIDE_CURSORS=true
-```
+**Only partially exercised.** `/_allauth/browser/v1/config` and the CSRF
+cookie round-trip through the BFF were confirmed; a full authenticated
+session was not, because signup was blocked by the two bugs below until
+late in the deploy.
 
-Both are this repo's defaults already (`prod.py`'s `env.int`/`env.bool`
-calls) — Neon is safe with no env vars set at all; Railway Postgres is the
-one that needs the two above set explicitly to get persistent connections.
-That asymmetry is intentional: the safe-by-default choice should be the
-one that can't silently corrupt a cursor.
+A production deployment on a real domain should still put the app and API
+on one registrable domain (`acme.com` / `api.acme.com`) and set
+`KEEL_APP_DOMAIN` and `DJANGO_SESSION_COOKIE_DOMAIN` accordingly. Vercel
+preview deployments on `*.vercel.app` cannot share a `Domain=.acme.com`
+cookie; a wildcard preview domain requires Vercel Pro.
 
-**Not verified against either live provider** — both bullet points above
-are read from `django-environ`'s and Neon's own documentation, not from a
-deploy pointed at each. Doing that (two deploys of the same commit, one
-per `DATABASE_URL`, diffing nothing else) is a blocked step — see the
-human checklist.
+## Two application bugs this deploy found
 
-## Production checklist
+Neither is Railway-specific; both were latent and are now fixed with
+regression tests.
 
-Before the first real deploy goes live for real users:
+1. **Every transactional email 500'd** — the missing templates above.
+2. **Signing up with an existing address 500'd.** allauth's
+   enumeration-prevention path mails the existing account, and building
+   that mail needs `HEADLESS_FRONTEND_URLS["account_signup"]` and
+   `["account_reset_password"]`. Neither was configured, so
+   `ImproperlyConfigured` propagated as a 500 — meaning the one flow
+   whose entire purpose is to be indistinguishable from a fresh signup
+   was the only one that returned an error, which is exactly the
+   enumeration signal it exists to suppress. It reproduces in the test
+   suite the moment anything signs up twice with one address, which
+   nothing did.
 
-- [ ] **Domains.** `api.<domain>` (Railway custom domain, or the
-      Railway-issued `*.up.railway.app` for a first smoke test) and
-      `<domain>` / `app.<domain>` (Vercel). See "Auth cookie domain" above for
-      why the registrable domain must match between them.
-- [ ] **DNS.** `CNAME`/`A` records per the domain provider's instructions
-      for both Railway and Vercel custom domains. Both platforms issue their
-      own TLS certs once DNS is verified — no manual cert step on either.
-- [ ] **TLS.** `DJANGO_SECURE_SSL_REDIRECT=true` (this repo's `prod.py`
-      default). `prod.py` also sets `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO",
-"https")` so Django trusts Railway's edge-forwarded scheme — confirmed
-      against Railway's own docs that its edge sets this header
-      (`docs.railway.com/networking/edge-networking`, checked 2026-08), not
-      yet confirmed against a real deploy inspecting the header Railway
-      actually sends (see the human checklist).
-- [ ] **Secrets.** `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` — both must
-      be freshly generated per environment, never the `.env.example`
-      placeholder values, and never reused between staging and production.
-      `DJANGO_SECRET_KEY` failing this is now a hard boot failure, not
-      just `security.W009` (`keel.core.checks.check_secret_key_not_default`).
-      `KEEL_ENCRYPTION_KEY` rotates safely (ddia#27,
-      `apps/api/keel/core/crypto.py`): set it to `<new-key>,<old-key>`
-      (comma-separated, newest first — every configured key can decrypt,
-      only the first encrypts), then run
-      `python manage.py rotate_connection_tokens` to move existing
-      `Connection` rows onto the new key before dropping the old one from
-      the env var.
-- [ ] **CORS/CSRF.** `DJANGO_CORS_ALLOWED_ORIGINS` and
-      `DJANGO_CSRF_TRUSTED_ORIGINS` set to the real production origins
-      (`https://app.<domain>`, `https://<domain>`) — the `.env.example`
-      defaults are `lvh.me` dev origins and must not ship to prod.
-- [ ] **Allowed hosts.** `DJANGO_ALLOWED_HOSTS` set to `api.<domain>` (and
-      Railway's own `*.up.railway.app` host if that's kept reachable as a
-      fallback) — the `.env.example` default is `lvh.me,.lvh.me,localhost,
-127.0.0.1` and must not ship to prod.
-- [ ] **First superuser.** `python manage.py createsuperuser` — run once,
-      against the production database, via `railway run` (executes against
-      the deployed environment's variables without a separate SSH step) or a
-      one-off Railway "Run Command" from the dashboard. Not `preDeployCommand`
-      — that runs on every deploy and `createsuperuser` isn't idempotent.
-- [ ] **`manage.py check --deploy` clean** (or every warning explicitly
-      accepted) against `config.settings.prod` with real production env vars
-      — CI already wires this in against placeholder vars; run it again
-      by hand against the real ones before the first deploy, since a
-      placeholder passing doesn't prove a real secret does.
-- [ ] **Sentry, PostHog, Stripe, Resend, Google OAuth** credentials set
-      (`SENTRY_DSN`, `POSTHOG_PROJECT_API_KEY`, `STRIPE_SECRET_KEY` +
-      `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GOOGLE_OAUTH_CLIENT_ID` +
-      `GOOGLE_OAUTH_CLIENT_SECRET`) — each is a documented no-op when blank
-      (see `base.py`'s comments on each), so a blank one fails silently
-      rather than loudly; verify each is actually set, don't rely on an error
-      to notice one was missed.
+Also observed, not yet addressed: the failed signup **persisted the user
+before the email raised**, so account creation and the verification email
+are not in one transaction. A user whose verification mail fails to send
+is left in the database, and their next attempt takes the "already
+exists" path.
 
-Every unchecked box above that needs a live Railway/Vercel account is
-also on the human checklist at the bottom of this doc.
+## Cost
 
-## Cost estimate
+Railway bills usage on top of a plan minimum: `$10/GB-RAM/month`,
+`$20/vCPU/month`, `$0.05/GB` egress, `$0.15/GB/month` volumes. Hobby is
+$5/month, Pro $20/month, each crediting that much usage.
 
-Railway's pricing (`docs.railway.com/pricing/plans`, checked 2026-08) is
-usage-based on top of a plan minimum: **Hobby, $5/month minimum**, billed
-at `$10/GB-RAM/month`, `$20/vCPU/month`, `$0.05/GB`network egress,`$0.15/GB/month` volume storage — the plan fee is credited against usage,
-not charged on top of it.
+The full seven-resource topology needs Pro. Four always-on API services
+at a conservative 0.5 vCPU / 512MB each is roughly $60/month of compute
+before the frontend and databases. `worker` and `beat` are idle most of
+the time for a low-traffic project and are the first place to look if the
+bill runs high — though neither is a good scale-to-zero candidate.
 
-Four services (`api`, `stream`, `worker`, `beat`) at a conservative
-low-traffic sizing (0.5 vCPU / 512MB each, Railway's own low end) plus a
-small Postgres volume and Redis:
+**Still a written estimate, not a measured bill.** The deploy described
+here ran for hours, not a billing cycle.
 
-| Resource                                                      | Sizing                                          | Monthly cost                                                                                     |
-| ------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `api` + `stream` + `worker` + `beat` compute                  | 4 × (0.5 vCPU, 512MB RAM), running continuously | 4 × (0.5×$20 + 0.5×$10) = **$60**                                                                |
-| Postgres volume                                               | 1GB to start                                    | **$0.15**                                                                                        |
-| Redis (no persistent volume needed for cache+broker use here) | —                                               | **~$0**                                                                                          |
-| Network egress                                                | Low-traffic estimate, 5GB/month                 | **$0.25**                                                                                        |
-| **Total**                                                     |                                                 | **≈ $60–65/month**, Pro plan ($20 minimum) since Hobby's $5 credit is exhausted well before this |
+## What remains untested
 
-This is a **written estimate from Railway's published per-unit rates, not
-a real bill** — actual usage-based cost depends on real traffic and was
-not measured, since no deploy ran. The dominant cost by far is running
-four always-on compute services continuously; `worker` and `beat` in
-particular are idle most of the time for a low-traffic project and are
-the first place to look if the real bill runs high (Railway supports
-scale-to-zero for some service types — not evaluated here, since Celery
-workers and beat schedulers are not good scale-to-zero candidates: a
-worker that's asleep when a job is dispatched adds latency, and beat
-sleeping means missed scheduled runs).
+Each of these needs Pro (for the service slots) or time:
 
-Compare: Neon's free tier covers Postgres entirely for a low-traffic
-project (its paid tiers start around $19/month at meaningfully higher
-usage) — since `DATABASE_URL` is the only thing that changes, pairing
-Railway compute with Neon Postgres instead of Railway's own Postgres is a
-real way to cut the estimate above, at the cost of the pooling caveats
-documented under "Postgres provider neutrality."
-
-## Vercel (frontend)
-
-Frontend deployment (`apps/web`, Vercel project settings) is separate
-from this doc's Railway focus, but is part of "deploy it, for real." What's
-needed,
-documented here since `docs/deploy-railway.md` is where the cross-service
-auth-cookie constraint already lives:
-
-1. Import the repo into a new Vercel project, root directory
-   `apps/web`, framework preset Next.js (auto-detected).
-2. Set every `NEXT_PUBLIC_*` variable from `.env.example`'s "Web" section
-   to the real production values, plus the two server-only ones Vercel
-   never exposes to the browser bundle — `KEEL_API_INTERNAL_URL` and
-   `KEEL_API_STREAM_INTERNAL_URL` — pointing at the deployed Railway
-   `api` and `stream` services' real hostnames. Since
-   docs/adr/0002-auth-bff-shape.md, those two are what the BFF proxy
-   itself dials; nothing in the browser needs Django's address anymore.
-3. Configure the custom domain(s) and, if preview-deployment auth testing
-   matters, the wildcard preview domain described above (**Vercel Pro
-   required**).
-4. Confirm `KEEL_APP_DOMAIN` / `DJANGO_SESSION_COOKIE_DOMAIN` on the
-   Railway side match the real registrable domain Vercel is serving from
-   — this is the single most likely thing to be wrong on a first deploy,
-   per the "Auth cookie domain" section above.
-
-**Not performed** — Vercel account provisioning is a blocked step, listed
-below.
-
-## Human checklist — steps that need a real account or paid resources
-
-Everything below requires a live Railway account (or Vercel/Neon account)
-and could not be attempted in this environment. Each is otherwise fully
-prepared by the config/docs/scripts already in this repo.
-
-1. **Create a Railway account and project**, connect this repo (or a fork
-   of it) via GitHub.
-2. **Provision Postgres.** Either Railway's own "Add Database →
-   PostgreSQL" (or the `pgvector` template, if `pgvector` is needed — see
-   the pgvector section above) or a Neon project + database, per the
-   provider-neutrality section above.
-3. **Provision Redis** ("Add Database → Redis").
-4. **Create the four services** (`api`, `stream`, `worker`, `beat`) from
-   this repo, each pointed at `infra/railway.json` (confirm Railway
-   actually reads one multi-service file this shape — see "Service
-   topology" above's open item).
-5. **Set environment variables** in each service's Variables tab: the
-   full `.env.example` set with real values, plus
-   `${{Postgres.DATABASE_URL}}` / `${{Redis.REDIS_URL}}` variable
-   references (Railway's own reference syntax — not expressible in
-   `railway.json`).
-6. **Trigger the first deploy** and confirm: build succeeds,
-   `preDeployCommand` (`migrate`) succeeds, all four services report
-   healthy, `/healthz/` responds on `api` and `stream`.
-7. **Create the first superuser** via `railway run python manage.py
-createsuperuser` (or the dashboard's one-off Run Command) and log in
-   to `/admin/`.
-8. **Dispatch a real Celery job** (any of the six scheduled tasks, or the
-   demo job `keel.jobs.demo` registers) and confirm the `worker` service
-   processes it and the result is visible wherever the app surfaces job
-   results.
-9. **Confirm SSE isn't buffered** by Railway's edge proxy in front of
-   `stream` — open a real SSE connection through the public URL and
-   confirm events arrive incrementally, not batched (the specific risk
-   "Service topology" above calls out).
-10. **Deploy the same commit a second time pointed at Neon instead of
-    Railway Postgres**, changing only `DATABASE_URL` (and the two pooling
-    env vars per "Postgres provider neutrality" above), and confirm it
-    behaves identically — this is the acceptance criterion "both
-    providers verified against the same commit."
-11. **Deliberately break a migration** (e.g. a bad column rename) on a
-    disposable environment, trigger a deploy, and confirm the rollback
-    story above actually holds — the previous deploy keeps serving, the
-    failure is visible in Railway's deploy log, and the documented
-    recovery steps work.
-12. **Create a Vercel account/project** for the frontend, per the "Vercel
-    (frontend)" section above, including the Pro-plan wildcard preview
-    domain if preview-deployment auth testing is wanted.
-13. **Confirm `SECURE_PROXY_SSL_HEADER`'s header actually arrives.**
-    `prod.py` now trusts `X-Forwarded-Proto` from Railway's edge
-    (confirmed via Railway's docs, not via a real request) — inspect an
-    actual request's headers on a live deploy to make sure the redirect
-    doesn't loop.
-14. **Record the real monthly bill** after a week or two of running, and
-    compare it against the written estimate in "Cost estimate" above —
-    replace the estimate with the measured number once one exists.
+1. `worker` and `beat` deployed, and Celery processing a real job.
+2. `stream` deployed, and whether Railway's edge buffers
+   `text/event-stream`. `keel/jobs/sse.py` sets `X-Accel-Buffering: no`
+   and flushes a leading comment; neither has been checked against
+   Railway's proxy. If it buffers, the symptom is a job tray that shows
+   nothing for minutes then everything at once.
+3. A deliberately-broken migration, and the rollback story.
+4. The same commit against Neon instead of Railway Postgres.
+5. A full authenticated session and the org-scoped app shell end to end.
+6. A real monthly bill.
+7. Custom domains and their DNS/TLS step — this deploy used the
+   Railway-issued `*.up.railway.app` hostnames throughout.
