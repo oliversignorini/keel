@@ -51,7 +51,14 @@ RUN pnpm --filter web build
 
 # --- runtime ---------------------------------------------------------------
 FROM base AS runtime
-ENV NODE_ENV=production
+# HOSTNAME=0.0.0.0 is not cosmetic. Next's standalone server binds
+# `process.env.HOSTNAME || "0.0.0.0"`, and Docker sets HOSTNAME to the
+# container id — so without this the server binds that single hostname
+# instead of every interface, and any healthcheck or proxy reaching the
+# container by IP gets nothing. Locally `docker run -p` hides the
+# problem; on Railway it fails the healthcheck with the app reporting
+# "Ready" and not one request in its logs.
+ENV NODE_ENV=production     HOSTNAME=0.0.0.0
 # node:22-slim already ships a non-root `node` user at uid 1000, so this
 # reuses it rather than adding one (`useradd --uid 1000` fails outright:
 # "UID 1000 is not unique"). The API image builds from python:3.12-slim,

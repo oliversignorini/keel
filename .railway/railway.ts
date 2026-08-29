@@ -81,7 +81,10 @@ export default defineRailway((ctx) => {
     // the check with 400 DisallowedHost and every deploy fails its
     // healthcheck while the app is running perfectly well.
     DJANGO_ALLOWED_HOSTS: "${{RAILWAY_PUBLIC_DOMAIN}},healthcheck.railway.app",
-    KEEL_APP_DOMAIN: "${{RAILWAY_PUBLIC_DOMAIN}}",
+    // The *app's* host — the Next.js service — not Django's own. Setting
+    // it to this service's domain trips keel.core.E004 at boot, since it
+    // then has no matching entry in CSRF_TRUSTED_ORIGINS.
+    KEEL_APP_DOMAIN: "${{web.RAILWAY_PUBLIC_DOMAIN}}",
     // CSRF is validated against the browser-facing origin, which is the
     // Next.js app, not this service — the BFF forwards the Origin it
     // received (docs/adr/0002-auth-bff-shape.md).
