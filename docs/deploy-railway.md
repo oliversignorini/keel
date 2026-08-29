@@ -4,24 +4,24 @@ Status: **deployed, for real.** Django and Next.js both run on Railway,
 serving over HTTPS, against Railway-managed Postgres and Redis, with
 migrations applied by `preDeployCommand` and the Next.js BFF reaching
 Django over the private network. Everything below is written from that
-deploy. Where something has *not* been exercised it says so in those
+deploy. Where something has _not_ been exercised it says so in those
 words — the previous version of this document was written from Railway's
 documentation without an account, and most of what it asserted turned out
 to be wrong in ways that each failed a deploy.
 
 Verified live at the time of writing:
 
-| Check                                                             | Result                                                       |
-| ----------------------------------------------------------------- | ------------------------------------------------------------ |
-| `apps/api/Dockerfile` builds on Railway                           | 115MB image, `collectstatic` 141 files / 421 post-processed  |
-| `preDeployCommand` migrations                                     | every app applied cleanly, idempotent on redeploy            |
-| `/healthz/`                                                       | `200 {"status": "ok"}`                                       |
-| Django admin, `/api/v1/docs`, `/_allauth/browser/v1/config`       | `200`                                                        |
-| WhiteNoise hashed asset (`/static/admin/css/base.<hash>.css`)     | `200`                                                        |
-| Next.js app on Railway                                            | `200`, standalone server, non-root                           |
-| BFF to Django over `api.railway.internal`                         | `200` JSON                                                   |
-| `pgvector` on Railway's managed Postgres                          | `CREATE EXTENSION vector` succeeds, `vector 0.8.6`           |
-| HTTPS redirect on, healthcheck still passing                      | both, via `SECURE_REDIRECT_EXEMPT`                           |
+| Check                                                         | Result                                                      |
+| ------------------------------------------------------------- | ----------------------------------------------------------- |
+| `apps/api/Dockerfile` builds on Railway                       | 115MB image, `collectstatic` 141 files / 421 post-processed |
+| `preDeployCommand` migrations                                 | every app applied cleanly, idempotent on redeploy           |
+| `/healthz/`                                                   | `200 {"status": "ok"}`                                      |
+| Django admin, `/api/v1/docs`, `/_allauth/browser/v1/config`   | `200`                                                       |
+| WhiteNoise hashed asset (`/static/admin/css/base.<hash>.css`) | `200`                                                       |
+| Next.js app on Railway                                        | `200`, standalone server, non-root                          |
+| BFF to Django over `api.railway.internal`                     | `200` JSON                                                  |
+| `pgvector` on Railway's managed Postgres                      | `CREATE EXTENSION vector` succeeds, `vector 0.8.6`          |
+| HTTPS redirect on, healthcheck still passing                  | both, via `SECURE_REDIRECT_EXEMPT`                          |
 
 Not yet exercised: `worker`, `beat` and `stream` as deployed services
 (see "Service count" below), Celery processing a real job, SSE through
@@ -43,7 +43,7 @@ railway config apply         # apply after confirmation
 
 The repo previously carried `infra/railway.json` with a top-level
 `{"services": {...}}` map. That shape was never a schema Railway read —
-Config as Code was per-*service*, with `build`/`deploy` at the top level
+Config as Code was per-_service_, with `build`/`deploy` at the top level
 and no way to describe four services at once. The four services it
 described could not have been provisioned from it. It has been deleted.
 
@@ -60,7 +60,7 @@ Things worth knowing about the IaC DSL, all found by using it:
   `applyResult.status` / `applyResult.diagnostics`. Anything running this
   in CI must check that, not the exit code.
 - An apply is atomic: if any one resource exceeds a plan limit, the whole
-  change set fails and *nothing* is created. Creating services one at a
+  change set fails and _nothing_ is created. Creating services one at a
   time gets further on a constrained plan.
 - A failed apply can still leave service rows behind that exist at
   project level with no environment instance. `railway service delete`
@@ -170,7 +170,7 @@ there. Django already reads exactly that header.
 The six emails are authored in `packages/emails` and rendered to static
 HTML by react-email; Django reads that output at send time. Building the
 API image with `apps/api` as its context means the templates can never be
-in it, and `EMAILS_DIST_DIR` resolved to a path *above* the app root that
+in it, and `EMAILS_DIST_DIR` resolved to a path _above_ the app root that
 does not exist in a container at all:
 
 ```
@@ -285,7 +285,7 @@ run their own copy on every deploy, racing concurrent `migrate` runs.
 **Still not tested:** a deliberately-broken migration, and therefore the
 rollback story. Django wraps each migration in a transaction on Postgres,
 and Railway's dashboard offers one-click redeploy of a previous build, so
-rolling the *code* back while leaving the schema forward is the intended
+rolling the _code_ back while leaving the schema forward is the intended
 path — but that is reasoning, not evidence.
 
 ## Environment variables
@@ -295,14 +295,14 @@ never in the file. Set them once per environment.
 
 Beyond the hosts and ports above, the ones that actually bite:
 
-| Variable                                | Why                                                                                                                                                                       |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DJANGO_DEBUG`                          | **No default.** `base.py` reads `env("DJANGO_DEBUG")` with no fallback, so omitting it is a hard boot failure, not a safe default.                                         |
-| `KEEL_APP_DOMAIN`                       | The **Next.js app's** host, not Django's. Pointing it at the API's own domain trips `keel.core.E004` at boot, because it then has no matching entry in CSRF trusted origins. |
-| `DJANGO_CSRF_TRUSTED_ORIGINS`           | The browser-facing origin — the Next.js service — since the BFF forwards the browser's `Origin` unchanged.                                                                 |
-| `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` | Generated per environment. A default `SECRET_KEY` is a hard boot failure (`keel.core.checks`).                                                                          |
-| `DJANGO_DB_CONN_MAX_AGE=60`             | Railway Postgres has no pooler in front of it, so persistent connections are safe. Leave at `0` for Neon (below).                                                          |
-| `KEEL_EMAILS_DIST_DIR`                  | Set by the Dockerfile. Only override it if you relocate the rendered templates.                                                                                            |
+| Variable                                   | Why                                                                                                                                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DJANGO_DEBUG`                             | **No default.** `base.py` reads `env("DJANGO_DEBUG")` with no fallback, so omitting it is a hard boot failure, not a safe default.                                           |
+| `KEEL_APP_DOMAIN`                          | The **Next.js app's** host, not Django's. Pointing it at the API's own domain trips `keel.core.E004` at boot, because it then has no matching entry in CSRF trusted origins. |
+| `DJANGO_CSRF_TRUSTED_ORIGINS`              | The browser-facing origin — the Next.js service — since the BFF forwards the browser's `Origin` unchanged.                                                                   |
+| `DJANGO_SECRET_KEY`, `KEEL_ENCRYPTION_KEY` | Generated per environment. A default `SECRET_KEY` is a hard boot failure (`keel.core.checks`).                                                                               |
+| `DJANGO_DB_CONN_MAX_AGE=60`                | Railway Postgres has no pooler in front of it, so persistent connections are safe. Leave at `0` for Neon (below).                                                            |
+| `KEEL_EMAILS_DIST_DIR`                     | Set by the Dockerfile. Only override it if you relocate the rendered templates.                                                                                              |
 
 `DATABASE_URL` and `REDIS_URL` come from `${{Postgres.DATABASE_URL}}` /
 `${{Redis.REDIS_URL}}`; `PORT` and `RAILWAY_GIT_COMMIT_SHA` are set by
@@ -345,8 +345,17 @@ browser's session cookie in this configuration.
 
 **Only partially exercised.** `/_allauth/browser/v1/config` and the CSRF
 cookie round-trip through the BFF were confirmed; a full authenticated
-session was not, because signup was blocked by the two bugs below until
-late in the deploy.
+session was not. Signup runs the whole chain — CSRF, the user row, the
+email template — and then stops at `RESEND_API_KEY is not set`, which the
+Resend backend raises rather than dropping the mail silently. Finishing
+the flow needs a real Resend key, since verification is mandatory
+(`ACCOUNT_EMAIL_VERIFICATION = "mandatory"`) and the emailed link is the
+only way through.
+
+Note for the checklist below: the claim that every integration is "a
+documented no-op when blank" does not hold for Resend, and should not —
+a mail backend that silently discards verification email is worse than
+one that refuses to start sending.
 
 A production deployment on a real domain should still put the app and API
 on one registrable domain (`acme.com` / `api.acme.com`) and set
