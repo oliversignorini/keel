@@ -347,6 +347,18 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@keel.local")
 # raises ImproperlyConfigured if a send is actually attempted without it.
 # Only wired as the ``default`` mailer's BACKEND in prod.py; dev/test keep
 # sending through Mailpit / locmem via the stock Django backends.
+# Where keel/notifications/emails.py reads the react-email build output
+# from. Defaults to the repo layout, which is what a dev checkout and the
+# test suite both have. A container image has no repo above the app, so
+# apps/api/Dockerfile builds the templates in a Node stage, copies just
+# the rendered HTML in, and points this at it — without the override,
+# every transactional email raises EmailTemplateMissing at send time and
+# signup answers 500.
+KEEL_EMAILS_DIST_DIR = env(
+    "KEEL_EMAILS_DIST_DIR",
+    default=str(BASE_DIR.parent.parent / "packages" / "emails" / "dist"),
+)
+
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 
 # R2 presigned direct upload (PRD §5). No R2
@@ -504,6 +516,18 @@ HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
     "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=provider",
+    # Needed by allauth's enumeration-prevention path, not by any
+    # redirect: signing up with an address that already has an account
+    # sends *that* address a "you already have an account" mail, and
+    # building it calls get_signup_url(). Without this key allauth raises
+    # ImproperlyConfigured and the request 500s — so the one flow whose
+    # entire purpose is to be indistinguishable from a fresh signup was
+    # instead the only one that returned an error. Found on a live
+    # deploy by signing up twice with the same address.
+    "account_signup": f"{FRONTEND_URL}/signup",
+    # Same path: that mail's body offers "reset your password" and builds
+    # the link from this key.
+    "account_reset_password": f"{FRONTEND_URL}/reset-password",
 }
 # `/invite/[token]` also appears in this settings-doc's PRD passage but is
 # an organizations concept, not an allauth flow — it is not a

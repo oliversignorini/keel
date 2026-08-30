@@ -1,0 +1,49 @@
+# Build context for apps/web/Dockerfile, which builds from the repository
+# root (the app imports workspace packages from outside apps/web).
+#
+# Without this the context is ~600MB and, worse, the builder's `COPY . .`
+# lands the *host's* node_modules and .venv on top of the ones installed
+# inside the image — native binaries built for the wrong platform, and a
+# build that fails in a way the Dockerfile itself does not explain.
+# apps/api/.dockerignore covers the same ground for the API image, whose
+# context is apps/api rather than the root.
+
+.git/
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Python — the API image installs its own from uv.lock.
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+coverage.json
+htmlcov/
+
+# Build output, regenerated inside the image.
+**/.next/
+**/dist/
+**/out/
+**/.turbo/
+**/.content-collections/
+*.tsbuildinfo
+apps/api/staticfiles/
+
+# Local secrets must never reach a layer.
+.env
+**/.env
+**/.env.local
+
+# Not needed to build or run anything.
+docs/
+infra/
+e2e/
+**/e2e/
+.github/

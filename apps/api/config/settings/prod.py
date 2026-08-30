@@ -13,6 +13,17 @@ DEBUG = False
 KEEL_ENFORCE_PRODUCTION_CHECKS = True
 
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+# Railway's health checker reaches the container directly rather than
+# through the edge, so the request carries no X-Forwarded-Proto for
+# SECURE_PROXY_SSL_HEADER below to read. Django therefore sees plain HTTP
+# and 301s the check to https://, the checker never sees a 200, and the
+# deploy is failed for an unhealthy service that is in fact serving
+# correctly — with nothing logged, since a redirect is not an error.
+# Exempting the health endpoint is what makes SECURE_SSL_REDIRECT=True
+# survivable on Railway; every other path still redirects. Confirmed
+# against a real deploy: with the redirect on and no exemption the
+# healthcheck fails, with it off the same commit answers 200.
+SECURE_REDIRECT_EXEMPT = [r"^healthz/$"]
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=60 * 60 * 24 * 30)

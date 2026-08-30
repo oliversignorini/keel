@@ -207,7 +207,7 @@ packages/
   api-client/   Generated from OpenAPI — src/generated is never hand-edited
   emails/       react-email templates, rendered to HTML at build
   ui/           theme.css token contract + shared components
-infra/          compose files, Caddyfile, railway.json, k6 smoke test
+infra/          compose files, Caddyfile, k6 smoke test
 docs/           architecture.md, auth-flow.md, diagrams/, deployment, dev setup
 scripts/        init.ts, coverage gate, permission lint, OpenAPI merge
 ```
@@ -255,14 +255,16 @@ on its own schedule, outside this repository.
 
 ## Deployment
 
-`docs/deploy-railway.md` covers the Railway path, including whether the
-target Postgres ships `pgvector` (it does not by default) and which
-templates do. The SSE endpoint runs as a **separate uvicorn service** from
+`docs/deploy-railway.md` covers the Railway path, written against a real
+deploy rather than from the documentation. Railway's own managed Postgres
+does ship `pgvector` — verified, no special template needed. The SSE
+endpoint runs as a **separate uvicorn service** from
 the same image — a held-open connection under a sync worker pool exhausts
 it far below what request/response load testing suggests, and a proxy
 that buffers `text/event-stream` produces a job tray that shows nothing
-for minutes and then everything at once. `infra/railway.json` declares
-both services.
+for minutes and then everything at once. `.railway/railway.ts` declares
+every service (Railway Infrastructure as Code; `railway.json` Config as
+Code is deprecated and cannot be used by new services).
 
 ## Licence
 

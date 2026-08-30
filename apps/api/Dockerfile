@@ -1,12 +1,42 @@
 # Multi-stage build for the Django API. One image, four Railway services
-# (infra/railway.json: api, stream, worker, beat) — they differ only in
+# (.railway/railway.ts: api, stream, worker, beat) — they differ only in
 # startCommand, not in what gets built here.
 #
-# Not directly verified against a live Railway build (docs/deploy-railway.md
-# carries the same epistemic-status note as the rest of that file) — built
-# and run locally against infra/compose.dev.yml's Postgres/Redis, see
-# docs/deploy-railway.md "Dockerfile" section for the exact commands.
+# Built from the *repository root*, not apps/api: the transactional
+# emails are authored in packages/emails and rendered to static HTML by a
+# Node toolchain, and Django reads that output at send time. With an
+# apps/api context they cannot be in the image, and every email raises
+# EmailTemplateMissing — signup answers 500 on a real deploy while
+# working perfectly in a dev checkout, where the repo tree is on disk.
 
+# --- emails ----------------------------------------------------------------
+# react-email renders each template once, here, with its placeholder
+# tokens ({{VERIFY_URL}} etc.) left in place. Django substitutes per
+# recipient at send time and never invokes Node — see
+# keel/notifications/emails.py's module docstring.
+FROM node:22-slim AS emails
+ENV PNPM_HOME=/pnpm \
+    PATH=/pnpm:$PATH
+RUN corepack enable
+WORKDIR /repo
+
+# Every workspace manifest must be present before `pnpm install`, or the
+# workspace: protocol links cannot resolve.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/cli/package.json packages/cli/
+COPY packages/emails/package.json packages/emails/
+COPY packages/eslint-config/package.json packages/eslint-config/
+COPY packages/tsconfig/package.json packages/tsconfig/
+COPY packages/ui/package.json packages/ui/
+RUN pnpm install --frozen-lockfile --filter @keel/emails...
+
+COPY packages/emails packages/emails
+RUN pnpm --filter @keel/emails build
+
+# --- python deps -----------------------------------------------------------
 FROM python:3.12-slim AS builder
 
 # uv is the project's dependency manager (uv.lock is the lockfile CI and
@@ -23,12 +53,13 @@ WORKDIR /app
 # Dependencies first, so an app-code-only change doesn't invalidate this
 # layer. --no-install-project defers installing the project itself until
 # the source is copied, per uv's documented Docker layering pattern.
-COPY pyproject.toml uv.lock ./
+COPY apps/api/pyproject.toml apps/api/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY . .
+COPY apps/api/ ./
 RUN uv sync --frozen --no-dev
 
+# --- runtime ---------------------------------------------------------------
 FROM python:3.12-slim AS runtime
 
 # libpq5 is psycopg[binary]'s runtime dependency; the [binary] extra
@@ -43,10 +74,16 @@ WORKDIR /app
 
 COPY --from=builder --chown=keel:keel /app /app
 
+# Just the rendered HTML, not Node or node_modules. KEEL_EMAILS_DIST_DIR
+# points config/settings/base.py at it, since the repo-relative default
+# has no meaning inside an image whose root is the app itself.
+COPY --from=emails --chown=keel:keel /repo/packages/emails/dist /opt/keel/emails
+
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    DJANGO_SETTINGS_MODULE=config.settings.prod
+    DJANGO_SETTINGS_MODULE=config.settings.prod \
+    KEEL_EMAILS_DIST_DIR=/opt/keel/emails
 
 # collectstatic needs a settings module to import but not a live database
 # or a real KEEL_ENCRYPTION_KEY/SECRET_KEY — every app's AppConfig.ready()
@@ -59,7 +96,7 @@ RUN python manage.py collectstatic --no-input
 
 USER keel
 
-# No CMD/ENTRYPOINT: infra/railway.json sets deploy.startCommand per
+# No CMD/ENTRYPOINT: .railway/railway.ts sets deploy.startCommand per
 # service (gunicorn for api, uvicorn for stream, celery for worker/beat).
 # A default here would only be reached by a misconfigured service and
 # would silently mask that misconfiguration instead of failing loudly.

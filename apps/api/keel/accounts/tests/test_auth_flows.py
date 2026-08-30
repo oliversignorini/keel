@@ -105,6 +105,34 @@ def test_signup_sends_a_verification_email() -> None:
     assert "verify-email" in mail.outbox[0].body
 
 
+def test_signing_up_with_an_existing_address_is_indistinguishable_from_a_new_one() -> None:
+    """allauth's enumeration prevention answers a duplicate signup the
+    same way as a fresh one and mails the existing account instead.
+    Building that mail calls get_signup_url(), which needs
+    HEADLESS_FRONTEND_URLS['account_signup'] — without it the response is
+    a 500, which leaks exactly the fact the flow exists to hide. Found on
+    a live deploy, not by this suite, because nothing here signed up
+    twice with one address."""
+    from django.test import Client
+
+    client = Client()
+    payload = {"email": "ada@example.com", "password": "s3cret-pass-1"}
+    first = client.post(
+        "/_allauth/browser/v1/auth/signup", payload, content_type="application/json"
+    )
+    assert first.status_code == 401, first.json()
+
+    mail.outbox.clear()
+    second = Client().post(
+        "/_allauth/browser/v1/auth/signup", payload, content_type="application/json"
+    )
+
+    assert second.status_code == first.status_code, second.content
+    assert len(mail.outbox) == 1
+    subject = mail.outbox[0].subject.lower()
+    assert "already" in subject or "account" in subject
+
+
 def test_verifying_the_emailed_key_then_login_authenticates_the_session() -> None:
     from django.test import Client
 

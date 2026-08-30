@@ -182,7 +182,7 @@ A parallel path exists for the SSE job-status stream
 (`/api/v1/.../stream`): the same Django code runs under a **separate ASGI
 service** on uvicorn, because a held-open connection under the sync
 worker pool exhausts it at a request count far below what
-request/response load testing suggests. `infra/railway.json` declares
+request/response load testing suggests. `.railway/railway.ts` declares
 both services from the same image.
 
 **Note on the pipeline today.** Since
