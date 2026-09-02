@@ -3,9 +3,9 @@ name = "keel-api"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "boto3>=1.35.0",
+    "boto3>=1.43.83",
     "celery>=5.6.3",
-    "cryptography>=50.0.0",
+    "cryptography>=50.0.1",
     "django~=6.0",
     "django-allauth[headless-spec,mfa,socialaccount]>=65.19.1",
     "django-cors-headers>=4.9.0",
@@ -14,12 +14,12 @@ dependencies = [
     # WSGI server for the `api` Railway service (.railway/railway.ts) — not
     # needed in dev, where `manage.py runserver` is the whole story.
     "gunicorn>=23.0.0",
-    "posthog>=3.7.4",
+    "posthog>=7.44.2",
     "psycopg[binary]>=3.3.4",
     "redis>=8.1.0",
     "requests>=2.32.3",
     "sentry-sdk[celery,django]>=2.68.0",
-    "stripe>=13.0.1",
+    "stripe>=15.6.0",
     "uuid-utils>=0.17.0",
     "uvicorn>=0.34.0",
     # Serves collected static files (Django admin CSS/JS) in production —
@@ -33,7 +33,7 @@ dev = [
     "bandit>=1.8.0",
     "django-stubs>=6.1.0",
     "factory-boy>=3.3.3",
-    "import-linter>=2.13",
+    "import-linter>=2.14",
     "moto[s3]>=5.2.3",
     "mypy>=2.3.1",
     "pip-audit>=2.7.0",
@@ -41,7 +41,7 @@ dev = [
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=7.1.0",
     "pytest-django>=4.14.0",
-    "ruff>=0.16.4",
+    "ruff>=0.16.5",
 ]
 
 [tool.pytest.ini_options]
