@@ -77,7 +77,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
-    image: redis:7
+    image: redis:8
     restart: unless-stopped
     volumes:
       - redis_data:/data
