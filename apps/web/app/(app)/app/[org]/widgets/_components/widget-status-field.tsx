@@ -32,7 +32,7 @@ export function WidgetStatusField({
         name="status"
         render={({ field }) => (
           <Select value={field.value || undefined} onValueChange={field.onChange}>
-            <SelectTrigger id="status" aria-invalid={Boolean(error)} className="w-full">
+            <SelectTrigger id="status" aria-invalid={Boolean(error)} fullWidth>
               {/* Radix only learns an item's label once that item has
                * mounted — which happens on first open — so a value set
                * from async-loaded data (the edit form) would otherwise

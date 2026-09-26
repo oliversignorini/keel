@@ -45,31 +45,6 @@
       "count": 11
     }
   },
-  "app/(app)/app/[org]/widgets/[id]/page.tsx": {
-    "shadcn/no-restyle": {
-      "count": 3
-    }
-  },
-  "app/(app)/app/[org]/widgets/_components/widget-form-skeleton.tsx": {
-    "shadcn/no-restyle": {
-      "count": 6
-    }
-  },
-  "app/(app)/app/[org]/widgets/_components/widget-status-field.tsx": {
-    "shadcn/no-restyle": {
-      "count": 1
-    }
-  },
-  "app/(app)/app/[org]/widgets/_components/widgets-table-skeleton.tsx": {
-    "shadcn/no-restyle": {
-      "count": 19
-    }
-  },
-  "app/(app)/app/[org]/widgets/page.tsx": {
-    "shadcn/no-restyle": {
-      "count": 7
-    }
-  },
   "app/(app)/app/page.tsx": {
     "shadcn/no-raw-colors": {
       "count": 2
