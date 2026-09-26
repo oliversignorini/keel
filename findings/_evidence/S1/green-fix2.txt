@@ -1,50 +1,4 @@
-=== RUN 1/3 ===
-
-> keel@ e2e <repo>
-> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
-
-factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
-
-Running 11 tests using 1 worker
-
-  ok  1 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /login has zero violations (1.0s)
-  ok  2 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /signup has zero violations (982ms)
-  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (950ms)
-  ok  4 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email/some-key has zero violations (974ms)
-  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (4.0s)
-  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.3s)
-  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (3.0s)
-  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (6.9s)
-  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (4.0s)
-  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (3.4s)
-  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (822ms)
-
-  11 passed (1.9m)
-
-=== RUN 2/3 ===
-
-> keel@ e2e <repo>
-> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
-
-factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
-
-Running 11 tests using 1 worker
-
-  ok  1 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /login has zero violations (1.5s)
-  ok  2 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /signup has zero violations (1.1s)
-  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (904ms)
-  ok  4 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email/some-key has zero violations (1.1s)
-  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (3.7s)
-  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.6s)
-  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (3.0s)
-  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (4.9s)
-  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (2.8s)
-  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (3.0s)
-  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (851ms)
-
-  11 passed (1.9m)
-
-=== RUN 3/3 ===
+=== RUN 1/3 (post-rebase onto beta w/ S3) ===
 
 > keel@ e2e <repo>
 > node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
@@ -55,14 +9,60 @@ Running 11 tests using 1 worker
 
   ok  1 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /login has zero violations (1.1s)
   ok  2 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /signup has zero violations (1.1s)
-  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (989ms)
+  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (963ms)
   ok  4 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email/some-key has zero violations (1.1s)
-  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (4.3s)
-  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.6s)
-  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (3.0s)
-  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (7.4s)
-  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (5.0s)
-  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (5.4s)
-  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (1.2s)
+  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (3.6s)
+  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.3s)
+  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (2.5s)
+  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (4.5s)
+  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (4.1s)
+  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (3.7s)
+  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (999ms)
 
-  11 passed (2.0m)
+  11 passed (1.8m)
+
+=== RUN 2/3 ===
+
+> keel@ e2e <repo>
+> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
+
+factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
+
+Running 11 tests using 1 worker
+
+  ok  1 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /login has zero violations (1.1s)
+  ok  2 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /signup has zero violations (984ms)
+  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (909ms)
+  ok  4 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email/some-key has zero violations (992ms)
+  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (3.4s)
+  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.1s)
+  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (2.3s)
+  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (4.6s)
+  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (3.6s)
+  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (3.4s)
+  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (846ms)
+
+  11 passed (1.8m)
+
+=== RUN 3/3 ===
+
+> keel@ e2e <repo>
+> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
+
+factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
+
+Running 11 tests using 1 worker
+
+  ok  1 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /login has zero violations (1.2s)
+  ok  2 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /signup has zero violations (1.1s)
+  ok  3 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email has zero violations (970ms)
+  ok  4 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /verify-email/some-key has zero violations (1.0s)
+  ok  5 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password has zero violations (3.4s)
+  ok  6 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /reset-password/some-key has zero violations (3.4s)
+  ok  7 [chromium] › e2e\accessibility.spec.ts:32:7 › axe: /mfa has zero violations (2.7s)
+  ok  8 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/profile has zero violations (6.2s)
+  ok  9 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/security has zero violations (3.8s)
+  ok 10 [chromium] › e2e\accessibility.spec.ts:70:9 › account routes (signed in) › axe: /account/sessions has zero violations (3.3s)
+  ok 11 [chromium] › e2e\accessibility.spec.ts:89:7 › account routes (signed in) › account tabs: tabpanel is not a keyboard tab stop (951ms)
+
+  11 passed (1.9m)

@@ -382,8 +382,11 @@ jobs:
       - name: Seed demo data
         working-directory: apps/api
         run: uv run python manage.py seed_demo
-        # cross-host-login.spec.ts logs in as the seeded owner
-        # (owner@demo.keel.test) in org "demo-org" — DJANGO_DEBUG is
+        # cross-host-login.spec.ts and accessibility.spec.ts's account-route
+        # checks both log in as the seeded owner (owner@demo.keel.test) —
+        # a fake session cookie 401s against the live API here and triggers
+        # a hard client-side redirect that races axe (see
+        # findings/a11y/0001-account-tabs-invalid-aria.md). DJANGO_DEBUG is
         # true above, so seed_demo runs without --force.
 
       - name: Start the Django API in the background
