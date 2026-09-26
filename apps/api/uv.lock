@@ -1003,7 +1003,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "sentry-sdk", extras = ["celery", "django"], specifier = ">=2.68.0" },
+    { name = "sentry-sdk", extras = ["celery", "django"], specifier = ">=2.68.1" },
     { name = "stripe", specifier = ">=13.0.1" },
     { name = "uuid-utils", specifier = ">=0.17.0" },
     { name = "uvicorn", specifier = ">=0.34.0" },
