@@ -1,0 +1,12 @@
+
+> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm
+> node scripts/factory/factory.mjs e2e "e2e/org-permissions.spec.ts"
+
+factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\.factory\dev-slot2.log)
+
+Running 1 test using 1 worker
+
+  ok 1 [chromium] › e2e\org-permissions.spec.ts:101:5 › a Member session gets 403 insufficient_role calling the API directly — <Can> never enters the picture (4.5s)
+
+  1 passed (1.5m)
+EXIT:0

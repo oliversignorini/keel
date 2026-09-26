@@ -21,7 +21,7 @@
     "test:unit": "pnpm --filter web test && pnpm --filter api test:unit",
     "test:db": "pnpm --filter api test:db",
     "design:check": "npx --yes impeccable@4.1.0 detect --json apps/web/app apps/web/components packages/ui/src",
-    "e2e:baseline": "node scripts/factory/factory.mjs e2e e2e/accessibility.spec.ts e2e/auth-flows.spec.ts"
+    "e2e:baseline": "node scripts/factory/factory.mjs e2e e2e/accessibility.spec.ts e2e/auth-flows.spec.ts e2e/org-permissions.spec.ts"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
