@@ -35,7 +35,9 @@ from keel.organizations.roles import (
 
 DEMO_ORG_NAME = "Demo Org"
 DEMO_ORG_SLUG = "demo-org"
-DEMO_PASSWORD = "demo-password-123"
+# Deliberately public: dev-only demo logins, and handle() refuses to run
+# unless DEBUG is on (or --force is passed explicitly).
+DEMO_PASSWORD = "demo-password-123"  # nosec B105
 DEMO_WIDGET_COUNT = 3
 
 # Role name -> local-part of the demo user's email, e.g. "owner@demo.keel.test".
