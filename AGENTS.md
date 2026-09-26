@@ -104,19 +104,20 @@ This repo is the seed for the `django-next` profile of the software factory.
 Agents working in a factory worktree use these commands, never the raw ones,
 because every command is scoped to the worktree's slot.
 
-| Command                    | What it does                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `pnpm env:up` / `env:down` | Start / destroy this slot's Postgres, Redis, Mailpit, MinIO (`infra/compose.dev.yml`, project `keel-s<slot>`) |
-| `pnpm env:reset`           | Fresh DB: down -v, up, build emails, migrate, `seed_demo`                                                     |
-| `pnpm dev:slot`            | API, SSE stream, Celery worker and web on this slot's ports                                                   |
-| `pnpm health`              | JSON `{api, web, ok}`; exit 0 when both answer                                                                |
-| `pnpm lint`                | ruff + ESLint (including `@shadcn/lint`) + prettier                                                           |
-| `pnpm typecheck`           | mypy strict + tsc                                                                                             |
-| `pnpm test:unit`           | DB-free tests (Vitest + pure-Python pytest)                                                                   |
-| `pnpm test:db`             | DB-backed pytest + coverage floors                                                                            |
-| `pnpm e2e [--grep @tag]`   | Playwright against this slot (starts `dev:slot` if it isn't running)                                          |
-| `pnpm e2e:baseline`        | The e2e specs CI runs (`accessibility`, `auth-flows`); the gate until `findings/code/0002` is fixed           |
-| `pnpm design:check`        | impeccable design detector over app, components and `packages/ui`                                             |
+| Command                    | What it does                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm bootstrap`           | Fresh checkout/worktree: install JS + Python deps, build email templates and content-collections (run once before anything else) |
+| `pnpm env:up` / `env:down` | Start / destroy this slot's Postgres, Redis, Mailpit, MinIO (`infra/compose.dev.yml`, project `keel-s<slot>`)                    |
+| `pnpm env:reset`           | Fresh DB: down -v, up, build emails, migrate, `seed_demo`                                                                        |
+| `pnpm dev:slot`            | API, SSE stream, Celery worker and web on this slot's ports                                                                      |
+| `pnpm health`              | JSON `{api, web, ok}`; exit 0 when both answer                                                                                   |
+| `pnpm lint`                | ruff + ESLint (including `@shadcn/lint`) + prettier                                                                              |
+| `pnpm typecheck`           | mypy strict + tsc                                                                                                                |
+| `pnpm test:unit`           | Service-free tests: Vitest + pytest minus `db`/`redis`-marked tests (both auto-applied in `apps/api/conftest.py`)                |
+| `pnpm test:db`             | DB-backed pytest + coverage floors                                                                                               |
+| `pnpm e2e [--grep @tag]`   | Playwright against this slot (starts `dev:slot` if it isn't running)                                                             |
+| `pnpm e2e:baseline`        | The e2e specs CI runs (`accessibility`, `auth-flows`); the gate until `findings/code/0002` is fixed                              |
+| `pnpm design:check`        | impeccable design detector over app, components and `packages/ui`                                                                |
 
 **Slots.** `FACTORY_SLOT` (0-9) is set by the factory chair per worktree.
 Every port is its default + slot*100 (`node scripts/factory/factory.mjs ports`).
