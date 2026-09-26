@@ -99,7 +99,7 @@ export default function __Resources__Page() {
               cell: ({ row }: { row: { original: __Resource__Out } }) => (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
+                    <Button variant="ghost" size="icon-sm">
                       <MoreHorizontal />
                       <span className="sr-only">Open actions</span>
                     </Button>
@@ -224,10 +224,7 @@ export default function __Resources__Page() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void onConfirmRowDelete()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction variant="destructive" onClick={() => void onConfirmRowDelete()}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -249,10 +246,7 @@ export default function __Resources__Page() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void onConfirmBulkDelete()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction variant="destructive" onClick={() => void onConfirmBulkDelete()}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
