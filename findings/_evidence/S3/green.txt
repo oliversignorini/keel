@@ -1,0 +1,12 @@
+
+> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost
+> node scripts/factory/factory.mjs e2e "e2e/cross-host-login.spec.ts"
+
+factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost\.factory\dev-slot2.log)
+
+Running 2 tests using 1 worker
+
+  ok 1 [chromium] › e2e\cross-host-login.spec.ts:20:5 › logs in on the apex and lands authenticated on the app subdomain (11.4s)
+  ok 2 [chromium] › e2e\cross-host-login.spec.ts:44:5 › unauthenticated access to the app subdomain redirects to the apex login with a working next= (5.4s)
+
+  2 passed (1.8m)

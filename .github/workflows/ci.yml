@@ -379,6 +379,16 @@ jobs:
         working-directory: apps/api
         run: uv run python manage.py migrate
 
+      - name: Seed demo data
+        working-directory: apps/api
+        run: uv run python manage.py seed_demo
+        # cross-host-login.spec.ts and accessibility.spec.ts's account-route
+        # checks both log in as the seeded owner (owner@demo.keel.test) —
+        # a fake session cookie 401s against the live API here and triggers
+        # a hard client-side redirect that races axe (see
+        # findings/a11y/0001-account-tabs-invalid-aria.md). DJANGO_DEBUG is
+        # true above, so seed_demo runs without --force.
+
       - name: Start the Django API in the background
         working-directory: apps/api
         run: |
@@ -405,6 +415,14 @@ jobs:
       - name: Signup, login, logout, and password reset against the live API
         working-directory: apps/web
         run: pnpm exec playwright test e2e/auth-flows.spec.ts
+
+      - name: Member session gets 403 calling the API directly, bypassing <Can>
+        working-directory: apps/web
+        run: pnpm exec playwright test e2e/org-permissions.spec.ts
+
+      - name: Cross-host login carries the session from the apex to the app subdomain
+        working-directory: apps/web
+        run: pnpm exec playwright test e2e/cross-host-login.spec.ts --workers=1
 
   contracts:
     runs-on: ubuntu-latest

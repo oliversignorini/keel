@@ -19,7 +19,7 @@ import { expect, test, type APIRequestContext } from "@playwright/test";
  * the server enforces the permission, not that CSRF can be skipped.
  */
 
-const API = process.env.E2E_API_URL ?? "http://localhost:8000";
+const API = process.env.E2E_API_LVH_URL ?? "http://api.lvh.me:8000";
 const MAILPIT_API = `${process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"}/api/v1`;
 
 function uniqueEmail(label: string): string {
@@ -66,22 +66,12 @@ async function signUpAndVerify(request: APIRequestContext, email: string, passwo
   const verifyResponse = await unsafePost(request, `${API}/_allauth/browser/v1/auth/email/verify`, {
     key,
   });
-  // A 401 here is expected and correct: verifying clears the pending
-  // verify_email flow but doesn't itself establish a session (see the
-  // explicit login call below) — only a 5xx would mean the verify call
-  // itself failed.
-  expect(verifyResponse.status(), await verifyResponse.text()).toBeLessThan(500);
-
-  // Verifying the email does not itself establish an authenticated
-  // session under ACCOUNT_EMAIL_VERIFICATION="mandatory" (confirmed
-  // against the live server — it clears the pending verify_email flow but
-  // leaves the session anonymous) — log in explicitly, same as a real
-  // user would after confirming their address.
-  const loginResponse = await unsafePost(request, `${API}/_allauth/browser/v1/auth/login`, {
-    email,
-    password,
-  });
-  expect(loginResponse.ok(), await loginResponse.text()).toBe(true);
+  // ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION (apps/api config/settings/base.py)
+  // means this call already establishes an authenticated session — no
+  // explicit login call needed (and allauth's headless login endpoint
+  // 409s on an already-authenticated session, same as auth-flows.spec.ts
+  // documents). Only a 5xx here would mean the verify call itself failed.
+  expect(verifyResponse.ok(), await verifyResponse.text()).toBe(true);
 }
 
 /**

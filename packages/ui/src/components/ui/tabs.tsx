@@ -1,13 +1,30 @@
 import type { ComponentProps } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as TabsPrimitive } from "radix-ui";
 
 import { cn } from "../../cn";
 
-export function Tabs({ className, ...props }: ComponentProps<typeof TabsPrimitive.Root>) {
+const tabsVariants = cva("flex flex-col", {
+  variants: {
+    spacing: {
+      default: "gap-2",
+      relaxed: "gap-6",
+    },
+  },
+  defaultVariants: {
+    spacing: "default",
+  },
+});
+
+export function Tabs({
+  className,
+  spacing,
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Root> & VariantProps<typeof tabsVariants>) {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn(tabsVariants({ spacing }), className)}
       {...props}
     />
   );
@@ -39,11 +56,28 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
   );
 }
 
-export function TabsContent({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) {
+const tabsContentVariants = cva("flex-1 outline-none", {
+  variants: {
+    focusable: {
+      true: "focus-visible:rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    focusable: true,
+  },
+});
+
+export function TabsContent({
+  className,
+  focusable = true,
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Content> & VariantProps<typeof tabsContentVariants>) {
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
+      tabIndex={focusable ? undefined : -1}
+      className={cn(tabsContentVariants({ focusable }), className)}
       {...props}
     />
   );

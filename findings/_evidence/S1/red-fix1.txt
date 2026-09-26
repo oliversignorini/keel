@@ -1,0 +1,30 @@
+
+> keel@ e2e <repo>
+> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts" "--grep" "tabpanel is not a keyboard tab stop"
+
+factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\accessibility.spec.ts:60:5 › account tabs: tabpanel is not a keyboard tab stop (3.6s)
+
+
+  1) [chromium] › e2e\accessibility.spec.ts:60:5 › account tabs: tabpanel is not a keyboard tab stop
+
+    Error: expect(received).not.toBe(expected) // Object.is equality
+
+    Expected: not "tabpanel"
+
+      71 |   await page.keyboard.press("Tab");
+      72 |   const focusedRole = await page.evaluate(() => document.activeElement?.getAttribute("role"));
+    > 73 |   expect(focusedRole).not.toBe("tabpanel");
+         |                           ^
+      74 | });
+      75 |
+        at <repo>\apps\web\e2e\accessibility.spec.ts:73:27
+
+    Error Context: test-results\accessibility-account-tabs-df3b3--is-not-a-keyboard-tab-stop-chromium\error-context.md
+
+  1 failed
+    [chromium] › e2e\accessibility.spec.ts:60:5 › account tabs: tabpanel is not a keyboard tab stop
+ ELIFECYCLE  Command failed with exit code 1.

@@ -1,0 +1,37 @@
+
+> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm
+> node scripts/factory/factory.mjs e2e "e2e/org-permissions.spec.ts"
+
+factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\.factory\dev-slot2.log)
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\org-permissions.spec.ts:111:5 › a Member session gets 403 insufficient_role calling the API directly — <Can> never enters the picture (420ms)
+
+
+  1) [chromium] › e2e\org-permissions.spec.ts:111:5 › a Member session gets 403 insufficient_role calling the API directly — <Can> never enters the picture
+
+    Error: config endpoint should set a csrftoken cookie
+
+    expect(received).toBeTruthy()
+
+    Received: undefined
+
+      37 |   const state = await request.storageState();
+      38 |   const cookie = state.cookies.find((c) => c.name === "csrftoken");
+    > 39 |   expect(cookie, "config endpoint should set a csrftoken cookie").toBeTruthy();
+         |                                                                   ^
+      40 |   return cookie!.value;
+      41 | }
+      42 |
+        at csrfToken (C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\apps\web\e2e\org-permissions.spec.ts:39:67)
+        at unsafePost (C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\apps\web\e2e\org-permissions.spec.ts:44:62)
+        at signUpAndVerify (C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\apps\web\e2e\org-permissions.spec.ts:48:26)
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s2-orgperm\apps\web\e2e\org-permissions.spec.ts:121:3
+
+    Error Context: test-results\org-permissions-a-Member-s-b627f-an-never-enters-the-picture-chromium\error-context.md
+
+  1 failed
+    [chromium] › e2e\org-permissions.spec.ts:111:5 › a Member session gets 403 insufficient_role calling the API directly — <Can> never enters the picture
+ ELIFECYCLE  Command failed with exit code 1.
+EXIT:1
