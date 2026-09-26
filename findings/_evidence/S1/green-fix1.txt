@@ -1,0 +1,11 @@
+
+> keel@ e2e <repo>
+> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts" "--grep" "tabpanel is not a keyboard tab stop"
+
+factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
+
+Running 1 test using 1 worker
+
+  ok 1 [chromium] › e2e\accessibility.spec.ts:60:5 › account tabs: tabpanel is not a keyboard tab stop (4.1s)
+
+  1 passed (1.1m)

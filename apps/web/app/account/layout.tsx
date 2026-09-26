@@ -23,7 +23,9 @@ const TABS = [
  */
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const activeTab = TABS.find((tab) => pathname?.startsWith(tab.href))?.href ?? "/account/profile";
+  const activeTab = TABS.find(
+    (tab) => pathname === tab.href || pathname?.startsWith(`${tab.href}/`),
+  )?.href;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -43,7 +45,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12">
         <h1 className="text-lg font-semibold">Account</h1>
-        <Tabs value={activeTab}>
+        <Tabs value={activeTab} spacing="relaxed">
           <TabsList>
             {TABS.map((tab) => (
               <TabsTrigger key={tab.href} value={tab.href} asChild>
@@ -51,8 +53,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               </TabsTrigger>
             ))}
           </TabsList>
-          <TabsContent value={activeTab}>{children}</TabsContent>
+          {activeTab ? (
+            <TabsContent value={activeTab} focusable={false}>
+              {children}
+            </TabsContent>
+          ) : null}
         </Tabs>
+        {activeTab ? null : children}
       </main>
     </div>
   );

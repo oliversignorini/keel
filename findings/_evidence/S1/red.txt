@@ -1,8 +1,8 @@
 
-> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs
+> keel@ e2e <repo>
 > node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
 
-factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\.factory\dev-slot1.log)
+factory: slot not serving; starting dev processes (log: <repo>\.factory\dev-slot1.log)
 
 Running 10 tests using 1 worker
 
@@ -76,7 +76,7 @@ Running 10 tests using 1 worker
       49 |   });
       50 | }
       51 |
-        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+        at <repo>\apps\web\e2e\accessibility.spec.ts:48:32
 
     Error Context: test-results\accessibility-axe-account-profile-has-zero-violations-chromium\error-context.md
 
@@ -138,7 +138,7 @@ Running 10 tests using 1 worker
       49 |   });
       50 | }
       51 |
-        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+        at <repo>\apps\web\e2e\accessibility.spec.ts:48:32
 
     Error Context: test-results\accessibility-axe-account-security-has-zero-violations-chromium\error-context.md
 
@@ -200,7 +200,7 @@ Running 10 tests using 1 worker
       49 |   });
       50 | }
       51 |
-        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+        at <repo>\apps\web\e2e\accessibility.spec.ts:48:32
 
     Error Context: test-results\accessibility-axe-account-sessions-has-zero-violations-chromium\error-context.md
 
