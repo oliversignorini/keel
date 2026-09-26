@@ -1,0 +1,71 @@
+# Red run against the pre-change spec (fixture identifiers e2e@example.com /
+# e2e-org / E2E Org), before it was pointed at seed_demo — i.e. the original
+# breakage, on an unseeded slot. It is not the new (post-change) spec run
+# against an unseeded slot; that would fail differently (login itself
+# succeeding, then a "Demo Org" heading not found because seed_demo never
+# ran) rather than staying on /login?next=.
+
+> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost
+> node scripts/factory/factory.mjs e2e "e2e/cross-host-login.spec.ts"
+
+factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost\.factory\dev-slot2.log)
+
+Running 2 tests using 1 worker
+
+  x  1 [chromium] › e2e\cross-host-login.spec.ts:19:5 › logs in on the apex and lands authenticated on the app subdomain (15.9s)
+  x  2 [chromium] › e2e\cross-host-login.spec.ts:43:5 › unauthenticated access to the app subdomain redirects to the apex login with a working next= (16.0s)
+
+
+  1) [chromium] › e2e\cross-host-login.spec.ts:19:5 › logs in on the apex and lands authenticated on the app subdomain
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: "http://app.lvh.me:3200/e2e-org"
+    Received: "http://lvh.me:3200/login?next=http%3A%2F%2Fapp.lvh.me%3A3200%2Fe2e-org"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 15000ms
+        33 × locator resolved to <html lang="en" class="light">…</html>
+           - unexpected value "http://lvh.me:3200/login?next=http%3A%2F%2Fapp.lvh.me%3A3200%2Fe2e-org"
+
+
+      30 |   // the one a client-side router.push cannot do, and the whole reason
+      31 |   // navigateTo() (lib/navigation.ts) exists.
+    > 32 |   await expect(page).toHaveURL(`${APP}/e2e-org`);
+         |                      ^
+      33 |   await expect(page.getByRole("heading", { name: "E2E Org" })).toBeVisible();
+      34 |
+      35 |   // The session cookie set on the apex during login is genuinely being
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost\apps\web\e2e\cross-host-login.spec.ts:32:22
+
+    Error Context: test-results\cross-host-login-logs-in-o-c86ec-icated-on-the-app-subdomain-chromium\error-context.md
+
+  2) [chromium] › e2e\cross-host-login.spec.ts:43:5 › unauthenticated access to the app subdomain redirects to the apex login with a working next=
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: "http://app.lvh.me:3200/e2e-org/settings/general"
+    Received: "http://lvh.me:3200/login?next=http%3A%2F%2Fapp.lvh.me%3A3200%2Fe2e-org%2Fsettings%2Fgeneral"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 15000ms
+        33 × locator resolved to <html lang="en" class="light">…</html>
+           - unexpected value "http://lvh.me:3200/login?next=http%3A%2F%2Fapp.lvh.me%3A3200%2Fe2e-org%2Fsettings%2Fgeneral"
+
+
+      53 |   await page.getByRole("button", { name: "Log in" }).click();
+      54 |
+    > 55 |   await expect(page).toHaveURL(`${APP}/e2e-org/settings/general`);
+         |                      ^
+      56 | });
+      57 |
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s3-crosshost\apps\web\e2e\cross-host-login.spec.ts:55:22
+
+    Error Context: test-results\cross-host-login-unauthent-c741b--login-with-a-working-next--chromium\error-context.md
+
+  2 failed
+    [chromium] › e2e\cross-host-login.spec.ts:19:5 › logs in on the apex and lands authenticated on the app subdomain
+    [chromium] › e2e\cross-host-login.spec.ts:43:5 › unauthenticated access to the app subdomain redirects to the apex login with a working next=
+ ELIFECYCLE  Command failed with exit code 1.
