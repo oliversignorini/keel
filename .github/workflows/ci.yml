@@ -406,6 +406,10 @@ jobs:
         working-directory: apps/web
         run: pnpm exec playwright test e2e/auth-flows.spec.ts
 
+      - name: Member session gets 403 calling the API directly, bypassing <Can>
+        working-directory: apps/web
+        run: pnpm exec playwright test e2e/org-permissions.spec.ts
+
   contracts:
     runs-on: ubuntu-latest
     services:
