@@ -53,7 +53,10 @@ asyncio_mode = "auto"
 # every test that touches the database (django_db marker, a db-backing
 # fixture, or a TestCase/TransactionTestCase subclass) — `-m "not db"`
 # selects the fast, no-Postgres-required suite; `-m db` selects the rest.
-markers = ["db: touches the database (auto-applied, see conftest.py)"]
+markers = [
+  "db: touches the database (auto-applied, see conftest.py)",
+  "redis: needs a live Redis (auto-applied, see conftest.py)",
+]
 
 [tool.ruff]
 line-length = 100
