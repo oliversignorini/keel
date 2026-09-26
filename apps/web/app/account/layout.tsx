@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { ImpersonationBannerHost } from "@/components/org/impersonation-banner";
-import { Tabs, TabsList, TabsTrigger } from "@keel/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@keel/ui";
 
 const TABS = [
   { href: "/account/profile", label: "Profile" },
@@ -51,8 +51,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               </TabsTrigger>
             ))}
           </TabsList>
+          <TabsContent value={activeTab}>{children}</TabsContent>
         </Tabs>
-        {children}
       </main>
     </div>
   );

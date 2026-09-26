@@ -1,0 +1,212 @@
+
+> keel@ e2e C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs
+> node scripts/factory/factory.mjs e2e "e2e/accessibility.spec.ts"
+
+factory: slot not serving; starting dev processes (log: C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\.factory\dev-slot1.log)
+
+Running 10 tests using 1 worker
+
+  ok  1 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /login has zero violations (1.7s)
+  ok  2 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /signup has zero violations (1.4s)
+  ok  3 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /verify-email has zero violations (1.2s)
+  ok  4 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /verify-email/some-key has zero violations (1.3s)
+  ok  5 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /reset-password has zero violations (4.6s)
+  ok  6 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /reset-password/some-key has zero violations (4.5s)
+  ok  7 [chromium] › e2e\accessibility.spec.ts:25:7 › axe: /mfa has zero violations (4.7s)
+  x   8 [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/profile has zero violations (5.0s)
+  x   9 [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/security has zero violations (7.4s)
+  x  10 [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/sessions has zero violations (5.1s)
+
+
+  1) [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/profile has zero violations ───────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 42
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "description": "Ensure all ARIA attributes have valid values",
+    +     "help": "ARIA attributes must conform to valid values",
+    +     "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/aria-valid-attr-value?application=playwright",
+    +     "id": "aria-valid-attr-value",
+    +     "impact": "critical",
+    +     "nodes": Array [
+    +       Object {
+    +         "all": Array [
+    +           Object {
+    +             "data": Array [
+    +               "aria-controls=\"radix-_R_1eitmlb_-content-/account/profile\"",
+    +             ],
+    +             "id": "aria-valid-attr-value",
+    +             "impact": "critical",
+    +             "message": "Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/profile\"",
+    +             "relatedNodes": Array [],
+    +           },
+    +         ],
+    +         "any": Array [],
+    +         "failureSummary": "Fix all of the following:
+    +   Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/profile\"",
+    +         "html": "<a type=\"button\" role=\"tab\" aria-selected=\"true\" aria-controls=\"radix-_R_1eitmlb_-co...\" data-state=\"active\" id=\"radix-_R_1eitmlb_-tr...\" data-slot=\"tabs-trigger\" class=\"inline-flex h-[calc(...\" tabindex=\"-1\" data-orientation=\"horizontal\" data-radix-collectio...=\"\" href=\"/account/profile\">",
+    +         "impact": "critical",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "#radix-_R_1eitmlb_-trigger-\\/account\\/profile",
+    +         ],
+    +       },
+    +     ],
+    +     "tags": Array [
+    +       "cat.aria",
+    +       "wcag2a",
+    +       "wcag412",
+    +       "EN-301-549",
+    +       "EN-9.4.1.2",
+    +       "RGAAv4",
+    +       "RGAA-7.1.1",
+    +     ],
+    +   },
+    + ]
+
+      46 |       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      47 |       .analyze();
+    > 48 |     expect(results.violations).toEqual([]);
+         |                                ^
+      49 |   });
+      50 | }
+      51 |
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+
+    Error Context: test-results\accessibility-axe-account-profile-has-zero-violations-chromium\error-context.md
+
+  2) [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/security has zero violations ──────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 42
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "description": "Ensure all ARIA attributes have valid values",
+    +     "help": "ARIA attributes must conform to valid values",
+    +     "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/aria-valid-attr-value?application=playwright",
+    +     "id": "aria-valid-attr-value",
+    +     "impact": "critical",
+    +     "nodes": Array [
+    +       Object {
+    +         "all": Array [
+    +           Object {
+    +             "data": Array [
+    +               "aria-controls=\"radix-_R_1eitmlb_-content-/account/security\"",
+    +             ],
+    +             "id": "aria-valid-attr-value",
+    +             "impact": "critical",
+    +             "message": "Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/security\"",
+    +             "relatedNodes": Array [],
+    +           },
+    +         ],
+    +         "any": Array [],
+    +         "failureSummary": "Fix all of the following:
+    +   Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/security\"",
+    +         "html": "<a type=\"button\" role=\"tab\" aria-selected=\"true\" aria-controls=\"radix-_R_1eitmlb_-co...\" data-state=\"active\" id=\"radix-_R_1eitmlb_-tr...\" data-slot=\"tabs-trigger\" class=\"inline-flex h-[calc(...\" tabindex=\"-1\" data-orientation=\"horizontal\" data-radix-collectio...=\"\" href=\"/account/security\">",
+    +         "impact": "critical",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "#radix-_R_1eitmlb_-trigger-\\/account\\/security",
+    +         ],
+    +       },
+    +     ],
+    +     "tags": Array [
+    +       "cat.aria",
+    +       "wcag2a",
+    +       "wcag412",
+    +       "EN-301-549",
+    +       "EN-9.4.1.2",
+    +       "RGAAv4",
+    +       "RGAA-7.1.1",
+    +     ],
+    +   },
+    + ]
+
+      46 |       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      47 |       .analyze();
+    > 48 |     expect(results.violations).toEqual([]);
+         |                                ^
+      49 |   });
+      50 | }
+      51 |
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+
+    Error Context: test-results\accessibility-axe-account-security-has-zero-violations-chromium\error-context.md
+
+  3) [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/sessions has zero violations ──────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 42
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "description": "Ensure all ARIA attributes have valid values",
+    +     "help": "ARIA attributes must conform to valid values",
+    +     "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/aria-valid-attr-value?application=playwright",
+    +     "id": "aria-valid-attr-value",
+    +     "impact": "critical",
+    +     "nodes": Array [
+    +       Object {
+    +         "all": Array [
+    +           Object {
+    +             "data": Array [
+    +               "aria-controls=\"radix-_R_1eitmlb_-content-/account/sessions\"",
+    +             ],
+    +             "id": "aria-valid-attr-value",
+    +             "impact": "critical",
+    +             "message": "Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/sessions\"",
+    +             "relatedNodes": Array [],
+    +           },
+    +         ],
+    +         "any": Array [],
+    +         "failureSummary": "Fix all of the following:
+    +   Invalid ARIA attribute value: aria-controls=\"radix-_R_1eitmlb_-content-/account/sessions\"",
+    +         "html": "<a type=\"button\" role=\"tab\" aria-selected=\"true\" aria-controls=\"radix-_R_1eitmlb_-co...\" data-state=\"active\" id=\"radix-_R_1eitmlb_-tr...\" data-slot=\"tabs-trigger\" class=\"inline-flex h-[calc(...\" tabindex=\"-1\" data-orientation=\"horizontal\" data-radix-collectio...=\"\" href=\"/account/sessions\">",
+    +         "impact": "critical",
+    +         "none": Array [],
+    +         "target": Array [
+    +           "#radix-_R_1eitmlb_-trigger-\\/account\\/sessions",
+    +         ],
+    +       },
+    +     ],
+    +     "tags": Array [
+    +       "cat.aria",
+    +       "wcag2a",
+    +       "wcag412",
+    +       "EN-301-549",
+    +       "EN-9.4.1.2",
+    +       "RGAAv4",
+    +       "RGAA-7.1.1",
+    +     ],
+    +   },
+    + ]
+
+      46 |       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      47 |       .analyze();
+    > 48 |     expect(results.violations).toEqual([]);
+         |                                ^
+      49 |   });
+      50 | }
+      51 |
+        at C:\Users\Ollie Signorini\orca\workspaces\keel\s1-tabs\apps\web\e2e\accessibility.spec.ts:48:32
+
+    Error Context: test-results\accessibility-axe-account-sessions-has-zero-violations-chromium\error-context.md
+
+  3 failed
+    [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/profile has zero violations ────────
+    [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/security has zero violations ───────
+    [chromium] › e2e\accessibility.spec.ts:35:7 › axe: /account/sessions has zero violations ───────
+  7 passed (2.3m)
+ ELIFECYCLE  Command failed with exit code 1.
