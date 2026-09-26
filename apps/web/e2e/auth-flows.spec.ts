@@ -8,7 +8,7 @@ import { expect, test } from "@playwright/test";
  * fail on the first API call.
  */
 
-const MAILPIT_API = "http://localhost:8025/api/v1";
+const MAILPIT_API = `${process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"}/api/v1`;
 
 function uniqueEmail(): string {
   return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;

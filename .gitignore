@@ -61,3 +61,6 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# software-factory run logs (scripts/factory/factory.mjs)
+.factory/

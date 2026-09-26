@@ -1,0 +1,187 @@
+{
+  "app/(app)/app/[org]/layout.tsx": {
+    "shadcn/no-restyle": {
+      "count": 4
+    }
+  },
+  "app/(app)/app/[org]/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 42
+    }
+  },
+  "app/(app)/app/[org]/settings/audit/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 9
+    }
+  },
+  "app/(app)/app/[org]/settings/billing/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 10
+    }
+  },
+  "app/(app)/app/[org]/settings/general/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 5
+    },
+    "shadcn/require-static-classes": {
+      "count": 1
+    }
+  },
+  "app/(app)/app/[org]/settings/layout.tsx": {
+    "shadcn/no-restyle": {
+      "count": 1
+    }
+  },
+  "app/(app)/app/[org]/settings/members/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 15
+    },
+    "shadcn/require-static-classes": {
+      "count": 1
+    }
+  },
+  "app/(app)/app/[org]/settings/roles/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 11
+    }
+  },
+  "app/(app)/app/[org]/widgets/[id]/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 3
+    }
+  },
+  "app/(app)/app/[org]/widgets/_components/widget-form-skeleton.tsx": {
+    "shadcn/no-restyle": {
+      "count": 6
+    }
+  },
+  "app/(app)/app/[org]/widgets/_components/widget-status-field.tsx": {
+    "shadcn/no-restyle": {
+      "count": 1
+    }
+  },
+  "app/(app)/app/[org]/widgets/_components/widgets-table-skeleton.tsx": {
+    "shadcn/no-restyle": {
+      "count": 19
+    }
+  },
+  "app/(app)/app/[org]/widgets/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 7
+    }
+  },
+  "app/(app)/app/page.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "app/(app)/layout.tsx": {
+    "shadcn/no-restyle": {
+      "count": 9
+    }
+  },
+  "app/(auth)/_components/form-error.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "app/(auth)/_components/form-field.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 12
+    }
+  },
+  "app/(auth)/_components/google-continue-link.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 4
+    },
+    "shadcn/no-restyle": {
+      "count": 1
+    }
+  },
+  "app/(auth)/_components/submit-button.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 3
+    }
+  },
+  "app/(auth)/layout.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    }
+  },
+  "app/(auth)/verify-email/[key]/page.tsx": {
+    "shadcn/no-restyle": {
+      "count": 1
+    }
+  },
+  "app/(marketing)/_components/mobile-nav.tsx": {
+    "shadcn/no-restyle": {
+      "count": 1
+    }
+  },
+  "app/(marketing)/blog/[slug]/opengraph-image.tsx": {
+    "shadcn/no-inline-styles": {
+      "count": 13
+    }
+  },
+  "app/(marketing)/opengraph-image.tsx": {
+    "shadcn/no-inline-styles": {
+      "count": 13
+    }
+  },
+  "app/(marketing)/pricing/pricing-table.tsx": {
+    "shadcn/no-restyle": {
+      "count": 5
+    }
+  },
+  "app/account/profile/page.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 10
+    }
+  },
+  "app/account/security/page.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 18
+    }
+  },
+  "app/account/sessions/page.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 12
+    }
+  },
+  "components/billing/credit-meter.tsx": {
+    "shadcn/no-restyle": {
+      "count": 3
+    }
+  },
+  "components/files/file-upload.tsx": {
+    "shadcn/no-restyle": {
+      "count": 4
+    }
+  },
+  "components/jobs/job-tray.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 2
+    }
+  },
+  "components/org/not-found.tsx": {
+    "shadcn/no-restyle": {
+      "count": 6
+    }
+  },
+  "components/org/org-switcher.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-restyle": {
+      "count": 10
+    }
+  },
+  "lib/cn.test.ts": {
+    "shadcn/no-unknown-classes": {
+      "count": 4
+    }
+  }
+}

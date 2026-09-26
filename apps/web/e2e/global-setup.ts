@@ -18,7 +18,7 @@ import { chromium, request as playwrightRequest, type FullConfig } from "@playwr
  * warmup didn't help, not that the suite should abort before it starts.
  */
 
-const MAILPIT_API = "http://localhost:8025/api/v1";
+const MAILPIT_API = `${process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"}/api/v1`;
 
 function uniqueEmail(label: string): string {
   return `e2e-warmup-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;

@@ -28,3 +28,52 @@ def pytest_configure(config: pytest.Config) -> None:
             "Without it, every test that exercises signup, email verification or "
             "password reset fails inside allauth with an unrelated-looking 500."
         )
+
+
+# Fixtures whose mere presence on a test means it opens a database
+# connection, even when the test has no explicit `pytest.mark.django_db`.
+# `client`/`admin_client`/`async_client` build a Django test client, which
+# pytest-django backs with `db` internally; `live_server` starts a real
+# server against the test database.
+_DB_FIXTURE_NAMES = frozenset(
+    {
+        "db",
+        "transactional_db",
+        "django_db_reset_sequences",
+        "django_db_serialized_rollback",
+        "client",
+        "admin_client",
+        "admin_user",
+        "async_client",
+        "live_server",
+    }
+)
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Auto-apply the ``db`` marker to any test that touches the database,
+    so ``-m "not db"``/``-m db`` split the suite without every test author
+    having to remember a second marker on top of ``pytest.mark.django_db``.
+
+    A test is considered DB-backed if it (or a fixture it uses) does any
+    of: carries ``pytest.mark.django_db``, requests one of
+    ``_DB_FIXTURE_NAMES`` (directly, or transitively through another
+    fixture — ``item.fixturenames`` is already the fully resolved set),
+    or is a ``django.test.TestCase``/``TransactionTestCase`` subclass
+    (both start a DB transaction in ``setUpClass``/``_pre_setup``
+    regardless of what the test body touches).
+    """
+    from django.test import TestCase, TransactionTestCase
+
+    for item in items:
+        marker_names = {marker.name for marker in item.iter_markers()}
+        fixture_names = set(getattr(item, "fixturenames", ()))
+
+        uses_db = bool("django_db" in marker_names or fixture_names & _DB_FIXTURE_NAMES)
+
+        if not uses_db:
+            test_cls = getattr(item, "cls", None)
+            uses_db = test_cls is not None and issubclass(test_cls, (TestCase, TransactionTestCase))
+
+        if uses_db:
+            item.add_marker(pytest.mark.db)
