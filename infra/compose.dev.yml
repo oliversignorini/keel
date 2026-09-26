@@ -1,4 +1,10 @@
-name: keel-dev
+# Project name is per factory slot so parallel worktrees get separate
+# containers AND separate named volumes (compose prefixes volume names with
+# the project name). Unset, it stays keel-dev, so a plain
+# `docker compose -f infra/compose.dev.yml up` keeps using existing volumes.
+# scripts/factory/factory.mjs sets KEEL_COMPOSE_SUFFIX=s<slot> and the
+# matching *_PORT values (slot N = default + N*100) in the root .env.
+name: keel-${KEEL_COMPOSE_SUFFIX:-dev}
 
 services:
   postgres:
@@ -15,7 +21,7 @@ services:
       # the race for it (connections land on the native server instead of
       # the container and fail auth). See docs/deploy-railway.md / the
       # Phase 0 report for the full story.
-      - "5433:5432"
+      - "${PG_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +34,7 @@ services:
     image: redis:7
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -41,8 +47,8 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
     volumes:
       - mailpit_data:/data
     environment:
@@ -64,8 +70,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
     healthcheck:

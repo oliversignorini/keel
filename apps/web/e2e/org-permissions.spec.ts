@@ -19,8 +19,8 @@ import { expect, test, type APIRequestContext } from "@playwright/test";
  * the server enforces the permission, not that CSRF can be skipped.
  */
 
-const API = "http://localhost:8000";
-const MAILPIT_API = "http://localhost:8025/api/v1";
+const API = process.env.E2E_API_URL ?? "http://localhost:8000";
+const MAILPIT_API = `${process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"}/api/v1`;
 
 function uniqueEmail(label: string): string {
   return `e2e-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;

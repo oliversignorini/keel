@@ -188,10 +188,7 @@ export default function __Resource__DetailPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void onConfirmDelete()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction variant="destructive" onClick={() => void onConfirmDelete()}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

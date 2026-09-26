@@ -19,9 +19,10 @@ import { expect, test } from "@playwright/test";
  */
 
 const APEX = process.env.E2E_LVH_BASE_URL ?? "http://lvh.me:3000";
-const API = APEX.replace("lvh.me", "api.lvh.me").replace(/:\d+$/, ":8000");
+const API =
+  process.env.E2E_API_LVH_URL ?? APEX.replace("lvh.me", "api.lvh.me").replace(/:\d+$/, ":8000");
 const APP_HOST = APEX.replace("//lvh.me", "//app.lvh.me");
-const MAILPIT_API = "http://localhost:8025/api/v1";
+const MAILPIT_API = `${process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"}/api/v1`;
 
 function uniqueEmail(label: string): string {
   return `e2e-axe-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;

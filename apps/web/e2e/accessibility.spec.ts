@@ -34,7 +34,11 @@ for (const route of AUTH_ROUTES) {
 for (const route of ACCOUNT_ROUTES) {
   test(`axe: ${route} has zero violations`, async ({ page, context }) => {
     await context.addCookies([
-      { name: "sessionid", value: "e2e-fake-session", url: "http://localhost:3100" },
+      {
+        name: "sessionid",
+        value: "e2e-fake-session",
+        url: `http://localhost:${process.env.E2E_WEB_PORT ?? "3100"}`,
+      },
     ]);
     await page.goto(route);
     const results = await new AxeBuilder({ page })

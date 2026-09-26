@@ -13,11 +13,14 @@ import { expect, test } from "@playwright/test";
  * against the same dev database this ran against) and both dev servers
  * up on the lvh.me topology — see playwright.cross-host.config.ts.
  */
+const APEX = process.env.E2E_LVH_BASE_URL ?? "http://lvh.me:3000";
+const APP = APEX.replace("//lvh.me", "//app.lvh.me");
+
 test("logs in on the apex and lands authenticated on the app subdomain", async ({ page }) => {
   // Visiting the app host while signed out redirects to the apex login,
   // with an absolute next= that can send the browser back across hosts.
-  await page.goto("http://app.lvh.me:3000/e2e-org");
-  await expect(page).toHaveURL(/^http:\/\/lvh\.me:3000\/login\?next=/);
+  await page.goto(`${APP}/e2e-org`);
+  await expect(page).toHaveURL((url) => url.href.startsWith(`${APEX}/login?next=`));
 
   await page.getByLabel("Email").fill("e2e@example.com");
   await page.getByLabel("Password").fill("s3cret-pass-1234");
@@ -26,29 +29,28 @@ test("logs in on the apex and lands authenticated on the app subdomain", async (
   // The redirect after login must cross back to the app host — this is
   // the one a client-side router.push cannot do, and the whole reason
   // navigateTo() (lib/navigation.ts) exists.
-  await expect(page).toHaveURL("http://app.lvh.me:3000/e2e-org");
+  await expect(page).toHaveURL(`${APP}/e2e-org`);
   await expect(page.getByRole("heading", { name: "E2E Org" })).toBeVisible();
 
   // The session cookie set on the apex during login is genuinely being
   // sent to, and accepted by, the app subdomain — not just a client-side
   // redirect that happens to land on the right URL.
   await page.reload();
-  await expect(page).toHaveURL("http://app.lvh.me:3000/e2e-org");
+  await expect(page).toHaveURL(`${APP}/e2e-org`);
   await expect(page.getByRole("heading", { name: "E2E Org" })).toBeVisible();
 });
 
 test("unauthenticated access to the app subdomain redirects to the apex login with a working next=", async ({
   page,
 }) => {
-  await page.goto("http://app.lvh.me:3000/e2e-org/settings/general");
+  await page.goto(`${APP}/e2e-org/settings/general`);
   await expect(page).toHaveURL(
-    "http://lvh.me:3000/login?next=" +
-      encodeURIComponent("http://app.lvh.me:3000/e2e-org/settings/general"),
+    `${APEX}/login?next=` + encodeURIComponent(`${APP}/e2e-org/settings/general`),
   );
 
   await page.getByLabel("Email").fill("e2e@example.com");
   await page.getByLabel("Password").fill("s3cret-pass-1234");
   await page.getByRole("button", { name: "Log in" }).click();
 
-  await expect(page).toHaveURL("http://app.lvh.me:3000/e2e-org/settings/general");
+  await expect(page).toHaveURL(`${APP}/e2e-org/settings/general`);
 });

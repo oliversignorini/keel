@@ -7,6 +7,11 @@ import { defineConfig, devices } from "@playwright/test";
  * until that worktree lands. axe-core checks (e2e/accessibility.spec.ts)
  * only need the Next.js pages to render and pass independently of the API.
  */
+// E2E_WEB_PORT lets parallel factory worktrees each run their own web
+// server (scripts/factory/factory.mjs sets it per slot); unset, the
+// historical :3100 is kept.
+const E2E_WEB_PORT = process.env.E2E_WEB_PORT ?? "3100";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -26,12 +31,12 @@ export default defineConfig({
   // first (see that file's global-setup.ts for why).
   globalSetup: "./e2e/global-setup.ts",
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3100",
+    baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${E2E_WEB_PORT}`,
     trace: "on-first-retry",
   },
   webServer: {
-    command: "next dev -p 3100",
-    url: "http://localhost:3100",
+    command: `next dev -p ${E2E_WEB_PORT}`,
+    url: `http://localhost:${E2E_WEB_PORT}`,
     reuseExistingServer: !process.env.CI,
     // 30s stopped being enough once the shadcn/radix dependency graph
     // landed (UX overhaul) — a cold `next dev` compile on a CI runner

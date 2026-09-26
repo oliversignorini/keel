@@ -11,7 +11,17 @@
     "lint": "turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "gen": "pnpm -s --filter @keel/cli build && node packages/cli/dist/index.js"
+    "gen": "pnpm -s --filter @keel/cli build && node packages/cli/dist/index.js",
+    "env:up": "node scripts/factory/factory.mjs env:up",
+    "env:down": "node scripts/factory/factory.mjs env:down",
+    "env:reset": "node scripts/factory/factory.mjs env:reset",
+    "dev:slot": "node scripts/factory/factory.mjs dev",
+    "health": "node scripts/factory/factory.mjs health",
+    "e2e": "node scripts/factory/factory.mjs e2e",
+    "test:unit": "pnpm --filter web test && pnpm --filter api test:unit",
+    "test:db": "pnpm --filter api test:db",
+    "design:check": "npx --yes impeccable@4.1.0 detect --json apps/web/app apps/web/components packages/ui/src",
+    "e2e:baseline": "node scripts/factory/factory.mjs e2e e2e/accessibility.spec.ts e2e/auth-flows.spec.ts"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

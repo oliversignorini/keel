@@ -38,6 +38,7 @@
     "@keel/tsconfig": "workspace:*",
     "@keel/ui": "workspace:*",
     "@playwright/test": "^1.48.2",
+    "@shadcn/lint": "^0.2.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
