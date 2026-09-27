@@ -53,8 +53,8 @@ In order (`scripts/pre-push-checks.sh`), ~50s warm:
 5. `eslint` (`pnpm --filter web lint`)
 6. `prettier --check`
 7. build email templates (pytest dependency, same as CI's `test-api` job)
-8. `pytest --no-cov -q` (apps/api) — the _fast subset_ of CI's `test-api`
-   job, see below
+8. `pytest -m "not db and not redis" --no-cov -q` (apps/api) — the
+   _service-free subset_ of CI's `test-api` job, see below
 9. `merge_openapi.py`, diffed against the committed `openapi.merged.json`
 10. `pnpm --filter @keel/api-client generate`, diffed against the
     committed `packages/api-client/src/generated`
@@ -63,8 +63,14 @@ In order (`scripts/pre-push-checks.sh`), ~50s warm:
 
 ## What "fast subset" means for pytest
 
-Step 8 is `apps/api`'s default `pytest` run, same settings module
-(`config.settings.test`) as CI, just without `--cov` (coverage
+Step 8 runs only the tests that need no services: `apps/api/conftest.py`
+auto-marks anything touching Postgres as `db` and anything touching Redis
+(Django's cache or a Redis client) as `redis`, and the hook deselects both.
+That keeps the whole hook under ~2 minutes with no Docker stack up (the
+software-factory profile contract requires fast, service-free pre-push
+hooks); CI's `test-api` job still runs the full suite against real
+Postgres and Redis. Same settings module (`config.settings.test`) as CI,
+without `--cov` (coverage
 instrumentation costs real time for a check nobody reads locally — CI's
 `check_coverage.py` still gates on it) and without the second,
 `--ds=config.settings.test_mfa` run CI does for the MFA-flag acceptance
