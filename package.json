@@ -25,9 +25,9 @@
     "bootstrap": "pnpm install --frozen-lockfile && uv sync --frozen --directory apps/api && pnpm --filter @keel/emails build && pnpm --filter web content:build"
   },
   "devDependencies": {
-    "prettier": "^3.3.3",
+    "prettier": "^3.9.9",
     "railway": "^3.11.0",
-    "turbo": "^2.1.3"
+    "turbo": "^2.11.4"
   },
   "pnpm": {
     "overrides": {
