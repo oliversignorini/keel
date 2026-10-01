@@ -93,6 +93,29 @@ storage abstractions are already solved by Django or by an app in this
 repo. Reinventing one of these instead of extending the existing seam
 makes the template worse for the next project that instantiates it.
 
+## Skills
+
+Vendored under `.claude/skills/`, each with its upstream `source` and
+`source_ref` (a pinned SHA) in frontmatter and a `LICENSE` beside it. They
+are edited copies, not mirrors — the keel-specific parts are the point, so
+re-vendoring upstream wholesale undoes them.
+
+| Skill                   | Use it for                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `django-safe-migration` | Writing or reviewing a migration for the rolling deploy (invariant 4) — configured below |
+| `django-perf-review`    | N+1s and unbounded querysets, in Ninja terms (`selectors.py` + `schemas.py` resolvers)   |
+| `django-celery-expert`  | Task internals once the tier is chosen (invariant 5)                                     |
+| `django-access-review`  | IDOR / tenant-isolation review against invariants 2 and 6                                |
+| `shadcn`                | Adding, composing or fixing `@keel/ui` components under the `@shadcn/lint` gate          |
+
+### django-safe-migration
+
+- Django version: 6.0
+- Deploy strategy: rolling deploy (Railway)
+- Runtime guard: none
+- Migration command: `cd apps/api && uv run python manage.py sqlmigrate`
+- Docs URL: none
+
 ## Before you open a PR
 
 Run `/check-invariants`. It maps every gate above to the invariant it
