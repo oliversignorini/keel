@@ -42,6 +42,9 @@ step "mypy"
 step "check_permission_lint.py"
 (cd apps/api && uv run python ../../scripts/check_permission_lint.py)
 
+step "check_skill_links.py"
+(cd apps/api && uv run python ../../scripts/check_skill_links.py)
+
 step "bandit"
 (cd apps/api && uv run bandit -c pyproject.toml -r keel -x '*/tests/*,*/migrations/*')
 
