@@ -1,23 +1,46 @@
-## What this does
+<Slice C10-02 -- issue #164 -- run hzb7c8>
+<Why: one line. The problem and where it came from (contract, issue, run finding).>
 
-<!-- One or two sentences. Link an issue if there is one. -->
+## Summary
+<!--
+Visual menu (docs/04-commits-and-prs.md §4). Summary carries at least one
+fenced visual, each next to the one or two lines of text it supports. Pick the
+smallest view that makes the key point clear: one is normal, two is fine.
 
-## Checklist
+| visual         | use when                                                        | fence        |
+|----------------|-----------------------------------------------------------------|--------------|
+| pseudocode     | logic or an algorithm changed                                   | text         |
+| call tree      | runtime control flow changed                                    | text         |
+| component tree | UI structure changed (with state and module boundaries)         | text         |
+| file tree      | file responsibilities moved, broad refactor                     | text         |
+| Mermaid        | interaction, data flow or state machine                         | mermaid      |
+| diff sketch    | what changes inside a shape that already exists (not code diff) | diff         |
+| code           | mostly new, or a copyable target shape (CLI call, API, type)    | the language |
+-->
+<1-2 visuals from the menu above, each with one line of text>
 
-- [ ] Tests cover both the **allow path and the deny path** — not just the
-      happy path (invariant 7; see `CONTRIBUTING.md`)
-- [ ] No new migration, or the migration is expected by the phase/plan this
-      PR implements — the schema is one baseline migration otherwise
-- [ ] If a viewset was added or changed: it declares `required_permissions`
-      and either `organization_scoped = True` + `test_factory`, or a
-      `GLOBAL_JUSTIFICATION`
-- [ ] If a mutating service was added or changed: it is `@audited(action)`
-      or `@not_audited(reason=...)`
-- [ ] If the API surface changed: `packages/api-client/src/generated` was
-      regenerated and the diff is committed (`pnpm --filter @keel/api-client generate`)
-- [ ] `pnpm lint` and `pnpm typecheck` pass locally
-- [ ] CI is green
+## Evidence
+- Before: <the test that failed, named, as pseudocode or its title> -- <absolute GitHub blob link to red.txt at the red commit>
+- After: <same test passing> -- <absolute GitHub blob link to green.txt>
+- Gates at HEAD: <local ci command> -> <result>
 
-## Anything reviewers should know
+<details><summary>red -> green</summary>
 
-<!-- Deliberate scope cuts, follow-up work, things you're unsure about. -->
+```text
+<the few failing lines from red.txt, then the passing lines from green.txt>
+```
+</details>
+
+<UI changed (the diff touches the profile's ui_globs): before and after screenshots or a GIF, absolute links. Screenshots are the strongest evidence for a visual change.>
+
+## Merge Danger
+**Door:** two-way -- <reason>
+**Blast radius:** module -- <who notices>
+
+## Scope
+<every changed path or glob, comma-separated; must match the slice scope + scope_implied + wiring_seams>
+
+## Followups
+- <deferred findings, leftovers, issues opened (#n)> or `None`
+
+Closes #164
