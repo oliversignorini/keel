@@ -139,11 +139,11 @@ worktrees never share containers, volumes or ports. Use these, not the raw
 | `pnpm test:unit`           | Service-free tests: Vitest + pytest minus `db`/`redis`-marked tests (both auto-applied in `apps/api/conftest.py`)                |
 | `pnpm test:db`             | DB-backed pytest + coverage floors                                                                                               |
 | `pnpm e2e [--grep @tag]`   | Playwright against this slot (starts `dev:slot` if it isn't running)                                                             |
-| `pnpm e2e:baseline`        | The subset of e2e specs CI runs; the rest of `apps/web/e2e` needs the cross-host config                                         |
+| `pnpm e2e:baseline`        | The subset of e2e specs CI runs; the rest of `apps/web/e2e` needs the cross-host config                                          |
 | `pnpm design:check`        | impeccable design detector over app, components and `packages/ui`                                                                |
 
 **Slots.** `DEV_SLOT` (0-9, default 0) picks this worktree's port block:
-every port is its default + slot*100 (`node scripts/dev.mjs ports`). The
+every port is its default + slot\*100 (`node scripts/dev.mjs ports`). The
 generated `.env` and `apps/web/.env.local` carry a `managed-by` header;
 never hand-edit them, and never point a worktree at another slot's services.
 Slot 0 matches the historical ports, but a hand-made `.env` is never
