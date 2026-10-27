@@ -11,7 +11,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
  * `window.location.href` redirect to /login on any 401 — a real navigation
  * that races axe and either destroys its execution context mid-analysis or
  * silently makes the test axe-check the login page instead of the account
- * page. See findings/a11y/0001-account-tabs-invalid-aria.md.
+ * page.
  */
 const AUTH_ROUTES = [
   "/login",
