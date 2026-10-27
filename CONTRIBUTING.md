@@ -95,7 +95,8 @@ Two more, checked mechanically rather than by review:
 
 - One coherent unit of work per commit, not one commit per file.
 - Fill in the PR template's checklist honestly — an unchecked box with a
-  one-line reason is more useful than a checked box that isn't true.
+  one-line reason is more useful than a checked box that isn't true. The
+  template comes from the account-wide `.github` repository.
 - If you're touching `apps/api`, run `uv run pytest` and
   `uv run lint-imports` locally before pushing; both are slow enough in CI
   that a broken run wastes a cycle.
