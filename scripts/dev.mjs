@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Software-factory profile commands for keel (django-next).
+// Local dev-environment commands for keel.
 //
-// Every command is slot-aware: FACTORY_SLOT (0-9, default 0) picks a port
+// Every command is slot-aware: DEV_SLOT (0-9, default 0) picks a port
 // block (default port + slot*100) and a compose project (keel-s<slot>), so
 // parallel git worktrees never share containers, volumes or ports.
 //
-//   node scripts/factory/factory.mjs <command> [args]
+//   node scripts/dev.mjs <command> [args]
 //
 //   env         write .env + apps/web/.env.local for this slot
 //   env:up      env, then start this slot's compose stack and wait healthy
@@ -22,8 +22,8 @@ import { existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from "no
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const MARKER = "# managed-by: scripts/factory/factory.mjs";
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const MARKER = "# managed-by: scripts/dev.mjs";
 const IS_WINDOWS = process.platform === "win32";
 
 const BASE_PORTS = {
@@ -38,13 +38,13 @@ const BASE_PORTS = {
   MINIO_CONSOLE_PORT: 9001,
 };
 
-/** FACTORY_SLOT from the environment, else the slot the managed .env was
+/** DEV_SLOT from the environment, else the slot the managed .env was
  * written for (so plain `pnpm e2e` in a worktree stays on its slot), else 0. */
 function slot() {
-  const raw = process.env.FACTORY_SLOT ?? fileSlot() ?? "0";
+  const raw = process.env.DEV_SLOT ?? fileSlot() ?? "0";
   const value = Number(raw);
   if (!Number.isInteger(value) || value < 0 || value > 9) {
-    fail(`FACTORY_SLOT must be an integer 0-9, got "${raw}"`);
+    fail(`DEV_SLOT must be an integer 0-9, got "${raw}"`);
   }
   return value;
 }
@@ -54,7 +54,7 @@ function ports(s = slot()) {
 }
 
 function fail(message) {
-  console.error(`factory: ${message}`);
+  console.error(`dev: ${message}`);
   process.exit(1);
 }
 
@@ -63,7 +63,7 @@ function fail(message) {
 function slotVars(s) {
   const p = ports(s);
   return {
-    FACTORY_SLOT: String(s),
+    DEV_SLOT: String(s),
     KEEL_COMPOSE_SUFFIX: `s${s}`,
     ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, String(v)])),
     E2E_WEB_PORT: String(p.WEB_PORT),
@@ -94,7 +94,7 @@ function renderRootEnv(s) {
   const extra = Object.entries(slotVars(s))
     .map(([k, v]) => `${k}=${v}`)
     .join("\n");
-  return `${MARKER} (slot ${s}); regenerate with \`pnpm env:up\`, do not hand-edit.\n${body}\n\n# --- factory slot ${s} ---\n${extra}\n`;
+  return `${MARKER} (slot ${s}); regenerate with \`pnpm env:up\`, do not hand-edit.\n${body}\n\n# --- dev slot ${s} ---\n${extra}\n`;
 }
 
 /** Next.js only reads apps/web/.env*, never the repo-root .env. */
@@ -107,7 +107,7 @@ function renderWebEnv(rootEnv) {
 function writeManaged(path, content) {
   if (existsSync(path) && !readFileSync(path, "utf8").startsWith(MARKER)) {
     fail(
-      `${path} exists and was not written by the factory; move it aside (it is probably a hand-made dev .env) and re-run`,
+      `${path} exists and was not written by scripts/dev.mjs; move it aside (it is probably a hand-made dev .env) and re-run`,
     );
   }
   writeFileSync(path, content);
@@ -118,7 +118,7 @@ function cmdEnv() {
   const rootEnv = renderRootEnv(s);
   writeManaged(join(ROOT, ".env"), rootEnv);
   writeManaged(join(ROOT, "apps/web/.env.local"), renderWebEnv(rootEnv));
-  console.log(`factory: wrote .env and apps/web/.env.local for slot ${s}`);
+  console.log(`dev: wrote .env and apps/web/.env.local for slot ${s}`);
 }
 
 function fileSlot() {
@@ -126,7 +126,7 @@ function fileSlot() {
   if (!existsSync(path)) return undefined;
   const text = readFileSync(path, "utf8");
   if (!text.startsWith(MARKER)) return undefined;
-  return /^FACTORY_SLOT=(\d)$/m.exec(text)?.[1];
+  return /^DEV_SLOT=(\d)$/m.exec(text)?.[1];
 }
 
 function envFromFile() {
@@ -251,7 +251,7 @@ function cmdDev() {
   const env = envFromFile();
   const p = ports();
   console.log(
-    `factory: slot ${slot()} -> web http://lvh.me:${p.WEB_PORT}  api http://api.lvh.me:${p.API_PORT}  mail http://localhost:${p.MAILPIT_UI_PORT}`,
+    `dev: slot ${slot()} -> web http://lvh.me:${p.WEB_PORT}  api http://api.lvh.me:${p.API_PORT}  mail http://localhost:${p.MAILPIT_UI_PORT}`,
   );
   const children = devProcesses(env);
   const stop = () => {
@@ -261,7 +261,7 @@ function cmdDev() {
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
   for (const child of children)
-    child.on("exit", (code) => code && console.error(`factory: a dev process exited ${code}`));
+    child.on("exit", (code) => code && console.error(`dev: a dev process exited ${code}`));
 }
 
 // ---------------------------------------------------------------- health
@@ -296,9 +296,9 @@ async function cmdE2e(args) {
   const env = envFromFile();
   let started = [];
   if (!(await healthy()).ok) {
-    mkdirSync(join(ROOT, ".factory"), { recursive: true });
-    const logPath = join(ROOT, ".factory", `dev-slot${slot()}.log`);
-    console.log(`factory: slot not serving; starting dev processes (log: ${logPath})`);
+    mkdirSync(join(ROOT, ".dev"), { recursive: true });
+    const logPath = join(ROOT, ".dev", `dev-slot${slot()}.log`);
+    console.log(`dev: slot not serving; starting dev processes (log: ${logPath})`);
     started = devProcesses(env, logPath);
     const deadline = Date.now() + 240_000;
     while (!(await healthy()).ok) {
@@ -361,5 +361,5 @@ switch (command) {
     console.log(JSON.stringify({ slot: slot(), ...ports() }));
     break;
   default:
-    fail(`unknown command "${command ?? ""}"; see the header of scripts/factory/factory.mjs`);
+    fail(`unknown command "${command ?? ""}"; see the header of scripts/dev.mjs`);
 }

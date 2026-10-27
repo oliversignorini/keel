@@ -121,11 +121,11 @@ re-vendoring upstream wholesale undoes them.
 Run `/check-invariants`. It maps every gate above to the invariant it
 covers.
 
-## Software-factory profile (`django-next`)
+## Local development
 
-This repo is the seed for the `django-next` profile of the software factory.
-Agents working in a factory worktree use these commands, never the raw ones,
-because every command is scoped to the worktree's slot.
+Every command below is scoped to the checkout's dev slot, so parallel git
+worktrees never share containers, volumes or ports. Use these, not the raw
+`docker compose` / `manage.py` / `playwright` invocations.
 
 | Command                    | What it does                                                                                                                     |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -139,15 +139,15 @@ because every command is scoped to the worktree's slot.
 | `pnpm test:unit`           | Service-free tests: Vitest + pytest minus `db`/`redis`-marked tests (both auto-applied in `apps/api/conftest.py`)                |
 | `pnpm test:db`             | DB-backed pytest + coverage floors                                                                                               |
 | `pnpm e2e [--grep @tag]`   | Playwright against this slot (starts `dev:slot` if it isn't running)                                                             |
-| `pnpm e2e:baseline`        | The e2e specs CI runs (`accessibility`, `auth-flows`); the gate until `findings/code/0002` is fixed                              |
+| `pnpm e2e:baseline`        | The subset of e2e specs CI runs; the rest of `apps/web/e2e` needs the cross-host config                                          |
 | `pnpm design:check`        | impeccable design detector over app, components and `packages/ui`                                                                |
 
-**Slots.** `FACTORY_SLOT` (0-9) is set by the factory chair per worktree.
-Every port is its default + slot*100 (`node scripts/factory/factory.mjs ports`).
-The generated `.env` and `apps/web/.env.local` carry a `managed-by` header;
+**Slots.** `DEV_SLOT` (0-9, default 0) picks this worktree's port block:
+every port is its default + slot\*100 (`node scripts/dev.mjs ports`). The
+generated `.env` and `apps/web/.env.local` carry a `managed-by` header;
 never hand-edit them, and never point a worktree at another slot's services.
 Slot 0 matches the historical ports, but a hand-made `.env` is never
-overwritten. The factory refuses to run until you move it aside.
+overwritten — the script refuses to run until you move it aside.
 
 **Demo data.** `seed_demo` creates a demo org and one verified user per
 role (`owner@demo.keel.test` etc., password `demo-password-123`). It is
@@ -161,12 +161,6 @@ and unknown classes. Existing violations are baselined in
 instead, and delete entries as you clean old code up
 (`pnpm --filter web exec eslint . --prune-suppressions`). If a design needs
 something no variant provides, add the variant in `packages/ui`.
-
-**Findings.** Audit findings (review, Playwright/visual, UX, design
-detector) are Markdown files under `findings/<type>/NNNN-<slug>.md` with
-front matter `type, severity (blocking|major|minor), status
-(open|fixed|wontfix), slice, source, evidence`. Evidence goes in
-`findings/_evidence/`.
 
 **Cookies across slots.** Every slot uses the same `.lvh.me` cookie names,
 so one browser profile can only be logged into one slot at a time.

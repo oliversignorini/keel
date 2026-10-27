@@ -1,8 +1,8 @@
-# Project name is per factory slot so parallel worktrees get separate
+# Project name is per dev slot so parallel worktrees get separate
 # containers AND separate named volumes (compose prefixes volume names with
 # the project name). Unset, it stays keel-dev, so a plain
 # `docker compose -f infra/compose.dev.yml up` keeps using existing volumes.
-# scripts/factory/factory.mjs sets KEEL_COMPOSE_SUFFIX=s<slot> and the
+# scripts/dev.mjs sets KEEL_COMPOSE_SUFFIX=s<slot> and the
 # matching *_PORT values (slot N = default + N*100) in the root .env.
 name: keel-${KEEL_COMPOSE_SUFFIX:-dev}
 
