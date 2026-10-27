@@ -7,7 +7,7 @@ export default [
   {
     ignores: ["next-env.d.ts"],
   },
-  // Design-system guard (software-factory profile): app code composes
+  // Design-system guard: app code composes
   // @keel/ui components and theme tokens instead of restyling them or
   // reaching for raw colours / arbitrary values. packages/ui itself is
   // where components are defined, so it is not linted by these rules.

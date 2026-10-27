@@ -17,7 +17,7 @@
 #   - DB- and Redis-backed pytest (`-m db`/`-m redis`, auto-marked in
 #     apps/api/conftest.py): they need a live stack and ~10+ minutes. CI's
 #     test-api job runs the full suite; this hook stays under ~2 minutes
-#     and needs no services (software-factory profile contract).
+#     and needs no services.
 #
 # Escape hatch: `git push --no-verify` skips this entirely. CI runs the
 # full set regardless, so --no-verify trades a slower feedback loop for
