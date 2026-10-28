@@ -6,6 +6,11 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      # One grouped PR per ecosystem for security updates (majors included).
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       python-minor-patch:
         update-types:
           - "minor"
@@ -17,6 +22,11 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      # One grouped PR per ecosystem for security updates (majors included).
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       js-minor-patch:
         update-types:
           - "minor"
@@ -28,6 +38,11 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      # One grouped PR per ecosystem for security updates (majors included).
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       actions-minor-patch:
         update-types:
           - "minor"
@@ -44,6 +59,11 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      # One grouped PR per ecosystem for security updates (majors included).
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
       docker-minor-patch:
         update-types:
           - "minor"

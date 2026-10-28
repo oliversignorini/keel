@@ -20,13 +20,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
-type RequestFormValues = z.infer<typeof identitySchemas.authPasswordRequestBody>;
+type RequestFormValues = z.infer<typeof identitySchemas.AuthPasswordRequestBody>;
 
 export default function ResetPasswordRequestPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(identitySchemas.authPasswordRequestBody),
+    resolver: zodResolver(identitySchemas.AuthPasswordRequestBody),
     defaultValues: { email: "" },
   });
   const { isSubmitting } = form.formState;

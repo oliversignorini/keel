@@ -23,7 +23,7 @@ import type { z } from "zod";
 
 import { defaultAppUrl, navigateTo } from "@/lib/navigation";
 
-const passwordSchema = identitySchemas.authPasswordResetBody.pick({ password: true });
+const passwordSchema = identitySchemas.AuthPasswordResetBody.pick({ password: true });
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function ResetPasswordKeyPage() {

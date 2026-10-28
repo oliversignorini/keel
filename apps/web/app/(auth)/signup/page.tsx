@@ -26,7 +26,7 @@ import { navigateTo } from "@/lib/navigation";
 
 import { GoogleContinueLink } from "../_components/google-continue-link";
 
-type SignupFormValues = z.infer<typeof identitySchemas.authSignupBody>;
+type SignupFormValues = z.infer<typeof identitySchemas.AuthSignupBody>;
 
 // useSearchParams() opts the page out of static rendering unless wrapped in
 // its own Suspense boundary, same as /login (see that page's comment).
@@ -49,7 +49,7 @@ function SignupForm() {
   const next = searchParams.get("next");
   const [formError, setFormError] = useState<string | null>(null);
   const form = useForm<SignupFormValues>({
-    resolver: zodResolver(identitySchemas.authSignupBody),
+    resolver: zodResolver(identitySchemas.AuthSignupBody),
     defaultValues: { email: lockedEmail ?? "", password: "" },
   });
   const { isSubmitting } = form.formState;
