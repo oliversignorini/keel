@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "content:build": "content-collections build",
     "typecheck": "pnpm run content:build && tsc --noEmit",
-    "test": "vitest run",
+    "test": "pnpm run content:build && vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test"
   },

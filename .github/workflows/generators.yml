@@ -9,6 +9,7 @@ name: Generators
 # used to catch a non-conforming slice.
 on:
   push:
+    branches: [master]
   pull_request:
 
 env:

@@ -1,0 +1,86 @@
+# Dependabot PRs only: install, lint, typecheck, unit tests (no e2e, no
+# service-backed tests), then auto-merge minor/patch. One job, so a bumped
+# lockfile costs a few minutes inside the free Actions allowance.
+name: dependabot-ci
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dependabot-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: "9.5.0"
+  NODE_VERSION: "22"
+
+jobs:
+  checks:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: Lint
+        run: |
+          pnpm --filter web lint
+          pnpm exec prettier --check .
+          cd apps/api && uv run ruff check . && uv run ruff format --check .
+
+      - name: Typecheck
+        run: |
+          pnpm --filter web typecheck
+          pnpm --filter @keel/api-client typecheck
+          cd apps/api && uv run mypy .
+
+      - name: Build content collections
+        run: pnpm --filter web content:build
+        # apps/web/.content-collections is gitignored generated output, and
+        # app/sitemap.ts imports it — vitest cannot resolve it without this.
+
+      - name: Unit tests
+        run: |
+          pnpm --filter web test
+          pnpm --filter @keel/api-client test
+          pnpm --filter api test:unit
+
+  automerge:
+    needs: checks
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2
+      - if: steps.meta.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

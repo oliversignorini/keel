@@ -38,7 +38,14 @@ covers. Run them for real — do not guess from reading code.
    `packages/api-client/src/generated`, and only one worktree at a time
    may regenerate it.
 
-7. **Full lint pass** (ruff, mypy, eslint, prettier) —
+7. **Vendored skill integrity — not a numbered invariant, but a gate.**
+   `cd apps/api && uv run python ../../scripts/check_skill_links.py`
+   Fails on a dead relative link inside `.claude/skills/`, a `SKILL.md`
+   missing its `source`/`source_ref`/`license` frontmatter or pinned to
+   something other than a 40-character SHA, or a load-time command
+   injection. Run only if you touched `.claude/skills/`.
+
+8. **Full lint pass** (ruff, mypy, eslint, prettier) —
    `cd apps/api && uv run ruff check . && uv run ruff format --check . && uv run mypy .`
    then from the repo root `pnpm --filter web lint && pnpm exec prettier --check .`
 
