@@ -77,3 +77,24 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
         if uses_db:
             item.add_marker(pytest.mark.db)
+
+        module = getattr(item, "module", None)
+        if module is not None and _module_uses_redis(module):
+            item.add_marker(pytest.mark.redis)
+
+
+def _module_uses_redis(module: object) -> bool:
+    """True when a test module holds Redis as a module global: the redis
+    package, a ``redis.Redis`` class/instance, or Django's ``cache`` (which
+    is Redis in every environment). These tests need a live Redis, so
+    ``test:unit`` (``-m "not db and not redis"``) must skip them. Detecting
+    it from imports means new tests don't have to remember a marker."""
+    import redis
+    from django.core.cache import cache
+
+    for value in vars(module).values():
+        if value is redis or value is cache or isinstance(value, redis.Redis):
+            return True
+        if isinstance(value, type) and issubclass(value, redis.Redis):
+            return True
+    return False
