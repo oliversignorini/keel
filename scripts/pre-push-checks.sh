@@ -14,6 +14,10 @@
 #     the whole CI test-api job.
 #   - e2e (Playwright), pnpm audit, pip-audit, gitleaks — slow, network-
 #     or browser-dependent, or already scheduled/non-blocking in CI.
+#   - DB- and Redis-backed pytest (`-m db`/`-m redis`, auto-marked in
+#     apps/api/conftest.py): they need a live stack and ~10+ minutes. CI's
+#     test-api job runs the full suite; this hook stays under ~2 minutes
+#     and needs no services.
 #
 # Escape hatch: `git push --no-verify` skips this entirely. CI runs the
 # full set regardless, so --no-verify trades a slower feedback loop for
@@ -38,6 +42,9 @@ step "mypy"
 step "check_permission_lint.py"
 (cd apps/api && uv run python ../../scripts/check_permission_lint.py)
 
+step "check_skill_links.py"
+(cd apps/api && uv run python ../../scripts/check_skill_links.py)
+
 step "bandit"
 (cd apps/api && uv run bandit -c pyproject.toml -r keel -x '*/tests/*,*/migrations/*')
 
@@ -50,8 +57,8 @@ pnpm exec prettier --check .
 step "build email templates (pytest dependency — see ci.yml's identical step)"
 pnpm --filter @keel/emails build
 
-step "pytest (fast subset: default settings, no coverage, no MFA-flag rerun)"
-(cd apps/api && uv run pytest --no-cov -q)
+step "pytest (service-free subset: no DB, no Redis, no coverage — CI runs the full suite)"
+(cd apps/api && uv run pytest -m "not db and not redis" --no-cov -q)
 
 step "merge_openapi.py drift"
 (cd apps/api && uv run python ../../scripts/merge_openapi.py)

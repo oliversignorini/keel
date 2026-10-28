@@ -7,8 +7,8 @@ import { defineConfig, devices } from "@playwright/test";
  * until that worktree lands. axe-core checks (e2e/accessibility.spec.ts)
  * only need the Next.js pages to render and pass independently of the API.
  */
-// E2E_WEB_PORT lets parallel factory worktrees each run their own web
-// server (scripts/factory/factory.mjs sets it per slot); unset, the
+// E2E_WEB_PORT lets parallel worktrees each run their own web
+// server (scripts/dev.mjs sets it per slot); unset, the
 // historical :3100 is kept.
 const E2E_WEB_PORT = process.env.E2E_WEB_PORT ?? "3100";
 
