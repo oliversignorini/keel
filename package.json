@@ -2,6 +2,7 @@
   "name": "keel",
   "private": true,
   "packageManager": "pnpm@9.5.0",
+  "//pnpm.overrides": "Transitive security pins, each clears Dependabot alerts the parent has not bumped for: next=min patched; tinypool<=2.1.1 (via vitest 3); glob@10 (via react-email); next>postcss (next pins 8.4.31); rollup@3 (via @sentry/nextjs); toml (via remark-mdx-frontmatter). Drop an entry once the parent ships a fixed range.",
   "engines": {
     "node": ">=22"
   },
@@ -31,7 +32,12 @@
   },
   "pnpm": {
     "overrides": {
-      "next": "^15.5.23"
+      "next": "^15.5.28",
+      "tinypool": "^2.1.2",
+      "glob@10": "^10.5.0",
+      "next>postcss": "^8.5.18",
+      "rollup@3": "^3.30.0",
+      "toml": "^5.0.1"
     }
   }
 }

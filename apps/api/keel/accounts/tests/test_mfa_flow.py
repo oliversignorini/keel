@@ -67,6 +67,16 @@ def _signup_verify_login(client: Client, email: str, password: str) -> None:
     assert response.status_code == 200, response.json()
 
 
+def _reauthenticate(client: Client, password: str) -> None:
+    """allauth >=65.20: a recent login no longer counts as reauthentication."""
+    response = client.post(
+        "/_allauth/browser/v1/auth/reauthenticate",
+        {"password": password},
+        content_type="application/json",
+    )
+    assert response.status_code == 200, response.json()
+
+
 def test_totp_enrolment() -> None:
     client = Client()
     _signup_verify_login(client, "ada@example.com", "s3cret-pass-1")
@@ -75,6 +85,7 @@ def test_totp_enrolment() -> None:
     assert secret_response.status_code == 404, secret_response.json()  # not yet enrolled
     secret = secret_response.json()["meta"]["secret"]
 
+    _reauthenticate(client, "s3cret-pass-1")
     activate_response = client.post(
         "/_allauth/browser/v1/account/authenticators/totp",
         {"code": _totp_code(secret)},
@@ -89,6 +100,7 @@ def test_totp_challenge_on_next_login() -> None:
     client = Client()
     _signup_verify_login(client, "ada@example.com", "s3cret-pass-1")
     secret = client.get("/_allauth/browser/v1/account/authenticators/totp").json()["meta"]["secret"]
+    _reauthenticate(client, "s3cret-pass-1")
     client.post(
         "/_allauth/browser/v1/account/authenticators/totp",
         {"code": _totp_code(secret)},
