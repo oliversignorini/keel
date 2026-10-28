@@ -17,7 +17,7 @@ import { FormError } from "../../(auth)/_components/form-error";
 import { FormField } from "../../(auth)/_components/form-field";
 import { SubmitButton } from "../../(auth)/_components/submit-button";
 
-type PasswordFormValues = z.infer<typeof identitySchemas.accountPasswordChangeBody>;
+type PasswordFormValues = z.infer<typeof identitySchemas.AccountPasswordChangeBody>;
 
 function PasswordChangeForm() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ function PasswordChangeForm() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<PasswordFormValues>({
-    resolver: zodResolver(identitySchemas.accountPasswordChangeBody),
+    resolver: zodResolver(identitySchemas.AccountPasswordChangeBody),
   });
 
   async function onSubmit(values: PasswordFormValues) {

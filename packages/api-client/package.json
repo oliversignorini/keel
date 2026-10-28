@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.20",
-    "zod": "^3.23.8"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "react": "^19.0.0"
@@ -20,8 +20,8 @@
     "@keel/tsconfig": "workspace:*",
     "@types/react": "^19.0.1",
     "jsdom": "^25.0.1",
-    "orval": "^7.5.0",
+    "orval": "^8.22.0",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.4"
+    "vitest": "^3.2.6"
   }
 }
