@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { withContentCollections } from "@content-collections/next";
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 import { buildContentSecurityPolicy } from "./lib/csp";
 
@@ -97,5 +97,5 @@ export default withSentryConfig(configWithContentCollections, {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: true,
   widenClientFileUpload: true,
-  disableLogger: true,
+  bundleSizeOptimizations: { excludeDebugStatements: true },
 });

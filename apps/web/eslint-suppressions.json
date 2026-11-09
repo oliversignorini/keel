@@ -153,10 +153,5 @@
     "shadcn/no-restyle": {
       "count": 10
     }
-  },
-  "lib/cn.test.ts": {
-    "shadcn/no-unknown-classes": {
-      "count": 4
-    }
   }
 }
