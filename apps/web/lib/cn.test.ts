@@ -4,11 +4,11 @@ import { cn } from "./cn";
 
 describe("cn", () => {
   it("joins truthy values with a space", () => {
-    expect(cn("a", "b", "c")).toBe("a b c");
+    expect(cn("flex", "grid", "block")).toBe("flex grid block");
   });
 
   it("drops falsy values", () => {
-    expect(cn("a", false, null, undefined, "b")).toBe("a b");
+    expect(cn("flex", false, null, undefined, "grid")).toBe("flex grid");
   });
 
   it("returns an empty string when nothing survives", () => {

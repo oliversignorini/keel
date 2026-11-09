@@ -462,7 +462,7 @@
       },
       "PasswordLess": {
         "allowEmptyValue": true,
-        "description": "When present (regardless of its value), enables passwordless sign-in via a WebAuthn credential (Passkey),\nbut may enforce additional multi-factor authentication (MFA) requirements. Omit the parameter to disable.\n",
+        "description": "When present (regardless of its value), enables passwordless sign-in via a WebAuthn credential (Passkey),\nwhich requires PIN, biometric, or equivalent user verification. Omit the parameter to disable.\n",
         "in": "query",
         "name": "passwordless",
         "required": false,

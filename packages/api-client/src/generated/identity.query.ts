@@ -1438,7 +1438,7 @@ export type EmailVerificationKeyParameter = string;
 
 /**
  * When present (regardless of its value), enables passwordless sign-in via a WebAuthn credential (Passkey),
- * but may enforce additional multi-factor authentication (MFA) requirements. Omit the parameter to disable.
+ * which requires PIN, biometric, or equivalent user verification. Omit the parameter to disable.
  */
 export type PasswordLessParameter = boolean;
 
@@ -1453,29 +1453,29 @@ export type PasswordResetKeyParameter = string;
 export type SessionTokenParameter = string;
 
 export type ListOrganizationsParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListAuditLogsParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListFilesParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListInvitationsParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListJobsParams = {
-status?: ListJobsStatus;
-cursor?: string | null;
-limit?: number | null;
+  status?: ListJobsStatus;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListJobsStatus = typeof ListJobsStatus[keyof typeof ListJobsStatus] | null;
@@ -1490,23 +1490,23 @@ export const ListJobsStatus = {
 } as const;
 
 export type ListMembersParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListRolesParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListWidgetsParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 export type ListPlansParams = {
-cursor?: string | null;
-limit?: number | null;
+  cursor?: string | null;
+  limit?: number | null;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -1623,6 +1623,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EmailRemoveMutationVariables = {data?: EmailBody}
 
     /**
+ * Used to remove an email address.
  * @summary Remove an email address
  */
 export const useEmailRemove = <TError = ErrorResponse,
@@ -1711,6 +1712,10 @@ export type EmailListQueryResult = NonNullable<Awaited<ReturnType<typeof emailLi
 export type EmailListQueryError = AuthenticationResponse
 
 
+/**
+ * Retrieves the list of email addresses of the account.
+ * @summary List email addresses
+ */
 export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1721,6 +1726,10 @@ export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieves the list of email addresses of the account.
+ * @summary List email addresses
+ */
 export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1731,14 +1740,18 @@ export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieves the list of email addresses of the account.
+ * @summary List email addresses
+ */
 export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Retrieves the list of email addresses of the account.
  * @summary List email addresses
  */
-
 export function useEmailList<TData = Awaited<ReturnType<typeof emailList>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof emailList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -1853,6 +1866,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EmailRequestVerificationMutationVariables = {data?: MarkPrimaryEmailBody}
 
     /**
+ * Used to change primary email address to a different one. Note that only verified email addresses
+ * can be marked as primary.
  * @summary Change primary email address
  */
 export const useEmailRequestVerification = <TError = ErrorResponse,
@@ -1978,6 +1993,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EmailAddMutationVariables = {data?: EmailBody}
 
     /**
+ * The following functionality is available:
+ *
+ *   - Adding a new email address for an already signed in user (`ACCOUNT_CHANGE_EMAIL = False`).
+ *   - Change to a new email address for an already signed in user   (`ACCOUNT_CHANGE_EMAIL = True`).
+ *   - Change to a new email address during the email verification process at signup (`ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_CHANGE = True`).
+ *
+ * In all cases, an email verification mail will be sent containing a link or code that needs to be verified.
  * @summary Add/Change email address
 
  */
@@ -2094,6 +2116,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EmailChangePrimaryMutationVariables = {data?: EmailBody}
 
     /**
+ * Requests for (another) email verification email to be sent. Note that
+ * sending emails is rate limited, so when you send too many requests the
+ * email will not be sent.
  * @summary Request email verification
  */
 export const useEmailChangePrimary = <TError = ErrorResponse | ForbiddenResponse,
@@ -2203,6 +2228,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AccountPasswordChangeMutationVariables = {data?: ChangePasswordBody}
 
     /**
+ * In order to change the password of an account, the current and new
+ * password must be provider.  However, accounts that were created by
+ * signing up using a third-party provider do not have a password set. In
+ * that case, the current password is not required.
  * @summary Change password
  */
 export const useAccountPasswordChange = <TError = ErrorResponse | AuthenticationResponse,
@@ -2292,6 +2321,11 @@ export type PhoneGetQueryResult = NonNullable<Awaited<ReturnType<typeof phoneGet
 export type PhoneGetQueryError = AuthenticationResponse
 
 
+/**
+ * Retrieves the phone number of the account, if any. Note that while the
+ * endpoint returns a list of phone numbers, at most one entry is returned.
+ * @summary Get the phone number
+ */
 export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -2302,6 +2336,11 @@ export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieves the phone number of the account, if any. Note that while the
+ * endpoint returns a list of phone numbers, at most one entry is returned.
+ * @summary Get the phone number
+ */
 export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -2312,14 +2351,20 @@ export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieves the phone number of the account, if any. Note that while the
+ * endpoint returns a list of phone numbers, at most one entry is returned.
+ * @summary Get the phone number
+ */
 export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Retrieves the phone number of the account, if any. Note that while the
+ * endpoint returns a list of phone numbers, at most one entry is returned.
  * @summary Get the phone number
  */
-
 export function usePhoneGet<TData = Awaited<ReturnType<typeof phoneGet>>, TError = AuthenticationResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof phoneGet>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -2453,6 +2498,16 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type PhoneChangeMutationVariables = {data?: PhoneBody}
 
     /**
+ * The following functionality is available:
+ *
+ * - Initiate the phone number change process for signed in users.
+ * - Change to a new phone number during the phone number verification
+ *   process at signup for unauthenticated users. Note that this requires:
+ *   `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_CHANGE = True`.
+ *
+ * In both cases, after posting a new phone number, proceed with the phone
+ * verification endpoint to confirm the change of the phone number by
+ * posting the verification code.
  * @summary Change the phone number
 
  */
@@ -2566,6 +2621,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ProvidersDisconnectMutationVariables = {data?: ProviderAccountBody}
 
     /**
+ * Disconnect a third-party provider account, returning the remaining
+ * accounts that are still connected. The disconnect is not allowed if it
+ * would leave the account unusable. For example, if no password was
+ * set up yet.
  * @summary Disconnect a third-party provider account
 
  */
@@ -2647,6 +2706,7 @@ export type ProvidersListQueryResult = NonNullable<Awaited<ReturnType<typeof pro
 export type ProvidersListQueryError = unknown
 
 
+/** @summary List the connected third-party provider accounts */
 export function useProvidersList<TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -2657,6 +2717,7 @@ export function useProvidersList<TData = Awaited<ReturnType<typeof providersList
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List the connected third-party provider accounts */
 export function useProvidersList<TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -2667,14 +2728,12 @@ export function useProvidersList<TData = Awaited<ReturnType<typeof providersList
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List the connected third-party provider accounts */
 export function useProvidersList<TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List the connected third-party provider accounts
- */
-
+/** @summary List the connected third-party provider accounts */
 export function useProvidersList<TData = Awaited<ReturnType<typeof providersList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -2798,6 +2857,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthCodeConfirmMutationVariables = {data: ConfirmLoginCodeBody}
 
     /**
+ * Use this endpoint to pass along the received "special" login code.
  * @summary Confirm login code
  */
 export const useAuthCodeConfirm = <TError = ErrorResponse | AuthenticationResponse | ConflictResponse,
@@ -2892,6 +2952,11 @@ export type AuthEmailVerifyInfoQueryResult = NonNullable<Awaited<ReturnType<type
 export type AuthEmailVerifyInfoQueryError = ErrorResponse | ConflictResponse
 
 
+/**
+ * Obtain email verification information, given the token that was sent to
+ * the user by email.
+ * @summary Get email verification information
+ */
 export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -2902,6 +2967,11 @@ export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEma
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Obtain email verification information, given the token that was sent to
+ * the user by email.
+ * @summary Get email verification information
+ */
 export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -2912,14 +2982,20 @@ export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEma
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Obtain email verification information, given the token that was sent to
+ * the user by email.
+ * @summary Get email verification information
+ */
 export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Obtain email verification information, given the token that was sent to
+ * the user by email.
  * @summary Get email verification information
  */
-
 export function useAuthEmailVerifyInfo<TData = Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authEmailVerifyInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -3052,6 +3128,16 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthEmailVerifyMutationVariables = {data?: VerifyEmailBody}
 
     /**
+ * Complete the email verification process. Depending on the configuration,
+ * email addresses are either verified by opening a link that is sent to
+ * their email address, or, by inputting a code that is sent. On the API,
+ * both cases are handled identically. Meaning, the required key is either
+ * the one from the link, or, the code itself.
+ *
+ * Note that a status code of 401 does not imply failure. It indicates that
+ * the email verification was successful, yet, the user is still not signed
+ * in. For example, in case `ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION` is set to
+ * `False`, a 401 is returned when verifying as part of login/signup.
  * @summary Verify an email
  */
 export const useAuthEmailVerify = <TError = ErrorResponse | UnauthenticatedResponse | ConflictResponse,
@@ -3152,6 +3238,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
     /**
+ * Requests a new email verification code.
+ * Requires `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True`.
  * @summary Resend email verification code
  */
 export const useAuthEmailVerifyResend = <TError = ConflictResponse | TooManyRequestsResponse,
@@ -3270,6 +3358,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthLoginMutationVariables = {data: LoginBody}
 
     /**
+ * Login using a username-password or email-password combination.
  * @summary Login
  */
 export const useAuthLogin = <TError = ErrorResponse | AuthenticationResponse | ConflictResponse,
@@ -3393,6 +3482,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthPasswordRequestMutationVariables = {data: RequestPasswordBody}
 
     /**
+ * Initiates the password reset procedure. Depending on whether or not
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED` is `True`, the procedure is
+ * either stateless or stateful.
+ *
+ * In case codes are used, it is stateful, and a new
+ * `password_reset_by_code` flow is started. In this case, on a successful
+ * password reset request, you will receive a 401 indicating the pending
+ * status of this flow.
+ *
+ * In case password reset is configured to use (stateless) links, you will
+ * receive a 200 on a successful password reset request.
  * @summary Request password
  */
 export const useAuthPasswordRequest = <TError = ErrorResponse | AuthenticationResponse,
@@ -3491,6 +3591,15 @@ export type AuthPasswordResetInfoQueryResult = NonNullable<Awaited<ReturnType<ty
 export type AuthPasswordResetInfoQueryError = ErrorResponse | ConflictResponse
 
 
+/**
+ * Used to obtain information on and validate a password reset key.  The
+ * key passed is either the key encoded in the password reset URL that the
+ * user has received per email, or, the password reset code in case of
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,
+ * the number of requests you can make is limited (by
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).
+ * @summary Get password reset information
+ */
 export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -3501,6 +3610,15 @@ export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authP
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Used to obtain information on and validate a password reset key.  The
+ * key passed is either the key encoded in the password reset URL that the
+ * user has received per email, or, the password reset code in case of
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,
+ * the number of requests you can make is limited (by
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).
+ * @summary Get password reset information
+ */
 export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -3511,14 +3629,28 @@ export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authP
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Used to obtain information on and validate a password reset key.  The
+ * key passed is either the key encoded in the password reset URL that the
+ * user has received per email, or, the password reset code in case of
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,
+ * the number of requests you can make is limited (by
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).
+ * @summary Get password reset information
+ */
 export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Used to obtain information on and validate a password reset key.  The
+ * key passed is either the key encoded in the password reset URL that the
+ * user has received per email, or, the password reset code in case of
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED`. Note that in case of a code,
+ * the number of requests you can make is limited (by
+ * `ACCOUNT_PASSWORD_RESET_BY_CODE_MAX_ATTEMPTS`).
  * @summary Get password reset information
  */
-
 export function useAuthPasswordResetInfo<TData = Awaited<ReturnType<typeof authPasswordResetInfo>>, TError = ErrorResponse | ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authPasswordResetInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -3647,6 +3779,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthPasswordResetMutationVariables = {data?: ResetPasswordBody}
 
     /**
+ * Perform the password reset, by handing over the password reset key and
+ * the new password. After successfully completing the password reset, the
+ * user is either logged in (in case `ACCOUNT_LOGIN_ON_PASSWORD_RESET` is
+ * `True`), or, the user will need to proceed to the login page.  In case
+ * of the former, a `200` status code is returned, in case of the latter a
+ * 401.
  * @summary Reset password
  */
 export const useAuthPasswordReset = <TError = ErrorResponse | AuthenticationResponse | ConflictResponse,
@@ -3767,6 +3905,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthPhoneVerifyMutationVariables = {data?: VerifyPhoneBody}
 
     /**
+ * Complete the phone number verification process. Note that a status code
+ * of 401 does not imply failure. It merely indicates that the phone number
+ * verification was successful, yet, the user is still not signed in.
  * @summary Verify a phone number
  */
 export const useAuthPhoneVerify = <TError = ErrorResponse | UnauthenticatedResponse | ConflictResponse,
@@ -3867,6 +4008,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
     /**
+ * Requests a new phone number verification code.
+ * Requires `ACCOUNT_PHONE_VERIFICATION_SUPPORTS_RESEND = True`.
  * @summary Resend phone number verification code
  */
 export const useAuthPhoneVerifyResend = <TError = ConflictResponse | TooManyRequestsResponse,
@@ -3975,6 +4118,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthProviderRedirectMutationVariables = {data: ProviderRedirectBody}
 
     /**
+ * Initiates the third-party provider authentication redirect flow. As calling
+ * this endpoint results in a user facing redirect (302), this call is only
+ * available in a browser, and must be called in a synchronous (non-XHR)
+ * manner.
  * @summary Provider redirect
  */
 export const useAuthProviderRedirect = <TError = void,
@@ -4068,6 +4215,15 @@ export type AuthProviderSignupInfoQueryResult = NonNullable<Awaited<ReturnType<t
 export type AuthProviderSignupInfoQueryError = ConflictResponse
 
 
+/**
+ * If, while signing up using a third-party provider account, there is
+ * insufficient information received from the provider to automatically
+ * complete the signup process, an additional step is needed to complete
+ * the missing data before the user is fully signed up and authenticated.
+ * The information available so far, such as the pending provider account,
+ * can be retrieved via this endpoint.
+ * @summary Provider signup information
+ */
 export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -4078,6 +4234,15 @@ export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof auth
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * If, while signing up using a third-party provider account, there is
+ * insufficient information received from the provider to automatically
+ * complete the signup process, an additional step is needed to complete
+ * the missing data before the user is fully signed up and authenticated.
+ * The information available so far, such as the pending provider account,
+ * can be retrieved via this endpoint.
+ * @summary Provider signup information
+ */
 export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -4088,14 +4253,28 @@ export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof auth
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * If, while signing up using a third-party provider account, there is
+ * insufficient information received from the provider to automatically
+ * complete the signup process, an additional step is needed to complete
+ * the missing data before the user is fully signed up and authenticated.
+ * The information available so far, such as the pending provider account,
+ * can be retrieved via this endpoint.
+ * @summary Provider signup information
+ */
 export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * If, while signing up using a third-party provider account, there is
+ * insufficient information received from the provider to automatically
+ * complete the signup process, an additional step is needed to complete
+ * the missing data before the user is fully signed up and authenticated.
+ * The information available so far, such as the pending provider account,
+ * can be retrieved via this endpoint.
  * @summary Provider signup information
  */
-
 export function useAuthProviderSignupInfo<TData = Awaited<ReturnType<typeof authProviderSignupInfo>>, TError = ConflictResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authProviderSignupInfo>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -4227,6 +4406,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthProviderSignupMutationVariables = {data: ProviderSignupBody}
 
     /**
+ * If, while signing up using a third-party provider account, there is
+ * insufficient information received from the provider to automatically
+ * complete the signup process, an additional step is needed to complete
+ * the missing data before the user is fully signed up and authenticated.
  * @summary Provider signup
  */
 export const useAuthProviderSignup = <TError = ErrorResponse | AuthenticationResponse | ForbiddenResponse | ConflictResponse,
@@ -4350,6 +4533,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthProviderTokenMutationVariables = {data: ProviderTokenBody}
 
     /**
+ * Authenticates with a third-party provider using provider tokens received
+ * by other means. For example, in case of a mobile app, the authentication
+ * flow runs completely on the device itself, without any interaction with
+ * the API. Then, when the (device) authentication completes and the mobile
+ * app receives an access and/or ID token, it can hand over these tokens
+ * via this endpoint to authenticate on the server.
  * @summary Provider token
  */
 export const useAuthProviderToken = <TError = ErrorResponse | AuthenticationResponse | ForbiddenResponse,
@@ -4463,6 +4652,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthReauthenticateMutationVariables = {data: ReauthenticateBody}
 
     /**
+ * In order to safeguard the account, some actions require the user to be
+ * recently authenticated.  If you try to perform such an action without
+ * having been recently authenticated, a `401` status is returned, listing
+ * flows that can be performed to reauthenticate. One such flow is the flow
+ * with ID `reauthenticate`, which allows for the user to input the
+ * password. This is the endpoint related towards that flow.
  * @summary Reauthenticate
  */
 export const useAuthReauthenticate = <TError = ErrorResponse,
@@ -4550,6 +4745,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
     /**
+ * Logs out the user from the current session.
  * @summary Logout
  */
 export const useAuthLogout = <TError = UnauthenticatedResponse,
@@ -4645,6 +4841,12 @@ export type AuthGetSessionQueryResult = NonNullable<Awaited<ReturnType<typeof au
 export type AuthGetSessionQueryError = AuthenticationResponse | SessionGoneResponse
 
 
+/**
+ * Retrieve information about the authentication status for the current
+ * session.
+ * @summary Get authentication status
+
+ */
 export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -4655,6 +4857,12 @@ export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSessi
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieve information about the authentication status for the current
+ * session.
+ * @summary Get authentication status
+
+ */
 export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -4665,15 +4873,22 @@ export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSessi
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Retrieve information about the authentication status for the current
+ * session.
+ * @summary Get authentication status
+
+ */
 export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Retrieve information about the authentication status for the current
+ * session.
  * @summary Get authentication status
 
  */
-
 export function useAuthGetSession<TData = Awaited<ReturnType<typeof authGetSession>>, TError = AuthenticationResponse | SessionGoneResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authGetSession>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -4785,9 +5000,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SessionsRevokeMutationError = AuthenticationResponse
     export type SessionsRevokeMutationVariables = {data: EndSessionsBody}
 
-    /**
- * @summary End one or more sessions
- */
+    /** @summary End one or more sessions */
 export const useSessionsRevoke = <TError = AuthenticationResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sessionsRevoke>>, TError,SessionsRevokeMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -4866,6 +5079,7 @@ export type SessionsListQueryResult = NonNullable<Awaited<ReturnType<typeof sess
 export type SessionsListQueryError = unknown
 
 
+/** @summary List sessions */
 export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -4876,6 +5090,7 @@ export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List sessions */
 export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -4886,14 +5101,12 @@ export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List sessions */
 export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List sessions
- */
-
+/** @summary List sessions */
 export function useSessionsList<TData = Awaited<ReturnType<typeof sessionsList>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sessionsList>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5025,6 +5238,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AuthSignupMutationVariables = {data: SignupBody}
 
     /**
+ * Whether or not `username`, `email`, `phone` or combination of those are
+ * required depends on the configuration of django-allauth. Additionally,
+ * if a custom signup form is used there may be other custom properties
+ * required.
  * @summary Signup
  */
 export const useAuthSignup = <TError = ErrorResponse | AuthenticationResponse | ForbiddenResponse | ConflictResponse,
@@ -5111,6 +5328,15 @@ export type AuthConfigQueryResult = NonNullable<Awaited<ReturnType<typeof authCo
 export type AuthConfigQueryError = unknown
 
 
+/**
+ * There are many configuration options that alter the functionality
+ * and behavior of django-allauth, some of which can also impact the
+ * frontend. Therefore, relevant configuration options are exposed via
+ * this endpoint. The data returned is not user/authentication
+ * dependent. Hence, it suffices to only fetch this data once at boot
+ * time of your application.
+ * @summary Get configuration
+ */
 export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5121,6 +5347,15 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * There are many configuration options that alter the functionality
+ * and behavior of django-allauth, some of which can also impact the
+ * frontend. Therefore, relevant configuration options are exposed via
+ * this endpoint. The data returned is not user/authentication
+ * dependent. Hence, it suffices to only fetch this data once at boot
+ * time of your application.
+ * @summary Get configuration
+ */
 export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5131,14 +5366,28 @@ export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * There are many configuration options that alter the functionality
+ * and behavior of django-allauth, some of which can also impact the
+ * frontend. Therefore, relevant configuration options are exposed via
+ * this endpoint. The data returned is not user/authentication
+ * dependent. Hence, it suffices to only fetch this data once at boot
+ * time of your application.
+ * @summary Get configuration
+ */
 export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * There are many configuration options that alter the functionality
+ * and behavior of django-allauth, some of which can also impact the
+ * frontend. Therefore, relevant configuration options are exposed via
+ * this endpoint. The data returned is not user/authentication
+ * dependent. Hence, it suffices to only fetch this data once at boot
+ * time of your application.
  * @summary Get configuration
  */
-
 export function useAuthConfig<TData = Awaited<ReturnType<typeof authConfig>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authConfig>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5266,9 +5515,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ExitImpersonationMutationError = ErrorEnvelope
 
 
-    /**
- * @summary Impersonation Exit
- */
+    /** @summary Impersonation Exit */
 export const useExitImpersonation = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exitImpersonation>>, TError,void, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -5384,6 +5631,7 @@ export type RetrieveInviteQueryResult = NonNullable<Awaited<ReturnType<typeof re
 export type RetrieveInviteQueryError = ErrorEnvelope
 
 
+/** @summary Invite Detail */
 export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
  token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5394,6 +5642,7 @@ export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvi
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Invite Detail */
 export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
  token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5404,14 +5653,12 @@ export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvi
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Invite Detail */
 export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
  token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Invite Detail
- */
-
+/** @summary Invite Detail */
 export function useRetrieveInvite<TData = Awaited<ReturnType<typeof retrieveInvite>>, TError = ErrorEnvelope>(
  token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvite>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5539,9 +5786,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AcceptInviteMutationError = ErrorEnvelope
     export type AcceptInviteMutationVariables = {token: string}
 
-    /**
- * @summary Invite Accept
- */
+    /** @summary Invite Accept */
 export const useAcceptInvite = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,AcceptInviteMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -5661,6 +5906,13 @@ export type RetrieveMeQueryResult = NonNullable<Awaited<ReturnType<typeof retrie
 export type RetrieveMeQueryError = ErrorEnvelope
 
 
+/**
+ * Three queries total regardless of how many organisations the user
+ * belongs to (api-patterns finding 12 — this used to be 2N+1: one
+ * membership lookup and one subscription lookup per organisation, in a
+ * Python loop).
+ * @summary Me
+ */
 export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5671,6 +5923,13 @@ export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Three queries total regardless of how many organisations the user
+ * belongs to (api-patterns finding 12 — this used to be 2N+1: one
+ * membership lookup and one subscription lookup per organisation, in a
+ * Python loop).
+ * @summary Me
+ */
 export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5681,14 +5940,24 @@ export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Three queries total regardless of how many organisations the user
+ * belongs to (api-patterns finding 12 — this used to be 2N+1: one
+ * membership lookup and one subscription lookup per organisation, in a
+ * Python loop).
+ * @summary Me
+ */
 export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Three queries total regardless of how many organisations the user
+ * belongs to (api-patterns finding 12 — this used to be 2N+1: one
+ * membership lookup and one subscription lookup per organisation, in a
+ * Python loop).
  * @summary Me
  */
-
 export function useRetrieveMe<TData = Awaited<ReturnType<typeof retrieveMe>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMe>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5818,6 +6087,7 @@ export type ListOrganizationsQueryResult = NonNullable<Awaited<ReturnType<typeof
 export type ListOrganizationsQueryError = ErrorEnvelope
 
 
+/** @summary List Organizations */
 export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params: undefined |  ListOrganizationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -5828,6 +6098,7 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Organizations */
 export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -5838,14 +6109,12 @@ export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrgan
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Organizations */
 export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Organizations
- */
-
+/** @summary List Organizations */
 export function useListOrganizations<TData = Awaited<ReturnType<typeof listOrganizations>>, TError = ErrorEnvelope>(
  params?: ListOrganizationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOrganizations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -5992,9 +6261,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateOrganizationMutationError = ErrorEnvelope
     export type CreateOrganizationMutationVariables = {data: OrganizationCreateIn}
 
-    /**
- * @summary Create Organization
- */
+    /** @summary Create Organization */
 export const useCreateOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganization>>, TError,CreateOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -6115,9 +6382,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteOrganizationMutationError = ErrorEnvelope
     export type DeleteOrganizationMutationVariables = {orgSlug: string}
 
-    /**
- * @summary Organization Delete
- */
+    /** @summary Organization Delete */
 export const useDeleteOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganization>>, TError,DeleteOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -6233,6 +6498,7 @@ export type RetrieveOrganizationQueryResult = NonNullable<Awaited<ReturnType<typ
 export type RetrieveOrganizationQueryError = ErrorEnvelope
 
 
+/** @summary Organization Detail */
 export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -6243,6 +6509,7 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Organization Detail */
 export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -6253,14 +6520,12 @@ export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Organization Detail */
 export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Organization Detail
- */
-
+/** @summary Organization Detail */
 export function useRetrieveOrganization<TData = Awaited<ReturnType<typeof retrieveOrganization>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveOrganization>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -6403,9 +6668,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateOrganizationMutationError = ErrorEnvelope
     export type UpdateOrganizationMutationVariables = {orgSlug: string;data: OrganizationUpdateIn}
 
-    /**
- * @summary Organization Update
- */
+    /** @summary Organization Update */
 export const useUpdateOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,UpdateOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -6532,6 +6795,7 @@ export type ListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof lis
 export type ListAuditLogsQueryError = ErrorEnvelope
 
 
+/** @summary List Audit Logs */
 export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListAuditLogsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
@@ -6543,6 +6807,7 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Audit Logs */
 export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>> & Pick<
@@ -6554,15 +6819,13 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Audit Logs */
 export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Audit Logs
- */
-
+/** @summary List Audit Logs */
 export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -6690,6 +6953,7 @@ export type RetrieveAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof 
 export type RetrieveAuditLogQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Audit Log */
 export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
@@ -6701,6 +6965,7 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Audit Log */
 export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>> & Pick<
@@ -6712,15 +6977,13 @@ export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAu
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Audit Log */
 export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Audit Log
- */
-
+/** @summary Retrieve Audit Log */
 export function useRetrieveAuditLog<TData = Awaited<ReturnType<typeof retrieveAuditLog>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveAuditLog>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -6864,9 +7127,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateCheckoutSessionMutationError = ErrorEnvelope
     export type CreateCheckoutSessionMutationVariables = {orgSlug: string;data: CheckoutIn}
 
-    /**
- * @summary Create Checkout Session
- */
+    /** @summary Create Checkout Session */
 export const useCreateCheckoutSession = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutSession>>, TError,CreateCheckoutSessionMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -6986,6 +7247,13 @@ export type RetrieveCreditBalanceQueryResult = NonNullable<Awaited<ReturnType<ty
 export type RetrieveCreditBalanceQueryError = ErrorEnvelope
 
 
+/**
+ * Behind ``BILLING_CREDITS``, off by default. Off is
+ * a **404**, not a zero balance — a disabled feature has no balance to
+ * report, and a zero balance is a real, distinguishable state once the
+ * feature is on.
+ * @summary Get Credit Balance
+ */
 export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
  orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -6996,6 +7264,13 @@ export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retri
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Behind ``BILLING_CREDITS``, off by default. Off is
+ * a **404**, not a zero balance — a disabled feature has no balance to
+ * report, and a zero balance is a real, distinguishable state once the
+ * feature is on.
+ * @summary Get Credit Balance
+ */
 export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7006,14 +7281,24 @@ export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retri
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Behind ``BILLING_CREDITS``, off by default. Off is
+ * a **404**, not a zero balance — a disabled feature has no balance to
+ * report, and a zero balance is a real, distinguishable state once the
+ * feature is on.
+ * @summary Get Credit Balance
+ */
 export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Behind ``BILLING_CREDITS``, off by default. Off is
+ * a **404**, not a zero balance — a disabled feature has no balance to
+ * report, and a zero balance is a real, distinguishable state once the
+ * feature is on.
  * @summary Get Credit Balance
  */
-
 export function useRetrieveCreditBalance<TData = Awaited<ReturnType<typeof retrieveCreditBalance>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveCreditBalance>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7141,9 +7426,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateBillingPortalSessionMutationError = ErrorEnvelope
     export type CreateBillingPortalSessionMutationVariables = {orgSlug: string}
 
-    /**
- * @summary Create Billing Portal Session
- */
+    /** @summary Create Billing Portal Session */
 export const useCreateBillingPortalSession = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortalSession>>, TError,CreateBillingPortalSessionMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -7259,6 +7542,7 @@ export type RetrieveSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typ
 export type RetrieveSubscriptionQueryError = ErrorEnvelope
 
 
+/** @summary Get Subscription */
 export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
  orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -7269,6 +7553,7 @@ export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Subscription */
 export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -7279,14 +7564,12 @@ export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrie
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get Subscription */
 export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get Subscription
- */
-
+/** @summary Get Subscription */
 export function useRetrieveSubscription<TData = Awaited<ReturnType<typeof retrieveSubscription>>, TError = ErrorEnvelope>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveSubscription>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -7420,6 +7703,7 @@ export type ListFilesQueryResult = NonNullable<Awaited<ReturnType<typeof listFil
 export type ListFilesQueryError = ErrorEnvelope
 
 
+/** @summary List Files */
 export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListFilesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>> & Pick<
@@ -7431,6 +7715,7 @@ export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Files */
 export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>> & Pick<
@@ -7442,15 +7727,13 @@ export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Files */
 export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Files
- */
-
+/** @summary List Files */
 export function useListFiles<TData = Awaited<ReturnType<typeof listFiles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFiles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -7599,9 +7882,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateUploadMutationError = ErrorEnvelope
     export type CreateUploadMutationVariables = {orgSlug: string;data: PresignedUploadRequest}
 
-    /**
- * @summary Create Upload
- */
+    /** @summary Create Upload */
 export const useCreateUpload = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUpload>>, TError,CreateUploadMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -7724,9 +8005,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteFileMutationError = ErrorEnvelope
     export type DeleteFileMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Delete File
- */
+    /** @summary Delete File */
 export const useDeleteFile = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,DeleteFileMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -7849,6 +8128,12 @@ export type RetrieveUploadQueryResult = NonNullable<Awaited<ReturnType<typeof re
 export type RetrieveUploadQueryError = ErrorEnvelope
 
 
+/**
+ * Scoped to ``organization`` in the same lookup as every other
+ * action above — the mechanism the cross-tenant test in
+ * ``keel/files/tests/test_uploads.py`` exercises directly.
+ * @summary Retrieve Upload
+ */
 export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
@@ -7860,6 +8145,12 @@ export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUplo
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Scoped to ``organization`` in the same lookup as every other
+ * action above — the mechanism the cross-tenant test in
+ * ``keel/files/tests/test_uploads.py`` exercises directly.
+ * @summary Retrieve Upload
+ */
 export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>> & Pick<
@@ -7871,15 +8162,23 @@ export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUplo
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Scoped to ``organization`` in the same lookup as every other
+ * action above — the mechanism the cross-tenant test in
+ * ``keel/files/tests/test_uploads.py`` exercises directly.
+ * @summary Retrieve Upload
+ */
 export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Scoped to ``organization`` in the same lookup as every other
+ * action above — the mechanism the cross-tenant test in
+ * ``keel/files/tests/test_uploads.py`` exercises directly.
  * @summary Retrieve Upload
  */
-
 export function useRetrieveUpload<TData = Awaited<ReturnType<typeof retrieveUpload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveUpload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -8010,9 +8309,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CompleteUploadMutationError = ErrorEnvelope
     export type CompleteUploadMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Complete Upload
- */
+    /** @summary Complete Upload */
 export const useCompleteUpload = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeUpload>>, TError,CompleteUploadMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -8138,6 +8435,15 @@ export type GetFileDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeo
 export type GetFileDownloadUrlQueryError = ErrorEnvelope
 
 
+/**
+ * Returns a fresh, short-lived download URL rather than embedding
+ * one in every list/retrieve response — a presigned GET URL is a
+ * credential in its own right (PRD §4 invariant 7's "unreadable across
+ * tenants" applies to it too), so it's only minted for the caller who
+ * just proved, via ``resolve_and_authorize``, that they're allowed to
+ * read this row.
+ * @summary Get Download Url
+ */
 export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>> & Pick<
@@ -8149,6 +8455,15 @@ export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileD
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Returns a fresh, short-lived download URL rather than embedding
+ * one in every list/retrieve response — a presigned GET URL is a
+ * credential in its own right (PRD §4 invariant 7's "unreadable across
+ * tenants" applies to it too), so it's only minted for the caller who
+ * just proved, via ``resolve_and_authorize``, that they're allowed to
+ * read this row.
+ * @summary Get Download Url
+ */
 export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>> & Pick<
@@ -8160,15 +8475,29 @@ export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileD
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Returns a fresh, short-lived download URL rather than embedding
+ * one in every list/retrieve response — a presigned GET URL is a
+ * credential in its own right (PRD §4 invariant 7's "unreadable across
+ * tenants" applies to it too), so it's only minted for the caller who
+ * just proved, via ``resolve_and_authorize``, that they're allowed to
+ * read this row.
+ * @summary Get Download Url
+ */
 export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Returns a fresh, short-lived download URL rather than embedding
+ * one in every list/retrieve response — a presigned GET URL is a
+ * credential in its own right (PRD §4 invariant 7's "unreadable across
+ * tenants" applies to it too), so it's only minted for the caller who
+ * just proved, via ``resolve_and_authorize``, that they're allowed to
+ * read this row.
  * @summary Get Download Url
  */
-
 export function useGetFileDownloadUrl<TData = Awaited<ReturnType<typeof getFileDownloadUrl>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFileDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -8296,6 +8625,7 @@ export type LocalObjectDownloadQueryResult = NonNullable<Awaited<ReturnType<type
 export type LocalObjectDownloadQueryError = ErrorEnvelope
 
 
+/** @summary Local Object Download */
 export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>> & Pick<
@@ -8307,6 +8637,7 @@ export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localOb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Local Object Download */
 export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>> & Pick<
@@ -8318,15 +8649,13 @@ export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localOb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Local Object Download */
 export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Local Object Download
- */
-
+/** @summary Local Object Download */
 export function useLocalObjectDownload<TData = Awaited<ReturnType<typeof localObjectDownload>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof localObjectDownload>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -8457,9 +8786,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type LocalObjectUploadMutationError = ErrorEnvelope
     export type LocalObjectUploadMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Local Object Upload
- */
+    /** @summary Local Object Upload */
 export const useLocalObjectUpload = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof localObjectUpload>>, TError,LocalObjectUploadMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -8586,6 +8913,7 @@ export type ListInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof l
 export type ListInvitationsQueryError = ErrorEnvelope
 
 
+/** @summary List Invitations */
 export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListInvitationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
@@ -8597,6 +8925,7 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Invitations */
 export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>> & Pick<
@@ -8608,15 +8937,13 @@ export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitat
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Invitations */
 export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Invitations
- */
-
+/** @summary List Invitations */
 export function useListInvitations<TData = Awaited<ReturnType<typeof listInvitations>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListInvitationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvitations>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -8765,9 +9092,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateInvitationMutationError = ErrorEnvelope
     export type CreateInvitationMutationVariables = {orgSlug: string;data: InvitationCreateIn}
 
-    /**
- * @summary Create Invitation
- */
+    /** @summary Create Invitation */
 export const useCreateInvitation = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInvitation>>, TError,CreateInvitationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -8890,9 +9215,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteInvitationMutationError = ErrorEnvelope
     export type DeleteInvitationMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Revoke Invitation
- */
+    /** @summary Revoke Invitation */
 export const useDeleteInvitation = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteInvitation>>, TError,DeleteInvitationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -9012,6 +9335,7 @@ export type RetrieveInvitationQueryResult = NonNullable<Awaited<ReturnType<typeo
 export type RetrieveInvitationQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Invitation */
 export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
@@ -9023,6 +9347,7 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Invitation */
 export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>> & Pick<
@@ -9034,15 +9359,13 @@ export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieve
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Invitation */
 export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Invitation
- */
-
+/** @summary Retrieve Invitation */
 export function useRetrieveInvitation<TData = Awaited<ReturnType<typeof retrieveInvitation>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveInvitation>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -9177,6 +9500,7 @@ export type ListJobsQueryResult = NonNullable<Awaited<ReturnType<typeof listJobs
 export type ListJobsQueryError = ErrorEnvelope
 
 
+/** @summary List Jobs */
 export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListJobsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
@@ -9188,6 +9512,7 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Jobs */
 export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>> & Pick<
@@ -9199,15 +9524,13 @@ export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Jobs */
 export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Jobs
- */
-
+/** @summary List Jobs */
 export function useListJobs<TData = Awaited<ReturnType<typeof listJobs>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -9356,9 +9679,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateJobMutationError = ErrorEnvelope
     export type CreateJobMutationVariables = {orgSlug: string;data: JobCreateIn}
 
-    /**
- * @summary Create Job
- */
+    /** @summary Create Job */
 export const useCreateJob = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,CreateJobMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -9450,6 +9771,10 @@ export type StreamJobsQueryResult = NonNullable<Awaited<ReturnType<typeof stream
 export type StreamJobsQueryError = void
 
 
+/**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
+ * @summary Live job/step events for the organisation (SSE)
+ */
 export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
  orgSlug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -9460,6 +9785,10 @@ export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
+ * @summary Live job/step events for the organisation (SSE)
+ */
 export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -9470,14 +9799,18 @@ export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TE
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
+ * @summary Live job/step events for the organisation (SSE)
+ */
 export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * Server-Sent Events, not served by this Ninja app — see config/urls_stream.py and keel/jobs/sse.py. Declared here so the event shape is part of the published contract even though no generated client method calls it directly (EventSource is the actual client).
  * @summary Live job/step events for the organisation (SSE)
  */
-
 export function useStreamJobs<TData = Awaited<ReturnType<typeof streamJobs>>, TError = void>(
  orgSlug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof streamJobs>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -9604,6 +9937,7 @@ export type RetrieveJobQueryResult = NonNullable<Awaited<ReturnType<typeof retri
 export type RetrieveJobQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Job */
 export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
@@ -9615,6 +9949,7 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Job */
 export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>> & Pick<
@@ -9626,15 +9961,13 @@ export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Job */
 export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Job
- */
-
+/** @summary Retrieve Job */
 export function useRetrieveJob<TData = Awaited<ReturnType<typeof retrieveJob>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveJob>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -9765,9 +10098,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CancelJobMutationError = ErrorEnvelope
     export type CancelJobMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Cancel Job
- */
+    /** @summary Cancel Job */
 export const useCancelJob = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,CancelJobMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -9894,6 +10225,7 @@ export type ListMembersQueryResult = NonNullable<Awaited<ReturnType<typeof listM
 export type ListMembersQueryError = ErrorEnvelope
 
 
+/** @summary List Members */
 export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
@@ -9905,6 +10237,7 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Members */
 export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>> & Pick<
@@ -9916,15 +10249,13 @@ export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Members */
 export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Members
- */
-
+/** @summary List Members */
 export function useListMembers<TData = Awaited<ReturnType<typeof listMembers>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMembers>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -10055,9 +10386,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteMemberMutationError = ErrorEnvelope
     export type DeleteMemberMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Remove Member
- */
+    /** @summary Remove Member */
 export const useDeleteMember = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMember>>, TError,DeleteMemberMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -10177,6 +10506,7 @@ export type RetrieveMemberQueryResult = NonNullable<Awaited<ReturnType<typeof re
 export type RetrieveMemberQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Member */
 export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
@@ -10188,6 +10518,7 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Member */
 export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>> & Pick<
@@ -10199,15 +10530,13 @@ export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMemb
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Member */
 export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Member
- */
-
+/** @summary Retrieve Member */
 export function useRetrieveMember<TData = Awaited<ReturnType<typeof retrieveMember>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveMember>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -10353,9 +10682,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateMemberRoleMutationError = ErrorEnvelope
     export type UpdateMemberRoleMutationVariables = {orgSlug: string;id: string;data: MembershipRoleUpdateIn}
 
-    /**
- * @summary Update Member Role
- */
+    /** @summary Update Member Role */
 export const useUpdateMemberRole = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMemberRole>>, TError,UpdateMemberRoleMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -10482,6 +10809,7 @@ export type ListRolesQueryResult = NonNullable<Awaited<ReturnType<typeof listRol
 export type ListRolesQueryError = ErrorEnvelope
 
 
+/** @summary List Roles */
 export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListRolesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
@@ -10493,6 +10821,7 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Roles */
 export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> & Pick<
@@ -10504,15 +10833,13 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Roles */
 export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Roles
- */
-
+/** @summary List Roles */
 export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -10640,6 +10967,7 @@ export type RetrieveRoleQueryResult = NonNullable<Awaited<ReturnType<typeof retr
 export type RetrieveRoleQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Role */
 export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
@@ -10651,6 +10979,7 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Role */
 export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>> & Pick<
@@ -10662,15 +10991,13 @@ export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Role */
 export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Role
- */
-
+/** @summary Retrieve Role */
 export function useRetrieveRole<TData = Awaited<ReturnType<typeof retrieveRole>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveRole>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -10814,9 +11141,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type TransferOrganizationMutationError = ErrorEnvelope
     export type TransferOrganizationMutationVariables = {orgSlug: string;data: TransferIn}
 
-    /**
- * @summary Organization Transfer
- */
+    /** @summary Organization Transfer */
 export const useTransferOrganization = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferOrganization>>, TError,TransferOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -10943,6 +11268,7 @@ export type ListWidgetsQueryResult = NonNullable<Awaited<ReturnType<typeof listW
 export type ListWidgetsQueryError = ErrorEnvelope
 
 
+/** @summary List Widgets */
 export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params: undefined |  ListWidgetsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
@@ -10954,6 +11280,7 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Widgets */
 export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>> & Pick<
@@ -10965,15 +11292,13 @@ export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, 
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Widgets */
 export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Widgets
- */
-
+/** @summary List Widgets */
 export function useListWidgets<TData = Awaited<ReturnType<typeof listWidgets>>, TError = ErrorEnvelope>(
  orgSlug: string,
     params?: ListWidgetsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWidgets>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -11117,9 +11442,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateWidgetMutationError = ErrorEnvelope
     export type CreateWidgetMutationVariables = {orgSlug: string;data: WidgetIn}
 
-    /**
- * @summary Create Widget
- */
+    /** @summary Create Widget */
 export const useCreateWidget = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWidget>>, TError,CreateWidgetMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -11242,9 +11565,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteWidgetMutationError = ErrorEnvelope
     export type DeleteWidgetMutationVariables = {orgSlug: string;id: string}
 
-    /**
- * @summary Destroy Widget
- */
+    /** @summary Destroy Widget */
 export const useDeleteWidget = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWidget>>, TError,DeleteWidgetMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -11364,6 +11685,7 @@ export type RetrieveWidgetQueryResult = NonNullable<Awaited<ReturnType<typeof re
 export type RetrieveWidgetQueryError = ErrorEnvelope
 
 
+/** @summary Retrieve Widget */
 export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
@@ -11375,6 +11697,7 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Widget */
 export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>> & Pick<
@@ -11386,15 +11709,13 @@ export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidg
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Retrieve Widget */
 export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Retrieve Widget
- */
-
+/** @summary Retrieve Widget */
 export function useRetrieveWidget<TData = Awaited<ReturnType<typeof retrieveWidget>>, TError = ErrorEnvelope>(
  orgSlug: string,
     id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrieveWidget>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
@@ -11540,9 +11861,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateWidgetMutationError = ErrorEnvelope
     export type UpdateWidgetMutationVariables = {orgSlug: string;id: string;data: WidgetPatchIn}
 
-    /**
- * @summary Update Widget
- */
+    /** @summary Update Widget */
 export const useUpdateWidget = <TError = ErrorEnvelope,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWidget>>, TError,UpdateWidgetMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -11663,6 +11982,14 @@ export type RetrievePermissionCodesQueryResult = NonNullable<Awaited<ReturnType<
 export type RetrievePermissionCodesQueryError = ErrorEnvelope
 
 
+/**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+ * registry only changes on deploy, not per-request. Also publishes the
+ * enumerable 403 denial reason codes (api-patterns finding 18), so a
+ * client can branch on ``error.code`` without having read the Python
+ * that raises it.
+ * @summary Permissions Registry
+ */
 export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -11673,6 +12000,14 @@ export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof ret
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+ * registry only changes on deploy, not per-request. Also publishes the
+ * enumerable 403 denial reason codes (api-patterns finding 18), so a
+ * client can branch on ``error.code`` without having read the Python
+ * that raises it.
+ * @summary Permissions Registry
+ */
 export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -11683,14 +12018,26 @@ export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof ret
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+ * registry only changes on deploy, not per-request. Also publishes the
+ * enumerable 403 denial reason codes (api-patterns finding 18), so a
+ * client can branch on ``error.code`` without having read the Python
+ * that raises it.
+ * @summary Permissions Registry
+ */
 export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * A Reference Data Holder (api-patterns finding 13) â€” the permission
+ * registry only changes on deploy, not per-request. Also publishes the
+ * enumerable 403 denial reason codes (api-patterns finding 18), so a
+ * client can branch on ``error.code`` without having read the Python
+ * that raises it.
  * @summary Permissions Registry
  */
-
 export function useRetrievePermissionCodes<TData = Awaited<ReturnType<typeof retrievePermissionCodes>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof retrievePermissionCodes>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -11820,6 +12167,7 @@ export type ListPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listPla
 export type ListPlansQueryError = ErrorEnvelope
 
 
+/** @summary List Plans */
 export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params: undefined |  ListPlansParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -11830,6 +12178,7 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Plans */
 export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -11840,14 +12189,12 @@ export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TErr
       >, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List Plans */
 export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Plans
- */
-
+/** @summary List Plans */
 export function useListPlans<TData = Awaited<ReturnType<typeof listPlans>>, TError = ErrorEnvelope>(
  params?: ListPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlans>>, TError, TData>>, request?: SecondParameter<typeof identityFetch>}
  , queryClient?: QueryClient
@@ -11979,6 +12326,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
     /**
+ * PRD §6 "Stripe webhook": acknowledge in under 200ms, work happens
+ * async. The only synchronous work below a signature check is one
+ * ``get_or_create`` and enqueuing a task.
  * @summary Stripe Webhook
  */
 export const useReceiveStripeWebhook = <TError = ErrorEnvelope,

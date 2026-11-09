@@ -25,6 +25,17 @@ build.
   `fields-ui.ts`) so `pnpm gen resource --ui` provisions the Next.js
   route group too, and an `email` generator for transactional emails
 
+## [1.1.0] - 2026-11-09
+
+### Security
+
+- Django 6.1.3, Next.js 15.5.29 and oauthlib 4.0.1.
+
+### Changed
+
+- Sentry 11, Vitest 5, jsdom 31, Redis 8, plus all minor and patch updates.
+- `dependabot-ci` builds email templates before pytest.
+
 ## [1.0.0] - 2026-08-28
 
 First tagged release. Phases 0–18: a working, instantiable multi-tenant
