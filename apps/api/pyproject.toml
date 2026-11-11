@@ -15,7 +15,7 @@ dependencies = [
     # needed in dev, where `manage.py runserver` is the whole story.
     "gunicorn>=23.0.0",
     "posthog>=3.7.4",
-    "psycopg[binary]>=3.3.4",
+    "psycopg[binary]>=3.3.8",
     "redis>=8.1.0",
     "requests>=2.32.3",
     "sentry-sdk[celery,django]>=2.74.0",

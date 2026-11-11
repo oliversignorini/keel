@@ -1042,7 +1042,7 @@ requires-dist = [
     { name = "django-ninja", specifier = ">=1.6.3,<2" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "posthog", specifier = ">=3.7.4" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.8" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "sentry-sdk", extras = ["celery", "django"], specifier = ">=2.74.0" },
