@@ -7,7 +7,7 @@
     "build": "email export --dir templates --outDir dist"
   },
   "dependencies": {
-    "@react-email/components": "^0.0.31",
+    "@react-email/components": "^1.0.12",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
