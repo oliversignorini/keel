@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@keel/tsconfig": "workspace:*",
-    "@tanstack/react-table": "^8.20.5",
+    "@tanstack/react-table": "^9.3.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.1",
@@ -31,7 +31,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.3.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
