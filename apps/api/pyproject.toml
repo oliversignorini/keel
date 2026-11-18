@@ -3,7 +3,7 @@ name = "keel-api"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "boto3>=1.35.0",
+    "boto3>=1.44.3",
     "celery>=5.6.3",
     "cryptography>=50.0.0",
     "django~=6.0",
@@ -14,7 +14,7 @@ dependencies = [
     # WSGI server for the `api` Railway service (.railway/railway.ts) — not
     # needed in dev, where `manage.py runserver` is the whole story.
     "gunicorn>=23.0.0",
-    "posthog>=3.7.4",
+    "posthog>=7.91.1",
     "psycopg[binary]>=3.3.8",
     "redis>=8.1.0",
     "requests>=2.32.3",
@@ -38,10 +38,10 @@ dev = [
     "mypy>=2.3.1",
     "pip-audit>=2.7.0",
     "pytest>=9.1.1",
-    "pytest-asyncio>=1.0.0",
+    "pytest-asyncio>=1.5.0",
     "pytest-cov>=7.1.0",
     "pytest-django>=4.14.0",
-    "ruff>=0.16.4",
+    "ruff>=0.17.5",
 ]
 
 [tool.pytest.ini_options]
