@@ -13,7 +13,7 @@ dependencies = [
     "django-ninja>=1.6.3,<2",
     # WSGI server for the `api` Railway service (.railway/railway.ts) — not
     # needed in dev, where `manage.py runserver` is the whole story.
-    "gunicorn>=23.0.0",
+    "gunicorn>=27.0.1",
     "posthog>=7.91.1",
     "psycopg[binary]>=3.3.9",
     "redis>=8.1.0",
