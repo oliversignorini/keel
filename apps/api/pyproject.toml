@@ -19,7 +19,7 @@ dependencies = [
     "redis>=8.1.0",
     "requests>=2.32.3",
     "sentry-sdk[celery,django]>=2.75.0",
-    "stripe>=13.0.1",
+    "stripe>=17.1.0",
     "uuid-utils>=0.17.0",
     "uvicorn>=0.34.0",
     # Serves collected static files (Django admin CSS/JS) in production —
